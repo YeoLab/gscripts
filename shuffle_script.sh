@@ -1,0 +1,5 @@
+intersectBed
+shuffleBed
+annotatePeaks
+scp
+visualize on local computer
