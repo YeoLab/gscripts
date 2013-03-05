@@ -5,14 +5,14 @@ import org.broadinstitute.sting.queue.util.QScriptUtils
 import net.sf.samtools.SAMFileHeader.SortOrder
 import org.broadinstitute.sting.utils.exceptions.UserException
 import org.broadinstitute.sting.commandline.Hidden
-import org.broadinstitute.sting.queue.extensions.picard.{ReorderSam, SortSam, AddOrReplaceReadGroups}
+import org.broadinstitute.sting.queue.extensions.picard.{ReorderSam, SortSam, AddOrReplaceReadGroups, MarkDuplicates}
 import org.broadinstitute.sting.queue.extensions.gatk._
 
 
 class HelloWorld extends QScript {
   // Script argunment
   @Input(doc="input file")
-  var input: File = _
+  var input: List[File] = Nil
 
   @Argument(doc="species (hg19...)")
   var species: String =  _
@@ -20,26 +20,29 @@ class HelloWorld extends QScript {
   @Argument(doc="location of chr_sizes")
   var chr_sizes: String = _
  
- class FilterRepetativeRegions(@Input inFasta: File, @Output outCounts: File, @Output outNoRep: File) extends CommandLineFunction {
+  @Argument(doc="adapter to trim")
+  var adapter: List[String] = Nil
 
-	def commandLine = "bowtie -S -q -p 4 -e 100 -l 20 --un %s all_ref %s | grep -v \"@\" | perl /nas3/yeolab/Software/pipeflower/count_aligned_from_sam.pl > %s".format(outNoRep, inFasta, outCounts)
+ class FilterRepetativeRegions(@Input inFastq: File, @Output outCounts: File, @Output outNoRep: File) extends CommandLineFunction {
 
- }
-
- class FastQC(@Input inFasta: File) extends CommandLineFunction {
-
-	def commandLine = "fastqc %s".format(inFasta)
+	def commandLine = "bowtie -S -q -p 4 -e 100 -l 20 --un %s all_ref %s | grep -v \"@\" | perl /nas3/yeolab/Software/pipeflower/count_aligned_from_sam.pl > %s".format(outNoRep, inFastq, outCounts)
 
  }
 
- class cutadapt(@Input inFasta: File, @Output outFasta: File, @Output report: File, @Argument anywhere: List[String], @Argument front: List[String], @Argument overlap: Int, @Argument error_rate: Float) extends CommandLineFunction {
-	#see argunments on cutadapt command line for more documentation
-	def commandLine = "cutadapt -f fastq" + optional("-e", error_rate) + optinal("-O", overlap) + repeat("-b", anywhere) + repeat("-f", front) + required("-o", outFasta) + required(">", report)
+ class FastQC(@Input inFastq: File) extends CommandLineFunction {
+
+	def commandLine = "fastqc %s".format(inFastq)
+
  }
 
- class MapWithSTAR(@Input inFasta: File, @Output samFile: File, @Argument genome: String) extends CommandLineFunction{
+ class Cutadapt(@Input inFastq: File, @Output outFastq: File, @Output report: File, @Argument anywhere: List[String] = Nil, front: List[String] = Nil, @Argument overlap: Option[Int] = None, error_rate: Option[Double] = None, length: Option[Int] = None) extends CommandLineFunction {
+	//see argunments on cutadapt command line for more documentation
+	def commandLine = "cutadapt -f fastq" + optional("-e", error_rate) + optional("-O", overlap) + optional("-m", length) + repeat("-b", anywhere) + repeat("-f", front) + required("-o", outFastq) + required(inFastq) + " > " +  report
+ }
 
-	def commandLine = "/nas3/yeolab/Software/STAR/STAR_2.3.0e/STAR --runMode alignReads --runThreadN 4 --genomeDir /nas3/yeolab/Software/STAR/genomes/2.2.0/%s --genomeLoad LoadAndRemove --readFilesIn %s --outSAMunmapped Within --outFilterMultimapNmax 10 --outStd SAM > %s".format(genome, inFasta, samFile)
+ class MapWithSTAR(@Input inFastq: File, @Output samFile: File, @Argument genome: String) extends CommandLineFunction{
+
+	def commandLine = "/nas3/yeolab/Software/STAR/STAR_2.3.0e/STAR --runMode alignReads --runThreadN 4 --genomeDir /nas3/yeolab/Software/STAR/genomes/2.2.0/%s --genomeLoad LoadAndRemove --readFilesIn %s --outSAMunmapped Within --outFilterMultimapNmax 10 --outStd SAM > %s".format(genome, inFastq, samFile)
 
  }
 
@@ -57,7 +60,7 @@ class HelloWorld extends QScript {
 
 	def commandLine = "genomeCoverageBed -split -bg -ibam %s -g %s > %s".format(inBam, genomeSize, bedGraph)
 
-}
+ }
  
   case class sortSam (inSam: File, outBam: File, sortOrderP: SortOrder) extends SortSam {
     this.input :+= inSam
@@ -66,12 +69,17 @@ class HelloWorld extends QScript {
 
   }
 
-
+  case class markDuplicates(inBam: File, outBam: File, metrics_file: File, remove_duplicates: Boolean) extends MarkDuplicates {
+	this.input = List(inBam)
+	this.output = outBam
+	this.metrics = metrics_file
+	this.REMOVE_DUPLICATES = remove_duplicates
+ } 
  class bedGraphToBigWig(@Input inBedGraph: File, @Argument genomeSize: String, @Output bigWig: File) extends CommandLineFunction{
 
 	def commandLine = "bedGraphToBigWig %s %s %s".format(inBedGraph, genomeSize, bigWig)
 
-}
+ }
 
  class Clipper(@Input inBam: File, @Argument species: String, @Output outBed: File) extends CommandLineFunction{
 
@@ -87,27 +95,34 @@ class HelloWorld extends QScript {
 
   def script() {
 
-    val fileList: Seq[File] = QScriptUtils.createSeqFromFile(input)
+//    val fileList: Seq[File] = QScriptUtils.createSeqFromFile(input)
 
-    for (fasta_file: File <- fileList) {
+    for (fastq_file: File <- input) {
     
     val noPolyAFastq  = swapExt(fastq_file, ".fastq", ".polyATrim.fastq")
     val filteredFastq = swapExt(noPolyAFastq, ".fastq", ".rmRep.fastq")
     val noPolyAReport = swapExt(noPolyAFastq, ".fastq", ".report")
+    val noAdapterFastq = swapExt(noPolyAFastq, ".fastq", ".adapterTrim.fastq")
+    val adapterReport = swapExt(noAdapterFastq, ".fastq", ".report")
     val filterd_results = swapExt(fastq_file, ".fastq", ".counts")
-    val samFile = swapExt(filteredFasta, ".fastq", ".sam")
-    val sortedBamFile = swapExt(samFile, ".sam", ".sorted.bam")  
+    val samFile = swapExt(filteredFastq, ".fastq", ".sam")
+    val sortedBamFile = swapExt(samFile, ".sam", ".sorted.bam")
+    val rmDupedBamFile = swapExt(sortedBamFile, ".bam", ".rmDup.bam")
+    val rmDupedMetricsFile = swapExt(rmDupedBamFile, ".bam", "")  
     val bedGraphFile = swapExt(sortedBamFile, ".bam", ".bg")  
     val bigWigFile   = swapExt(bedGraphFile, ".bg", ".bw")
     val clipper_output = swapExt(sortedBamFile, ".bam", ".peaks.bed")
  
-    add(new FastQC(inFasta=fasta_file, outFasta=noPolyAFastq, report=noPolyAReport, anywhere=List("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAA", "TTTTTTTTTTTTTTTTTTTTTTTTTTTTTT", overlap=7, error_rate=0.03))
-    #filters out poly-a tails (and maybe other types of poly in the future)
-    add(new Cutadapt(fasta_file, 
-    add(new FilterRepetativeRegions(fasta_file, filterd_results, filteredFasta))
-    add(new FastQC(filteredFasta))    
-    add(new MapWithSTAR(filteredFasta, samFile, species))
+    add(new FastQC(inFastq=fastq_file)) 
+    //filters out poly-a tails (and maybe other types of poly in the future)
+    add(new Cutadapt(inFastq=fastq_file, outFastq=noPolyAFastq, report=noPolyAReport, anywhere=List("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAA", "TTTTTTTTTTTTTTTTTTTTTTTTTTTTTT"), overlap=7, error_rate=0.03))
+    //filters out adapter reads
+    add(new Cutadapt(inFastq=noPolyAFastq, outFastq=noAdapterFastq, report=adapterReport, anywhere=adapter, overlap=5, length=18))
+    add(new FilterRepetativeRegions(noAdapterFastq, filterd_results, filteredFastq))
+    add(new FastQC(filteredFastq))    
+    add(new MapWithSTAR(filteredFastq, samFile, species))
     add(sortSam(samFile, sortedBamFile, SortOrder.coordinate))
+    add(markDuplicates(sortedBamFile, rmDupedBamFile, rmDupedMetricsFile, true)) 
     add(new genomeCoverageBed(sortedBamFile, chr_sizes, bedGraphFile))
     add(new bedGraphToBigWig(bedGraphFile, chr_sizes, bigWigFile))
 
