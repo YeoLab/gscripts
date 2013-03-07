@@ -9,7 +9,7 @@ import org.broadinstitute.sting.queue.extensions.picard.{ReorderSam, SortSam, Ad
 import org.broadinstitute.sting.queue.extensions.gatk._
 
 
-class HelloWorld extends QScript {
+class AnalizeCLIPSeq extends QScript {
   // Script argunment
   @Input(doc="input file")
   var input: List[File] = Nil
@@ -56,9 +56,9 @@ class HelloWorld extends QScript {
 	def commandLine = "samtools sort %s %s".format(inBam, outBam)	
 
  }
-  class genomeCoverageBed(@Input inBam: File, @Argument genomeSize: String, @Output bedGraph: File) extends CommandLineFunction{
-
-	def commandLine = "genomeCoverageBed -split -bg -ibam %s -g %s > %s".format(inBam, genomeSize, bedGraph)
+  class genomeCoverageBed(@Input inBam: File, @Argument genomeSize: String, @Output bedGraph: File, @Argument strand: String = null) extends CommandLineFunction{
+	//When it comes time to refactor use the @Input(doc, requiered=False) pattern...
+	def commandLine = "genomeCoverageBed " + optional("-strand", strand) + required("-split") + required("-bg") + required("-ibam", inBam) + required("-g", genomeSize) +  " > " + bedGraph
 
  }
  
@@ -74,6 +74,7 @@ class HelloWorld extends QScript {
 	this.output = outBam
 	this.metrics = metrics_file
 	this.REMOVE_DUPLICATES = remove_duplicates
+	this.isIntermediate = false
  } 
  class bedGraphToBigWig(@Input inBedGraph: File, @Argument genomeSize: String, @Output bigWig: File) extends CommandLineFunction{
 
@@ -99,35 +100,47 @@ class HelloWorld extends QScript {
 
     for (fastq_file: File <- input) {
     
-    val noPolyAFastq  = swapExt(fastq_file, ".fastq", ".polyATrim.fastq")
-    val filteredFastq = swapExt(noPolyAFastq, ".fastq", ".rmRep.fastq")
+    val noPolyAFastq  = swapExt(fastq_file, ".fastq", ".polyATrim.fastq")    
     val noPolyAReport = swapExt(noPolyAFastq, ".fastq", ".report")
+
     val noAdapterFastq = swapExt(noPolyAFastq, ".fastq", ".adapterTrim.fastq")
     val adapterReport = swapExt(noAdapterFastq, ".fastq", ".report")
-    val filterd_results = swapExt(fastq_file, ".fastq", ".counts")
+
+    val filteredFastq = swapExt(noAdapterFastq, ".fastq", ".rmRep.fastq")    
+    val filterd_results = swapExt(filteredFastq, ".fastq", ".counts")
+
     val samFile = swapExt(filteredFastq, ".fastq", ".sam")
     val sortedBamFile = swapExt(samFile, ".sam", ".sorted.bam")
     val rmDupedBamFile = swapExt(sortedBamFile, ".bam", ".rmDup.bam")
     val rmDupedMetricsFile = swapExt(rmDupedBamFile, ".bam", "")  
-    val bedGraphFile = swapExt(sortedBamFile, ".bam", ".bg")  
-    val bigWigFile   = swapExt(bedGraphFile, ".bg", ".bw")
-    val clipper_output = swapExt(sortedBamFile, ".bam", ".peaks.bed")
+    
+    val bedGraphFilePos = swapExt(rmDupedBamFile, ".bam", ".pos.bg")  
+    val bigWigFilePos   = swapExt(bedGraphFilePos, ".bg", ".bw")
+
+    val bedGraphFileNeg = swapExt(rmDupedBamFile, ".bam", ".neg.bg")  
+    val bigWigFileNeg   = swapExt(bedGraphFileNeg, ".bg", ".bw")
+    
+    val clipper_output = swapExt(rmDupedBamFile, ".bam", ".peaks.bed")
  
     add(new FastQC(inFastq=fastq_file)) 
     //filters out poly-a tails (and maybe other types of poly in the future)
     add(new Cutadapt(inFastq=fastq_file, outFastq=noPolyAFastq, report=noPolyAReport, anywhere=List("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAA", "TTTTTTTTTTTTTTTTTTTTTTTTTTTTTT"), overlap=7, error_rate=0.03))
     //filters out adapter reads
     add(new Cutadapt(inFastq=noPolyAFastq, outFastq=noAdapterFastq, report=adapterReport, anywhere=adapter, overlap=5, length=18))
-    add(new FilterRepetativeRegions(noAdapterFastq, filterd_results, filteredFastq))
+    add(new FilterRepetativeRegions(inFastq=noAdapterFastq, filterd_results, filteredFastq))
     add(new FastQC(filteredFastq))    
     add(new MapWithSTAR(filteredFastq, samFile, species))
     add(sortSam(samFile, sortedBamFile, SortOrder.coordinate))
     add(markDuplicates(sortedBamFile, rmDupedBamFile, rmDupedMetricsFile, true)) 
-    add(new genomeCoverageBed(sortedBamFile, chr_sizes, bedGraphFile))
-    add(new bedGraphToBigWig(bedGraphFile, chr_sizes, bigWigFile))
 
-    add(new Clipper(sortedBamFile, species, clipper_output))
-    add(new Clip_Analysis(sortedBamFile, clipper_output, species))
+    add(new genomeCoverageBed(inBam=rmDupedBamFile, genomeSize=chr_sizes, bedGraph=bedGraphFilePos, strand="+"))
+    add(new bedGraphToBigWig(bedGraphFilePos, chr_sizes, bigWigFilePos))
+    
+    add(new genomeCoverageBed(inBam=rmDupedBamFile, genomeSize=chr_sizes, bedGraph=bedGraphFileNeg, strand="-"))   
+    add(new bedGraphToBigWig(bedGraphFileNeg, chr_sizes, bigWigFileNeg))
+
+    add(new Clipper(rmDupedBamFile, species, clipper_output))
+    add(new Clip_Analysis(rmDupedBamFile, clipper_output, species))
 } 	  
  }
 }
