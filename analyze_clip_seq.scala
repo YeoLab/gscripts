@@ -23,6 +23,9 @@ class AnalizeCLIPSeq extends QScript {
   @Argument(doc="adapter to trim")
   var adapter: List[String] = Nil
 
+  @Argument(doc="location to place trackhub (must have the rest of the track hub made before starting script)")
+  var location: String = _
+
  class FilterRepetativeRegions(@Input inFastq: File, @Output outCounts: File, @Output outNoRep: File) extends CommandLineFunction {
 
 	def commandLine = "bowtie -S -q -p 4 -e 100 -l 20 --un %s all_ref %s | grep -v \"@\" | perl /nas3/yeolab/Software/pipeflower/count_aligned_from_sam.pl > %s".format(outNoRep, inFastq, outCounts)
@@ -42,7 +45,7 @@ class AnalizeCLIPSeq extends QScript {
 
  class MapWithSTAR(@Input inFastq: File, @Output samFile: File, @Argument genome: String) extends CommandLineFunction{
 
-	def commandLine = "/nas3/yeolab/Software/STAR/STAR_2.3.0e/STAR --runMode alignReads --runThreadN 4 --genomeDir /nas3/yeolab/Software/STAR/genomes/2.2.0/%s --genomeLoad LoadAndRemove --readFilesIn %s --outSAMunmapped Within --outFilterMultimapNmax 10 --outStd SAM > %s".format(genome, inFastq, samFile)
+	def commandLine = "/nas3/yeolab/Software/STAR/STAR_2.3.0e/STAR --runMode alignReads --runThreadN 4 --genomeDir /nas3/yeolab/Software/STAR/genomes/2.2.0/%s --genomeLoad LoadAndRemove --readFilesIn %s --outSAMunmapped Within --outFilterMultimapNmax 1 --outStd SAM > %s".format(genome, inFastq, samFile)
 
  }
 
@@ -56,6 +59,7 @@ class AnalizeCLIPSeq extends QScript {
 	def commandLine = "samtools sort %s %s".format(inBam, outBam)	
 
  }
+
   class genomeCoverageBed(@Input inBam: File, @Argument genomeSize: String, @Output bedGraph: File, @Argument strand: String = null) extends CommandLineFunction{
 	//When it comes time to refactor use the @Input(doc, requiered=False) pattern...
 	def commandLine = "genomeCoverageBed " + optional("-strand", strand) + required("-split") + required("-bg") + required("-ibam", inBam) + required("-g", genomeSize) +  " > " + bedGraph
@@ -94,10 +98,23 @@ class AnalizeCLIPSeq extends QScript {
 
  }
 
+ class MakeTrackHub(@Input bwFiles: List[File], @Argument location: String) extends CommandLineFunction {
+	//@Input(doc="Bam file to sort") 
+	//var bwFiles: List[File] = Nil 
+	
+	//@Argument(doc="Location") 
+	//var location: String = _
+	
+	def commandLine = "python /nas3/gpratt/gscripts/make_trackhub.py" + repeat(bwFiles) + required("--location", location)
+
+ 	
+ }
+
   def script() {
 
 //    val fileList: Seq[File] = QScriptUtils.createSeqFromFile(input)
-
+     var bwFiles : List[File] = List()
+   
     for (fastq_file: File <- input) {
     
     val noPolyAFastq  = swapExt(fastq_file, ".fastq", ".polyATrim.fastq")    
@@ -112,7 +129,7 @@ class AnalizeCLIPSeq extends QScript {
     val samFile = swapExt(filteredFastq, ".fastq", ".sam")
     val sortedBamFile = swapExt(samFile, ".sam", ".sorted.bam")
     val rmDupedBamFile = swapExt(sortedBamFile, ".bam", ".rmDup.bam")
-    val rmDupedMetricsFile = swapExt(rmDupedBamFile, ".bam", "")  
+    val rmDupedMetricsFile = swapExt(rmDupedBamFile, ".bam", ".metrics")  
     
     val bedGraphFilePos = swapExt(rmDupedBamFile, ".bam", ".pos.bg")  
     val bigWigFilePos   = swapExt(bedGraphFilePos, ".bg", ".bw")
@@ -121,12 +138,15 @@ class AnalizeCLIPSeq extends QScript {
     val bigWigFileNeg   = swapExt(bedGraphFileNeg, ".bg", ".bw")
     
     val clipper_output = swapExt(rmDupedBamFile, ".bam", ".peaks.bed")
+    
+    //add bw files to list for printing out later
+    bwFiles = bwFiles ++ List(bigWigFileNeg, bigWigFilePos)
  
     add(new FastQC(inFastq=fastq_file)) 
     //filters out poly-a tails (and maybe other types of poly in the future)
-    add(new Cutadapt(inFastq=fastq_file, outFastq=noPolyAFastq, report=noPolyAReport, anywhere=List("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAA", "TTTTTTTTTTTTTTTTTTTTTTTTTTTTTT"), overlap=7, error_rate=0.03))
+    //add(new Cutadapt(inFastq=fastq_file, outFastq=noPolyAFastq, report=noPolyAReport, anywhere=List("AAAAAAAAAAAAAAAAAAAAAAAAA", "TTTTTTTTTTTTTTTTTTTTTTTTTTTTTT"), overlap=7, error_rate=0.03))
     //filters out adapter reads
-    add(new Cutadapt(inFastq=noPolyAFastq, outFastq=noAdapterFastq, report=adapterReport, anywhere=adapter, overlap=5, length=18))
+    add(new Cutadapt(inFastq=fastq_file, outFastq=noAdapterFastq, report=adapterReport, anywhere=adapter ++ List("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAA", "TTTTTTTTTTTTTTTTTTTTTTTTTTTTTT"), overlap=5, length=18))
     add(new FilterRepetativeRegions(inFastq=noAdapterFastq, filterd_results, filteredFastq))
     add(new FastQC(filteredFastq))    
     add(new MapWithSTAR(filteredFastq, samFile, species))
@@ -141,7 +161,8 @@ class AnalizeCLIPSeq extends QScript {
 
     add(new Clipper(rmDupedBamFile, species, clipper_output))
     add(new Clip_Analysis(rmDupedBamFile, clipper_output, species))
-} 	  
+  }
+    add(new MakeTrackHub(bwFiles, location))   	  
  }
 }
 
