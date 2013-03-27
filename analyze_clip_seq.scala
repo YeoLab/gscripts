@@ -38,14 +38,22 @@ class AnalizeCLIPSeq extends QScript {
 
  }
 
- class Cutadapt(@Input inFastq: File, @Output outFastq: File, @Output report: File, @Argument anywhere: List[String] = Nil, front: List[String] = Nil, @Argument overlap: Option[Int] = None, error_rate: Option[Double] = None, length: Option[Int] = None) extends CommandLineFunction {
+ class CalculateNRF(@Input inBam: File, @Output outNRF: File, @Argument genomeSize: String) extends CommandLineFunction {
+
+	def commandLine = "python /nas3/gpratt/gscripts/calcluate_NRF.py " + required("--bam", inBam) + required("--genome", genomeSize) + " > " + outNRF
+   
+ }
+
+ class Cutadapt(@Input inFastq: File, @Output outFastq: File, @Output report: File, @Argument anywhere: List[String] = Nil, front: List[String] = Nil, @Argument overlap: Option[Int] = None, error_rate: Option[Double] = None, length: Option[Int] = None, quality_cutoff: Option[Int] = None) extends CommandLineFunction {
 	//see argunments on cutadapt command line for more documentation
-	def commandLine = "cutadapt -f fastq" + optional("-e", error_rate) + optional("-O", overlap) + optional("-m", length) + repeat("-b", anywhere) + repeat("-f", front) + required("-o", outFastq) + required(inFastq) + " > " +  report
+
+	def commandLine = "cutadapt -f fastq --match-read-wildcards --times 2" + optional("-e", error_rate) + optional("-O", overlap) + optional("--quality-cutoff", quality_cutoff) + optional("-m", length) + repeat("-b", anywhere) + repeat("-f", front) + required("-o", outFastq) + required(inFastq) + " > " +  report
+
  }
 
  class MapWithSTAR(@Input inFastq: File, @Output samFile: File, @Argument genome: String) extends CommandLineFunction{
 
-	def commandLine = "/nas3/yeolab/Software/STAR/STAR_2.3.0e/STAR --runMode alignReads --runThreadN 4 --genomeDir /nas3/yeolab/Software/STAR/genomes/2.2.0/%s --genomeLoad LoadAndRemove --readFilesIn %s --outSAMunmapped Within --outFilterMultimapNmax 1 --outStd SAM > %s".format(genome, inFastq, samFile)
+	def commandLine = "/nas3/yeolab/Software/STAR/STAR_2.3.0e/STAR --runMode alignReads --runThreadN 4 --genomeDir /nas3/yeolab/Software/STAR/genomes/2.2.0/%s --genomeLoad LoadAndRemove --readFilesIn %s --outSAMunmapped Within --outFilterMultimapNmax 1 --outFileNamePrefix %s --outStd SAM > %s".format(genome, inFastq, samFile, samFile)
 
  }
 
@@ -92,9 +100,21 @@ class AnalizeCLIPSeq extends QScript {
 
  }
 
- class Clip_Analysis(@Input inBam: File, @Input inBed: File, @Argument species: String) extends CommandLineFunction {
+ class Clip_Analysis(@Input inBam: File, @Input inBed: File, @Argument species: String, @Output metrics: File) extends CommandLineFunction {
 	
-	def commandLine = "python /nas3/gpratt/clipper/clipper/src/CLIP_analysis.py --clusters %s -s %s --bam %s --regions_location /nas3/lovci/projects/ucscBED/%s --AS_Structure /nas3/yeolab/Genome/ensembl/AS_STRUCTURE/%sdata4 --genome_location /nas3/yeolab/Genome/ucsc/%s/chromosomes/all.fa --motif AAAAA --nrand 3 --rePhast".format(inBed, species, inBam, species, species, species) 
+	def commandLine = "python /nas3/gpratt/clipper/clipper/src/CLIP_analysis.py " + 
+			   required("--clusters", inBed) + 
+			   required("-s", species) + 
+			   required("--bam", inBam) + 
+			   required("--regions_location", "/nas3/lovci/projects/ucscBED/%s".format(species)) +  
+			   required("--AS_Structure", "/nas3/yeolab/Genome/ensembl/AS_STRUCTURE/%sdata4".format(species)) + 
+			   required("--genome_location", "/nas3/yeolab/Genome/ucsc/%s/chromosomes/all.fa".format(species)) +
+			   required("--motif",  "AAAAA") +
+			   required("--nrand", 3) +
+			   required("--runPhast") +
+			   required("--runMotif") +
+			   required("--runHomer") +
+			   required("--metrics", metrics) 
 
  }
 
@@ -105,7 +125,7 @@ class AnalizeCLIPSeq extends QScript {
 	//@Argument(doc="Location") 
 	//var location: String = _
 	
-	def commandLine = "python /nas3/gpratt/gscripts/make_trackhub.py" + repeat(bwFiles) + required("--location", location)
+	def commandLine = "python /nas3/gpratt/gscripts/make_trackhubs.py" + repeat(bwFiles) + required("--location", location)
 
  	
  }
@@ -128,6 +148,8 @@ class AnalizeCLIPSeq extends QScript {
 
     val samFile = swapExt(filteredFastq, ".fastq", ".sam")
     val sortedBamFile = swapExt(samFile, ".sam", ".sorted.bam")
+    val NRFFile = swapExt(sortedBamFile, ".bam", ".NRF")
+
     val rmDupedBamFile = swapExt(sortedBamFile, ".bam", ".rmDup.bam")
     val rmDupedMetricsFile = swapExt(rmDupedBamFile, ".bam", ".metrics")  
     
@@ -138,21 +160,23 @@ class AnalizeCLIPSeq extends QScript {
     val bigWigFileNeg   = swapExt(bedGraphFileNeg, ".bg", ".bw")
     
     val clipper_output = swapExt(rmDupedBamFile, ".bam", ".peaks.bed")
-    
+    val clipper_output_metrics = swapExt(clipper_output, ".bed", ".metrics")
+
     //add bw files to list for printing out later
     bwFiles = bwFiles ++ List(bigWigFileNeg, bigWigFilePos)
  
     add(new FastQC(inFastq=fastq_file)) 
-    //filters out poly-a tails (and maybe other types of poly in the future)
-    //add(new Cutadapt(inFastq=fastq_file, outFastq=noPolyAFastq, report=noPolyAReport, anywhere=List("AAAAAAAAAAAAAAAAAAAAAAAAA", "TTTTTTTTTTTTTTTTTTTTTTTTTTTTTT"), overlap=7, error_rate=0.03))
+    
     //filters out adapter reads
-    add(new Cutadapt(inFastq=fastq_file, outFastq=noAdapterFastq, report=adapterReport, anywhere=adapter ++ List("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAA", "TTTTTTTTTTTTTTTTTTTTTTTTTTTTTT"), overlap=5, length=18))
+    add(new Cutadapt(inFastq=fastq_file, outFastq=noAdapterFastq, report=adapterReport, anywhere=adapter ++ List("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAA", "TTTTTTTTTTTTTTTTTTTTTTTTTTTTTT"), overlap=5, length=18, quality_cutoff=10))
     add(new FilterRepetativeRegions(inFastq=noAdapterFastq, filterd_results, filteredFastq))
     add(new FastQC(filteredFastq))    
     add(new MapWithSTAR(filteredFastq, samFile, species))
     add(sortSam(samFile, sortedBamFile, SortOrder.coordinate))
-    add(markDuplicates(sortedBamFile, rmDupedBamFile, rmDupedMetricsFile, true)) 
 
+    add(new CalculateNRF(inBam=sortedBamFile, genomeSize=chr_sizes, outNRF=NRFFile)) 
+    add(markDuplicates(sortedBamFile, rmDupedBamFile, rmDupedMetricsFile, true)) 
+	
     add(new genomeCoverageBed(inBam=rmDupedBamFile, genomeSize=chr_sizes, bedGraph=bedGraphFilePos, strand="+"))
     add(new bedGraphToBigWig(bedGraphFilePos, chr_sizes, bigWigFilePos))
     
@@ -160,7 +184,7 @@ class AnalizeCLIPSeq extends QScript {
     add(new bedGraphToBigWig(bedGraphFileNeg, chr_sizes, bigWigFileNeg))
 
     add(new Clipper(rmDupedBamFile, species, clipper_output))
-    add(new Clip_Analysis(rmDupedBamFile, clipper_output, species))
+    add(new Clip_Analysis(rmDupedBamFile, clipper_output, species, clipper_output_metrics))
   }
     add(new MakeTrackHub(bwFiles, location))   	  
  }
