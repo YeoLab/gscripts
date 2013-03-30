@@ -23,14 +23,14 @@ if __name__ == "__main__":
     out_file = open("trackhub.txt", 'w')
     for track in args.files:
         out_file.write("track\t%s\n" % (track))
-        out_file.write("bigDAtaUrl\t%s\n" % (track))
+        out_file.write("bigDataUrl\t%s\n" % (track))
         out_file.write("shortLabel\t%s\n" % (track))
         out_file.write("longLabel\t%s\n" % (track))
         out_file.write("type\t",)
         if track.endswith(".bw") or track.endswith('.bigWig'):
             out_file.write("bigWig")
-        if track.endswith(".bb") or track.endswith('.bigBam'):
-            out_file.write("bigBam")
+        if track.endswith(".bb") or track.endswith('.bigBed'):
+            out_file.write("bigBed")
         if track.endswith(".bam"):
             out_file.write("bam")
         out_file.write("\n\n")

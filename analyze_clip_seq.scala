@@ -40,7 +40,7 @@ class AnalizeCLIPSeq extends QScript {
 
  class CalculateNRF(@Input inBam: File, @Output outNRF: File, @Argument genomeSize: String) extends CommandLineFunction {
 
-	def commandLine = "python /nas3/gpratt/gscripts/calcluate_NRF.py " + required("--bam", inBam) + required("--genome", genomeSize) + " > " + outNRF
+	def commandLine = "/nas3/gpratt/gscripts/calculate_NRF.py " + required("--bam", inBam) + required("--genome", genomeSize) + " > " + outNRF
    
  }
 
@@ -54,7 +54,7 @@ class AnalizeCLIPSeq extends QScript {
  class MapWithSTAR(@Input inFastq: File, @Output samFile: File, @Argument genome: String) extends CommandLineFunction{
 
 	def commandLine = "/nas3/yeolab/Software/STAR/STAR_2.3.0e/STAR --runMode alignReads --runThreadN 4 --genomeDir /nas3/yeolab/Software/STAR/genomes/2.2.0/%s --genomeLoad LoadAndRemove --readFilesIn %s --outSAMunmapped Within --outFilterMultimapNmax 1 --outFileNamePrefix %s --outStd SAM > %s".format(genome, inFastq, samFile, samFile)
-
+	this.isIntermediate = true
  }
 
  class sortBam extends CommandLineFunction {
@@ -71,7 +71,7 @@ class AnalizeCLIPSeq extends QScript {
   class genomeCoverageBed(@Input inBam: File, @Argument genomeSize: String, @Output bedGraph: File, @Argument strand: String = null) extends CommandLineFunction{
 	//When it comes time to refactor use the @Input(doc, requiered=False) pattern...
 	def commandLine = "genomeCoverageBed " + optional("-strand", strand) + required("-split") + required("-bg") + required("-ibam", inBam) + required("-g", genomeSize) +  " > " + bedGraph
-
+	this.isIntermediate = true
  }
  
   case class sortSam (inSam: File, outBam: File, sortOrderP: SortOrder) extends SortSam {
@@ -109,7 +109,8 @@ class AnalizeCLIPSeq extends QScript {
 			   required("--regions_location", "/nas3/lovci/projects/ucscBED/%s".format(species)) +  
 			   required("--AS_Structure", "/nas3/yeolab/Genome/ensembl/AS_STRUCTURE/%sdata4".format(species)) + 
 			   required("--genome_location", "/nas3/yeolab/Genome/ucsc/%s/chromosomes/all.fa".format(species)) +
-			   required("--motif",  "AAAAA") +
+			   required("--phastcons_location", "/nas3/yeolab/Conservation/phastCons/hg19_46way/placentalMammals/reformat/hg19_phastcons.bw")
+			   required("--motifs",  "AAAAA") +
 			   required("--nrand", 3) +
 			   required("--runPhast") +
 			   required("--runMotif") +
