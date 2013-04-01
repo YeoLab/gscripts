@@ -23,6 +23,9 @@ class AnalizeCLIPSeq extends QScript {
   @Argument(doc="adapter to trim")
   var adapter: List[String] = Nil
 
+  @Argument(doc="RBP binding modality is premRNA")
+  var premRNA: Boolean = false
+
   @Argument(doc="location to place trackhub (must have the rest of the track hub made before starting script)")
   var location: String = _
 
@@ -94,10 +97,15 @@ class AnalizeCLIPSeq extends QScript {
 
  }
 
- class Clipper(@Input inBam: File, @Argument species: String, @Output outBed: File) extends CommandLineFunction{
+ class Clipper(@Input inBam: File, @Argument species: String, @Argument premRNA: Boolean, @Output outBed: File) extends CommandLineFunction{
 
- 	def commandLine = "clipper -b %s -s %s -o %s".format(inBam, species, outBed) 
-
+ 	def commandLine = "clipper " +
+			   required("-b", inBam) + 
+		           required("-s", species) +
+			   required("-o", outBed) + 
+			   conditional(premRNA, "--premRNA") +  
+			   required("--bonferroni") + 
+			   required("--superlocal")
  }
 
  class Clip_Analysis(@Input inBam: File, @Input inBed: File, @Argument species: String, @Output metrics: File) extends CommandLineFunction {
@@ -131,10 +139,24 @@ class AnalizeCLIPSeq extends QScript {
  	
  }
 
+ class NegBedGraph(@Input inBedGraph: File, @Output outBedGraph: File) extends CommandLineFunction {
+     def commandLine = "python /nas3/gpratt/gscripts/negBedGraph " + required("-bg", inBedGraph) + " > " + required(outBedGraph)     
+     this.isIntermediate = true
+ }
+ 
+ class RunIDR(@Input inBam: File, @Output outResult: File, @Argument premRNA: Boolean, @Argument species: String, @Argument genome: String) extends CommandLineFunction {
+     def commandLine = "python /nas3/gpratt/projects/perform_idr.py " +
+			required("--bam", inBam) +
+			required("--out", outResult)
+			conditional(premRNA, "--premRNA") +
+			required("--species", species) +
+			required("--genome", genome) 
+ }
+
   def script() {
 
 //    val fileList: Seq[File] = QScriptUtils.createSeqFromFile(input)
-     var bwFiles : List[File] = List()
+     var trackHubFiles : List[File] = List()
    
     for (fastq_file: File <- input) {
     
@@ -157,15 +179,18 @@ class AnalizeCLIPSeq extends QScript {
     val bedGraphFilePos = swapExt(rmDupedBamFile, ".bam", ".pos.bg")  
     val bigWigFilePos   = swapExt(bedGraphFilePos, ".bg", ".bw")
 
-    val bedGraphFileNeg = swapExt(rmDupedBamFile, ".bam", ".neg.bg")  
-    val bigWigFileNeg   = swapExt(bedGraphFileNeg, ".bg", ".bw")
-    
+    val bedGraphFileNeg = swapExt(rmDupedBamFile, ".bam", ".neg.bg")
+    val bedGraphFileNegInverted = swapExt(bedGraphFileNeg, "neg.bg", "neg.t.bg")  
+    val bigWigFileNeg   = swapExt(bedGraphFileNeg, ".t.bg", ".bw")
+       
     val clipper_output = swapExt(rmDupedBamFile, ".bam", ".peaks.bed")
     val clipper_output_metrics = swapExt(clipper_output, ".bed", ".metrics")
 
+    val IDRResult = swapExt(rmDupedBamFile, "", ".IDR")
+
     //add bw files to list for printing out later
-    bwFiles = bwFiles ++ List(bigWigFileNeg, bigWigFilePos)
- 
+    trackHubFiles = trackHubFiles ++ List(bedGraphFileNegInverted, bigWigFilePos)
+    //trackHubFiles = trackHubFiles ++ List(clipper_output)
     add(new FastQC(inFastq=fastq_file)) 
     
     //filters out adapter reads
@@ -181,13 +206,17 @@ class AnalizeCLIPSeq extends QScript {
     add(new genomeCoverageBed(inBam=rmDupedBamFile, genomeSize=chr_sizes, bedGraph=bedGraphFilePos, strand="+"))
     add(new bedGraphToBigWig(bedGraphFilePos, chr_sizes, bigWigFilePos))
     
-    add(new genomeCoverageBed(inBam=rmDupedBamFile, genomeSize=chr_sizes, bedGraph=bedGraphFileNeg, strand="-"))   
-    add(new bedGraphToBigWig(bedGraphFileNeg, chr_sizes, bigWigFileNeg))
+    add(new genomeCoverageBed(inBam=rmDupedBamFile, genomeSize=chr_sizes, bedGraph=bedGraphFileNeg, strand="-"))
+    add(new NegBedGraph(inBedGraph=bedGraphFileNeg, outBedGraph=bedGraphFileNegInverted))   
+    add(new bedGraphToBigWig(bedGraphFileNegInverted, chr_sizes, bigWigFileNeg))
 
-    add(new Clipper(rmDupedBamFile, species, clipper_output))
+    add(new Clipper(inBam=rmDupedBamFile, species=species, outBed=clipper_output, premRNA=premRNA))
     add(new Clip_Analysis(rmDupedBamFile, clipper_output, species, clipper_output_metrics))
+    
+    add(new RunIDR(inBam=rmDupedBamFile, species=species, genome=chr_sizes, outResult=IDRResult, premRNA=premRNA))
+
   }
-    add(new MakeTrackHub(bwFiles, location))   	  
+    add(new MakeTrackHub(trackHubFiles, location))   	  
  }
 }
 
