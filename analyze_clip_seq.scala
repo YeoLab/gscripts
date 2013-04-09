@@ -43,7 +43,7 @@ class AnalizeCLIPSeq extends QScript {
 
  class CalculateNRF(@Input inBam: File, @Output outNRF: File, @Argument genomeSize: String) extends CommandLineFunction {
 
-	def commandLine = "/nas3/gpratt/gscripts/calculate_NRF.py " + required("--bam", inBam) + required("--genome", genomeSize) + " > " + outNRF
+	def commandLine = "python /nas3/gpratt/gscripts/calculate_NRF.py " + required("--bam", inBam) + required("--genome", genomeSize) + " > " + outNRF
    
  }
 
@@ -51,7 +51,7 @@ class AnalizeCLIPSeq extends QScript {
 	//see argunments on cutadapt command line for more documentation
 
 	def commandLine = "cutadapt -f fastq --match-read-wildcards --times 2" + optional("-e", error_rate) + optional("-O", overlap) + optional("--quality-cutoff", quality_cutoff) + optional("-m", length) + repeat("-b", anywhere) + repeat("-f", front) + required("-o", outFastq) + required(inFastq) + " > " +  report
-
+	this.isIntermediate = true
  }
 
  class MapWithSTAR(@Input inFastq: File, @Output samFile: File, @Argument genome: String) extends CommandLineFunction{
@@ -110,14 +110,14 @@ class AnalizeCLIPSeq extends QScript {
 
  class Clip_Analysis(@Input inBam: File, @Input inBed: File, @Argument species: String, @Output metrics: File) extends CommandLineFunction {
 	
-	def commandLine = "python /nas3/gpratt/clipper/clipper/src/CLIP_analysis.py " + 
+	def commandLine = "clip_analysis " + 
 			   required("--clusters", inBed) + 
 			   required("-s", species) + 
 			   required("--bam", inBam) + 
 			   required("--regions_location", "/nas3/lovci/projects/ucscBED/%s".format(species)) +  
 			   required("--AS_Structure", "/nas3/yeolab/Genome/ensembl/AS_STRUCTURE/%sdata4".format(species)) + 
 			   required("--genome_location", "/nas3/yeolab/Genome/ucsc/%s/chromosomes/all.fa".format(species)) +
-			   required("--phastcons_location", "/nas3/yeolab/Conservation/phastCons/hg19_46way/placentalMammals/reformat/hg19_phastcons.bw")
+			   required("--phastcons_location", "/nas3/yeolab/Conservation/phastCons/hg19_46way/placentalMammals/reformat/hg19_phastcons.bw") +
 			   required("--motifs",  "AAAAA") +
 			   required("--nrand", 3) +
 			   required("--runPhast") +
@@ -140,14 +140,14 @@ class AnalizeCLIPSeq extends QScript {
  }
 
  class NegBedGraph(@Input inBedGraph: File, @Output outBedGraph: File) extends CommandLineFunction {
-     def commandLine = "python /nas3/gpratt/gscripts/negBedGraph " + required("-bg", inBedGraph) + " > " + required(outBedGraph)     
+     def commandLine = "python /nas3/gpratt/gscripts/negBedGraph.py " + required("--bg", inBedGraph) + " > " + required(outBedGraph)     
      this.isIntermediate = true
  }
  
  class RunIDR(@Input inBam: File, @Output outResult: File, @Argument premRNA: Boolean, @Argument species: String, @Argument genome: String) extends CommandLineFunction {
-     def commandLine = "python /nas3/gpratt/projects/perform_idr.py " +
+     def commandLine = "python /nas3/gpratt/projects/idr/perform_idr.py " +
 			required("--bam", inBam) +
-			required("--out", outResult)
+			required("--out", outResult) +
 			conditional(premRNA, "--premRNA") +
 			required("--species", species) +
 			required("--genome", genome) 
