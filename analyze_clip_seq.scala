@@ -145,7 +145,7 @@ class AnalizeCLIPSeq extends QScript {
  }
  
  class RunIDR(@Input inBam: File, @Output outResult: File, @Argument premRNA: Boolean, @Argument species: String, @Argument genome: String) extends CommandLineFunction {
-     def commandLine = "python /nas3/gpratt/projects/idr/perform_idr.py " +
+     def commandLine = "python /nas3/gpratt/gscripts/perform_idr.py " +
 			required("--bam", inBam) +
 			required("--out", outResult) +
 			conditional(premRNA, "--premRNA") +
