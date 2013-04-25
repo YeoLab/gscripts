@@ -51,7 +51,7 @@ if __name__ == "__main__":
     parser.add_argument('--location', help="location to SCP tracks to")
     args = parser.parse_args()
 
-    out_file = open("tracDb.txt", 'w')
+    out_file = open("trackDb.txt", 'w')
 
     #logic for doing pos and neg as the same multi trackhub
     #process bw files first, do the rest with old logic
