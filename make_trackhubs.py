@@ -15,31 +15,6 @@ import os
 import subprocess
 from itertools import groupby
 
-
-def make_basic_track(track, out_file):
-
-    """
-
-    track: str trackname
-    out_file: file handle for writing
-
-    must be terminated by \n\n\, should consier making into a decreator if this gets more complex
-    Outputs basic information for any trackhub track
-
-    """
-
-    out_file.write("track\t%s\n" % (track))
-    out_file.write("bigDataUrl\t%s\n" % (track))
-    out_file.write("shortLabel\t%s\n" % (track))
-    out_file.write("longLabel\t%s\n" % (track))
-    out_file.write("type\t",)
-    if track.endswith(".bw") or track.endswith('.bigWig'):
-        out_file.write("bigWig\n")
-    if track.endswith(".bb") or track.endswith('.bigBed'):
-        out_file.write("bigBed\n")
-    if track.endswith(".bam"):
-        out_file.write("bam\n")
-    
     
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(
@@ -47,53 +22,93 @@ if __name__ == "__main__":
     parser.add_argument(
         'files',  nargs='+',
         help='Files to turn into track hub')
+    parser.add_argument('--genome', help="genome use", required=True)
+    parser.add_argument('--hub', help="hub name, (no spaces)", required=True)
+    parser.add_argument('--short_label', default=None, help="short label for hub")
+    parser.add_argument('--long_label', default=None, help="long label for hub")
+    parser.add_argument('--email', default='gpratt@ucsd.edu', help="email for hub")
     parser.add_argument('--server', default="sauron.ucsd.edu", help="server to SCP to")
-    parser.add_argument('--location', help="location to SCP tracks to")
+    parser.add_argument('--user', default='gpratt', help="that is uploading files")
+    
     args = parser.parse_args()
 
-    out_file = open("trackDb.txt", 'w')
+    #default setting
+    if not args.short_label:
+        args.short_label = args.hub
+    if not args.long_label:
+        args.long_label = args.short_label
+        
+    upload_dir = os.path.join("/zfs/Hubs", args.hub)
+    URLBASE= os.path.join("http://sauron.ucsd.edu/Hubs", args.hub)
+    GENOME = args.genome
+    
+    hub = Hub(hub=args.hub,
+              short_label=args.short_label,
+              long_label=args.long_label,
+              email = args.email,
+              )
+    
+    genomes_file = GenomesFile()
+    genome = Genome(GENOME)
+    trackdb = TrackDb()
+    
+    genome.add_trackdb(trackdb)
+    genomes_file.add_genome(genome)
+    hub.add_genomes_file(genomes_file)
+    hub.upload_fn = upload_dir
 
+    files = os.listdir(BASEDIR)
+    
+    [os.path.basename(file) for file in files]
+    files = args.files
     #logic for doing pos and neg as the same multi trackhub
     #process bw files first, do the rest with old logic
-
-    bw_files = [track for track in args.files if track.endswith(".bw") or track.endswith(".bigWig")]
-    remaining_files = [track for track in args.files if not (track.endswith(".bw") or track.endswith(".bigWig"))]
+    bw_files = [track for track in files if track.endswith(".bw") or track.endswith(".bigWig")]
+    remaining_files = [track for track in files if not (track.endswith(".bw") or track.endswith(".bigWig"))]
 
     key_func = lambda x: x.split(".")[:-2]
     for bw_group, files in groupby(sorted(bw_files, key=key_func), key_func):
             long_name = ".".join(bw_group)
-            out_file.write("track\t%s\n" % long_name)
-            out_file.write("container multiWig\n")
-            out_file.write("noInherit on\n" )
-            out_file.write("shortLabel\t%s\n" % long_name)
-            out_file.write("longLabel\t%s\n" % long_name)
-            out_file.write("type bigWig\n")
-            out_file.write("configurable on\n")
-            out_file.write("visibility full\n")
-            out_file.write("aggergate solidOverlay\n")
-            out_file.write("showSubtrackColorOnUi on\n")
-            out_file.write("autoScale on\n")
-            out_file.write("windowFunction mean\n")
-            out_file.write("priority 1.4\n")
-            out_file.write("maxHeightPixles 100:75:11\n")
-            out_file.write("alwaysZero on\n")
-            out_file.write("\n")
-
+            aggregate = AggregateTrack(
+                         name=long_name,
+                         tracktype='bigWig',
+                         short_label=long_name,
+                         long_label=long_name,
+                         aggregate='transparentOverlay',
+                         showSubtrackColorOnUi='on',
+                         autoScale='on',
+                         priority='1.4',
+                         alwaysZero='on',
+                         )
+                       
             for track in files:
-                make_basic_track(track,out_file)
-                if "pos" in track:
-                    out_file.write("color 0,100,0\n")
-                else:
-                    out_file.write("color 100,0,0\n")
-                out_file.write("parent\t%s\n" % long_name)
-                out_file.write("\n")
-                
-    for track in remaining_files:
-        make_basic_track(track, out_file)
-        out_file.write("\n")
-
-        os.system("scp %s %s:%s" % (track, args.server, args.location))
-    print "To copy your trackhub enter the following the command"
-    print("cat trackDb.txt | ssh sauron.ucsd.edu 'cat >> %s/trackDb.txt'" % args.location)
-
-
+                    base_track = os.path.basename(track)
+                    color = "0,100,0" if "pos" in track else "100,0,0"
+                    
+                    if track.endswith(".bw") or track.endswith('.bigWig'):
+                        tracktype = "bigWig"
+                    if track.endswith(".bb") or track.endswith('.bigBed'):
+                        tracktype = "bigBed"
+                    if track.endswith(".bam"):
+                        tracktype = "bam"
+                        
+                    track = Track(name= track,
+                          url = os.path.join(URLBASE, GENOME, base_track),
+                          tracktype = tracktype,
+                          short_label=base_track,
+                          long_label=base_track,
+                          color = color,
+                          local_fn = os.path.join(track),
+                          remote_fn = os.path.join(upload_dir, GENOME, base_track)
+                          )
+           
+                    aggregate.add_subtrack(track)
+            trackdb.add_tracks(aggregate)
+    
+    result = hub.render()
+    for track in trackdb.tracks:
+        #print track.local_fn
+        #print track.remote_fn
+        upload_track(track=track, host=args.server, user=args.user)
+    
+    upload_hub(hub=hub, host=args.server, user=args.user)
