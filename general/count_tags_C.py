@@ -151,11 +151,11 @@ def count_tags(basedir, species, bam_file, flip, out_file):
 	
 	with open(out_file, 'w') as out_file:
 		for line in csv.reader(genic_order_file, delimiter="\t"):
-			chr, start, stop, strand, ensembl_id, frea_annot = line
+			chrom, start, stop, strand, ensembl_id, frea_annot = line
 			
 			if ensembl_id+start+stop in gene_info:
 				out_file.write("\t".join([
-										chr, start, stop, 
+										chrom, start, stop, 
 										region_counts[ensembl_id+start+stop], 
 										gene_counts[ensembl_id], 
 										strand, ensembl_id, frea_annot, "\n"
@@ -163,16 +163,15 @@ def count_tags(basedir, species, bam_file, flip, out_file):
 							)
 
 if __name__ == "__main__":
-	main()
 	# detect between oolite and triton hosts
 	host = Popen(["hostname"], stdout=PIPE).communicate()[0].strip()
+
 	if "optiputer" in host or "compute" in host:
 		basedir = "/nas/nas0"
 	elif "tcc" in host or "triton" in host:
 		basedir = "/projects"
 	else:
-		print "Not in the correct location"
-		raise Exception
+		raise Exception("Not in the correct location, current host: %s" % (host))
 
 	# gather command line option values
 	parser = OptionParser()
