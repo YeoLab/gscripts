@@ -9,40 +9,37 @@
 
 import csv
 from collections import defaultdict
-import pickle
-import os
 from optparse import OptionParser
 from subprocess import Popen, PIPE
-import sys
-import random
-import re
-import time
 
-from bx.bbi.bigwig_file import BigWigFile
-from clipper.src.peaks import readsToWiggle_pysam
-from numpy import *
-import pybedtools
+from clipper.src.call_peak import readsToWiggle_pysam
+import numpy as np
 import pysam
 
-# get read counts for genic regions in the gene specified by annotation in passed value 'keys'
-def get_wig(key, bam_file, gene_info, regions_info, flip):
+def count_reads(bam_file, genes, regions, flip):
+	
+	"""
+	
+	get read counts for genic regions in the gene specified by annotation in passed value 'keys'
 
-	if key not in gene_info:
-		print keys
-		print "not here"
+	"""
+	
+	gene_counts = {}
+	region_counts = {}
+	for key, gene in genes.items():
 
-	try:
-		# fetch reads from bam file for the gene referenced by keys (Ensembl ID)
-		subset_reads = bam_file.fetch(reference = gene_info[keys]['chr'],
-					      start = int(gene_info[keys]["start"]),
-					      end = int(gene_info[keys]["stop"]))
-		
-	except:
-		raise Exception("could not fetch reads. check if bam is indexed."+gene_info[key]['chr']+" "+ gene_info[key]['start']+" "+ gene_info[key]['stop'])
-
-	try:
+		try:
+			# fetch reads from bam file for the gene referenced by keys (Ensembl ID)
+			subset_reads = bam_file.fetch(reference = gene['chr'],
+						      start = int(gene["start"]),
+						      end = int(gene["stop"]))
+			
+		except:
+			raise Exception("could not fetch reads. check if bam is indexed." + 
+						gene['chr']+ " " + gene['start']+" "+ gene['stop'])
+	
 		# determine strand to keep based on flip option
-		keep_strand = gene_info[key]["strand"]
+		keep_strand = gene["strand"]
 		if str(flip) == "flip":
 			if str(keep_strand) == '-':
 				keep_strand = '+'
@@ -52,33 +49,28 @@ def get_wig(key, bam_file, gene_info, regions_info, flip):
 		elif str(flip) == "both":
 			keep_strand = 0;
 
-		wig, jxns, nr_counts, read_lengths, reads = readsToWiggle_pysam(subset_reads,
-										int(gene_info[key]["start"]),
-										int(gene_info[key]["stop"]),
-										keep_strand,
-										'center',
-										True)
+		wig, jxns, nr_counts, read_lengths, reads = readsToWiggle_pysam(
+																	subset_reads,
+																	int(gene["start"]),
+																	int(gene["stop"]),
+																	keep_strand,
+																	'center',
+																	True)
 
-	except Exception as e:
-		print e
 
-	region_sum = 0
-	while len(regions_info[key]) >= 2:
-		try:
-			start = int(regions_info[key].pop(0)) - int(gene_info[key]["start"] )
-			stop = int(regions_info[key].pop(0)) - int(gene_info[key]["start"] )
-		except:
-			print "no regions information"
-
-		sum = 0
-		for x in range(start, stop):
-			sum+=wig[x]	
-		
-		region_sum+=sum
-		gene_info[key+str(int(start)+int(gene_info[keys]["start"] ))+str(int(stop)+int(gene_info[key]["start"]) )] =  str(sum)
-
-	gene_info[key]["region_sum"] = str(region_sum)
 	
+		gene_sum = 0
+		for region_start, region_stop in regions[key]:
+			
+			start = region_start - gene["start"]
+			stop  = region_stop  - gene["start"]
+			
+			gene_sum += sum(wig[start:stop])
+			
+			region_counts[key + str(start + gene["start"]) + str(stop + gene["start"])] =  sum(wig[start:stop])
+	
+		gene_counts[key] = gene_sum
+	return gene_counts, region_counts
 
 def count_to_regions(basedir, species):
 
@@ -87,7 +79,8 @@ def count_to_regions(basedir, species):
 	Gets all genic regions, returns a two dicts, a regions dict and a genes dict
 	for all the genes
 
-	returns gene_info, regions_info
+	returns genes, regions
+	
 	"""
 
 	if species == "hg19" or species == "hg18":
@@ -102,8 +95,8 @@ def count_to_regions(basedir, species):
 	elif species == "ce6":
 		chrs = ("I", "II", "III", "IV", "V", "X")
 
-	gene_info = defaultdict(list)
-	regions_info = defaultdict(list)
+	genes = defaultdict(list)
+	regions = defaultdict(list)
 	
 	for chr in chrs:
 		regions_file = basedir+"/ppliu/genic_regions/"+species+"/genic_regions_"+species+".chr"+chr
@@ -114,41 +107,63 @@ def count_to_regions(basedir, species):
 	
 				strand = "+" if int(strand) == 0 else "-"
 			
-				regions_info[ensembl_id].append(start)
-				regions_info[ensembl_id].append(stop)
+				regions[ensembl_id].append((start, stop))
 
-				if (ensembl_id in gene_info):
+				if (ensembl_id in genes):
 					#get the minimal start, and maximal stop for each gene
-					gene_info[ensembl_id]['start'] = min(int(start),
-									       int(gene_info[ensembl_id]["start"]))
+					genes[ensembl_id]['start'] = min(int(start),
+									       int(genes[ensembl_id]["start"]))
 						
-					gene_info[ensembl_id]['stop'] = max(int(stop),
-									     int(gene_info[ensembl_id]["stop"]))
+					genes[ensembl_id]['stop'] = max(int(stop),
+									     int(genes[ensembl_id]["stop"]))
 				else:
-					gene_info[ensembl_id]={}
-					gene_info[ensembl_id]["chr"] = chromosome
-					gene_info[ensembl_id]["start"] = start
-					gene_info[ensembl_id]["stop"] = stop
-					gene_info[ensembl_id]["strand"] = strand
-					gene_info[ensembl_id]["frea"] = frea_annot
-					gene_info[ensembl_id]["raw_count"] = 0
+					genes[ensembl_id]={}
+					genes[ensembl_id]["chr"] = chromosome
+					genes[ensembl_id]["start"] = int(start)
+					genes[ensembl_id]["stop"] = int(stop)
+					genes[ensembl_id]["strand"] = strand
+					genes[ensembl_id]["frea"] = frea_annot
+					genes[ensembl_id]["raw_count"] = 0
 	
-	return gene_info, regions_info
+	return genes, regions
 
-def main(genic_order_file):
+def count_tags(basedir, species, bam_file, flip, out_file):
 	
-	region_lines = [get_wig(key) for key in gene_info.keys()]
-
-	for lines in genic_order_file:
-
-		lines = lines.strip()
-		chr, start, stop, strand, ensembl_id, frea_annot = lines.split("\t")
+	"""
+		Main function counts tags and ouptouts counts to outfile
 		
-		if ensembl_id+start+stop in gene_info:
-			out_file.write( chr+"\t"+start+"\t"+stop+"\t"+gene_info[ensembl_id+start+stop]+"\t"+gene_info[ensembl_id]["region_sum"]+"\t"+strand+"\t"+ensembl_id+"\t"+frea_annot+"\n")
+		basedir - root where files are stored (generally /nas/nas0
+		species - species to count for, hg19, hg18, mm9
+		flip - if true flip the reads
+		out_file - output file 
+		
+	"""
+	# open properly ordered genic order file for reading
+	genic_order_file = open(basedir+"/ppliu/genic_counts_orders/"+species+".order", 'r')
+	
+	# open bam file for reading
+	bam_file = pysam.Samfile(bam_file, 'rb')
+	
+	# create dictionary data structures 
+	genes, regions = count_to_regions(basedir, species)
+	
+	gene_counts, region_counts = count_reads(bam_file, genes, regions, flip) 
+	
+	with open(out_file, 'w') as out_file:
+		for line in csv.reader(genic_order_file, delimiter="\t"):
+			chr, start, stop, strand, ensembl_id, frea_annot = line
+			
+			if ensembl_id+start+stop in gene_info:
+				out_file.write("\t".join([
+										chr, start, stop, 
+										region_counts[ensembl_id+start+stop], 
+										gene_counts[ensembl_id], 
+										strand, ensembl_id, frea_annot, "\n"
+										])
+							)
 
 if __name__ == "__main__":
-
+	main()
 	# detect between oolite and triton hosts
 	host = Popen(["hostname"], stdout=PIPE).communicate()[0].strip()
 	if "optiputer" in host or "compute" in host:
@@ -168,18 +183,4 @@ if __name__ == "__main__":
 	
 	# assign parameters to variables
 	(options,args) = parser.parse_args()
-	flip = options.flip
-	
-	# open output file for writing 
-	out_file = open(options.out_file, 'a')
-	
-	# open properly ordered genic order file for reading
-	genic_order_file = open(basedir+"/ppliu/genic_counts_orders/"+species+".order", 'r')
-	
-	# open bam file for reading
-	bam_file = pysam.Samfile(options.bam_path, 'rb')
-	
-	# create dictionary data structures 
-	gene_info, regions_info = count_to_regions(basedir, options.species)
-	main()
-	
+	count_tags(basedir, options.species, options.bam_path, options.flip, options.out_file)
