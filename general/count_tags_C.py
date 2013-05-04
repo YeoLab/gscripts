@@ -31,8 +31,8 @@ def count_reads(bam_file, genes, regions, flip):
 		try:
 			# fetch reads from bam file for the gene referenced by keys (Ensembl ID)
 			subset_reads = bam_file.fetch(reference = gene['chr'],
-						      start = int(gene["start"]),
-						      end = int(gene["stop"]))
+						      start = gene["start"],
+						      end = gene["stop"])
 			
 		except:
 			raise Exception("could not fetch reads. check if bam is indexed." + 
@@ -62,8 +62,8 @@ def count_reads(bam_file, genes, regions, flip):
 		gene_sum = 0
 		for region_start, region_stop in regions[key]:
 			
-			start = region_start - gene["start"]
-			stop  = region_stop  - gene["start"]
+			start = int(region_start) - gene["start"]
+			stop  = int(region_stop)  - gene["start"]
 			
 			gene_sum += sum(wig[start:stop])
 			
@@ -153,7 +153,7 @@ def count_tags(basedir, species, bam_file, flip, out_file):
 		for line in csv.reader(genic_order_file, delimiter="\t"):
 			chrom, start, stop, strand, ensembl_id, frea_annot = line
 			
-			if ensembl_id+start+stop in gene_info:
+			if ensembl_id+start+stop in region_counts:
 				out_file.write("\t".join([
 										chrom, start, stop, 
 										region_counts[ensembl_id+start+stop], 
@@ -177,7 +177,7 @@ if __name__ == "__main__":
 	parser = OptionParser()
 	parser.add_option("-s", "--species", dest="species")
 	parser.add_option("-b", "--bam_file", dest="bam_path")
-	parser.add_option("-f", "--flip", dest="flip")
+	parser.add_option("-f", "--flip", dest="flip", action="store_true", help="Flip reads", default=False)
 	parser.add_option("-o", "--out_file", dest="out_file")
 	
 	# assign parameters to variables
