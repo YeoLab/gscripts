@@ -87,8 +87,9 @@ class AnalizeCLIPSeq extends QScript {
       //filters out adapter reads
       add(new Cutadapt(inFastq = fastq_file, outFastq = noAdapterFastq, 
           report = adapterReport, 
-          anywhere = adapter ++ List("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAA", "TTTTTTTTTTTTTTTTTTTTTTTTTTTTTT"), 
-          overlap = 5, length = 18, quality_cutoff = 10))
+          anywhere = adapter ++ List("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA", 
+        		  					 "TTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTT"), 
+          overlap = 5, length = 18, quality_cutoff = 6))
           
       add(new FilterRepetativeRegions(inFastq = noAdapterFastq, filterd_results, filteredFastq))
       add(new FastQC(filteredFastq))
