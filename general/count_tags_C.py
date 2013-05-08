@@ -125,7 +125,7 @@ def count_gene(bam_file, gene, flip):
 		
 		gene_sum += sum(wig[start:stop])
 		
-		region_counts[gene['gene_id'] + str(start + gene["start"]) + str(stop + gene["start"])] =  sum(wig[start:stop])
+		region_counts[gene['gene_id'] + str(start + gene["start"]) + str(stop + gene["start"])] = sum(wig[start:stop])
 	
 	return {region : count(gene_sum, region_sum) for region, region_sum in region_counts}
 
