@@ -12,6 +12,7 @@ from collections import defaultdict, namedtuple
 import itertools
 from optparse import OptionParser
 from subprocess import Popen, PIPE
+import os
 
 from clipper.src.call_peak import readsToWiggle_pysam
 import pysam
@@ -49,7 +50,7 @@ def count_to_regions(basedir, species):
 	genes = defaultdict(dict)
 	
 	for chr in chrs:
-		regions_file = basedir+"/ppliu/genic_regions/"+species+"/genic_regions_"+species+".chr"+chr
+		regions_file = os.path.join(basedir, "genic_regions_"+species+".chr"+chr)
 		with open(regions_file, 'r') as gene_file:
 			for line in csv.reader(gene_file, delimiter="\t"):
 				
@@ -147,6 +148,7 @@ def count_tags(basedir, species, bam_file, flip, out_file):
 	bam_file = pysam.Samfile(bam_file, 'rb')
 	
 	# create dictionary data structures 
+	basedir = os.path.join(basedir, "ppliu/genic_regions/"+species+"/")
 	genes = count_to_regions(basedir, species)
 	
 	region_counts = []
@@ -173,9 +175,9 @@ if __name__ == "__main__":
 	host = Popen(["hostname"], stdout=PIPE).communicate()[0].strip()
 
 	if "optiputer" in host or "compute" in host:
-		basedir = "/nas/nas0"
+		basedir = "/nas/nas0/"
 	elif "tcc" in host or "triton" in host:
-		basedir = "/projects"
+		basedir = "/projects/"
 	else:
 		raise Exception("Not in the correct location, current host: %s" % (host))
 
