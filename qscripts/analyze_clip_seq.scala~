@@ -87,8 +87,9 @@ class AnalizeCLIPSeq extends QScript {
       //filters out adapter reads
       add(new Cutadapt(inFastq = fastq_file, outFastq = noAdapterFastq, 
           report = adapterReport, 
-          anywhere = adapter ++ List("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAA", "TTTTTTTTTTTTTTTTTTTTTTTTTTTTTT"), 
-          overlap = 5, length = 18, quality_cutoff = 10))
+          anywhere = adapter ++ List("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA", 
+        		  					 "TTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTT"), 
+          overlap = 5, length = 18, quality_cutoff = 6))
           
       add(new FilterRepetativeRegions(inFastq = noAdapterFastq, filterd_results, filteredFastq))
       add(new FastQC(filteredFastq))
@@ -97,6 +98,9 @@ class AnalizeCLIPSeq extends QScript {
 
       add(new CalculateNRF(inBam = sortedBamFile, genomeSize = chr_sizes, outNRF = NRFFile))
       add(markDuplicates(sortedBamFile, rmDupedBamFile, rmDupedMetricsFile, true))
+
+      add(new GenomeCoverageBed(inBam = rmDupedBamFile, genomeSize = chr_sizes, bedGraph = bedGraphFilePos, strand = "+"))
+      add(new BedGraphToBigWig(bedGraphFilePos, chr_sizes, bigWigFilePos))
 
       add(new GenomeCoverageBed(inBam = rmDupedBamFile, genomeSize = chr_sizes, bedGraph = bedGraphFileNeg, strand = "-"))
       add(new NegBedGraph(inBedGraph = bedGraphFileNeg, outBedGraph = bedGraphFileNegInverted))

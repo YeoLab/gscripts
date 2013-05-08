@@ -1,3 +1,14 @@
+"""
+List of functions to help help with pybedtools or improve on its features, eventually should be included into pybedtool package
+
+"""
+
+
+from collections import defaultdict
+
+import numpy as np
+import pybedtools
+
 def small_peaks(feature):
     """
 
@@ -39,3 +50,75 @@ def get_three_prime_end(feature):
         feature.stop = feature.start
     return feature
 
+
+def adjust_after_shuffle(interval):
+
+    """
+
+    Adjusts name and strand to correct name and strand after shuffling (assumes use of shuffle_transcriptome method)
+    
+    """
+    #Adjusts name and strand in one to name and strand that was in two
+    interval.name = interval[11]
+    interval.strand = interval[13]
+    return interval
+
+
+def shuffle_and_adjust(bedtool, incl):
+
+    """
+    
+    bedtool: bedtool to shuffle
+    incl: bedtool to include in
+    
+    Shuffles bedtool and re-adjusts name and strand of interval to match to new location.
+    
+    """
+    
+    
+    already_exists = {}
+    shuffled_tool = bedtool.shuffle(g="/nas3/yeolab/Genome/ucsc/hg19/hg19.chrom.sizes", incl=incl.fn).intersect(incl, wo=True)
+    for interval in shuffled_tool:
+        existance_tuple = (interval.chrom, interval.start, interval.start, interval.name)
+        
+        if existance_tuple not in already_exists:
+            already_exists[existance_tuple] = interval
+            
+    return pybedtools.BedTool(already_exists.values()).each(adjust_after_shuffle).saveas()
+                                                                
+def closest_by_feature(bedtool, closest_feature):
+
+    """
+    
+    bedtool - a bedtool to find closest feature of
+    closest_feature - list of features to find closest things of
+    returns list of distances relative to the features and only on the same feature (name of the interval and name of
+    the feature match) (could return closest bed objects, this may be more useful later)
+    
+    Assumes both the bedtools object and the feature are 1bp long so we get the distance from both from their start sites
+    """
+    
+    #feature_dict = {feature.name : feature for feature in closest_feature}
+    feature_dict = defaultdict(list)
+    for feature in closest_feature:
+        feature_dict[feature.name].append(feature)
+        
+    not_included = []
+    distances = []
+    for interval in bedtool:
+        if interval.name not in feature_dict:
+            not_included.append(interval.name)
+            continue
+        
+        best_distance = (np.inf, None)
+        for feature in feature_dict[interval.name]:
+            if feature.strand == "+":
+                distance = interval.start - feature.start
+            else:
+                distance = feature.start - interval.start
+                
+            if distance < best_distance[0]:
+                best_distance = (distance, feature)
+            distances.append("\t".join([str(interval).strip(), str(best_distance[1]).strip(), str(best_distance[0])]))
+
+    return pybedtools.BedTool(distances).saveas()

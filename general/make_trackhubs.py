@@ -15,6 +15,9 @@ import os
 import subprocess
 from itertools import groupby
 
+from trackhub import Hub, GenomesFile, Genome, TrackDb, Track, AggregateTrack
+from trackhub.upload import upload_track, upload_hub
+
     
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(
@@ -56,10 +59,7 @@ if __name__ == "__main__":
     genomes_file.add_genome(genome)
     hub.add_genomes_file(genomes_file)
     hub.upload_fn = upload_dir
-
-    files = os.listdir(BASEDIR)
     
-    [os.path.basename(file) for file in files]
     files = args.files
     #logic for doing pos and neg as the same multi trackhub
     #process bw files first, do the rest with old logic
@@ -68,7 +68,7 @@ if __name__ == "__main__":
 
     key_func = lambda x: x.split(".")[:-2]
     for bw_group, files in groupby(sorted(bw_files, key=key_func), key_func):
-            long_name = ".".join(bw_group)
+            long_name = os.path.basename(bw_group[0])
             aggregate = AggregateTrack(
                          name=long_name,
                          tracktype='bigWig',
@@ -91,14 +91,16 @@ if __name__ == "__main__":
                         tracktype = "bigBed"
                     if track.endswith(".bam"):
                         tracktype = "bam"
-                        
-                    track = Track(name= track,
+
+                    print base_track
+                    track = Track(
+                          name= base_track,
                           url = os.path.join(URLBASE, GENOME, base_track),
                           tracktype = tracktype,
                           short_label=base_track,
                           long_label=base_track,
                           color = color,
-                          local_fn = os.path.join(track),
+                          local_fn = track,
                           remote_fn = os.path.join(upload_dir, GENOME, base_track)
                           )
            
@@ -106,9 +108,9 @@ if __name__ == "__main__":
             trackdb.add_tracks(aggregate)
     
     result = hub.render()
+    hub.remote_fn = os.path.join(upload_dir, "hub.txt") 
     for track in trackdb.tracks:
-        #print track.local_fn
-        #print track.remote_fn
+
         upload_track(track=track, host=args.server, user=args.user)
     
     upload_hub(hub=hub, host=args.server, user=args.user)

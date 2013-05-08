@@ -1,5 +1,3 @@
-#!/usr/bin/python
-
 import sys
 
 #argv[1] bed file to generate coverage from
