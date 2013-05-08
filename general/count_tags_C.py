@@ -14,7 +14,9 @@ from optparse import OptionParser
 from subprocess import Popen, PIPE
 import os
 
+
 from clipper.src.call_peak import readsToWiggle_pysam
+import numpy as np
 import pysam
 
 
@@ -47,7 +49,15 @@ def count_to_regions(basedir, species):
 	elif species == "ce6":
 		chrs = ("I", "II", "III", "IV", "V", "X")
 
-	genes = defaultdict(dict)
+	genes = defaultdict(lambda : {'regions' : [],
+				      'start' : np.inf,
+				      'stop'  : np.NINF,
+				      'chr'   : None,
+				      'strand': None,
+				      'frea'  : None,
+				      'raw_count' : None,
+				      'gene_id' : None}
+				      )
 	
 	for chr in chrs:
 		regions_file = os.path.join(basedir, "genic_regions_"+species+".chr"+chr)
@@ -60,21 +70,14 @@ def count_to_regions(basedir, species):
 				
 				genes[ensembl_id]['regions'].append((start, stop))
 	
-			
 				#get the minimal start, and maximal stop for each gene
-				genes[ensembl_id]['start'] = min(int(start),
-										       int(genes[ensembl_id]["start"]))
-							
-				genes[ensembl_id]['stop'] = max(int(stop),
-										     int(genes[ensembl_id]["stop"]))
-
+				genes[ensembl_id]['start'] = min(int(start), genes[ensembl_id]["start"])
+				genes[ensembl_id]['stop'] = max(int(stop), genes[ensembl_id]["stop"])
 				genes[ensembl_id]["chr"] = chromosome
-				genes[ensembl_id]["start"] = int(start)
-				genes[ensembl_id]["stop"] = int(stop)
 				genes[ensembl_id]["strand"] = strand
 				genes[ensembl_id]["frea"] = frea_annot
 				genes[ensembl_id]["raw_count"] = 0
-                genes[ensembl_id]['gene_id'] = ensembl_id
+				genes[ensembl_id]['gene_id'] = ensembl_id
 	
 	return genes
 
