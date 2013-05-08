@@ -155,10 +155,10 @@ def count_tags(basedir, species, bam_file, flip, out_file):
 			
 			if ensembl_id+start+stop in region_counts:
 				out_file.write("\t".join([
-										chrom, start, stop, 
-										region_counts[ensembl_id+start+stop], 
-										gene_counts[ensembl_id], 
-										strand, ensembl_id, frea_annot, "\n"
+										str(chrom), str(start), str(stop), 
+										str(region_counts[ensembl_id+start+stop]), 
+										str(gene_counts[ensembl_id]), 
+										str(strand), str(ensembl_id), str(frea_annot), "\n"
 										])
 							)
 

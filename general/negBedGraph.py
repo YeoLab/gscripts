@@ -1,4 +1,3 @@
-#!/usr/bin/python
 import argparse
 
 parser = argparse.ArgumentParser(description="Takes a bedgraph and makes all values negative")
