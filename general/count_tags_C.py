@@ -12,6 +12,7 @@ from collections import defaultdict, namedtuple
 import itertools
 from optparse import OptionParser
 from subprocess import Popen, PIPE
+import multiprocessing 
 import os
 
 
@@ -87,7 +88,10 @@ def count_gene(bam_file, gene, flip):
 	
 	get read counts for genic regions in the gene specified by annotation in passed value 'keys'
 
+	bam_file - pysam bam file
+	
 	"""
+	
 	count = namedtuple('count', ['gene_count', 'region_count'])
     
 	region_counts = {}
@@ -99,8 +103,7 @@ def count_gene(bam_file, gene, flip):
 					      end = gene["stop"])
 		
 	except:
-		raise Exception("could not fetch reads. check if bam is indexed." + 
-					gene['chr']+ " " + gene['start']+" "+ gene['stop'])
+		raise Exception("could not fetch reads. check if bam is indexed region %s:%s-%s." % (gene['chr'], gene['start'], gene['stop']))
 
 	# determine strand to keep based on flip option
 	keep_strand = gene["strand"]
@@ -133,7 +136,7 @@ def count_gene(bam_file, gene, flip):
 	
 	return {region : count(gene_sum, region_sum) for region, region_sum in region_counts.items()}
 
-def count_tags(basedir, species, bam_file, flip, out_file):
+def count_tags(basedir, species, bam_file, flip, out_file, num_cpu = "autodetect"):
 	
 	"""
 		Main function counts tags and ouptouts counts to outfile
@@ -145,6 +148,11 @@ def count_tags(basedir, species, bam_file, flip, out_file):
 		
 	"""
 	
+	if num_cpu == 'autodetect':
+		num_cpu = multiprocessing.cpu_count()
+		
+	pool = multiprocessing.Pool(int(num_cpu))
+	
 	# open properly ordered genic order file for reading
 	genic_order_file = open(basedir+"/ppliu/genic_counts_orders/"+species+".order", 'r')
 	
@@ -155,24 +163,26 @@ def count_tags(basedir, species, bam_file, flip, out_file):
 	basedir = os.path.join(basedir, "ppliu/genic_regions/"+species+"/")
 	genes = count_to_regions(basedir, species)
 	
-	region_counts = []
-	for gene in genes.values():
-		region_counts.append(count_gene(bam_file, gene, flip)) 
 	
-	region_counts = union(region_counts)
+	tasks =  [(bam_file, gene, flip) for gene in genes]
+	
+	jobs = [pool.apply_async(count_gene, job) for job in tasks]
+	
+	region_counts = [job.get(timeout=360) for job in jobs]
+	
+	region_counts = union(*region_counts)
+	
 	with open(out_file, 'w') as out_file:
 		for line in csv.reader(genic_order_file, delimiter="\t"):
 			chrom, start, stop, strand, ensembl_id, frea_annot = line
 			
 			if ensembl_id+start+stop in region_counts:
 				out_file.write("\t".join([
-
 										str(chrom), str(start), str(stop), 
 										str(region_counts[ensembl_id+start+stop]), 
 										str(gene_counts[ensembl_id]), 
 										str(strand), str(ensembl_id), str(frea_annot), "\n"
-										])
-							)
+										]))
 
 if __name__ == "__main__":
 	# detect between oolite and triton hosts
@@ -191,7 +201,8 @@ if __name__ == "__main__":
 	parser.add_option("-b", "--bam_file", dest="bam_path")
 	parser.add_option("-f", "--flip", dest="flip", action="store_true", help="Flip reads", default=False)
 	parser.add_option("-o", "--out_file", dest="out_file")
-	
+	parser.add_option("--processors", dest="np", default="autodetect", help="Number of processors to use. Default: All processors on machine", type="str", metavar="NP")
+
 	# assign parameters to variables
 	(options,args) = parser.parse_args()
-	count_tags(basedir, options.species, options.bam_path, options.flip, options.out_file)
+	count_tags(basedir, options.species, options.bam_path, options.flip, options.out_file, options.np)
