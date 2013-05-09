@@ -15,7 +15,7 @@ from subprocess import Popen, PIPE
 import os
 
 
-from clipper.src.call_peak import readsToWiggle_pysam
+from clipper.src.readsToWiggle import readsToWiggle_pysam
 import numpy as np
 import pysam
 
@@ -131,7 +131,7 @@ def count_gene(bam_file, gene, flip):
 		
 		region_counts[gene['gene_id'] + str(start + gene["start"]) + str(stop + gene["start"])] = sum(wig[start:stop])
 	
-	return {region : count(gene_sum, region_sum) for region, region_sum in region_counts}
+	return {region : count(gene_sum, region_sum) for region, region_sum in region_counts.items()}
 
 def count_tags(basedir, species, bam_file, flip, out_file):
 	
@@ -144,6 +144,7 @@ def count_tags(basedir, species, bam_file, flip, out_file):
 		out_file - output file 
 		
 	"""
+	
 	# open properly ordered genic order file for reading
 	genic_order_file = open(basedir+"/ppliu/genic_counts_orders/"+species+".order", 'r')
 	
