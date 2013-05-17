@@ -97,6 +97,7 @@ def count_gene(bam_file, gene, flip):
 	region_counts = {}
 
 	try:
+		bam_file = pysam.Samfile(bam_file, 'rb')
 		# fetch reads from bam file for the gene referenced by keys (Ensembl ID)
 		subset_reads = bam_file.fetch(reference = gene['chr'],
 					      start = gene["start"],
@@ -157,19 +158,17 @@ def count_tags(basedir, species, bam_file, flip, out_file, num_cpu = "autodetect
 	# open properly ordered genic order file for reading
 	genic_order_file = open(basedir+"/ppliu/genic_counts_orders/"+species+".order", 'r')
 	
-	# open bam file for reading
-	bam_file = pysam.Samfile(bam_file, 'rb')
-	
 	# create dictionary data structures 
 	basedir = os.path.join(basedir, "ppliu/genic_regions/"+species+"/")
 	genes = count_to_regions(basedir, species)
 	
 	
 	tasks =  [(bam_file, gene, flip) for gene in genes]
+
+	region_counts = [count_gene(bam_file, gene, flip) for gene in genes.values()]
 	
-	jobs = [pool.apply_async(count_gene, job) for job in tasks]
-	
-	region_counts = [job.get(timeout=360) for job in jobs]
+	#jobs = [pool.apply_async(count_gene(bam_file, gene, flip) for gene in genes, job) for job in tasks]
+	#region_counts = [job.get(timeout=360) for job in jobs]
 	
 	region_counts = union(*region_counts)
 	

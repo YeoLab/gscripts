@@ -45,7 +45,7 @@ class AnalizeCLIPSeq extends QScript {
   }
 
   case class genomeCoverageBed(input: File, outBed : File, cur_strand : String) extends GenomeCoverageBed {
-        this.inBed = input
+        this.inBam = input
         this.genomeSize = chr_sizes
         this.bedGraph = outBed
         this.strand = cur_strand

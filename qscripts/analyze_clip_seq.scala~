@@ -44,6 +44,14 @@ class AnalizeCLIPSeq extends QScript {
     this.isIntermediate = false
   }
 
+  case class genomeCoverageBed(input: File, outBed : File, cur_strand : String) extends GenomeCoverageBed {
+        this.inBed = input
+        this.genomeSize = chr_sizes
+        this.bedGraph = outBed
+        this.strand = cur_strand
+        this.split = true
+  }
+
   def script() {
 
     //    val fileList: Seq[File] = QScriptUtils.createSeqFromFile(input)
@@ -99,10 +107,10 @@ class AnalizeCLIPSeq extends QScript {
       add(new CalculateNRF(inBam = sortedBamFile, genomeSize = chr_sizes, outNRF = NRFFile))
       add(markDuplicates(sortedBamFile, rmDupedBamFile, rmDupedMetricsFile, true))
 
-      add(new GenomeCoverageBed(inBam = rmDupedBamFile, genomeSize = chr_sizes, bedGraph = bedGraphFilePos, strand = "+"))
+      add(new genomeCoverageBed(input = rmDupedBamFile, outBed = bedGraphFilePos, cur_strand = "+"))
       add(new BedGraphToBigWig(bedGraphFilePos, chr_sizes, bigWigFilePos))
 
-      add(new GenomeCoverageBed(inBam = rmDupedBamFile, genomeSize = chr_sizes, bedGraph = bedGraphFileNeg, strand = "-"))
+      add(new genomeCoverageBed(input = rmDupedBamFile, outBed = bedGraphFileNeg, cur_strand = "-"))
       add(new NegBedGraph(inBedGraph = bedGraphFileNeg, outBedGraph = bedGraphFileNegInverted))
       add(new BedGraphToBigWig(bedGraphFileNegInverted, chr_sizes, bigWigFileNeg))
 
