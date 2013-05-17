@@ -103,7 +103,8 @@ def count_gene(bam_file, gene, flip):
 					      end = gene["stop"])
 		
 	except:
-		raise Exception("could not fetch reads. check if bam is indexed region %s:%s-%s." % (gene['chr'], gene['start'], gene['stop']))
+		raise Exception("could not fetch reads. check if bam is indexed %s:%s-%s" % (gene['chr'], gene['start'], gene['stop']))
+
 
 	# determine strand to keep based on flip option
 	keep_strand = gene["strand"]
