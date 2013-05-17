@@ -134,7 +134,7 @@ def count_gene(bam_file, gene, flip):
 		
 		region_counts[gene['gene_id'] + str(start + gene["start"]) + str(stop + gene["start"])] = sum(wig[start:stop])
 	
-	return {region : count(gene_sum, region_sum) for region, region_sum in region_counts.items()}
+	return [(region, count(gene_sum, region_sum)) for region, region_sum in region_counts.items()]
 
 def count_tags(basedir, species, bam_file, flip, out_file, num_cpu = "autodetect"):
 	
@@ -164,13 +164,13 @@ def count_tags(basedir, species, bam_file, flip, out_file, num_cpu = "autodetect
 	genes = count_to_regions(basedir, species)
 	
 	
-	tasks =  [(bam_file, gene, flip) for gene in genes]
+	region_counts =  [count_gene(bam_file, gene, flip) for gene in genes]
 	
-	jobs = [pool.apply_async(count_gene, job) for job in tasks]
+	#jobs = [pool.apply_async(count_gene, job) for job in tasks]
 	
-	region_counts = [job.get(timeout=360) for job in jobs]
+	#region_counts = [job.get(timeout=360) for job in jobs]
 	
-	region_counts = union(*region_counts)
+	region_counts = dict(itertools.chain(*region_counts))
 	
 	with open(out_file, 'w') as out_file:
 		for line in csv.reader(genic_order_file, delimiter="\t"):
