@@ -90,10 +90,12 @@ def closest_by_feature(bedtool, closest_feature):
 
     """
     
+    Returns distance from nearest feature assuming distance is centered on the feature
+    
     bedtool - a bedtool to find closest feature of
-    closest_feature - list of features to find closest things of
-    returns list of distances relative to the features and only on the same feature (name of the interval and name of
-    the feature match) (could return closest bed objects, this may be more useful later)
+    closest_feature - bedtool of features to find closest things of
+    
+    Returns closest bed objects 
     
     Assumes both the bedtools object and the feature are 1bp long so we get the distance from both from their start sites
     """
@@ -112,13 +114,18 @@ def closest_by_feature(bedtool, closest_feature):
         
         best_distance = (np.inf, None)
         for feature in feature_dict[interval.name]:
+            
+
+            if feature.strand != interval.strand:
+                raise ValueError("Strands not identical\nfeature : %sinterval: %s" % (str(feature), str(interval)))
+            
             if feature.strand == "+":
                 distance = interval.start - feature.start
             else:
                 distance = feature.start - interval.start
                 
-            if distance < best_distance[0]:
+            if abs(distance) < abs(best_distance[0]):
                 best_distance = (distance, feature)
-            distances.append("\t".join([str(interval).strip(), str(best_distance[1]).strip(), str(best_distance[0])]))
+        distances.append("\t".join([str(interval).strip(), str(best_distance[1]).strip(), str(best_distance[0])]))
 
     return pybedtools.BedTool(distances).saveas()
