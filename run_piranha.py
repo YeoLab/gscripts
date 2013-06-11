@@ -16,12 +16,12 @@ parser.add_option("-o", "--out_file", dest="out_file")
 (options,args) = parser.parse_args()
                                                                
 #format reads for piranah, this is a bitch
-subprocess.call("bamToBed -i " + options.bam + " | sort -k1,1 -k3n,3 -k2,2n > piranah_tmp.bed", shell=True)
-subprocess.call("cut -f 1,2,3 piranah_tmp.bed > piranah_input.bed", shell=True) 
-subprocess.call("Piranha -b " + str(options.bin_size) + " piranah_input.bed > piranah_results.bed", shell=True) 
-subprocess.call("cat piranah_results.bed | awk '{if($7 < " + str(options.p_value) + " ) print $0}' | awk 'BEGIN {OFS="\t"} {print $1, $2, $3, $4, $7, $6}' > " + options.out_file, shell=True)
+subprocess.call("bamToBed -i %s | sort -k1,1 -k3n,3 -k2,2n > %s_tmp.bed" % (options.bam, options.bam), shell=True)
+subprocess.call("cut -f 1,2,3 %s_tmp.bed > %s_input.bed" % (options.bam, options.bam), shell=True) 
+subprocess.call("Piranha -b %s %s_input.bed > %s_results.bed" % (options.bin_size, options.bam, options.bam), shell=True) 
+subprocess.call("cat %s_results.bed | awk '{if($7 < %s ) print $0}' | awk 'BEGIN {OFS=\"\t\"} {print $1, $2, $3, $4, $7, $6}' > %s" % (options.bam, options.p_value, options.out_file), shell=True)
 
 #cleanup
-subprocess.call("rm piranah_tmp.bed")
-subprocess.call("rm piranah_input.bed")
-subprocess.call("rm piranah_results.bed")
+#subprocess.call("rm piranah_tmp.bed")
+#subprocess.call("rm piranah_input.bed")
+#subprocess.call("rm piranah_results.bed")
