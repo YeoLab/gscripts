@@ -1,9 +1,9 @@
 ####
 #
-#	Count tags to regions script. Not optimized for parallel
+#	Count tags to regions script. 
 #	environments. Produces a genic counts file. 
 #
-#	ppliu
+#	ppliu,G gabriel Pratt
 #
 #####
 
@@ -20,7 +20,7 @@ from clipper.src.readsToWiggle import readsToWiggle_pysam
 import numpy as np
 import pysam
 
-
+count = namedtuple('count', ['gene_count', 'region_count'])
 				
 def union(*dicts):
 	
@@ -92,19 +92,19 @@ def count_gene(bam_file, gene, flip):
 	
 	"""
 	
-	count = namedtuple('count', ['gene_count', 'region_count'])
+	
     
 	region_counts = {}
 
-	try:
-		bam_file = pysam.Samfile(bam_file, 'rb')
-		# fetch reads from bam file for the gene referenced by keys (Ensembl ID)
-		subset_reads = bam_file.fetch(reference = gene['chr'],
-					      start = gene["start"],
-					      end = gene["stop"])
+	#try:
+	bam_file = pysam.Samfile(bam_file, 'rb')
+	# fetch reads from bam file for the gene referenced by keys (Ensembl ID)
+	subset_reads = bam_file.fetch(reference = gene['chr'],
+				      start = int(gene["start"]),
+				      end = int(gene["stop"]))
 		
-	except:
-		raise Exception("could not fetch reads. check if bam is indexed %s:%s-%s" % (gene['chr'], gene['start'], gene['stop']))
+	#except:
+	#	raise Exception("could not fetch reads. check if bam is indexed %s:%s-%s" % (gene['chr'], gene['start'], gene['stop']))
 
 
 	# determine strand to keep based on flip option
@@ -118,13 +118,11 @@ def count_gene(bam_file, gene, flip):
 	elif str(flip) == "both":
 		keep_strand = 0;
 
-	wig, jxns, nr_counts, read_lengths, reads = readsToWiggle_pysam(
-																subset_reads, 
-																int(gene["start"]),
-																int(gene["stop"]),
-																keep_strand,
-																'center',
-																True)
+	wig, jxns, nr_counts, read_lengths, reads = readsToWiggle_pysam(subset_reads,
+									int(gene["start"]),
+									int(gene["stop"]),
+									keep_strand,
+									'center', True)
 
 	gene_sum = 0
 	for region_start, region_stop in gene['regions']:
@@ -153,36 +151,40 @@ def count_tags(basedir, species, bam_file, flip, out_file, num_cpu = "autodetect
 	if num_cpu == 'autodetect':
 		num_cpu = multiprocessing.cpu_count()
 		
-	pool = multiprocessing.Pool(int(num_cpu))
 	
+	if not os.path.exists(bam_file):
+		raise Exception("bam file %s does not exist" % (bam_file))
+				
 	# open properly ordered genic order file for reading
-	genic_order_file = open(basedir+"/ppliu/genic_counts_orders/"+species+".order", 'r')
+	genic_order_file = open(basedir+"/ppliu/genic_counts_orders/%s.order" % (species), 'r')
 	
 	# create dictionary data structures 
-	basedir = os.path.join(basedir, "ppliu/genic_regions/"+species+"/")
+	basedir = os.path.join(basedir, "ppliu/genic_regions/%s/" % (species))
 	genes = count_to_regions(basedir, species)
 	
-	
+	#region_counts =  [count_gene(bam_file, gene, flip) for gene in genes.values()]
 
-	region_counts =  [count_gene(bam_file, gene, flip) for gene in genes]
-	
-	#jobs = [pool.apply_async(count_gene, job) for job in tasks]
-	
+	pool = multiprocessing.Pool(int(num_cpu))
+	print type(bam_file)
+	print type(flip)
+
+	def func_star(varables):
+		""" covert f([1,2]) to f(1,2) """
+		return count_gene(*varables)
+		
+	region_counts = pool.map(func_star, [(bam_file, gene, flip) for gene in genes.values()], chunksize=50)	
 	#region_counts = [job.get(timeout=360) for job in jobs]
 	
 	region_counts = dict(itertools.chain(*region_counts))
 	
 	with open(out_file, 'w') as out_file:
-		for line in csv.reader(genic_order_file, delimiter="\t"):
-			chrom, start, stop, strand, ensembl_id, frea_annot = line
-			
+		for chrom, start, stop, strand, ensembl_id, frea_annot in csv.reader(genic_order_file, delimiter="\t"):
 			if ensembl_id+start+stop in region_counts:
-				out_file.write("\t".join([
-										str(chrom), str(start), str(stop), 
-										str(region_counts[ensembl_id+start+stop]), 
-										str(gene_counts[ensembl_id]), 
-										str(strand), str(ensembl_id), str(frea_annot), "\n"
-										]))
+				out_file.write("\t".join([str(chrom), str(start), str(stop), 
+							  str(region_counts[ensembl_id+start+stop].region_count), 
+							  str(region_counts[ensembl_id+start+stop].gene_count), 
+							  str(strand), str(ensembl_id), str(frea_annot), "\n"
+							  ]))
 
 if __name__ == "__main__":
 	# detect between oolite and triton hosts
@@ -199,7 +201,7 @@ if __name__ == "__main__":
 	parser = OptionParser()
 	parser.add_option("-s", "--species", dest="species")
 	parser.add_option("-b", "--bam_file", dest="bam_path")
-	parser.add_option("-f", "--flip", dest="flip", action="store_true", help="Flip reads", default=False)
+	parser.add_option("-f", "--flip", dest="flip", help="Flip reads to flip type : flip, for non-strand specific: both", default=False)
 	parser.add_option("-o", "--out_file", dest="out_file")
 	parser.add_option("--processors", dest="np", default="autodetect", help="Number of processors to use. Default: All processors on machine", type="str", metavar="NP")
 

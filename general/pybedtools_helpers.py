@@ -60,7 +60,8 @@ def adjust_after_shuffle(interval):
     """
     #Adjusts name and strand in one to name and strand that was in two
     interval.name = interval[11]
-    interval.strand = interval[13]
+    interval.strand = interval[12]
+    
     return interval
 
 
@@ -115,8 +116,10 @@ def closest_by_feature(bedtool, closest_feature):
         best_distance = (np.inf, None)
         for feature in feature_dict[interval.name]:
             
-
-            if feature.strand != interval.strand:
+            #should throw in stronger error checking here, this is due to slightly different gene annotation approaches being used.  
+            if feature.strand != interval.strand or feature.chrom != interval.chrom:
+                #continue
+                print interval.strand, feature.strand
                 raise ValueError("Strands not identical\nfeature : %sinterval: %s" % (str(feature), str(interval)))
             
             if feature.strand == "+":
@@ -126,6 +129,8 @@ def closest_by_feature(bedtool, closest_feature):
                 
             if abs(distance) < abs(best_distance[0]):
                 best_distance = (distance, feature)
-        distances.append("\t".join([str(interval).strip(), str(best_distance[1]).strip(), str(best_distance[0])]))
+        #avoids problem of skipping sections
+        if best_distance[1] is not None:
+            distances.append("\t".join([str(interval).strip(), str(best_distance[1]).strip(), str(best_distance[0])]))
 
     return pybedtools.BedTool(distances).saveas()
