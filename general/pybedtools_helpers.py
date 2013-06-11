@@ -129,3 +129,52 @@ def closest_by_feature(bedtool, closest_feature):
         distances.append("\t".join([str(interval).strip(), str(best_distance[1]).strip(), str(best_distance[0])]))
 
     return pybedtools.BedTool(distances).saveas()
+
+def convert_to_mRNA_position(interval, gene_model):
+
+    """
+    
+    Returns distance from nearest feature assuming distance is centered on the feature
+    
+    bedtool - a bedtool to find closest feature of
+    gene_model - bedtool of features to find closest things of
+    
+    Returns bed objects mapped to mRNA position instead of genomic position
+    
+    Assumes both the bedtools object and the feature are 1bp long so we get the distance from both from their start sites
+    
+    Negative strand gets modified to be positive strand like, this will fuck with closest bed
+    need to do everything on the positive strand from here on out
+    """
+    
+    #feature_dict = {feature.name : feature for feature in closest_feature}
+
+    
+    if interval.chrom not in gene_model:
+        raise KeyError(interval.chrom + " not in current as stucture dict ignoring cluster ")
+    
+    if not interval.strand == gene_model[interval.chrom]['strand']:
+        raise ValueError("strands not the same, there is some issue with gene annotations")
+        
+    running_length = 0
+            
+    for start, stop in gene_model[interval.chrom]['regions']:
+        length = float(stop - start) 
+        
+        if interval.start >= int(start) and interval.start <= int(stop):
+            if interval.strand == "+":
+                interval.start = running_length + (interval.start - start)
+                interval.end = running_length + (interval.end - start)
+
+            elif interval.strand == "-": #need the temps for swaping start and end
+                tmp_start = running_length + (stop - interval.end) 
+                tmp_end = running_length + (stop - interval.start)
+                interval.start = tmp_start
+                interval.end = tmp_end
+            else:
+                raise ValueError("Strand not correct strand is %s" % interval.strand)
+
+            return interval
+        running_length += length
+    interval.chrom = "none"
+    return interval
