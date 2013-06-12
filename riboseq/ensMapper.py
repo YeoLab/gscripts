@@ -1,4 +1,3 @@
-#!/usr/bin/python
 #This script requieres at least a BED-4 (a unique name) to run properly
 #need to figure out how to handle arbitray bed files...
 #This is actually to slow to run efficently 

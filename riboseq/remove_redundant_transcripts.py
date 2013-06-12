@@ -1,5 +1,3 @@
-#!/usr/bin/python
-
 #first file is the filtered gene list
 #second file is the file to to read and output a filtered list of
 import sys

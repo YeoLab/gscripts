@@ -22,12 +22,6 @@ setup(
       
     setup_requires = ["setuptools_git >= 0.3",],
     
-    entry_points = {
-                    'console_scripts': [
-                                        'clipper = clipper.src.peakfinder:call_main',
-                                        'clip_analysis = clipper.src.CLIP_analysis:call_main',],
-                    },
-
     #metadata for upload to PyPI
     author = "Gabriel Pratt",
     author_email = "gpratt@ucsd.edu",
@@ -38,5 +32,5 @@ setup(
     
     #Other stuff I feel like including here
     include_package_data = True,
-    zip_safe = True #True I think
+    zip_safe = False #True I think
 )

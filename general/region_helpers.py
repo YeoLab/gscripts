@@ -6,8 +6,13 @@ Created on May 1, 2013
 Helps get region information from oolite
 '''
 
-import pybedtools 
+from collections import defaultdict
 import os
+
+import pybedtools 
+
+
+from general.pybedtools_helpers import get_single_gene_name, rename_to_gene_from_dict
 
 def trim_names(interval):
 
@@ -139,3 +144,40 @@ def get_regions():
     regions['transcription_start'] = transcription_start
     regions['transcriptome'] = UTR3.cat(UTR5, postmerge=False).cat(CDS, postmerge=False)
     return regions
+
+def get_single_gene_name(interval):
+
+    """
+
+
+    """
+    interval.name = interval.name.split(";")[0]
+    return interval
+        
+def generate_region_dict(gff, region_name, transcript_gene_dict):
+        """
+
+        Generates a dict {gene : [(star, stop)]} from gff file that has region name in the third column (x[2]) of the interval
+
+        Merges overlapping regions if multiple transcripts exist
+        REVERSES ORDER OF REGIONS IF NEGATIVE STRAND
+        
+        Region name - name of region to pull out, merge and look at
+        transcript_gene_dict -dict {transcript_id : gene_id} (used because gff regions are defined on transcripts and I want genes)
+        
+        """
+        
+        
+        merged_region = gff.filter(lambda x:x[2] == region_name).each(rename_to_gene_from_dict, transcript_gene_dict).merge(s=True, n=True, nms=True).each(get_single_gene_name)
+
+        region_dict = defaultdict(list)
+        
+        for interval in merged_region:
+            region_dict[interval.name].append((interval))
+            
+        for gene in region_dict.keys():
+            region_dict[gene] = sorted(region_dict[gene], key=lambda x: x.start)
+            if region_dict[gene][0].strand == "-":
+                region_dict[gene].reverse()
+                
+        return region_dict

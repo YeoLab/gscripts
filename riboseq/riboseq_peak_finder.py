@@ -1,5 +1,3 @@
-#!/usr/bin/python
-
 #takes in a vector, outputs any location where the peaks are 25 fold higher than the median of the vector
 #Eventually want to modify this to accept a) bed formatted files b) gene body files that let me limit searches
 #arg1 = vector

@@ -3,7 +3,6 @@ List of functions to help help with pybedtools or improve on its features, event
 
 """
 
-
 from collections import defaultdict
 
 import numpy as np
@@ -86,6 +85,42 @@ def shuffle_and_adjust(bedtool, incl):
             already_exists[existance_tuple] = interval
             
     return pybedtools.BedTool(already_exists.values()).each(adjust_after_shuffle).saveas()
+
+def make_ucsc_chr(interval):
+    """
+
+    Converts interval from ENSEMBL chroms to UCSC chroms
+
+    (appends str to each chrom)
+
+    """
+
+    interval.chrom = "chr" + interval.chrom
+    return interval
+        
+def rename_to_gene_from_dict(interval, transcript_gene_dict):
+
+    """
+
+    Renames interval name field (and second column because are working on gff files) to the parent gene
+    Generally takes a dict {transcript : gene} and converts transcript names to gene names
+    
+    """
+
+    interval[2] = transcript_gene_dict[interval.attrs['Parent']]
+    interval.name = transcript_gene_dict[interval.attrs['Parent']]
+    return interval
+    
+def get_single_gene_name(interval):
+
+    """
+
+    Converts the name file from an interval to just have one name (if multiple names are combined via a ;
+
+    """
+
+    interval.name = interval.name.split(";")[0]
+    return interval
                                                                 
 def closest_by_feature(bedtool, closest_feature):
 
@@ -156,10 +191,14 @@ def convert_to_mRNA_position(interval, gene_model):
 
     
     if interval.chrom not in gene_model:
-        raise KeyError(interval.chrom + " not in current as stucture dict ignoring cluster ")
+        interval.chrom = "none"
+        return interval
+        #raise KeyError(interval.chrom + " not in current as stucture dict ignoring cluster ")
     
     if not interval.strand == gene_model[interval.chrom]['strand']:
-        raise ValueError("strands not the same, there is some issue with gene annotations")
+        interval.chrom = "none"
+        return interval
+        #raise ValueError("strands not the same, there is some issue with gene annotations")
         
     running_length = 0
             
@@ -168,16 +207,23 @@ def convert_to_mRNA_position(interval, gene_model):
         
         if interval.start >= int(start) and interval.start <= int(stop):
             if interval.strand == "+":
-                interval.start = running_length + (interval.start - start)
-                interval.end = running_length + (interval.end - start)
+                tmp_start = running_length + (interval.start - start)
+                tmp_end = running_length + (interval.end - start)
 
             elif interval.strand == "-": #need the temps for swaping start and end
                 tmp_start = running_length + (stop - interval.end) 
                 tmp_end = running_length + (stop - interval.start)
-                interval.start = tmp_start
-                interval.end = tmp_end
-            else:
-                raise ValueError("Strand not correct strand is %s" % interval.strand)
+                
+
+
+            if int(tmp_start) == 0 or int(tmp_end) == 0:
+
+                tmp_start = 1
+                tmp_end = 1
+
+
+            interval.start = tmp_start
+            interval.end = tmp_end
 
             return interval
         running_length += length
