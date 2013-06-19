@@ -166,9 +166,12 @@ def generate_region_dict(gff, region_name, transcript_gene_dict):
         transcript_gene_dict -dict {transcript_id : gene_id} (used because gff regions are defined on transcripts and I want genes)
         
         """
+
+        def swap_name_and_chrom(interval):
+            interval.name, interval.chrom = interval.chrom, interval.name
+            return interval
         
-        
-        merged_region = gff.filter(lambda x:x[2] == region_name).each(rename_to_gene_from_dict, transcript_gene_dict).merge(s=True, n=True, nms=True).each(get_single_gene_name)
+        merged_region = gff.filter(lambda x:x[2] == region_name).each(rename_to_gene_from_dict, transcript_gene_dict).each(swap_name_and_chrom).merge(s=True, n=True, nms=True).each(swap_name_and_chrom).each(get_single_gene_name)
 
         region_dict = defaultdict(list)
         

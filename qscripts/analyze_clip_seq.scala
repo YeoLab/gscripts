@@ -12,7 +12,7 @@ import org.broadinstitute.sting.queue.extensions.yeo._
 class AnalizeCLIPSeq extends QScript {
   // Script argunment
   @Input(doc = "input file")
-  var input: List[File] = Nil
+  var input: File = _
 
   @Argument(doc = "species (hg19...)")
   var species: String = _
@@ -54,10 +54,10 @@ class AnalizeCLIPSeq extends QScript {
 
   def script() {
 
-    //    val fileList: Seq[File] = QScriptUtils.createSeqFromFile(input)
+    val fileList: Seq[File] = QScriptUtils.createSeqFromFile(input)
     var trackHubFiles: List[File] = List()
 
-    for (fastq_file: File <- input) {
+    for (fastq_file: File <- fileList) {
 
       val noPolyAFastq = swapExt(fastq_file, ".fastq", ".polyATrim.fastq")
       val noPolyAReport = swapExt(noPolyAFastq, ".fastq", ".report")
