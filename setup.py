@@ -21,7 +21,7 @@ setup(
                         ],
       
     setup_requires = ["setuptools_git >= 0.3",],
-    scripts=['rnaseq/count_tags_C.py',
+    scripts=['rnaseq/count_tags.py',
              'general/calculate_NRF.py',
              'general/calculate_NRF.py',
              'general/make_trackhubs.py',
