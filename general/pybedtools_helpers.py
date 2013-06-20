@@ -194,25 +194,25 @@ def convert_to_mRNA_position(interval, gene_model):
         interval.chrom = "none"
         return interval
         #raise KeyError(interval.chrom + " not in current as stucture dict ignoring cluster ")
-    
-    if not interval.strand == gene_model[interval.chrom]['strand']:
+
+    #gene model - dict of list of intervals, always at least length 1 
+    if not interval.strand == gene_model[interval.chrom][0].strand:
         interval.chrom = "none"
         return interval
         #raise ValueError("strands not the same, there is some issue with gene annotations")
         
     running_length = 0
             
-    for start, stop in gene_model[interval.chrom]['regions']:
-        length = float(stop - start) 
+    for region in gene_model[interval.chrom]:
         
-        if interval.start >= int(start) and interval.start <= int(stop):
+        if interval.start >= int(region.start) and interval.start <= int(region.stop):
             if interval.strand == "+":
-                tmp_start = running_length + (interval.start - start)
-                tmp_end = running_length + (interval.end - start)
+                tmp_start = running_length + (interval.start - region.start)
+                tmp_end = running_length + (interval.end - region.start)
 
             elif interval.strand == "-": #need the temps for swaping start and end
-                tmp_start = running_length + (stop - interval.end) 
-                tmp_end = running_length + (stop - interval.start)
+                tmp_start = running_length + (region.stop - interval.end) 
+                tmp_end = running_length + (region.stop - interval.start)
                 
 
 
@@ -226,6 +226,6 @@ def convert_to_mRNA_position(interval, gene_model):
             interval.end = tmp_end
 
             return interval
-        running_length += length
+        running_length += region.length 
     interval.chrom = "none"
     return interval

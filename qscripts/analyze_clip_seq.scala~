@@ -12,7 +12,7 @@ import org.broadinstitute.sting.queue.extensions.yeo._
 class AnalizeCLIPSeq extends QScript {
   // Script argunment
   @Input(doc = "input file")
-  var input: List[File] = Nil
+  var input: File = _
 
   @Argument(doc = "species (hg19...)")
   var species: String = _
@@ -45,7 +45,7 @@ class AnalizeCLIPSeq extends QScript {
   }
 
   case class genomeCoverageBed(input: File, outBed : File, cur_strand : String) extends GenomeCoverageBed {
-        this.inBed = input
+        this.inBam = input
         this.genomeSize = chr_sizes
         this.bedGraph = outBed
         this.strand = cur_strand

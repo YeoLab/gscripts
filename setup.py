@@ -21,7 +21,14 @@ setup(
                         ],
       
     setup_requires = ["setuptools_git >= 0.3",],
-    
+    scripts=['rnaseq/count_tags.py',
+             'general/calculate_NRF.py',
+             'general/calculate_NRF.py',
+             'general/make_trackhubs.py',
+             'general/negBedGraph.py',
+             'clipseq/perform_idr.py',
+             'clipseq/run_piranha.py'],
+
     #metadata for upload to PyPI
     author = "Gabriel Pratt",
     author_email = "gpratt@ucsd.edu",

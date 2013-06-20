@@ -96,6 +96,7 @@ def count_gene(bam_file, gene, flip):
     
 	region_counts = {}
 
+
 	#try:
 	bam_file = pysam.Samfile(bam_file, 'rb')
 	# fetch reads from bam file for the gene referenced by keys (Ensembl ID)
@@ -133,8 +134,13 @@ def count_gene(bam_file, gene, flip):
 		gene_sum += sum(wig[start:stop])
 		
 		region_counts[gene['gene_id'] + str(start + gene["start"]) + str(stop + gene["start"])] = sum(wig[start:stop])
-	
+
+	bam_file.close()
 	return [(region, count(gene_sum, region_sum)) for region, region_sum in region_counts.items()]
+
+def func_star(varables):
+	""" covert f([1,2]) to f(1,2) """
+	return count_gene(*varables)
 
 def count_tags(basedir, species, bam_file, flip, out_file, num_cpu = "autodetect"):
 	
@@ -165,13 +171,7 @@ def count_tags(basedir, species, bam_file, flip, out_file, num_cpu = "autodetect
 	#region_counts =  [count_gene(bam_file, gene, flip) for gene in genes.values()]
 
 	pool = multiprocessing.Pool(int(num_cpu))
-	print type(bam_file)
-	print type(flip)
-
-	def func_star(varables):
-		""" covert f([1,2]) to f(1,2) """
-		return count_gene(*varables)
-		
+			
 	region_counts = pool.map(func_star, [(bam_file, gene, flip) for gene in genes.values()], chunksize=50)	
 	#region_counts = [job.get(timeout=360) for job in jobs]
 	
