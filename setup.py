@@ -25,6 +25,7 @@ setup(
              'general/calculate_NRF.py',
              'general/calculate_NRF.py',
              'general/make_trackhubs.py',
+             'general/count_aligned_from_sam.py',
              'general/negBedGraph.py',
              'clipseq/perform_idr.py',
              'clipseq/run_piranha.py'],
