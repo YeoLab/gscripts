@@ -27,7 +27,7 @@ def union(*dicts):
 	""" unions a list of dicts into one dict """
 	return dict(itertools.chain(*map(lambda dct: list(dct.items()), dicts)))
    
-def count_to_regions(basedir, species):
+def count_to_regions(annotation):
 
 	"""
 
@@ -37,18 +37,6 @@ def count_to_regions(basedir, species):
 	returns genes
 	
 	"""
-
-	if species == "hg19" or species == "hg18":
-		chrs = map(str,range(1,23)) #1-22
-		chrs.append("X")
-		chrs.append("Y")
-
-	elif species == "mm9":
-		chrs = map(str, range(1,20))
-		chrs.append("X")
-		chrs.append("Y")
-	elif species == "ce6":
-		chrs = ("I", "II", "III", "IV", "V", "X")
 
 	genes = defaultdict(lambda : {'regions' : [],
 				      'start' : np.inf,
@@ -60,25 +48,24 @@ def count_to_regions(basedir, species):
 				      'gene_id' : None}
 				      )
 	
-	for chr in chrs:
-		regions_file = os.path.join(basedir, "genic_regions_"+species+".chr"+chr)
-		with open(regions_file, 'r') as gene_file:
-			for line in csv.reader(gene_file, delimiter="\t"):
-				
-				chromosome, start, stop, strand, ensembl_id, frea_annot = line
 
-				strand = "+" if int(strand) == 0 else "-"
-				
-				genes[ensembl_id]['regions'].append((start, stop))
-	
-				#get the minimal start, and maximal stop for each gene
-				genes[ensembl_id]['start'] = min(int(start), genes[ensembl_id]["start"])
-				genes[ensembl_id]['stop'] = max(int(stop), genes[ensembl_id]["stop"])
-				genes[ensembl_id]["chr"] = chromosome
-				genes[ensembl_id]["strand"] = strand
-				genes[ensembl_id]["frea"] = frea_annot
-				genes[ensembl_id]["raw_count"] = 0
-				genes[ensembl_id]['gene_id'] = ensembl_id
+	with open(annotation, 'r') as gene_file:
+		for line in csv.reader(gene_file, delimiter="\t"):
+			
+			chromosome, start, stop, name, score, strand, exon_number = line
+			
+			strand = "+" if int(strand) == 0 else "-"
+			
+			genes[ensembl_id]['regions'].append((start, stop))
+			
+			#get the minimal start, and maximal stop for each gene
+			genes[ensembl_id]['start'] = min(int(start), genes[ensembl_id]["start"])
+			genes[ensembl_id]['stop'] = max(int(stop), genes[ensembl_id]["stop"])
+			genes[ensembl_id]["chr"] = chromosome
+			genes[ensembl_id]["strand"] = strand
+			genes[ensembl_id]["frea"] = exon_number
+			genes[ensembl_id]["raw_count"] = 0
+			genes[ensembl_id]['gene_id'] = ensembl_id
 	
 	return genes
 
@@ -142,16 +129,16 @@ def func_star(varables):
 	""" covert f([1,2]) to f(1,2) """
 	return count_gene(*varables)
 
-def count_tags(basedir, species, bam_file, flip, out_file, num_cpu = "autodetect"):
+def count_tags(bam_file, filp, out_file, annotation, num_cpu = "autodetect", ):
 	
 	"""
 		Main function counts tags and ouptouts counts to outfile
 		
-		basedir - root where files are stored (generally /nas/nas0
-		species - species to count for, hg19, hg18, mm9
+		bam_file - bam file to process
 		flip - if true flip the reads
 		out_file - output file 
-		
+		num_cpu - number of cpus to use in parallel processing, autodetect uses all avaiable cpus
+		annotation - path to annotation file, format is bed 6 + 1 where 1 is exon information (may swap this out later)
 	"""
 	
 	if num_cpu == 'autodetect':
@@ -161,12 +148,7 @@ def count_tags(basedir, species, bam_file, flip, out_file, num_cpu = "autodetect
 	if not os.path.exists(bam_file):
 		raise Exception("bam file %s does not exist" % (bam_file))
 				
-	# open properly ordered genic order file for reading
-	genic_order_file = open(basedir+"/ppliu/genic_counts_orders/%s.order" % (species), 'r')
-	
-	# create dictionary data structures 
-	basedir = os.path.join(basedir, "ppliu/genic_regions/%s/" % (species))
-	genes = count_to_regions(basedir, species)
+	genes = count_to_regions(annotation)
 	
 	#region_counts =  [count_gene(bam_file, gene, flip) for gene in genes.values()]
 
@@ -187,24 +169,19 @@ def count_tags(basedir, species, bam_file, flip, out_file, num_cpu = "autodetect
 							  ]))
 
 if __name__ == "__main__":
-	# detect between oolite and triton hosts
-	host = Popen(["hostname"], stdout=PIPE).communicate()[0].strip()
-
-	if "optiputer" in host or "compute" in host:
-		basedir = "/nas/nas0/"
-	elif "tcc" in host or "triton" in host:
-		basedir = "/projects/"
-	else:
-		raise Exception("Not in the correct location, current host: %s" % (host))
 
 	# gather command line option values
 	parser = OptionParser()
-	parser.add_option("-s", "--species", dest="species")
 	parser.add_option("-b", "--bam_file", dest="bam_path")
 	parser.add_option("-f", "--flip", dest="flip", help="Flip reads to flip type : flip, for non-strand specific: both", default=False)
 	parser.add_option("-o", "--out_file", dest="out_file")
-	parser.add_option("--processors", dest="np", default="autodetect", help="Number of processors to use. Default: All processors on machine", type="str", metavar="NP")
-
+	parser.add_option("--processors", dest="np", default="autodetect",
+			  help="Number of processors to use. Default: All processors on machine",
+			  type="str", metavar="NP")
+	parser.add_option("--annotation_file", dest="annotation", help="annotation to count tags from, generated from gtfutils")
+	
 	# assign parameters to variables
 	(options,args) = parser.parse_args()
-	count_tags(basedir, options.species, options.bam_path, options.flip, options.out_file, options.np)
+	count_tags(options.bam_path, options.flip,
+		   options.out_file, num_cpu = options.np,
+		   annotation = options.annotation)
