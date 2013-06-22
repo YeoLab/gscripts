@@ -177,7 +177,7 @@ def convert_to_mRNA_position(interval, gene_model):
     Returns distance from nearest feature assuming distance is centered on the feature
     
     bedtool - a bedtool to find closest feature of
-    gene_model - bedtool of features to find closest things of
+    gene_model - dict of lists of pybedtools 
     
     Returns bed objects mapped to mRNA position instead of genomic position
     

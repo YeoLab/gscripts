@@ -5,3 +5,4 @@ gscripts.egg-info/
 setuptools_git-1.0b1-py2.7.egg
 .project
 .pydevproject
+*.pyc
