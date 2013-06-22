@@ -16,6 +16,9 @@ class AnalizeCLIPSeq extends QScript {
 
   @Argument(doc = "species (hg19...)")
   var species: String = _
+  
+  @Argument(doc = "STAR genome location")
+  var star_genome_location: String = _
 
   @Argument(doc = "location of chr_sizes")
   var chr_sizes: String = _
@@ -28,6 +31,18 @@ class AnalizeCLIPSeq extends QScript {
 
   @Argument(doc = "location to place trackhub (must have the rest of the track hub made before starting script)")
   var location: String = _
+
+  @Argument(doc = "location of genomic regions (AS_Structure proxintron... generally in /nas3/yeolab/Genome/ensembl/AS_STRUCTURE/xxdata4)")
+  var regions_location: String = _
+
+  @Argument(doc = "AS STRUCTURE Files")
+  var AS_Structure: String = _
+
+  @Argument(doc = ".fa file for full genome")
+  var genome_location: String = _
+ 
+  @Argument(doc = "location of phastcons conservation bw file")
+  var phastcons_location: String = _
 
   case class sortSam(inSam: File, outBam: File, sortOrderP: SortOrder) extends SortSam {
     this.input :+= inSam
@@ -50,6 +65,12 @@ class AnalizeCLIPSeq extends QScript {
         this.bedGraph = outBed
         this.strand = cur_strand
         this.split = true
+  }
+
+  case class star(input: File, output: File, genome_loc: String) extends STAR {
+       this.inFastq = input
+       this.outSam = output
+       this.genome = genome_loc
   }
 
   def script() {
@@ -101,7 +122,7 @@ class AnalizeCLIPSeq extends QScript {
           
       add(new FilterRepetativeRegions(inFastq = noAdapterFastq, filterd_results, filteredFastq))
       add(new FastQC(filteredFastq))
-      add(new STAR(filteredFastq, samFile, species))
+      add(star(input = filteredFastq, output = samFile, genome_loc = star_genome_location))
       add(sortSam(samFile, sortedBamFile, SortOrder.coordinate))
 
       add(new CalculateNRF(inBam = sortedBamFile, genomeSize = chr_sizes, outNRF = NRFFile))
@@ -115,7 +136,8 @@ class AnalizeCLIPSeq extends QScript {
       add(new BedGraphToBigWig(bedGraphFileNegInverted, chr_sizes, bigWigFileNeg))
 
       add(new Clipper(inBam = rmDupedBamFile, species = species, outBed = clipper_output, premRNA = premRNA))
-      add(new ClipAnalysis(rmDupedBamFile, clipper_output, species, clipper_output_metrics))
+      add(new ClipAnalysis(rmDupedBamFile, clipper_output, species, clipper_output_metrics, regions_location = regions_location,
+      	      		   AS_Structure = AS_Structure, genome_location = genome_location, phastcons_location = phastcons_location))
 
       add(new IDR(inBam = rmDupedBamFile, species = species, genome = chr_sizes, outResult = IDRResult, premRNA = premRNA))
 
