@@ -44,11 +44,12 @@ def main(counts, outfile): # IGNORE:C0111
         gene_lengths[gene_id] += stop - start
         gene_counts[gene_id] = gene_count
         
-    outfile.write("gene    flag    RPKM\n")
+    outfile.write("gene\tflag\tRPKM\n")
     for gene_id in gene_counts.keys():
         RPK = gene_counts[gene_id] / (gene_lengths[gene_id] / 1000.0)
         RPKM = RPK / (total_reads / 1000000)
-        outfile.write("\t".join(map(str, [gene_id, 0, RPKM, "\n"])))
+        outfile.write("\t".join(map(str, [gene_id, 0, RPKM])))
+	outfile.write("\n")
         
 if __name__ == "__main__":
     parser = ArgumentParser(description="Calculates RPKM for genes")
