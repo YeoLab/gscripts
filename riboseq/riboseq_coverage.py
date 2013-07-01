@@ -1,6 +1,7 @@
 import pybedtools
 import argparse
-pybedtools.set_tempdir("/nas3/scratch/gpratt/pybedtools_tmp")
+#need to set more general tmpdir
+pybedtools.set_tempdir("/home/gpratt/scratch/tmp/pybedtools_tmp")
 
 def adjust_start(feature):
     feature.start = feature.start + 13

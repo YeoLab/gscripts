@@ -70,10 +70,10 @@ if __name__ == "__main__":
     for bw_group, files in groupby(sorted(bw_files, key=key_func), key_func):
             long_name = os.path.basename(bw_group[0])
             aggregate = AggregateTrack(
-                         name=long_name,
+                         name="_".join(bw_group),
                          tracktype='bigWig',
-                         short_label=long_name,
-                         long_label=long_name,
+                         short_label="_".join(bw_group),
+                         long_label="_".join(bw_group),
                          aggregate='transparentOverlay',
                          showSubtrackColorOnUi='on',
                          autoScale='on',
@@ -107,6 +107,20 @@ if __name__ == "__main__":
                     aggregate.add_subtrack(track)
             trackdb.add_tracks(aggregate)
     
+    bigBed_files = [track for track in remaining_files if track.endswith(".bb") or track.endswith(".bigBed")]
+    for bigBed_file in bigBed_files:
+        base_track = os.path.basename(bigBed_file)
+        track = Track(
+            name = base_track,
+            url = os.path.join(URLBASE, GENOME, base_track),
+            tracktype = "bigBed",
+            short_label = base_track,
+            long_label = base_track,
+            color = color,
+            local_fn = track,
+            remote_fn = os.path.join(upload_dir, GENOME, base_track)
+            )
+
     result = hub.render()
     hub.remote_fn = os.path.join(upload_dir, "hub.txt") 
     for track in trackdb.tracks:
