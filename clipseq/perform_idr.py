@@ -31,8 +31,8 @@ if __name__ == "__main__":
 
     print "done seperating, calling peaks"
     if args.method == "clipper":
-        p3 = subprocess.Popen("clipper -b " + args.bam + "00.sorted.bam -s " + args.species + " -o " + args.bam + "00.sorted.peaks.bed --poisson-cutoff=.90 --superlocal --bonferroni " + premRNA, shell=True)
-        p4 = subprocess.Popen("clipper -b " + args.bam + "01.sorted.bam -s " + args.species + " -o " + args.bam + "01.sorted.peaks.bed --poisson-cutoff=.90 --superlocal --bonferroni " + premRNA, shell=True)
+        p3 = subprocess.Popen("clipper -b " + args.bam + "00.sorted.bam -s " + args.species + " -o " + args.bam + "00.sorted.peaks.bed --poisson-cutoff=.90 --superlocal --bonferroni --threshold-method binomial " + premRNA, shell=True)
+        p4 = subprocess.Popen("clipper -b " + args.bam + "01.sorted.bam -s " + args.species + " -o " + args.bam + "01.sorted.peaks.bed --poisson-cutoff=.90 --superlocal --bonferroni --threshold-method binomial " + premRNA, shell=True)
         p3.wait()
         p4.wait()
         

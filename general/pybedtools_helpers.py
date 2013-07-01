@@ -59,7 +59,7 @@ def adjust_after_shuffle(interval):
     """
     #Adjusts name and strand in one to name and strand that was in two
     interval.name = interval[11]
-    interval.strand = interval[12]
+    interval.strand = interval[13]
     
     return interval
 
