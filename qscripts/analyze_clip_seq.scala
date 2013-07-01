@@ -15,6 +15,7 @@ class AnalizeCLIPSeq extends QScript {
   @Input(doc = "input file")
   var input: File = _
 
+
 //  @Argument(doc = "species (hg19...)")
 //  var species: String = _
   
@@ -43,7 +44,6 @@ class AnalizeCLIPSeq extends QScript {
     this.sortOrder = sortOrderP
 
   }
-
 
   class RemoveDuplicates(@Input inBam: File, @Output outResult: File, @Argument metrics_file: String) extends CommandLineFunction {
   override def shortDescription = "RemoveDuplicates"
@@ -288,10 +288,6 @@ class AnalizeCLIPSeq extends QScript {
 
       val indexedBamFile = swapExt(rmDupedBamFile, "", ".bai")
 
-      val bedGraphFilePos = swapExt(rmDupedBamFile, ".bam", ".pos.bg")
-      val bigWigFilePos = swapExt(bedGraphFilePos, ".bg", ".bw")
-
-      val bedGraphFileNeg = swapExt(rmDupedBamFile, ".bam", ".neg.bg")
       val bigWigFileNeg = swapExt(bedGraphFileNeg, ".bg", ".norm.bw")
       val bedGraphFileNegInverted = swapExt(bedGraphFileNeg, "neg.bg", "neg.t.bg")
       val bigWigFileNegInverted = swapExt(bedGraphFileNegInverted, ".t.bg", ".bw")
@@ -312,7 +308,7 @@ class AnalizeCLIPSeq extends QScript {
       //add bw files to list for printing out later
       trackHubFiles = trackHubFiles ++ List(bedGraphFileNegInverted, bigWigFilePos)
       trackHubFiles = trackHubFiles ++ List(bigBed_output)
-      
+
       add(new FastQC(inFastq = fastq_file))
 
       //filters out adapter reads
