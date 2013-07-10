@@ -31,8 +31,8 @@ if __name__ == "__main__":
 
     print "done seperating, calling peaks"
     if args.method == "clipper":
-        p3 = subprocess.Popen("clipper -b " + args.bam + "00.sorted.bam -s " + args.species + " -o " + args.bam + "00.sorted.peaks.bed --poisson-cutoff=.90 --superlocal --bonferroni " + premRNA, shell=True)
-        p4 = subprocess.Popen("clipper -b " + args.bam + "01.sorted.bam -s " + args.species + " -o " + args.bam + "01.sorted.peaks.bed --poisson-cutoff=.90 --superlocal --bonferroni " + premRNA, shell=True)
+        p3 = subprocess.Popen("clipper -b " + args.bam + "00.sorted.bam -s " + args.species + " -o " + args.bam + "00.sorted.peaks.bed --poisson-cutoff=.90 --superlocal --bonferroni --threshold-method binomial " + premRNA, shell=True)
+        p4 = subprocess.Popen("clipper -b " + args.bam + "01.sorted.bam -s " + args.species + " -o " + args.bam + "01.sorted.peaks.bed --poisson-cutoff=.90 --superlocal --bonferroni --threshold-method binomial " + premRNA, shell=True)
         p3.wait()
         p4.wait()
         
@@ -55,6 +55,6 @@ if __name__ == "__main__":
     subprocess.Popen("cat " + args.bam + "00.sorted.peaks.bed |  awk '{$8=$5; $5=0; $7=-1;$9=-1;$10=-1; print $0}' > " + args.bam + "00.sorted.peaks.bed.narrow", shell=True).wait()
     subprocess.Popen("cat " + args.bam + "01.sorted.peaks.bed |  awk '{$8=$5; $5=0; $7=-1;$9=-1;$10=-1; print $0}' > " + args.bam + "01.sorted.peaks.bed.narrow", shell=True).wait()
 
-    subprocess.Popen("Rscript /nas3/yeolab/Software/idrCode/batch-consistency-analysis.r " + args.bam + "00.sorted.peaks.bed.narrow " + args.bam + "01.sorted.peaks.bed.narrow -1 " + args.out + " 0 F p.value " + args.genome, shell=True).wait()
+    subprocess.Popen("Rscript /home/yeo-lab/software/idrCode/batch-consistency-analysis.r " + args.bam + "00.sorted.peaks.bed.narrow " + args.bam + "01.sorted.peaks.bed.narrow -1 " + args.out + " 0 F p.value " + args.genome, shell=True).wait()
 #    subprocess.Popen("rm -rf " + args.bam + "00*", shell=True)
 #    subprocess.Popen("rm -rf " + args.bam + "01*", shell=True)

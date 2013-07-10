@@ -21,8 +21,13 @@ class analyze_ribo_seq extends QScript {
 
 	@Argument(doc = "adapter to trim")
 	var adapter: List[String] = Nil
+
+	@Argument(doc = "STAR genome location")
+	var star_genome_location: String = _
 	
   case class sortSam(inSam: File, outBam: File, sortOrderP: SortOrder) extends SortSam {
+    override def shortDescription = "sortSam"
+
     this.input :+= inSam
     this.output = outBam
     this.sortOrder = sortOrderP
@@ -35,6 +40,12 @@ class analyze_ribo_seq extends QScript {
 	this.bedGraph = outBed
 	this.strand = cur_strand
 	this.split = false
+  }
+
+  case class star(input: File, output: File) extends STAR {
+       this.inFastq = input
+       this.outSam = output
+       this.genome = star_genome_location
   }
 
   def script() {
@@ -75,7 +86,7 @@ class analyze_ribo_seq extends QScript {
 	 add(new FilterRepetativeRegions(inFastq = noAdapterFastq, filterd_results, filteredFastq))
 
 	 add(new FastQC(filteredFastq))
-	 add(new STAR(filteredFastq, samFile, species))
+	 add(new star(filteredFastq, samFile))
 
 	 add(sortSam(samFile, sortedBamFile, SortOrder.coordinate))
 

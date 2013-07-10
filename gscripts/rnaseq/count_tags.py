@@ -10,9 +10,10 @@
 import csv
 from collections import defaultdict, namedtuple
 import itertools
+import multiprocessing 
 from optparse import OptionParser
 from subprocess import Popen, PIPE
-import multiprocessing 
+import sys
 import os
 
 
@@ -155,7 +156,6 @@ def count_tags(bam_file, flip, out_file, annotation, num_cpu = "autodetect", ):
 	
 	with open(out_file, 'w') as out_file:
 		for region in region_counts.values():
-			print region
 			out_file.write("\t".join(map(str, [region['chrom'], region['start'], region['stop'], 
 							  str(region['counts'].region_count), 
 							  str(region['counts'].gene_count), 
@@ -179,3 +179,5 @@ if __name__ == "__main__":
 	count_tags(bam_file = options.bam_path, flip = options.flip,
 		   out_file = options.out_file, num_cpu = options.np,
 		   annotation = options.annotation)
+
+	sys.exit(0)
