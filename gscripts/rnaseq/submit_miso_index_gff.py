@@ -22,14 +22,20 @@ submit_miso_index_gff.py --gff \
 class CommandLine(object):
     def __init__(self, inOpts=None):
         self.parser = argparse.ArgumentParser(
-            description=''' Given a number of digits "n" and number of
-            iterations "N", calculate .....
+            description='''Given a GTF or GFF file, submit it to the Oolite
+            cluster for indexing via MISO's index_gff.py
             ''',
-            add_help=True, prefix_chars='-',
-            usage='%(prog)s --N NUM_ITERATIONS')
-        self.parser.add_argument('--gff', '-g', action='store',
-                                 type=str, required=True,
-                                 help='GFF/GTF file to index')
+            add_help=True, prefix_chars='-')
+        gtf_or_gff = self.parser.add_mutually_exclusive_group(required=True)
+        gtf_or_gff.add_argument('--gff', '-g', action='store',
+                                 type=str,
+                                 help='GFF file to index')
+        gtf_or_gff.add_argument('--gtf', '-g', action='store',
+                                 type=str,
+                                 help='GTF file to index. If this is '
+                                      'provided, then will use "gtf2gff3.pl" '
+                                      '(must be in your path) to convert to '
+                                      'the proper format')
         self.parser.add_argument('--index-dir', '-d', action='store',
                                  type=str,
                                  help='Where to put the index files, '
@@ -85,8 +91,7 @@ def main():
     cl = CommandLine()
     try:
         gff = cl.args['gff']
-        index_dir = cl.args['index_dir']
-        miso_index_gff_py = cl.args['miso_index_gff_py']
+        gtf = cl.args['gtf']
 
         submitter_sh = gff + '.submit_miso_index.sh'
         submitter_err = submitter_sh + '.err'
@@ -97,6 +102,16 @@ def main():
         qs.add_Q_resource('-l', 'h_vmem=30G')
         qs.add_Q_resource('-e', submitter_err)
         qs.add_Q_resource('-o', submitter_out)
+
+
+        if gtf is not None:
+            command = 'gtf2gff3.pl %s'
+        else:
+
+        index_dir = cl.args['index_dir']
+        miso_index_gff_py = cl.args['miso_index_gff_py']
+
+
 
         command = 'python %s --index %s %s' % (miso_index_gff_py, gff,
                                                index_dir)
