@@ -115,8 +115,7 @@ def main():
 
             sub = Submitter(queue_type='PBS', sh_file='map_'+file+'.sh',
                             command_list=cmd_list, job_name='map_'+file)
-            sub.add_resource('-q', 'glean')
-            sub.write_sh(submit=True, nodes=1, ppn=16)
+            sub.write_sh(submit=True, nodes=1, ppn=16, queue='glean')
 
 
         for file in glob('*Rd1*gz'):
@@ -136,8 +135,7 @@ def main():
 
             sub = Submitter(queue_type='PBS', sh_file='map_'+file+'.sh',
                             command_list=cmd_list, job_name='map_'+file)
-            sub.add_resource('-q', 'glean')
-            sub.write_sh(submit=True, nodes=1, ppn=16)
+            sub.write_sh(submit=True, nodes=1, ppn=16, queue='glean')
 
         pass
     # If not all the correct arguments are given, break the program and
