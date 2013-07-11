@@ -2,11 +2,8 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="61ce5d8f-55d9-43ed-83e9-8591a2dd609a" name="Default" comment="">
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/gscripts/mapping/sam_to_bam_and_sort.py" />
       <change type="DELETED" beforePath="$PROJECT_DIR$/gscripts/submit_miso_index_gtf.py" afterPath="" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/gscripts/mapping/map_paired_with_STAR.py" afterPath="$PROJECT_DIR$/gscripts/mapping/map_paired_with_STAR.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/gscripts/rnaseq/submit_miso_index_gff.py" afterPath="$PROJECT_DIR$/gscripts/rnaseq/submit_miso_index_gff.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/workspace.xml" afterPath="$PROJECT_DIR$/.idea/workspace.xml" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/setup.py" afterPath="$PROJECT_DIR$/setup.py" />
     </list>
     <ignored path="gscripts.iws" />
     <ignored path=".idea/workspace.xml" />
@@ -16,7 +13,7 @@
     <file path="/__init__.py" changelist="61ce5d8f-55d9-43ed-83e9-8591a2dd609a" time="1373501045445" ignored="false" />
     <file path="/python_command_line_template.py" changelist="61ce5d8f-55d9-43ed-83e9-8591a2dd609a" time="1373556381015" ignored="false" />
     <file path="/submit_miso_index_gtf.py" changelist="61ce5d8f-55d9-43ed-83e9-8591a2dd609a" time="1373556371405" ignored="false" />
-    <file path="/setup.py" changelist="61ce5d8f-55d9-43ed-83e9-8591a2dd609a" time="1373557752389" ignored="false" />
+    <file path="/setup.py" changelist="61ce5d8f-55d9-43ed-83e9-8591a2dd609a" time="1373580782663" ignored="false" />
     <file path="/submit_miso_index_gff.py" changelist="61ce5d8f-55d9-43ed-83e9-8591a2dd609a" time="1373560047999" ignored="false" />
     <file path="/map_paired_with_STAR.py" changelist="61ce5d8f-55d9-43ed-83e9-8591a2dd609a" time="1373578983044" ignored="false" />
     <file path="/sam_to_bam_and_sort_and_index.py" changelist="61ce5d8f-55d9-43ed-83e9-8591a2dd609a" time="1373580428381" ignored="false" />
@@ -50,10 +47,10 @@
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="sam_to_bam_and_sort.py" pinned="false" current="true" current-in-tab="true">
+      <file leaf-file-name="sam_to_bam_and_sort.py" pinned="false" current="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/gscripts/mapping/sam_to_bam_and_sort.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state line="106" column="0" selection-start="3359" selection-end="3359" vertical-scroll-proportion="0.54545456">
+            <state line="106" column="0" selection-start="3359" selection-end="3359" vertical-scroll-proportion="0.0">
               <folding />
             </state>
           </provider>
@@ -68,10 +65,10 @@
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="setup.py" pinned="false" current="false" current-in-tab="false">
+      <file leaf-file-name="setup.py" pinned="false" current="true" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/setup.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state line="2" column="0" selection-start="45" selection-end="45" vertical-scroll-proportion="0.0">
+            <state line="16" column="40" selection-start="578" selection-end="578" vertical-scroll-proportion="0.3305785">
               <folding />
             </state>
           </provider>
@@ -108,13 +105,13 @@
         <option value="$USER_HOME$/Dropbox/workspace/cse202/Homework/hw2/q5_integer_multiplication.py" />
         <option value="$PROJECT_DIR$/gscripts/submit_miso_index_gtf.py" />
         <option value="$PROJECT_DIR$/gscripts/rnaseq/submit_miso_index_gtf.py" />
-        <option value="$PROJECT_DIR$/setup.py" />
         <option value="$PROJECT_DIR$/gscripts/general/gtf2gff3.pl" />
         <option value="$PROJECT_DIR$/gscripts/rnaseq/submit_miso_index_gff.py" />
         <option value="$PROJECT_DIR$/gscripts/mapping/map_paired_with_STAR.py" />
         <option value="$USER_HOME$/Dropbox/workspace/templates/python_command_line_template.py" />
         <option value="$PROJECT_DIR$/gscripts/mapping/sam_to_bam_and_sort_and_index.py" />
         <option value="$PROJECT_DIR$/gscripts/mapping/sam_to_bam_and_sort.py" />
+        <option value="$PROJECT_DIR$/setup.py" />
       </list>
     </option>
   </component>
@@ -469,13 +466,6 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/setup.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state line="2" column="0" selection-start="45" selection-end="45" vertical-scroll-proportion="0.0">
-          <folding />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/gscripts/rnaseq/submit_miso_index_gff.py">
       <provider selected="true" editor-type-id="text-editor">
         <state line="107" column="0" selection-start="3757" selection-end="3757" vertical-scroll-proportion="0.3499289">
@@ -510,7 +500,14 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/gscripts/mapping/sam_to_bam_and_sort.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state line="106" column="0" selection-start="3359" selection-end="3359" vertical-scroll-proportion="0.54545456">
+        <state line="106" column="0" selection-start="3359" selection-end="3359" vertical-scroll-proportion="0.0">
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/setup.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state line="16" column="40" selection-start="578" selection-end="578" vertical-scroll-proportion="0.3305785">
           <folding />
         </state>
       </provider>

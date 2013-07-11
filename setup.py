@@ -12,7 +12,9 @@ scripts = ['rnaseq/count_tags.py',
          'general/negBedGraph.py',
          'clipseq/perform_idr.py',
          'clipseq/run_piranha.py',
-         'riboseq/riboseq_coverage.py']
+         'riboseq/riboseq_coverage.py',
+         'mapping/map_paired_with_STAR.py',
+         'mapping/sam_to_bam_and_sort.py']
 scripts = map((lambda x: "gscripts/" + x), scripts)
 
 
