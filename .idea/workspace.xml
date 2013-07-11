@@ -3,9 +3,7 @@
   <component name="ChangeListManager">
     <list default="true" id="61ce5d8f-55d9-43ed-83e9-8591a2dd609a" name="Default" comment="">
       <change type="DELETED" beforePath="$PROJECT_DIR$/gscripts/submit_miso_index_gtf.py" afterPath="" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/gscripts/general/gtf2gff3.pl" afterPath="$PROJECT_DIR$/gscripts/general/gtf2gff3.pl" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/gscripts/rnaseq/submit_miso_index_gff.py" afterPath="$PROJECT_DIR$/gscripts/rnaseq/submit_miso_index_gff.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/workspace.xml" afterPath="$PROJECT_DIR$/.idea/workspace.xml" />
     </list>
     <ignored path="gscripts.iws" />
     <ignored path=".idea/workspace.xml" />
@@ -16,7 +14,7 @@
     <file path="/python_command_line_template.py" changelist="61ce5d8f-55d9-43ed-83e9-8591a2dd609a" time="1373556381015" ignored="false" />
     <file path="/submit_miso_index_gtf.py" changelist="61ce5d8f-55d9-43ed-83e9-8591a2dd609a" time="1373556371405" ignored="false" />
     <file path="/setup.py" changelist="61ce5d8f-55d9-43ed-83e9-8591a2dd609a" time="1373557752389" ignored="false" />
-    <file path="/submit_miso_index_gff.py" changelist="61ce5d8f-55d9-43ed-83e9-8591a2dd609a" time="1373558492610" ignored="false" />
+    <file path="/submit_miso_index_gff.py" changelist="61ce5d8f-55d9-43ed-83e9-8591a2dd609a" time="1373559778835" ignored="false" />
     <option name="TRACKING_ENABLED" value="true" />
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -47,19 +45,19 @@
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="submit_miso_index_gff.py" pinned="false" current="false" current-in-tab="false">
+      <file leaf-file-name="submit_miso_index_gff.py" pinned="false" current="true" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/gscripts/rnaseq/submit_miso_index_gff.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state line="102" column="46" selection-start="3659" selection-end="3659" vertical-scroll-proportion="0.0">
+            <state line="114" column="56" selection-start="4033" selection-end="4033" vertical-scroll-proportion="0.89669424">
               <folding />
             </state>
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="gtf2gff3.pl" pinned="false" current="true" current-in-tab="true">
+      <file leaf-file-name="gtf2gff3.pl" pinned="false" current="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/gscripts/general/gtf2gff3.pl">
           <provider selected="true" editor-type-id="text-editor">
-            <state line="79" column="7" selection-start="2743" selection-end="2743" vertical-scroll-proportion="0.87603307">
+            <state line="64" column="66" selection-start="2426" selection-end="2426" vertical-scroll-proportion="0.0">
               <folding />
             </state>
           </provider>
@@ -107,8 +105,8 @@
         <option value="$PROJECT_DIR$/gscripts/rnaseq/submit_miso_index_gtf.py" />
         <option value="$USER_HOME$/Dropbox/workspace/templates/python_command_line_template.py" />
         <option value="$PROJECT_DIR$/setup.py" />
-        <option value="$PROJECT_DIR$/gscripts/rnaseq/submit_miso_index_gff.py" />
         <option value="$PROJECT_DIR$/gscripts/general/gtf2gff3.pl" />
+        <option value="$PROJECT_DIR$/gscripts/rnaseq/submit_miso_index_gff.py" />
       </list>
     </option>
   </component>
@@ -421,16 +419,16 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/gscripts/rnaseq/submit_miso_index_gff.py">
+    <entry file="file://$PROJECT_DIR$/gscripts/general/gtf2gff3.pl">
       <provider selected="true" editor-type-id="text-editor">
-        <state line="102" column="46" selection-start="3659" selection-end="3659" vertical-scroll-proportion="0.0">
+        <state line="64" column="66" selection-start="2426" selection-end="2426" vertical-scroll-proportion="0.0">
           <folding />
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/gscripts/general/gtf2gff3.pl">
+    <entry file="file://$PROJECT_DIR$/gscripts/rnaseq/submit_miso_index_gff.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state line="79" column="7" selection-start="2743" selection-end="2743" vertical-scroll-proportion="0.87603307">
+        <state line="114" column="56" selection-start="4033" selection-end="4033" vertical-scroll-proportion="0.89669424">
           <folding />
         </state>
       </provider>

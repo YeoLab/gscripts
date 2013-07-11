@@ -93,7 +93,9 @@ def main():
         gff = cl.args['gff']
         gtf = cl.args['gtf']
 
-        submitter_sh = gff + '.submit_miso_index.sh'
+        gtf_or_gff = gtf if gtf is not None else gff
+
+        submitter_sh = gtf_or_gff + '.submit_miso_index.sh'
         submitter_err = submitter_sh + '.err'
         submitter_out = submitter_sh + '.out'
 
@@ -105,13 +107,12 @@ def main():
 
 
         if gtf is not None:
-            command = 'gtf2gff3.pl %s'
-        else:
+            gff = gtf.replace('gtf', 'gff')
+            gtf2gff = 'gtf2gff3.pl %s > %s' % (gtf, gff)
+            qs.add_command(gtf2gff)
 
         index_dir = cl.args['index_dir']
         miso_index_gff_py = cl.args['miso_index_gff_py']
-
-
 
         command = 'python %s --index %s %s' % (miso_index_gff_py, gff,
                                                index_dir)
