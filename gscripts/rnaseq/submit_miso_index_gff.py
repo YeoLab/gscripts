@@ -12,21 +12,30 @@ Date created: 7/11/13 7:52 AM
 The purpose of this program is to ...
 
 Example run:
-python submit_miso_index_gtf.py --gff /nas3/yeolab/Genome/ensembl/gtf/gencode.v17.annotation.first.two.exons.gtf --index-dir /nas3/yeolab/Genome/ensembl/gtf/gencode_v17_indexed_first_two_exon_events/
+submit_miso_index_gff.py --gff \
+/nas3/yeolab/Genome/ensembl/gtf/gencode.v17.annotation.first.two.exons.gtf \
+--index-dir \
+/nas3/yeolab/Genome/ensembl/gtf/gencode_v17_indexed_first_two_exon_events/
 '''
 
 # Class: CommandLine
 class CommandLine(object):
     def __init__(self, inOpts=None):
         self.parser = argparse.ArgumentParser(
-            description=''' Given a number of digits "n" and number of
-            iterations "N", calculate .....
+            description='''Given a GTF or GFF file, submit it to the Oolite
+            cluster for indexing via MISO's index_gff.py
             ''',
-            add_help=True, prefix_chars='-',
-            usage='%(prog)s --N NUM_ITERATIONS')
-        self.parser.add_argument('--gff', '-g', action='store',
-                                 type=str, required=True,
-                                 help='GFF/GTF file to index')
+            add_help=True, prefix_chars='-')
+        gtf_or_gff = self.parser.add_mutually_exclusive_group(required=True)
+        gtf_or_gff.add_argument('--gff', action='store',
+                                 type=str,
+                                 help='GFF file to index')
+        gtf_or_gff.add_argument('--gtf', action='store',
+                                 type=str,
+                                 help='GTF file to index. If this is '
+                                      'provided, then will use "gtf2gff3.pl" '
+                                      '(must be in your path) to convert to '
+                                      'the proper format')
         self.parser.add_argument('--index-dir', '-d', action='store',
                                  type=str,
                                  help='Where to put the index files, '
@@ -36,7 +45,7 @@ class CommandLine(object):
         self.parser.add_argument('--miso-index-gff-py', action='store',
                                  default='/nas3/yeolab/Software/miso/misopy-0'
                                          '.4.9/misopy/index_gff.py',
-                                 type=str,
+                                 type=str, required=False,
                                  help="Which MISO `index_gff.py` script to "
                                       "use.")
         if inOpts is None:
@@ -81,11 +90,12 @@ def main():
     '''
     cl = CommandLine()
     try:
-        gff = cl['gff']
-        index_dir = cl['index_dir']
-        miso_index_gff_py = cl['miso_index_gff_py']
+        gff = cl.args['gff']
+        gtf = cl.args['gtf']
 
-        submitter_sh = gff + '.submit_miso_index.sh'
+        gtf_or_gff = gtf if gtf is not None else gff
+
+        submitter_sh = gtf_or_gff + '.submit_miso_index.sh'
         submitter_err = submitter_sh + '.err'
         submitter_out = submitter_sh + '.out'
 
@@ -95,7 +105,16 @@ def main():
         qs.add_Q_resource('-e', submitter_err)
         qs.add_Q_resource('-o', submitter_out)
 
-        command = 'python $s --index %s %s' % (miso_index_gff_py, gff,
+
+        if gtf is not None:
+            gff = gtf.replace('gtf', 'gff')
+            gtf2gff = 'gtf2gff3.pl %s > %s' % (gtf, gff)
+            qs.add_command(gtf2gff)
+
+        index_dir = cl.args['index_dir']
+        miso_index_gff_py = cl.args['miso_index_gff_py']
+
+        command = 'python %s --index %s %s' % (miso_index_gff_py, gff,
                                                index_dir)
         qs.add_command(command)
         qs.submit(shFile=submitter_sh, jobName='first2exons',
