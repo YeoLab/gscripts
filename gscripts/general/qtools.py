@@ -50,9 +50,13 @@ class Submitter:
     job scheduler. 
 
     keyword arguement attributes that can be passed:
-    array: distribute jobs to array of jobs if True
+    array: Oolite only. distribute jobs to array of jobs if True. 
     chunks: if array is True, Int number of commands per job
     submit: submit to scheduler if True, only write SH file if False or None
+    queue: TSCC only. name of queue to submit jobs to. defaults to 'home'
+    walltime: TSCC only. specify a walltime for this job as HH:MM:SS string. defaults to 72h
+    nodes: TSCC only. specify number of nodes to use. defaults to 1
+    ppn: TSCC only. specify number of processors per node. defaults to 1
 
     method returns job ID assigned by scheduler for this job if submit is True,
     returns 0 if only writing SH file.
