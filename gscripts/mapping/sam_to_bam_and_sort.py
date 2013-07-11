@@ -109,6 +109,7 @@ def main():
                                    sh_file=submitter_sh,
                                    command_list=qsub_commands,
                                    job_name=submitter_prefix)
+            sub.add_resource('-q', 'glean')
             sub.write_sh(submit=True, nodes=1, ppn=16)
 
     # If not all the correct arguments are given, break the program and

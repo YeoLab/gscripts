@@ -115,6 +115,7 @@ def main():
 
             sub = Submitter(queue_type='PBS', sh_file='map_'+file+'.sh',
                             command_list=cmd_list, job_name='map_'+file)
+            sub.add_resource('-q', 'glean')
             sub.write_sh(submit=True, nodes=1, ppn=16)
 
 
@@ -135,6 +136,7 @@ def main():
 
             sub = Submitter(queue_type='PBS', sh_file='map_'+file+'.sh',
                             command_list=cmd_list, job_name='map_'+file)
+            sub.add_resource('-q', 'glean')
             sub.write_sh(submit=True, nodes=1, ppn=16)
 
         pass
