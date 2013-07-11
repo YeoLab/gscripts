@@ -117,7 +117,7 @@ def main():
         command = 'python %s --index %s %s' % (miso_index_gff_py, gff,
                                                index_dir)
         qs.add_command(command)
-        qs.submit(shFile=submitter_sh, jobName='first2exons',
+        qs.submit(shFile=submitter_sh, jobName='index_%s' % gff,
                   joinArrayOut=False)
 
     # If not all the correct arguments are given, break the program and
