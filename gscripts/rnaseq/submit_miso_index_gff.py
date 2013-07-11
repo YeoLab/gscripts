@@ -39,7 +39,7 @@ class CommandLine(object):
         self.parser.add_argument('--miso-index-gff-py', action='store',
                                  default='/nas3/yeolab/Software/miso/misopy-0'
                                          '.4.9/misopy/index_gff.py',
-                                 type=str,
+                                 type=str, required=False,
                                  help="Which MISO `index_gff.py` script to "
                                       "use.")
         if inOpts is None:
@@ -98,7 +98,7 @@ def main():
         qs.add_Q_resource('-e', submitter_err)
         qs.add_Q_resource('-o', submitter_out)
 
-        command = 'python $s --index %s %s' % (miso_index_gff_py, gff,
+        command = 'python %s --index %s %s' % (miso_index_gff_py, gff,
                                                index_dir)
         qs.add_command(command)
         qs.submit(shFile=submitter_sh, jobName='first2exons',
