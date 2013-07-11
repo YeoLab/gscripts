@@ -3,8 +3,7 @@
   <component name="ChangeListManager">
     <list default="true" id="61ce5d8f-55d9-43ed-83e9-8591a2dd609a" name="Default" comment="">
       <change type="DELETED" beforePath="$PROJECT_DIR$/gscripts/submit_miso_index_gtf.py" afterPath="" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/gscripts/map_star.py" afterPath="$PROJECT_DIR$/gscripts/map_star.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/gscripts/rnaseq/submit_miso_index_gtf.py" afterPath="$PROJECT_DIR$/gscripts/rnaseq/submit_miso_index_gtf.py" />
+      <change type="MOVED" beforePath="$PROJECT_DIR$/gscripts/rnaseq/submit_miso_index_gtf.py" afterPath="$PROJECT_DIR$/gscripts/rnaseq/submit_miso_index_gff.py" />
     </list>
     <ignored path="gscripts.iws" />
     <ignored path=".idea/workspace.xml" />
@@ -45,10 +44,10 @@
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="submit_miso_index_gtf.py" pinned="false" current="true" current-in-tab="true">
-        <entry file="file://$PROJECT_DIR$/gscripts/rnaseq/submit_miso_index_gtf.py">
+      <file leaf-file-name="submit_miso_index_gff.py" pinned="false" current="true" current-in-tab="true">
+        <entry file="file://$PROJECT_DIR$/gscripts/rnaseq/submit_miso_index_gff.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state line="88" column="35" selection-start="2958" selection-end="2958" vertical-scroll-proportion="0.26367462">
+            <state line="0" column="0" selection-start="0" selection-end="0" vertical-scroll-proportion="0.0">
               <folding />
             </state>
           </provider>
@@ -367,15 +366,6 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/gscripts/map_star.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state line="5" column="0" selection-start="73" selection-end="73" vertical-scroll-proportion="0.0">
-          <folding>
-            <element signature="e#21#42#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$USER_HOME$/Dropbox/workspace/templates/python_command_line_template.py">
       <provider selected="true" editor-type-id="text-editor">
         <state line="4" column="0" selection-start="70" selection-end="70" vertical-scroll-proportion="0.0">
@@ -390,9 +380,18 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/gscripts/rnaseq/submit_miso_index_gtf.py">
+    <entry file="file://$PROJECT_DIR$/gscripts/map_star.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state line="88" column="35" selection-start="2958" selection-end="2958" vertical-scroll-proportion="0.26367462">
+        <state line="5" column="0" selection-start="73" selection-end="73" vertical-scroll-proportion="0.0">
+          <folding>
+            <element signature="e#21#42#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/gscripts/rnaseq/submit_miso_index_gff.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state line="0" column="0" selection-start="0" selection-end="0" vertical-scroll-proportion="0.0">
           <folding />
         </state>
       </provider>
