@@ -7,10 +7,7 @@ import argparse
 import qtools
 
 # Get filenames matching a pattern
-import glob
-
-# Get current working directory
-import os
+from glob import glob
 
 '''
 Author: olga
