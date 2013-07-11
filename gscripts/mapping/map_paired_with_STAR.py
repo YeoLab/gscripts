@@ -18,7 +18,8 @@ Date created: 07/11/2013 14:12
 The purpose of this program is to ...
 
 Example run:
-python map_paired_with_STAR.py -N 10
+cd dir_with_sequencing_files
+python map_paired_with_STAR.py
 '''
 
 #######################################################################
@@ -40,9 +41,10 @@ class CommandLine(object):
                                  help='The prefix before the read number in '
                                       'the .fastq filename, e.g. Sample1_R1'
                                       '.fastq and Sample1_R2.fastq')
-        self.parser.add_argument('--filenam-extension', action='store',
+        self.parser.add_argument('--file-extension', action='store',
                                  type=str, default='fastq.gz',
-                                 help='File extension of the sequencing filenams'
+                                 help='File extension of the sequencing '
+                                      'files'
                                       '. Most often, this is `fastq`, '
                                       '`fastq.gz`, `fq`, or `fq.gz`')
         self.parser.add_argument

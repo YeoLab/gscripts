@@ -16,7 +16,8 @@ Date created: 7/11/13 2:31 PM
 The purpose of this program is to ...
 
 Example run:
-python sam_to_bam_and_sort.py -N 10
+cd dir_of_sam_files
+python sam_to_bam_and_sort.py
 '''
 
 # Class: CommandLine
