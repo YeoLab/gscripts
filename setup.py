@@ -4,6 +4,7 @@ from setuptools import setup, find_packages
 scripts=['rnaseq/count_tags.py',
          'rnaseq/single_RPKM.py',
          'rnaseq/submit_miso_index_gtf.py',
+         'general/gtf2gff3.pl',
          'general/calculate_NRF.py',
          'general/calculate_NRF.py',
          'general/make_trackhubs.py',
