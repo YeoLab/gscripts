@@ -48,7 +48,7 @@
       <file leaf-file-name="submit_miso_index_gff.py" pinned="false" current="true" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/gscripts/rnaseq/submit_miso_index_gff.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state line="114" column="56" selection-start="4033" selection-end="4033" vertical-scroll-proportion="0.89669424">
+            <state line="32" column="39" selection-start="992" selection-end="992" vertical-scroll-proportion="0.59917355">
               <folding />
             </state>
           </provider>
@@ -428,7 +428,7 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/gscripts/rnaseq/submit_miso_index_gff.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state line="114" column="56" selection-start="4033" selection-end="4033" vertical-scroll-proportion="0.89669424">
+        <state line="32" column="39" selection-start="992" selection-end="992" vertical-scroll-proportion="0.59917355">
           <folding />
         </state>
       </provider>

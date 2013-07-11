@@ -27,10 +27,10 @@ class CommandLine(object):
             ''',
             add_help=True, prefix_chars='-')
         gtf_or_gff = self.parser.add_mutually_exclusive_group(required=True)
-        gtf_or_gff.add_argument('--gff', '-g', action='store',
+        gtf_or_gff.add_argument('--gff', action='store',
                                  type=str,
                                  help='GFF file to index')
-        gtf_or_gff.add_argument('--gtf', '-g', action='store',
+        gtf_or_gff.add_argument('--gtf', action='store',
                                  type=str,
                                  help='GTF file to index. If this is '
                                       'provided, then will use "gtf2gff3.pl" '
