@@ -12,7 +12,10 @@ Date created: 7/11/13 7:52 AM
 The purpose of this program is to ...
 
 Example run:
-python submit_miso_index_gtf.py --gff /nas3/yeolab/Genome/ensembl/gtf/gencode.v17.annotation.first.two.exons.gtf --index-dir /nas3/yeolab/Genome/ensembl/gtf/gencode_v17_indexed_first_two_exon_events/
+submit_miso_index_gff.py --gff \
+/nas3/yeolab/Genome/ensembl/gtf/gencode.v17.annotation.first.two.exons.gtf \
+--index-dir \
+/nas3/yeolab/Genome/ensembl/gtf/gencode_v17_indexed_first_two_exon_events/
 '''
 
 # Class: CommandLine
@@ -81,9 +84,9 @@ def main():
     '''
     cl = CommandLine()
     try:
-        gff = cl['gff']
-        index_dir = cl['index_dir']
-        miso_index_gff_py = cl['miso_index_gff_py']
+        gff = cl.args['gff']
+        index_dir = cl.args['index_dir']
+        miso_index_gff_py = cl.args['miso_index_gff_py']
 
         submitter_sh = gff + '.submit_miso_index.sh'
         submitter_err = submitter_sh + '.err'
