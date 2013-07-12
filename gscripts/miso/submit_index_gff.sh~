@@ -1,0 +1,16 @@
+#!/bin/sh
+#PBS -q glean
+#PBS -N EVENT_TYPE
+#PBS -l nodes=16:ppn:2
+#PBS -l walltime=72:00:00
+#PBS -o EVENT_TYPE_index/pbs.out
+#PBS -e EVENT_TYPE_index/pbs.err
+#PBS -V
+#PBS -M olga.botvinnik@gmail.com
+#PBS -m abe
+
+# if not all the chromosomes are there in the
+
+DIR=/home/obotvinnik/genome/miso_annotations/hg19
+
+python /home/yeo-lab/software/bin/index_gff.py --index $DIR/EVENT_TYPE.hg19.gff3 $DIR/EVENT_TYPE_index/
