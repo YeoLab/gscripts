@@ -16,7 +16,8 @@ Example run:
 python /home/obotvinnik/gscripts/gscripts/rnaseq/submit_rnaseqc.py --base-dir \
 /oasis/tscc/scratch/obotvinnik/gm12878/rna-seq \
 --sample-file /home/obotvinnik/projects/alt_first_exon/gm12878_samples.txt \
---species hg19
+--species hg19 \
+--gtf /projects/ps-yeolab/genomes/hg19/gencode_v17/gencode.v17.annotation.gtf
 '''
 
 # Class: CommandLine
@@ -46,6 +47,9 @@ class CommandLine(object):
                                  help='A tab-delimited description of the '
                                       'samples and their BAMs. The header is:'
                                       'Sample ID    Bam File    Notes')
+        self.parser.add_argument('--gtf', '-t', action='store', required=True,
+                                 help='GTF (must end in .gtf) file describing'
+                                      ' transcripts.')
         self.parser.add_argument('--species', '-s', action='store',
                                  required=True, type=str,
                                  help='Which species these reads were mapped '
@@ -56,6 +60,7 @@ class CommandLine(object):
                                  default='',
                                  help='Any additional arguments to pass to '
                                       'RNA-SeQC, besides the required ones.')
+
         if inOpts is None:
             self.args = vars(self.parser.parse_args())
         else:
