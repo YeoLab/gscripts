@@ -4,7 +4,7 @@
 import argparse
 
 # Submit jobs to the TSCC cluster
-from qtools import Submitter
+from gscripts.qtools import Submitter
 
 '''
 Author: olga
@@ -106,7 +106,7 @@ def main():
     try:
         rnaseqc_bin = cl.args['rnaseqc_bin']
         species = cl.args['species']
-        genome_fasta = '/projects/ps-yeolab/genomes/%s/chromosomes/%s.fa.fai' \
+        genome_fasta = '/projects/ps-yeolab/genomes/%s/chromosomes/all.fa' \
                        % (species, species)
         base_dir = cl.args['base_dir']
 
@@ -114,15 +114,14 @@ def main():
         base_dir = base_dir if base_dir.endswith('/') else base_dir + '/'
         output_dir = base_dir + 'rnaseqc/'
         sample_file = cl.args['sample_file']
+        gtf = cl.args['gtf']
         additional_arguments = cl.args['additional_arguments']
 
         job_name = 'rnaseqc_%s' % base_dir
         submit_sh = '%srnaseqc.sh' % base_dir
-        command = 'java -jar %s -o %s -r %s -s %s %s' % (rnaseqc_bin,
-                                                         output_dir,
-                                                         genome_fasta,
-                                                         sample_file,
-                                                         additional_arguments)
+        command = 'java -jar %s -o %s -r %s -s %s -t %s %s' \
+                  % (rnaseqc_bin, output_dir, genome_fasta, sample_file, gtf,
+                     additional_arguments)
         commands = [command]
 
         submit_out = submit_sh + '.out'
@@ -130,8 +129,8 @@ def main():
 
         sub = Submitter(queue_type='PBS', sh_file=submit_sh,
                         command_list=commands, job_name=job_name)
-        sub.add_resource('-o', submit_out)
-        sub.add_resource('-e', submit_err)
+        # sub.add_resource('-o', submit_out)
+        # sub.add_resource('-e', submit_err)
         sub.write_sh(submit=True, nodes=1, ppn=16, queue='glean')
         pass
     # If not all the correct arguments are given, break the program and

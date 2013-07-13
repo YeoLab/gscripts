@@ -54,7 +54,7 @@ class Submitter:
         Create a file that is the shell script to be submitted to the
         job scheduler.
 
-        keyword arguement attributes that can be passed:
+        keyword argument attributes that can be passed:
         array: distribute jobs to array of jobs if True
         chunks: if array is True, Int number of commands per job
         submit: submit to scheduler if True, only write SH file if False or None
@@ -67,12 +67,18 @@ class Submitter:
         sh_file: name of shell file to write
         command_list: list of commands to be performed for this job
         job_name: name of this job
+        queue: the name of the queue (e.g. glean)
 
         Optional class attributes:
         wait_for: list of ID's that this job will wait for before starting
         addtl_resc: keyword-value pairs of scheduler attributes, set with add_resource()
+        out: the standard output (stdout) file created by the queue. Defaults
+        to [sh_file].out
+        err: the standard error (stderr) file created by the queue. Defaults
+        to [sh_file].err
         """
-        required_keys = "queue_type sh_file command_list job_name".split()
+        required_keys = "queue_type sh_file command_list job_name queue"\
+            .split()
         use_array = False
         chunks = 1
         submit = False
@@ -123,92 +129,60 @@ class Submitter:
                 return
 
         sh_file = open(self.data['sh_file'], 'w')
+        sh_file.write("#!/bin/sh\n")
+
+        # Default stdout/stderr .out/.err files to be the sh submit script file
+        # plus .out or .err
+        out_file = self.data['out'] if 'out' in self.data else sh_file + '.out'
+        err_file = self.data['err'] if 'err' in self.data else sh_file + '.err'
+
+        queue_param_prefixes = {'SGE': '#$', 'PBS': '#PBS'}
+        queue_param_prefix = queue_param_prefixes[self.data['queue_type']]
+
+        sh_file.write("%s -N %s\n" % (queue_param_prefix, self.data['job_name']))
+        sh_file.write("%s -o %s\n" % (queue_param_prefix, out_file))
+        sh_file.write("%s -e %s\n" % (queue_param_prefix, err_file))
+        sh_file.write("%s -V\n" % queue_param_prefix)
 
         if self.data['queue_type'] == 'SGE':
-            sh_file.write("#!/bin/sh\n")
-            sh_file.write("#$ -N " + self.data['job_name'] + "\n")
-            sh_file.write("#$ -o " + self.data['job_name'] + ".out\n")
-            sh_file.write("#$ -e " + self.data['job_name'] + ".err\n")
-            sh_file.write("#$ -V\n")
-            sh_file.write("#$ -S /bin/sh\n")
-            sh_file.write("#$ -cwd\n")
-
-            if 'wait_for' in self.data:
-                if self.data['wait_for']:
-                    sh_file.write("#$ -hold_jid " + " ".join(
-                        self.data['wait_for']) + "\n")
-
-            if 'addtl_resc' in self.data:
-                if self.data['addtl_resc']:
-                    for key in self.data['addtl_resc']:
-                        for value in self.data['addtl_resc'][key]:
-                            sh_file.write("#$ " + key + " " + value + "\n")
-
-            if use_array:
-                print "use array"
-                number_jobs = math.ceil(
-                    len(self.data['command_list']) / int(chunks))
-
-            else:
-                for command in self.data['command_list']:
-                    sh_file.write(str(command) + "\n")
-
-            sh_file.close()
-            if submit:
-                p = subprocess.Popen(["qsub", self.data['sh_file']],
-                                     stdout=PIPE)
-                output = p.communicate()[0].strip()
-                ret_val = re.findall(r'\d+', output)[0]
-
-            return ret_val
-
+            sh_file.write("%s -S /bin/sh\n" % queue_param_prefix)
+            sh_file.write("%s -cwd\n" % queue_param_prefix)
         elif self.data['queue_type'] == 'PBS':
-            sh_file.write("#!/bin/sh\n")
-            sh_file.write("#PBS -N " + self.data['job_name'] + "\n")
-            sh_file.write("#PBS -o " + self.data['out'] + ".out\n")
-            sh_file.write("#PBS -e " + self.data['err'] + ".err\n")
-            sh_file.write("#PBS -V\n")
-            sh_file.write("#PBS -l walltime={}\n".format(walltime))
-            sh_file.write("#PBS -l nodes={}:ppn={}\n". \
-                format(str(nodes), str(ppn)))
-            sh_file.write("#PBS -A {}\n".format(account))
-            sh_file.write("#PBS -q {}\n".format(queue))
+            queue_param_prefix = '#PBS'
+            sh_file.write("%s -l walltime=%s\n" % (queue_param_prefix,
+                                                   walltime))
+            sh_file.write("%s -l nodes=%s:ppn=%s\n" % (queue_param_prefix,
+                                                       str(nodes), str(ppn)))
+            sh_file.write("%s -A %s\n" % (queue_param_prefix, account))
+            sh_file.write("%s -q %s\n" % (queue_param_prefix, queue))
             sh_file.write("cd $PBS_O_WORKDIR\n")
 
-            if 'wait_for' in self.data:
-                if self.data['wait_for']:
-                    sh_file.write("#PBS -hold_jid " + " ".join(
-                        self.data['wait_for']) + "\n")
+        if 'wait_for' in self.data:
+            if self.data['wait_for']:
+                sh_file.write("%s -hold_jid %s \n"
+                              % (queue_param_prefix,
+                                 ''.join(self.data['wait_for'])))
 
-            if 'addtl_resc' in self.data:
-                if self.data['addtl_resc']:
-                    for key in self.data['addtl_resc']:
-                        for value in self.data['addtl_resc'][key]:
-                            sh_file.write("#PBS " + key + " " + value + "\n")
+        if 'addtl_resc' in self.data:
+            if self.data['addtl_resc']:
+                for key in self.data['addtl_resc']:
+                    for value in self.data['addtl_resc'][key]:
+                        sh_file.write("%s %s %s\n" % (queue_param_prefix,
+                                                      key, value))
+        # Olga: The 'number_jobs' variable is unused.
+        # if use_array:
+        #     print "use array"
+        #     number_jobs = math.ceil(
+        #         len(self.data['command_list']) / int(chunks))
 
-            if use_array:
-                print "use array"
-                number_jobs = math.ceil(
-                    len(self.data['command_list']) / int(chunks))
+        for command in self.data['command_list']:
+            sh_file.write(str(command) + "\n")
 
-            else:
-                for command in self.data['command_list']:
-                    sh_file.write(str(command) + "\n")
+        sh_file.close()
+        if submit:
+            p = subprocess.Popen(["qsub", self.data['sh_file']],
+                                 stdout=PIPE)
+            output = p.communicate()[0].strip()
+            ret_val = re.findall(r'\d+', output)[0]
 
-            sh_file.close()
-            if submit:
-
-                if 'wait_for' in self.data:
-                    wait_cmd = '-W depend=\"afterok:\"' + ':'.join(
-                        self.data['wait_for'])
-                    p = subprocess.Popen(
-                        ["qsub", wait_cmd, self.data['sh_file']], stdout=PIPE)
-
-                else:
-                    p = subprocess.Popen(["qsub", self.data['sh_file']],
-                                         stdout=PIPE)
-
-                output = p.communicate()[0].strip()
-                ret_val = re.findall(r'\d+', output)[0]
-
-            return ret_val
+        return ret_val
