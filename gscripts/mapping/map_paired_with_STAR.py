@@ -47,7 +47,7 @@ class CommandLine(object):
                                       'files'
                                       '. Most often, this is `fastq`, '
                                       '`fastq.gz`, `fq`, or `fq.gz`')
-        self.parser.add_argument
+        self.parser.add_argument('--STAR')
 
         if inOpts is None:
             self.args = vars(self.parser.parse_args())
@@ -98,6 +98,13 @@ def main():
     try:
         read_number_prefix = cl.args['read_number_prefix']
         file_extension = cl.args['file_extension']
+
+        # assume
+        if file_extension.endswith('z'):
+            zcat_command = '--readFilesCommand zcat'
+        else:
+            zcat_command = ''
+
 
         for file in glob('*%s1*%s' % (read_number_prefix, file_extension)):
             pair = file.replace('Rd1', 'Rd2')
