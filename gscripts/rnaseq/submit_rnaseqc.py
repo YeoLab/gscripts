@@ -107,12 +107,12 @@ def main():
 
         # add trailing forward slash if it's not already there
         base_dir = base_dir if base_dir.endswith('/') else base_dir + '/'
-        output_dir = base_dir + 'rseqc/'
+        output_dir = base_dir + 'rnaseqc/'
         sample_file = cl.args['sample_file']
         additional_arguments = cl.args['additional_arguments']
 
         job_name = 'rnaseqc_%s' % base_dir
-        submit_sh = '%srseqc.sh' % base_dir
+        submit_sh = '%srnaseqc.sh' % base_dir
         command = 'java -jar %s -o %s -r %s -s %s %s' % (rnaseqc_bin,
                                                          output_dir,
                                                          genome_fasta,
