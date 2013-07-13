@@ -12,7 +12,7 @@ import os
 import pybedtools 
 
 
-from general.pybedtools_helpers import get_single_gene_name, rename_to_gene_from_dict
+from gscripts.general.pybedtools_helpers import get_single_gene_name, rename_to_gene_from_dict
 
 def trim_names(interval):
 

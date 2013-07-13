@@ -1,5 +1,5 @@
-from setuptools import setup, find_packages
 
+from setuptools import setup, find_packages
 
 scripts = ['rnaseq/count_tags.py',
            'rnaseq/single_RPKM.py',
