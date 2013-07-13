@@ -13,15 +13,17 @@ Date created: 7/13/13 10:16 AM
 The purpose of this program is to ...
 
 Example run:
-python submit_rnaseqc.py -N 10
+python submit_rnaseqc.py --base-dir /home/obotvinnik/scratch/gm12878/rna-seq \
+--sample-file /home/obotvinnik/projects/alt_first_exon/gm12878_samples.txt \
+--species hg19
 '''
 
 # Class: CommandLine
 class CommandLine(object):
     def __init__(self, inOpts=None):
         self.parser = argparse.ArgumentParser(
-            description=''' Given a number of digits "n" and number of
-            iterations "N", calculate .....
+            description='''Perform RNA-Seq quality control pipeline RNA-SeQC
+            on the samples described in the sample file.
             ''',
             add_help=True, prefix_chars='-')
         self.parser.add_argument('--rnaseqc-bin', action='store',
@@ -96,7 +98,6 @@ def main():
     '''
     cl = CommandLine()
     try:
-        N = cl.args['N']
         rnaseqc_bin = cl.args['rnaseqc_bin']
         species = cl.args['species']
         genome_fasta = '/projects/ps-yeolab/genomes/%s/chromosomes/%s.fa.fai' \
