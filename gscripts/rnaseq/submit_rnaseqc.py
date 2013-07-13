@@ -13,7 +13,8 @@ Date created: 7/13/13 10:16 AM
 The purpose of this program is to ...
 
 Example run:
-python submit_rnaseqc.py --base-dir /home/obotvinnik/scratch/gm12878/rna-seq \
+python /home/obotvinnik/gscripts/gscripts/rnaseq/submit_rnaseqc.py --base-dir \
+/oasis/tscc/scratch/obotvinnik/gm12878/rna-seq \
 --sample-file /home/obotvinnik/projects/alt_first_exon/gm12878_samples.txt \
 --species hg19
 '''
@@ -119,8 +120,13 @@ def main():
                                                          additional_arguments)
         commands = [command]
 
+        submit_out = submit_sh + '.out'
+        submit_err = submit_sh + '.err'
+
         sub = Submitter(queue_type='PBS', sh_file=submit_sh,
                         command_list=commands, job_name=job_name)
+        sub.add_resource('-o', submit_out)
+        sub.add_resource('-e', submit_err)
         sub.write_sh(submit=True, nodes=1, ppn=16, queue='glean')
         pass
     # If not all the correct arguments are given, break the program and
