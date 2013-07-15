@@ -5,7 +5,7 @@
 import argparse
 
 # Submit jobs to the cluster
-from gscripts.general.qtools import Submitter
+from gscripts.qtools import Submitter
 #import gscripts
 from gscripts import which
 
