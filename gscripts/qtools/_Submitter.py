@@ -77,7 +77,7 @@ class Submitter:
         err: the standard error (stderr) file created by the queue. Defaults
         to [sh_file].err
         """
-        required_keys = "queue_type sh_file command_list job_name queue"\
+        required_keys = "queue_type sh_file command_list job_name"\
             .split()
         use_array = False
         chunks = 1
