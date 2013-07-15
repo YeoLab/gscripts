@@ -167,7 +167,7 @@ def main():
             print 'header', header
             for line in f:
                 print 'line', line
-                sample_id, bam, note = line.rstrip().split()
+                sample_id, bam, note = line.rstrip().split('\t')
                 sample_ids.append(sample_id)
                 bams.append(bam)
                 notes.append(note)
