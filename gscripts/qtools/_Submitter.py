@@ -142,7 +142,8 @@ class Submitter:
         queue_param_prefixes = {'SGE': '#$', 'PBS': '#PBS'}
         queue_param_prefix = queue_param_prefixes[self.data['queue_type']]
 
-        sh_file.write("%s -N %s\n" % (queue_param_prefix, self.data['job_name']))
+        sh_file.write("%s -N %s\n" % (queue_param_prefix,
+                                      self.data['job_name']))
         sh_file.write("%s -o %s\n" % (queue_param_prefix, out_file))
         sh_file.write("%s -e %s\n" % (queue_param_prefix, err_file))
         sh_file.write("%s -V\n" % queue_param_prefix)
