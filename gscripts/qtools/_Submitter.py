@@ -128,13 +128,16 @@ class Submitter:
                 print "missing value for required key: " + str(keys)
                 return
 
-        sh_file = open(self.data['sh_file'], 'w')
+        sh_filename = self.data['sh_file']
+        sh_file = open(sh_filename, 'w')
         sh_file.write("#!/bin/sh\n")
 
         # Default stdout/stderr .out/.err files to be the sh submit script file
         # plus .out or .err
-        out_file = self.data['out'] if 'out' in self.data else sh_file + '.out'
-        err_file = self.data['err'] if 'err' in self.data else sh_file + '.err'
+        out_file = self.data['out'] if 'out' in self.data else sh_filename + \
+                                                               '.out'
+        err_file = self.data['err'] if 'err' in self.data else sh_filename + \
+                                                               '.err'
 
         queue_param_prefixes = {'SGE': '#$', 'PBS': '#PBS'}
         queue_param_prefix = queue_param_prefixes[self.data['queue_type']]
