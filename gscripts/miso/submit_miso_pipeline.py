@@ -5,6 +5,7 @@ import argparse
 
 # Submit jobs to the cluster
 from gscripts.qtools import Submitter
+from gscripts import which
 
 # File name manipulations
 import os
@@ -60,7 +61,11 @@ Alternative last exons (ALE)
                                       'the header:\n'
                                       'Sample ID\tBam File\t Notes')
         self.parser.add_argument('--miso-scripts-dir', type=str,
-                                 action='store', help='Which ')
+                                 action='store',
+                                 help='Which directory to use as the prefix for '
+                                      'miso scripts. Default is the directory'
+                                      ' returned from the unix command line '
+                                      'command "which miso".')
         self.parser.add_argument('--run-events-analysis-py',
                                  type=str, action='store',
                                  help='Location of the run_events_analysis.py'
@@ -127,6 +132,8 @@ def main():
     try:
         event_type = cl.args['event_type']
         sample_info_file = cl.args['sample_info_file']
+
+        miso_scripts_dir =
         run_events_analysis = cl.args['run_events_analysis']
         base_annotation_dir = cl.args['base_annotation_dir']
         base_annotation_dir = base_annotation_dir if base_annotation_dir\
