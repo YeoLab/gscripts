@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# coding=utf-8
 
 # Parse command line arguments
 import argparse
@@ -46,15 +47,16 @@ class CommandLine(object):
                                  action='store', type=str, required=True,
                                  help="Which event you'd like to index. One "
                                       "of:"+
-                                 '''
-Skipped exons (SE)
-Alternative 3’/5’ splice sites (A3SS, A5SS)
-Mutually exclusive exons (MXE)
-Tandem 3’ UTRs (TandemUTR)
-Retained introns (RI)
-Alternative first exons (AFE)
-Alternative last exons (ALE)
-                                      '''+
+                                      ('\n'
+                                       'Skipped exons (SE)\n'
+                                       'Alternative 3’/5’ splice sites (A3SS, A5SS)\n'
+                                       'Mutually exclusive exons (MXE)\n'
+                                       'Tandem 3’ UTRs (TandemUTR)\n'
+                                       'Retained introns (RI)\n'
+                                       'Alternative first exons (AFE)\n'
+                                       'Alternative last exons (ALE)\n'
+                                       '                                      '
+                                      ) +
                                       "See http://genes.mit"
                                       ".edu/burgelab/miso/docs/#alternative-event-annotations for more information")
         self.parser.add_argument('--sample-info-file', required=True,
