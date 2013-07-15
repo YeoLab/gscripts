@@ -151,7 +151,7 @@ def main():
         base_annotation_dir = base_annotation_dir if not base_annotation_dir\
             .endswith('/') else base_annotation_dir.rstrip('/')
 
-        event_type_gff = glob.glob('%s/%%s*.gff' % (base_annotation_dir,
+        event_type_gff = glob('%s/%%s*.gff' % (base_annotation_dir,
                                                     event_type))
         event_type_index = '%s/%s_index' % (base_annotation_dir, event_type)
 
