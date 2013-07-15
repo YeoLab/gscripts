@@ -258,7 +258,7 @@ def main():
                 insert_size_stddev = line[1].split('=')[1]
 
             run_events_analysis_command = 'python %s' \
-                      '--compute-genes-psi %s %s --output-dir %s' \
+                      ' --compute-genes-psi %s %s --output-dir %s' \
                       ' --read-len %d --paired-end %s %s' \
                       % (run_events_analysis_py, event_type_index, bam,
                          output_dir, read_len, insert_size_mean,
@@ -276,7 +276,7 @@ def main():
         job_name = 'miso_pipeline'
         sub = Submitter(queue_type='PBS', sh_file=submit_sh,
                         command_list=commands, job_name=job_name)
-        sub.write_sh(submit=True, nodes=1, ppn=16, queue='glean')
+        print sub.write_sh(submit=True, nodes=1, ppn=16, queue='glean')
         '''
         ## Run MISO on a pair of paired-end sample (with insert length distribution with mean 250,
         ## standard deviation 15) using the mouse genome skipped exon annotations using the
