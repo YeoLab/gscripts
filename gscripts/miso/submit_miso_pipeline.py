@@ -36,26 +36,27 @@ class CommandLine(object):
             iterations "N", calculate .....
             ''',
             add_help=True, prefix_chars='-')
-        self.parser.add_argument('--index-base-dir',
-                                 action='store',
-                                 type=str,
-                                 default='/home/obotvinnik/genomes/miso_annotations/hg19',
-                                 help='The base directory to use for '
-                                      'annotations. The annotation is assumed'
-                                      ' to be (index_base_dir)/('
-                                      'event_type)_indexed/')
+        # self.parser.add_argument('--index-base-dir',
+        #                          action='store',
+        #                          type=str,
+        #                          default='/home/obotvinnik/genomes/miso_annotations/hg19',
+        #                          help='The base directory to use for '
+        #                               'annotations. The annotation is assumed'
+        #                               ' to be (index_base_dir)/('
+        #                               'event_type)_indexed/')
         self.parser.add_argument('--event-type', '-e',
                                  action='store', type=str, required=True,
                                  help="Which event you'd like to index. One "
                                       "of:"+
                                       ('\n'
-                                       'Skipped exons (SE)\n'
-                                       'Alternative 3’/5’ splice sites (A3SS, A5SS)\n'
-                                       'Mutually exclusive exons (MXE)\n'
-                                       'Tandem 3’ UTRs (TandemUTR)\n'
-                                       'Retained introns (RI)\n'
-                                       'Alternative first exons (AFE)\n'
-                                       'Alternative last exons (ALE)\n'
+                                       '1. Skipped exons (SE)\n'
+                                       '2. Alternative 3’/5’ splice sites ('
+                                       'A3SS, A5SS)\n'
+                                       '3. Mutually exclusive exons (MXE)\n'
+                                       '4. Tandem 3’ UTRs (TandemUTR)\n'
+                                       '5. Retained introns (RI)\n'
+                                       '6. Alternative first exons (AFE)\n'
+                                       '7. Alternative last exons (ALE)\n'
                                        '                                      '
                                       ) +
                                       "See http://genes.mit"
@@ -87,7 +88,7 @@ class CommandLine(object):
                                  default='/home/obotvinnik/genomes/miso_annotations/hg19')
         self.parser.add_argument('--read-len', '-l', type=int, action='store',
                                  help='Read lengths. Assumed to be the same '
-                                      'for all samples')
+                                      'for all samples', required=True)
         if inOpts is None:
             self.args = vars(self.parser.parse_args())
         else:

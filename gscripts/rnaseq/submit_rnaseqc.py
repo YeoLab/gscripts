@@ -4,7 +4,7 @@
 import argparse
 
 # Submit jobs to the TSCC cluster
-from gscripts.qtools import Submitter
+from gscripts.qtools import _Submitter
 
 '''
 Author: olga
@@ -127,7 +127,7 @@ def main():
         submit_out = submit_sh + '.out'
         submit_err = submit_sh + '.err'
 
-        sub = Submitter(queue_type='PBS', sh_file=submit_sh,
+        sub = _Submitter(queue_type='PBS', sh_file=submit_sh,
                         command_list=commands, job_name=job_name)
         # sub.add_resource('-o', submit_out)
         # sub.add_resource('-e', submit_err)
