@@ -2,7 +2,6 @@ from setuptools import setup, find_packages
 
 scripts = ['rnaseq/count_tags.py',
            'rnaseq/single_RPKM.py',
-           'rnaseq/submit_miso_index_gff.py',
            'general/gtf2gff3.pl',
            'general/calculate_NRF.py',
            'general/calculate_NRF.py',
@@ -13,7 +12,10 @@ scripts = ['rnaseq/count_tags.py',
            'clipseq/run_piranha.py',
            'riboseq/riboseq_coverage.py',
            'mapping/map_paired_with_STAR.py',
-           'mapping/sam_to_bam_and_sort.py']
+           'mapping/sam_to_bam_and_sort.py',
+           'miso/submit_miso_pipeline.py',
+           'miso/submit_miso_index_gff.py']
+
 scripts = map((lambda x: "gscripts/" + x), scripts)
 
 with open("README") as file:

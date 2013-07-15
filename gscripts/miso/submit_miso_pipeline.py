@@ -10,8 +10,11 @@ from gscripts import which
 # File name manipulations
 import os
 
-# Round floats to int reliably
-import math
+# Exit the program cleanly
+import sys
+
+# Get groups of files with similar names
+from glob import glob
 
 '''
 Author: olga
@@ -65,12 +68,7 @@ Alternative last exons (ALE)
                                  help='Which directory to use as the prefix for '
                                       'miso scripts. Default is the directory'
                                       ' returned from the unix command line '
-                                      'command "which miso".')
-        self.parser.add_argument('--run-events-analysis-py',
-                                 type=str, action='store',
-                                 help='Location of the run_events_analysis.py'
-                                      ' file from MISO',
-                                 default='/home/yeo-lab/software/bin/run_events_analysis.py')
+                                      'command "which miso".', required=False)
         self.parser.add_argument('--base-annotation-dir',
                                  type=str, action='store',
                                  help='Where the MISO annotations are housed.'
@@ -131,19 +129,30 @@ def main():
     cl = CommandLine()
     try:
         event_type = cl.args['event_type']
+
         sample_info_file = cl.args['sample_info_file']
 
-        miso_scripts_dir =
-        run_events_analysis = cl.args['run_events_analysis']
+        try:
+            miso_scripts_dir = os.dirname(which('miso')[0])
+        except IndexError:
+            # If there is an IndexError, that means that 'which' returned an
+            # empty list, and thus there is no miso installed on the path.
+            print >> sys.stderr, '"which miso" returned empty list, ' \
+                                 'the program miso does not exist on your ' \
+                                 'command line'
+            sys.exit(1)
+
+        run_events_analysis_py = '%s/run_events_analysis.py' % miso_scripts_dir
+        paired_end_utils_py = '%s/pe_utils.py' % miso_scripts_dir
         base_annotation_dir = cl.args['base_annotation_dir']
-        base_annotation_dir = base_annotation_dir if base_annotation_dir\
-            .endswith('/') else base_annotation_dir + '/'
+        base_annotation_dir = base_annotation_dir if not base_annotation_dir\
+            .endswith('/') else base_annotation_dir.rstrip('/')
+
+        event_type_gff = glob.glob('%s/%%s*.gff' % (base_annotation_dir,
+                                                    event_type))
+        event_type_index = '%s/%s_index' % (base_annotation_dir, event_type)
 
         read_len = cl.args['read_len']
-
-        # first compute insert sizes
-        # python ~/obot_virtualenv/bin/pe_utils.py --compute-insert-len $(
-        # echo $BAMS | tr ' ' ,) ~/genomes/miso_annotations/hg19/AFE_constitutive/AFE.hg19.min_20.const_exons.gff --no-bam-filter --output-dir insert_sizes
 
 
         bams = []
@@ -161,6 +170,7 @@ def main():
 
         # Command-line commands to submit to the cluster
         commands = []
+        output_dirs = []
 
         for sample_id, bam, note in zip(sample_ids, bams, notes):
             # os.dirname returns the directory containing the bam file WITHOUT
@@ -169,8 +179,9 @@ def main():
             # >>> os.path.dirname(
             # '/home/gpratt/projects/upf1/analysis/rna/318_UPF11_NoIndex_L004_R1.fq.polyATrim.adapterTrim.rmRep.sorted.bam')
             # '/home/gpratt/projects/upf1/analysis/rna'
-            base_dir = os.dirname(bam)
-            output_dir = '%smiso/%s' % (base_dir, event_type)
+            base_bam_dir = os.dirname(bam)
+            output_dir = '%smiso/%s' % (base_bam_dir, event_type)
+            output_dirs.append(output_dir)
             try:
                 os.makedirs(output_dir)
             except:
@@ -184,6 +195,55 @@ def main():
             # #mean=158.4,sdev=13.7,dispersion=1.1,num_pairs=20091
             # This file is assumed to be the '.bam' file + '.insert_len'
             insert_size_file = bam + '.insert_len'
+
+            # first compute insert sizes
+            # python ~/obot_virtualenv/bin/pe_utils.py --compute-insert-len $(
+            # echo $BAMS | tr ' ' ,) ~/genomes/miso_annotations/hg19/AFE_constitutive/AFE.hg19.min_20.const_exons.gff --no-bam-filter --output-dir insert_sizes
+
+            try:
+                with open(insert_size_file) as f:
+                    pass
+
+            except IOError:
+                # test that the corresponding constitutive exon file exists
+                constitutive_exons_dir = '%s%s_constitutive' % (
+                    base_annotation_dir, event_type)
+                try:
+                    constitutive_exons_gff = glob('%s/*.gff' %
+                                              constitutive_exons_dir)[0]
+                    with open(constitutive_exons_gff) as f:
+                        pass
+                except IndexError:
+                    # Make the constitutive exons gff file for finding
+                    exon_utils = '%s/exon_utils.py' % miso_scripts_dir
+                    event_type_constitutive_dir = '%s/%s_constitutive/' \
+                                                  % (base_annotation_dir,
+                                                     event_type)
+                    exon_utils_command = 'python %s --get-const-exons %s ' \
+                                 '--output-dir %s' \
+                              % (exon_utils, event_type_gff,
+                                 event_type_constitutive_dir)
+                    commands.append(exon_utils_command)
+
+                    # Make sure the exon_utils.py commmand of finding
+                    # constitutive exons finished before continuing on to
+                    # find the insert length mean and standard deviation
+                    commands.append('sleep 500')
+
+                constitutive_exons_gff = glob('%s/*.gff' %
+                                              constitutive_exons_dir)[0]
+                paired_end_utils_command = 'python %s --compute-insert-len ' \
+                                           '%s %s --no-bam-filter ' \
+                                           '--output-dir %s' \
+                                           % (paired_end_utils_py, bam,
+                                              constitutive_exons_gff,
+                                              base_bam_dir)
+                commands.append(paired_end_utils_command)
+
+                # Make sure the insert size calculation finishes before the
+                # run_events_analysis.py command
+                commands.append('sleep 500')
+
             with open(insert_size_file) as f:
                 # remove the starting comment mark '#' and split on commas
                 line = f.readline().lstrip('#').split(',')
@@ -193,12 +253,26 @@ def main():
                 insert_size_mean = line[0].split('=')[1]
                 insert_size_stddev = line[1].split('=')[1]
 
-            command = 'python %s' \
-                      '--compute-genes-psi %s%s_index %s --output-dir %s ' \
-                      '--read-len %d --paired-end %s %s' \
-                      % (run_events_analysis, event_type, bam, output_dir,
-                         read_len, insert_size_mean, insert_size_stddev)
-            commands.append(command)
+            run_events_analysis_command = 'python %s' \
+                      '--compute-genes-psi %s %s --output-dir %s' \
+                      ' --read-len %d --paired-end %s %s' \
+                      % (run_events_analysis_py, event_type_index, bam,
+                         output_dir, read_len, insert_size_mean,
+                         insert_size_stddev)
+            commands.append(run_events_analysis_command)
+
+        for output_dir in output_dirs:
+            run_miso_py = '%s/run_miso.py' % miso_scripts_dir
+            summarize_command = 'python %s --summarize-samples %s %s' \
+                                % (run_miso_py, output_dir, output_dir)
+            commands.append(summarize_command)
+
+        # Put the submitter script wherever the command was run from
+        submit_sh = 'submit_miso.sh'
+        job_name = 'miso_pipeline'
+        sub = Submitter(queue_type='PBS', sh_file=submit_sh,
+                        command_list=commands, job_name=job_name)
+        sub.write_sh(submit=True, nodes=1, ppn=16, queue='glean')
         '''
         ## Run MISO on a pair of paired-end sample (with insert length distribution with mean 250,
         ## standard deviation 15) using the mouse genome skipped exon annotations using the
@@ -225,7 +299,7 @@ def main():
         ## and place the results in the directory SE/comparisons/control_vs_knockdown
         python run_miso.py --compare-samples SE/control/ SE/knockdown/ SE/comparisons/
         '''
-        pass
+
     # If not all the correct arguments are given, break the program and
     # show the usage information
     except Usage, err:

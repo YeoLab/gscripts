@@ -1,4 +1,4 @@
-__all__ = ["GO", "riboseq", "rnaseq", "general", 'which']
+__all__ = ["GO", "riboseq", "rnaseq", "general", 'which', 'qtools', 'mapping']
 
 
 # Copyright (c) 2001-2004 Twisted Matrix Laboratories.
