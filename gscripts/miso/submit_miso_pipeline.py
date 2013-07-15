@@ -25,7 +25,7 @@ Date created: 7/12/13 9:38 AM
 The purpose of this program is to ...
 
 Example run:
-gscripts/gscripts/miso/submit_miso_pipeline.py \
+python ~/gscripts/gscripts/miso/submit_miso_pipeline.py \
   --base-annotation-dir ~/genomes/miso_annotations/hg19/ \
   --event-type AFE \
   --sample-info-file ~/projects/alt_first_exon/gm12878_samples_read_groups.txt \
@@ -169,9 +169,9 @@ def main():
 
         with open(sample_info_file) as f:
             header = f.readline()
-            print 'header', header
+            # print 'header', header
             for line in f:
-                print 'line', line
+                # print 'line', line
                 sample_id, bam, note = line.rstrip().split('\t')
                 sample_ids.append(sample_id)
                 bams.append(bam)
