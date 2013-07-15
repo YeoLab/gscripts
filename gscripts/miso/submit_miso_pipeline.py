@@ -135,7 +135,7 @@ def main():
         sample_info_file = cl.args['sample_info_file']
 
         try:
-            miso_scripts_dir = os.dirname(gscripts.which('miso')[0])
+            miso_scripts_dir = os.path.dirname(gscripts.which('miso')[0])
         except IndexError:
             # If there is an IndexError, that means that 'which' returned an
             # empty list, and thus there is no miso installed on the path.
@@ -175,13 +175,13 @@ def main():
         output_dirs = []
 
         for sample_id, bam, note in zip(sample_ids, bams, notes):
-            # os.dirname returns the directory containing the bam file WITHOUT
+            # os.path.dirname returns the directory containing the bam file WITHOUT
             # the trailing forward slash: '/'
             # e.g.:
             # >>> os.path.dirname(
             # '/home/gpratt/projects/upf1/analysis/rna/318_UPF11_NoIndex_L004_R1.fq.polyATrim.adapterTrim.rmRep.sorted.bam')
             # '/home/gpratt/projects/upf1/analysis/rna'
-            base_bam_dir = os.dirname(bam)
+            base_bam_dir = os.path.dirname(bam)
             output_dir = '%smiso/%s' % (base_bam_dir, event_type)
             output_dirs.append(output_dir)
             try:
