@@ -185,7 +185,7 @@ def main():
             # '/home/gpratt/projects/upf1/analysis/rna/318_UPF11_NoIndex_L004_R1.fq.polyATrim.adapterTrim.rmRep.sorted.bam')
             # '/home/gpratt/projects/upf1/analysis/rna'
             base_bam_dir = os.path.dirname(bam)
-            output_dir = '%smiso/%s' % (base_bam_dir, event_type)
+            output_dir = '%s/miso/%s' % (base_bam_dir, event_type)
             output_dirs.append(output_dir)
             try:
                 os.makedirs(output_dir)
@@ -277,7 +277,7 @@ def main():
         job_name = 'miso_pipeline'
         sub = Submitter(queue_type='PBS', sh_file=submit_sh,
                         command_list=commands, job_name=job_name)
-        print sub.write_sh(submit=True, nodes=1, ppn=16, queue='glean')
+        print sub.write_sh(submit=True, nodes=16, ppn=2, queue='glean')
         '''
         ## Run MISO on a pair of paired-end sample (with insert length distribution with mean 250,
         ## standard deviation 15) using the mouse genome skipped exon annotations using the
