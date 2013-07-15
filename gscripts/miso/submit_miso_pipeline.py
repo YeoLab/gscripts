@@ -3,6 +3,15 @@
 # Parse command line arguments
 import argparse
 
+# Submit jobs to the cluster
+from gscripts.qtools import Submitter
+
+# File name manipulations
+import os
+
+# Round floats to int reliably
+import math
+
 '''
 Author: olga
 Date created: 7/12/13 9:38 AM
@@ -32,8 +41,47 @@ class CommandLine(object):
         self.parser.add_argument('--event-type', '-e',
                                  action='store', type=str, required=True,
                                  help="Which event you'd like to index. One "
-                                      "of: See http://genes.mit"
+                                      "of:"+
+                                 '''
+Skipped exons (SE)
+Alternative 3’/5’ splice sites (A3SS, A5SS)
+Mutually exclusive exons (MXE)
+Tandem 3’ UTRs (TandemUTR)
+Retained introns (RI)
+Alternative first exons (AFE)
+Alternative last exons (ALE)
+                                      '''+
+                                      "See http://genes.mit"
                                       ".edu/burgelab/miso/docs/#alternative-event-annotations for more information")
+        self.parser.add_argument('--sample-info-file', required=True,
+                                 type=str,
+                                 action='store',
+                                 help='A tab-delimited sample info file with '
+                                      'the header:\n'
+                                      'Sample ID\tBam File\t Notes')
+        self.parser.add_argument('--miso-scripts-dir', type=str,
+                                 action='store', help='Which ')
+        self.parser.add_argument('--run-events-analysis-py',
+                                 type=str, action='store',
+                                 help='Location of the run_events_analysis.py'
+                                      ' file from MISO',
+                                 default='/home/yeo-lab/software/bin/run_events_analysis.py')
+        self.parser.add_argument('--base-annotation-dir',
+                                 type=str, action='store',
+                                 help='Where the MISO annotations are housed.'
+                                      ' The indexed version are assumed to be'
+                                      ' [base_annotation_dir]/['
+                                      'event_type]_index. For example, '
+                                      'if the base annotation dir is '
+                                      '/home/obotvinnik/genomes/miso_annotations/hg19 '
+                                      'and the event type is AFE, '
+                                      'then the annotations are assumed to be'
+                                      ' in folder'
+                                      '/home/obotvinnik/genomes/miso_annotations/hg19/AFE_index/',
+                                 default='/home/obotvinnik/genomes/miso_annotations/hg19')
+        self.parser.add_argument('--read-len', '-l', type=int, action='store',
+                                 help='Read lengths. Assumed to be the same '
+                                      'for all samples')
         if inOpts is None:
             self.args = vars(self.parser.parse_args())
         else:
@@ -77,29 +125,99 @@ def main():
     '''
     cl = CommandLine()
     try:
-        N = cl.args['N']
+        event_type = cl.args['event_type']
+        sample_info_file = cl.args['sample_info_file']
+        run_events_analysis = cl.args['run_events_analysis']
+        base_annotation_dir = cl.args['base_annotation_dir']
+        base_annotation_dir = base_annotation_dir if base_annotation_dir\
+            .endswith('/') else base_annotation_dir + '/'
 
-## Run MISO on a pair of paired-end sample (with insert length distribution with mean 250,
-## standard deviation 15) using the mouse genome skipped exon annotations using the
-## the cluster
+        read_len = cl.args['read_len']
 
-# Compute Psi values for control sample
-python run_events_analysis.py --compute-genes-psi mm9/pickled/SE data/control.bam --output-dir SE/control/ --read-len 35 --paired-end 250 15 --use-cluster
-
-# Compute Psi values for knockdown sample
-python run_events_analysis.py --compute-genes-psi mm9/pickled/SE data/knockdown.bam --output-dir SE/knockdown/ --read-len 35 --paired-end 250 15 --use-cluster
+        # first compute insert sizes
+        # python ~/obot_virtualenv/bin/pe_utils.py --compute-insert-len $(
+        # echo $BAMS | tr ' ' ,) ~/genomes/miso_annotations/hg19/AFE_constitutive/AFE.hg19.min_20.const_exons.gff --no-bam-filter --output-dir insert_sizes
 
 
-## Summarize the output (only run this once --compute-genes-psi finished!)
-## This will create a "summary" directory in SE/control/ and in SE/knockdown/
-python run_miso.py --summarize-samples SE/control/ SE/control/
-python run_miso.py --summarize-samples SE/knockdown/ SE/knockdown/
+        bams = []
+        sample_ids = []
+        notes = []
 
-## Detect differentially expressed isoforms between "control" and "knockdown"
-## This will compute Bayes factors and delta Psi values between the samples
-## and place the results in the directory SE/comparisons/control_vs_knockdown
-python run_miso.py --compare-samples SE/control/ SE/knockdown/ SE/comparisons/
+        with open(sample_info_file) as f:
+            header = f.readline()
+            print 'header', header
+            for line in f:
+                sample_id, bam, note = line.split()
+                sample_ids.append(sample_id)
+                bams.append(bam)
+                notes.append(note)
 
+        # Command-line commands to submit to the cluster
+        commands = []
+
+        for sample_id, bam, note in zip(sample_ids, bams, notes):
+            # os.dirname returns the directory containing the bam file WITHOUT
+            # the trailing forward slash: '/'
+            # e.g.:
+            # >>> os.path.dirname(
+            # '/home/gpratt/projects/upf1/analysis/rna/318_UPF11_NoIndex_L004_R1.fq.polyATrim.adapterTrim.rmRep.sorted.bam')
+            # '/home/gpratt/projects/upf1/analysis/rna'
+            base_dir = os.dirname(bam)
+            output_dir = '%smiso/%s' % (base_dir, event_type)
+            try:
+                os.makedirs(output_dir)
+            except:
+                # This is just to silence the error of directory creation
+                # if it's
+                pass
+
+            # Get the insert size from the *.insert_len file created by
+            # pe_utils.py
+            # First line of '.insert_len' file:
+            # #mean=158.4,sdev=13.7,dispersion=1.1,num_pairs=20091
+            # This file is assumed to be the '.bam' file + '.insert_len'
+            insert_size_file = bam + '.insert_len'
+            with open(insert_size_file) as f:
+                # remove the starting comment mark '#' and split on commas
+                line = f.readline().lstrip('#').split(',')
+
+                # Keep the insert size mean and standard dev as a string so
+                # we don't have to deal with conversion
+                insert_size_mean = line[0].split('=')[1]
+                insert_size_stddev = line[1].split('=')[1]
+
+            command = 'python %s' \
+                      '--compute-genes-psi %s%s_index %s --output-dir %s ' \
+                      '--read-len %d --paired-end %s %s' \
+                      % (run_events_analysis, event_type, bam, output_dir,
+                         read_len, insert_size_mean, insert_size_stddev)
+            commands.append(command)
+        '''
+        ## Run MISO on a pair of paired-end sample (with insert length distribution with mean 250,
+        ## standard deviation 15) using the mouse genome skipped exon annotations using the
+        ## the cluster
+
+        # Compute Psi values for control sample
+        python run_events_analysis.py
+        --compute-genes-psi mm9/pickled/SE data/control.bam --output-dir SE/control/
+        --read-len 35 --paired-end 250 15 --use-cluster
+
+        # Compute Psi values for knockdown sample
+        python run_events_analysis.py
+        --compute-genes-psi mm9/pickled/SE data/knockdown.bam --output-dir SE/knockdown/
+         --read-len 35 --paired-end 250 15 --use-cluster
+
+
+        ## Summarize the output (only run this once --compute-genes-psi finished!)
+        ## This will create a "summary" directory in SE/control/ and in SE/knockdown/
+        python run_miso.py --summarize-samples SE/control/ SE/control/
+        python run_miso.py --summarize-samples SE/knockdown/ SE/knockdown/
+
+        ## Detect differentially expressed isoforms between "control" and "knockdown"
+        ## This will compute Bayes factors and delta Psi values between the samples
+        ## and place the results in the directory SE/comparisons/control_vs_knockdown
+        python run_miso.py --compare-samples SE/control/ SE/knockdown/ SE/comparisons/
+        '''
         pass
     # If not all the correct arguments are given, break the program and
     # show the usage information
