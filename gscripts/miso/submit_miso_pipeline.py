@@ -6,7 +6,8 @@ import argparse
 
 # Submit jobs to the cluster
 from gscripts.general.qtools import Submitter
-import gscripts
+#import gscripts
+from gscripts import which
 
 # File name manipulations
 import os
@@ -135,7 +136,7 @@ def main():
         sample_info_file = cl.args['sample_info_file']
 
         try:
-            miso_scripts_dir = os.path.dirname(gscripts.which('miso')[0])
+            miso_scripts_dir = os.path.dirname(which('miso')[0])
         except IndexError:
             # If there is an IndexError, that means that 'which' returned an
             # empty list, and thus there is no miso installed on the path.
