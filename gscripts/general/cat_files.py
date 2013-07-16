@@ -30,10 +30,10 @@ def inspectFolder(folder, extensions, recurse=False, cat=False, cat_depth=1):
                 
                 
             
-        for file in glob('*'):
+        for a_file in glob('*'):
                 if recurse:
-                    if os.path.isdir(file):
-                        inspectFolder(file, extensions, recurse, cat, cat_depth)
+                    if os.path.isdir(a_file):
+                        inspectFolder(a_file, extensions, recurse, cat, cat_depth)
                         
         os.chdir('..')
             
@@ -54,11 +54,14 @@ def catFiles(file_list, ext, combine_depth=1):
 
     filenames_tree = defaultdict(defaultdict)
     
-    for file in file_list:
-        complete_file = file
-        file = file.split('.')[0]
+    if max(map(len, file_list)) != min(map(len, file_list)):
+        raise Exception('a file is not in the same format as the rest')
+
+    for a_file in file_list:
+        complete_file = a_file
+        a_file = a_file.split('.')[0]
         
-        file_values = file.split('_')
+        file_values = a_file.split('_')
         
         current_parent = None
         current_file_string = ''
@@ -83,7 +86,7 @@ def catFiles(file_list, ext, combine_depth=1):
                     
                     if not step in current_parent:
                         current_parent[step] = defaultdict(defaultdict)
-                        
+
                     current_parent[step]['file_string'] = current_file_string
                     current_parent = current_parent[step]
                     
