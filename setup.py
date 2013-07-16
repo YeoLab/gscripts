@@ -37,11 +37,6 @@ setup(
                       'scikit-learn >= 0.13.0'],
 
     setup_requires=["setuptools_git >= 0.3", ],
-    name = "gscripts",
-    long_description = long_description,
-    version = "0.1.2",
-    packages = find_packages(),
-
     scripts=scripts,
 
     #metadata for upload to PyPI
