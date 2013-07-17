@@ -122,8 +122,8 @@ def main():
         --outFilterMultimapNmax 1 %s' % (species, read1, read2, name,
                                          zcat_command))
 
-            sub = Submitter(queue_type='PBS', sh_file='map_'+file+'.sh',
-                            command_list=cmd_list, job_name='map_'+file)
+            sub = Submitter(queue_type='PBS', sh_file=read1+'_map.sh',
+                            command_list=cmd_list, job_name='map_'+read1)
             sub.write_sh(submit=True, nodes=16, ppn=4, queue='glean')
 
 
