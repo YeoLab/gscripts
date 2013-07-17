@@ -242,8 +242,8 @@ def main():
                     # find the insert length mean and standard deviation
                     commands.append('sleep 500')
 
-                constitutive_exons_gff = glob('%s/*.gff' %
-                                              constitutive_exons_dir)[0]
+                # constitutive_exons_gff = glob('%s/*.gff' %
+                #                               constitutive_exons_dir)[0]
                 paired_end_utils_command = 'python %s --compute-insert-len ' \
                                            '%s %s --no-bam-filter ' \
                                            '--output-dir %s' \
