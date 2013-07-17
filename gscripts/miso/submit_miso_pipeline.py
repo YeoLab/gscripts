@@ -214,33 +214,37 @@ def main():
                     pass
 
             except IOError:
-                # test that the corresponding constitutive exon file exists
-                constitutive_exons_dir = '%s/%s_constitutive' % (
-                    base_annotation_dir, event_type)
-                print 'constitutive_exons_dir', constitutive_exons_dir
-                try:
-                    constitutive_exons_gff = glob('%s/*.gff' %
-                                              constitutive_exons_dir)[0]
-                    with open(constitutive_exons_gff) as f:
-                        print 'trying to open', constitutive_exons_gff
-                        pass
-                except IndexError:
-                    print 'IndexError!'
-                    # Make the constitutive exons gff file for finding
-                    exon_utils = '%s/exon_utils.py' % miso_scripts_dir
-                    # event_type_constitutive_dir = '%s/%s_constitutive/' \
-                    #                               % (base_annotation_dir,
-                    #                                  event_type)
-                    exon_utils_command = 'python %s --get-const-exons %s ' \
-                                 '--output-dir %s' \
-                              % (exon_utils, event_type_gff,
-                                 constitutive_exons_dir)
-                    commands.append(exon_utils_command)
-
-                    # Make sure the exon_utils.py commmand of finding
-                    # constitutive exons finished before continuing on to
-                    # find the insert length mean and standard deviation
-                    commands.append('sleep 500')
+                # ***
+                # Assume that the corresponding constitutive exon file
+                # exists
+                # ***
+                
+                # constitutive_exons_dir = '%s/%s_constitutive' % (
+                #     base_annotation_dir, event_type)
+                # print 'constitutive_exons_dir', constitutive_exons_dir
+                # try:
+                #     constitutive_exons_gff = glob('%s/*.gff' %
+                #                               constitutive_exons_dir)[0]
+                #     with open(constitutive_exons_gff) as f:
+                #         print 'trying to open', constitutive_exons_gff
+                #         pass
+                # except IndexError:
+                #     print 'IndexError!'
+                #     # Make the constitutive exons gff file for finding
+                #     exon_utils = '%s/exon_utils.py' % miso_scripts_dir
+                #     # event_type_constitutive_dir = '%s/%s_constitutive/' \
+                #     #                               % (base_annotation_dir,
+                #     #                                  event_type)
+                #     exon_utils_command = 'python %s --get-const-exons %s ' \
+                #                  '--output-dir %s' \
+                #               % (exon_utils, event_type_gff,
+                #                  constitutive_exons_dir)
+                #     commands.append(exon_utils_command)
+                #
+                #     # Make sure the exon_utils.py command of finding
+                #     # constitutive exons finished before continuing on to
+                #     # find the insert length mean and standard deviation
+                #     commands.append('sleep 500')
 
                 # constitutive_exons_gff = glob('%s/*.gff' %
                 #                               constitutive_exons_dir)[0]
