@@ -259,22 +259,33 @@ def main():
                 # Make sure the insert size calculation finishes before the
                 # run_events_analysis.py command
                 commands.append('sleep 500')
+            #
+            # with open(insert_size_file) as f:
+            #     # remove the starting comment mark '#' and split on commas
+            #     line = f.readline().lstrip('#').split(',')
+            #
+            #     # Keep the insert size mean and standard dev as a string so
+            #     # we don't have to deal with conversion
+            #     insert_size_mean = line[0].split('=')[1]
+            #     insert_size_stddev = line[1].split('=')[1]
 
-            with open(insert_size_file) as f:
-                # remove the starting comment mark '#' and split on commas
-                line = f.readline().lstrip('#').split(',')
-
-                # Keep the insert size mean and standard dev as a string so
-                # we don't have to deal with conversion
-                insert_size_mean = line[0].split('=')[1]
-                insert_size_stddev = line[1].split('=')[1]
+            insert_size_mean_command = "\n INSERT_SIZE_MEAN=$(head -n 1 %s | " \
+                                       "sed 's:#::' | cut -d'," \
+                                       "' -f1 | cut -d'=' -f2)" \
+                                       % (insert_size_file)
+            insert_size_stddev_command = "\n INSERT_SIZE_STDDEV=$(head -n 1 " \
+                                         "%s | sed 's:#::' | cut -d'," \
+                                         "' -f2 | cut -d'=' -f2)" \
+                                         % (insert_size_file)
+            commands.append(insert_size_mean_command)
+            commands.append(insert_size_stddev_command)
 
             run_events_analysis_command = 'python %s' \
                       ' --compute-genes-psi %s %s --output-dir %s' \
-                      ' --read-len %d --paired-end %s %s' \
+                      ' --read-len %d --paired-end $INSERT_SIZE_MEAN ' \
+                      '$INSERT_SIZE_STDDEV' \
                       % (run_events_analysis_py, event_type_index, bam,
-                         output_dir, read_len, insert_size_mean,
-                         insert_size_stddev)
+                         output_dir, read_len)
             commands.append(run_events_analysis_command)
 
         # Try to make it so that the summarization only happens after the
