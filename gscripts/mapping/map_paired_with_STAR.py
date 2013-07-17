@@ -107,9 +107,9 @@ def main():
 
 
         for read1 in glob('*%s1*%s' % (read_number_prefix, file_extension)):
-            read2 = file.replace('%s1' % read_number_prefix,
+            read2 = read1.replace('%s1' % read_number_prefix,
                              '%s2' % read_number_prefix)
-            name = file.replace('_%s1' %read_number_prefix, '')
+            name = read1.replace('_%s1' % read_number_prefix, '')
             cmd_list = []
             cmd_list.append('/home/yeo-lab/software/STAR_2.3.0e/STAR \
         --runMode alignReads \
