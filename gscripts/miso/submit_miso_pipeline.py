@@ -171,7 +171,7 @@ def main():
             header = f.readline()
             print 'header', header
             for line in f:
-                print 'line', line
+                print 'line', line.rstrip().split('\t')
                 sample_id, bam, note = line.rstrip().split('\t')
                 sample_ids.append(sample_id)
                 bams.append(bam)
