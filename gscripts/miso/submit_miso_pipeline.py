@@ -270,6 +270,9 @@ def main():
                          insert_size_stddev)
             commands.append(run_events_analysis_command)
 
+        # Try to make it so that the summarization only happens after the
+        # psi computation
+        commands.append('sleep 1000')
         for output_dir in output_dirs:
             run_miso_py = '%s/run_miso.py' % miso_scripts_dir
             summarize_command = 'python %s --summarize-samples %s %s' \

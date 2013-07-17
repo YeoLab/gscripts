@@ -31,8 +31,7 @@ class CommandLine(object):
             description=''' Given a number of digits "n" and number of
             iterations "N", calculate .....
             ''',
-            add_help=True, prefix_chars='-',
-            usage='%(prog)s --N NUM_ITERATIONS')
+            add_help=True, prefix_chars='-')
         self.parser.add_argument('--species', '-s', action='store',
                                  type=str, default='hg19', required=True,
                                  help="Which species' genome to map to")
@@ -98,6 +97,7 @@ def main():
     try:
         read_number_prefix = cl.args['read_number_prefix']
         file_extension = cl.args['file_extension']
+        species = cl.args['species']
 
         # assume
         if file_extension.endswith('z'):
