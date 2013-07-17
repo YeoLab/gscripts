@@ -215,14 +215,15 @@ def main():
 
             except IOError:
                 # test that the corresponding constitutive exon file exists
-                constitutive_exons_dir = '%s%s_constitutive' % (
+                constitutive_exons_dir = '%s/%s_constitutive' % (
                     base_annotation_dir, event_type)
+                print 'constitutive_exons_dir', constitutive_exons_dir
                 try:
                     constitutive_exons_gff = glob('%s/*.gff' %
                                               constitutive_exons_dir)[0]
-                    with open(constitutive_exons_gff) as f:
-                        pass
-                except:
+                    # with open(constitutive_exons_gff) as f:
+                    #     pass
+                except IndexError:
                     # Make the constitutive exons gff file for finding
                     exon_utils = '%s/exon_utils.py' % miso_scripts_dir
                     event_type_constitutive_dir = '%s/%s_constitutive/' \
