@@ -221,8 +221,9 @@ def main():
                 try:
                     constitutive_exons_gff = glob('%s/*.gff' %
                                               constitutive_exons_dir)[0]
-                    # with open(constitutive_exons_gff) as f:
-                    #     pass
+                    with open(constitutive_exons_gff) as f:
+                        print 'trying to open', constitutive_exons_gff
+                        pass
                 except IndexError:
                     print 'IndexError!'
                     # Make the constitutive exons gff file for finding
