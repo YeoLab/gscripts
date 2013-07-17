@@ -222,7 +222,7 @@ def main():
                                               constitutive_exons_dir)[0]
                     with open(constitutive_exons_gff) as f:
                         pass
-                except IndexError:
+                except:
                     # Make the constitutive exons gff file for finding
                     exon_utils = '%s/exon_utils.py' % miso_scripts_dir
                     event_type_constitutive_dir = '%s/%s_constitutive/' \
