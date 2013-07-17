@@ -224,15 +224,16 @@ def main():
                     # with open(constitutive_exons_gff) as f:
                     #     pass
                 except IndexError:
+                    print 'IndexError!'
                     # Make the constitutive exons gff file for finding
                     exon_utils = '%s/exon_utils.py' % miso_scripts_dir
-                    event_type_constitutive_dir = '%s/%s_constitutive/' \
-                                                  % (base_annotation_dir,
-                                                     event_type)
+                    # event_type_constitutive_dir = '%s/%s_constitutive/' \
+                    #                               % (base_annotation_dir,
+                    #                                  event_type)
                     exon_utils_command = 'python %s --get-const-exons %s ' \
                                  '--output-dir %s' \
                               % (exon_utils, event_type_gff,
-                                 event_type_constitutive_dir)
+                                 constitutive_exons_dir)
                     commands.append(exon_utils_command)
 
                     # Make sure the exon_utils.py commmand of finding
