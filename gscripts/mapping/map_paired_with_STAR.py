@@ -106,45 +106,47 @@ def main():
             zcat_command = ''
 
 
-        for file in glob('*%s1*%s' % (read_number_prefix, file_extension)):
-            pair = file.replace('Rd1', 'Rd2')
-            name = file.replace('_Rd1', '')
+        for read1 in glob('*%s1*%s' % (read_number_prefix, file_extension)):
+            read2 = file.replace('%s1' % read_number_prefix,
+                             '%s2' % read_number_prefix)
+            name = file.replace('_%s1' %read_number_prefix, '')
             cmd_list = []
             cmd_list.append('/home/yeo-lab/software/STAR_2.3.0e/STAR \
         --runMode alignReads \
         --runThreadN 16 \
-        --genomeDir /projects/ps-yeolab/genomes/{}/star/ \
+        --genomeDir /projects/ps-yeolab/genomes/%s/star/ \
         --genomeLoad LoadAndRemove \
-        --readFilesIn {}, {} \
-        --outFileNamePrefix {}. \
+        --readFilesIn %s, %s \
+        --outFileNamePrefix %s. \
         --outSAMunmapped Within \
-        --outFilterMultimapNmax 1'.format(species, file, pair, name))
+        --outFilterMultimapNmax 1 %s' % (species, read1, read2, name,
+                                         zcat_command))
 
             sub = Submitter(queue_type='PBS', sh_file='map_'+file+'.sh',
                             command_list=cmd_list, job_name='map_'+file)
-            sub.write_sh(submit=True, nodes=1, ppn=16, queue='glean')
+            sub.write_sh(submit=True, nodes=16, ppn=4, queue='glean')
 
 
-        for file in glob('*Rd1*gz'):
-            pair = file.replace('Rd1', 'Rd2')
-            name = file.replace('_Rd1', '')
-            cmd_list = []
-            cmd_list.append('/home/yeo-lab/software/STAR_2.3.0e/STAR \
-        --runMode alignReads \
-        --runThreadN 16 \
-        --genomeDir /projects/ps-yeolab/genomes/{}/star/ \
-        --genomeLoad LoadAndRemove \
-        --readFilesCommand zcat \
-        --readFilesIn {},{} \
-        --outFileNamePrefix {}. \
-        --outSAMunmapped Within \
-        --outFilterMultimapNmax 1'.format(species, file, pair, name))
-
-            sub = Submitter(queue_type='PBS', sh_file='map_'+file+'.sh',
-                            command_list=cmd_list, job_name='map_'+file)
-            sub.write_sh(submit=True, nodes=1, ppn=16, queue='glean')
-
-        pass
+        # for file in glob('*Rd1*gz'):
+        #     pair = file.replace('Rd1', 'Rd2')
+        #     name = file.replace('_Rd1', '')
+        #     cmd_list = []
+        #     cmd_list.append('/home/yeo-lab/software/STAR_2.3.0e/STAR \
+        # --runMode alignReads \
+        # --runThreadN 16 \
+        # --genomeDir /projects/ps-yeolab/genomes/{}/star/ \
+        # --genomeLoad LoadAndRemove \
+        # --readFilesCommand zcat \
+        # --readFilesIn {},{} \
+        # --outFileNamePrefix {}. \
+        # --outSAMunmapped Within \
+        # --outFilterMultimapNmax 1'.format(species, file, pair, name))
+        #
+        #     sub = Submitter(queue_type='PBS', sh_file='map_'+file+'.sh',
+        #                     command_list=cmd_list, job_name='map_'+file)
+        #     sub.write_sh(submit=True, nodes=1, ppn=16, queue='glean')
+        #
+        # pass
     # If not all the correct arguments are given, break the program and
     # show the usage information
     except Usage, err:
