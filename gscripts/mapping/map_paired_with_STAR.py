@@ -46,7 +46,19 @@ class CommandLine(object):
                                       'files'
                                       '. Most often, this is `fastq`, '
                                       '`fastq.gz`, `fq`, or `fq.gz`')
-        self.parser.add_argument('--STAR')
+        self.parser.add_argument('--STAR', type=str, action='store',
+                                 default='/home/yeo-lab/software/STAR_2.3'
+                                         '.0e/STAR',
+                                 help='Which installation of STAR to use.')
+        self.parser.add_argument('--no-sam2bam-sort-index', type=bool,
+                                 action='store_true', required=False,
+                                 default=False,
+                                 help='The default is to convert the SAM file'
+                                      ' produced by STAR to BAM, '
+                                      'then sort and index it using the '
+                                      'sam_to_bam.py script from MISO. If you'
+                                      ' do not wish to do so, turn off this '
+                                      'functionality, specify this flag.')
 
         if inOpts is None:
             self.args = vars(self.parser.parse_args())
@@ -98,6 +110,7 @@ def main():
         read_number_prefix = cl.args['read_number_prefix']
         file_extension = cl.args['file_extension']
         species = cl.args['species']
+        STAR = cl.args['STAR']
 
         # assume
         if file_extension.endswith('z'):
@@ -107,23 +120,32 @@ def main():
 
 
         for read1 in glob('*%s1*%s' % (read_number_prefix, file_extension)):
+            base_dir = os.path.dirname(read1)
             read2 = read1.replace('%s1' % read_number_prefix,
                              '%s2' % read_number_prefix)
-            name = read1.replace('_%s1' % read_number_prefix, '')
-            cmd_list = []
-            cmd_list.append('/home/yeo-lab/software/STAR_2.3.0e/STAR \
+            filename_prefix = read1 + '.'
+            commands = []
+            commands.append('%s \
         --runMode alignReads \
         --runThreadN 16 \
         --genomeDir /projects/ps-yeolab/genomes/%s/star/ \
         --genomeLoad LoadAndRemove \
+        --outFileNamePrefix %s \
         --readFilesIn %s, %s \
-        --outFileNamePrefix %s. \
         --outSAMunmapped Within \
-        --outFilterMultimapNmax 1 %s' % (species, read1, read2, name,
+        --outFilterMultimapNmax 1 %s'
+                            % (STAR, species, read1, read2, filename_prefix,
                                          zcat_command))
+            commands.append('sleep 500')
+
+            sam = filename_prefix + '.Aligned.out.sam'
+            commands.append('sam_to_bam.py --convert %s %s--ref '
+                            '/projects/ps-yeolab/genomes/%s/chromosomes/all.fa'
+                            '.fai'
+                            % (sam, base_dir, species))
 
             sub = Submitter(queue_type='PBS', sh_file=read1+'_map.sh',
-                            command_list=cmd_list, job_name='map_'+read1)
+                            command_list=commands, job_name='map_'+read1)
             sub.write_sh(submit=True, nodes=16, ppn=4, queue='glean')
 
 

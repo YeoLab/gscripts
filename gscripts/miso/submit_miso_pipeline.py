@@ -169,9 +169,9 @@ def main():
 
         with open(sample_info_file) as f:
             header = f.readline()
-            # print 'header', header
+            print 'header', header
             for line in f:
-                # print 'line', line
+                print 'line', line
                 sample_id, bam, note = line.rstrip().split('\t')
                 sample_ids.append(sample_id)
                 bams.append(bam)
@@ -284,7 +284,7 @@ def main():
         job_name = 'miso_pipeline'
         sub = Submitter(queue_type='PBS', sh_file=submit_sh,
                         command_list=commands, job_name=job_name)
-        print sub.write_sh(submit=True, nodes=16, ppn=2, queue='glean')
+        print sub.write_sh(submit=True, nodes=1, ppn=16, queue='glean')
         '''
         ## Run MISO on a pair of paired-end sample (with insert length distribution with mean 250,
         ## standard deviation 15) using the mouse genome skipped exon annotations using the
