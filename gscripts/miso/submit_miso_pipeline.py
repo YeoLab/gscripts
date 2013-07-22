@@ -181,7 +181,45 @@ def main():
         commands = []
         output_dirs = []
 
+        commands.append('BAMS_AND_IDS="%s"' %
+                        ' '.join(','.join([bam, sample_id])
+                                 for bam, sample_id in zip(bams, sample_ids) ))
+        commands.append('EVENT_TYPE=%s\n' % event_type)
+        commands.append('for BAM, ID in $BAMS_AND_IDS ; do IFS=","')
+        commands.append('   echo')
+        commands.append('   echo "----- $ID -----"')
+        commands.append('   DIR=$(dirname $BAM)')
+        commands.append('   OUT_DIR=$DIR/miso/$EVENT_TYPE/$ID')
+        commands.append("\n   # Create the output directory if it doesn't "
+                        "exist")
+        commands.append('   if [ ! -d $OUT_DIR ] ; then')
+        commands.append('       mkdir -p $OUT_DIR')
+        commands.append('   fi')
+        commands.append('\n   # Remove any *.bed files '
+                        'previously created by --prefilter')
+        commands.append('   rm -rf $OUT_DIR/*.bed\n')
+        commands.append("   # Create the insert size file if it doesn't exist"
+                        "already")
+        commands.append('   INSERT_SIZE_FILE=$BAM.insert_len')
+        commands.append('   if [ ! -e $INSERT_SIZE_FILE ] ; then')
+        commands.append('       INSERT_SIZE_COMMAND="python '
+                        '$PAIRED_END_UTILS_PY $BAM $CONSTITUTIVE_EXONS_GFF '
+                        '$DIR"')
+        commands.append('       date')
+        commands.append('       echo Starting ... $INSERT_SIZE_COMMAND')
+        commands.append('       $INSERT_SIZE_COMMAND')
+        commands.append('   fi')
+        paired_end_utils_command = 'python %s --compute-insert-len ' \
+                                           '%s %s --no-bam-filter ' \
+                                           '--output-dir %s' \
+                                           % (paired_end_utils_py, bam,
+                                              constitutive_exons_gff,
+                                              base_bam_dir)
+
         for sample_id, bam, note in zip(sample_ids, bams, notes):
+            commands.append('\n# --- %s --- #' % sample_id)
+            commands.append('DIR=$(dirname $BAM)')
+            commands.append('OUT_DIR=$DIR/miso/$EVENT_TYPE/')
             # os.path.dirname returns the directory containing the bam file WITHOUT
             # the trailing forward slash: '/'
             # e.g.:
@@ -189,7 +227,8 @@ def main():
             # '/home/gpratt/projects/upf1/analysis/rna/318_UPF11_NoIndex_L004_R1.fq.polyATrim.adapterTrim.rmRep.sorted.bam')
             # '/home/gpratt/projects/upf1/analysis/rna'
             base_bam_dir = os.path.dirname(bam)
-            output_dir = '%s/miso/%s' % (base_bam_dir, event_type)
+            output_dir = '%s/miso/%s/%s' % (base_bam_dir, event_type,
+                                            sample_id)
             output_dirs.append(output_dir)
             try:
                 os.makedirs(output_dir)
@@ -269,11 +308,11 @@ def main():
             #     insert_size_mean = line[0].split('=')[1]
             #     insert_size_stddev = line[1].split('=')[1]
 
-            insert_size_mean_command = "\n INSERT_SIZE_MEAN=$(head -n 1 %s | " \
+            insert_size_mean_command = "INSERT_SIZE_MEAN=$(head -n 1 %s | " \
                                        "sed 's:#::' | cut -d'," \
                                        "' -f1 | cut -d'=' -f2)" \
                                        % (insert_size_file)
-            insert_size_stddev_command = "\n INSERT_SIZE_STDDEV=$(head -n 1 " \
+            insert_size_stddev_command = "INSERT_SIZE_STDDEV=$(head -n 1 " \
                                          "%s | sed 's:#::' | cut -d'," \
                                          "' -f2 | cut -d'=' -f2)" \
                                          % (insert_size_file)
@@ -283,7 +322,7 @@ def main():
             run_events_analysis_command = 'python %s' \
                       ' --compute-genes-psi %s %s --output-dir %s' \
                       ' --read-len %d --paired-end $INSERT_SIZE_MEAN ' \
-                      '$INSERT_SIZE_STDDEV' \
+                      '$INSERT_SIZE_STDDEV --prefilter -p 16' \
                       % (run_events_analysis_py, event_type_index, bam,
                          output_dir, read_len)
             commands.append(run_events_analysis_command)
