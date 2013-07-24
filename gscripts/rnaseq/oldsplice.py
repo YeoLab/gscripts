@@ -50,7 +50,6 @@ def assign_reads(gene, splicedict=None, bam_file=None, alignment_slop=10, flip=T
     wig, jxns, nrCounts, readLengths, reads = readsToWiggle_pysam(subset_reads, (tx_start-1000), (tx_end+1000), signstrand, "center", False)
     
     data["descriptor"] = gene
-    data["prettyName"] = splicedict['prettyName']
     if "SE" in splicedict and "SE" in splicetypes:
         data["SE"] = {}
         for loc in splicedict["SE"]:
@@ -65,7 +64,6 @@ def assign_reads(gene, splicedict=None, bam_file=None, alignment_slop=10, flip=T
                     structurestrip = structure.lstrip("j")
                     
                     structurestrip = tuple(map(int, structurestrip.split(":")))
-                    data["descriptor"] = gene
 
                     if structurestrip in jxns:
                         data["SE"][loc]["IN"] += jxns[structurestrip]
@@ -232,9 +230,7 @@ def retrieve_splicing(species):
                         try:
                             thisExonNumber = gene + "|" +  str(numbered[exons[exonIndexes[0]]]-1)
                         except:
-                            import code
-                            code.interact(local=locals()) 
-
+			    raise	
                             
                         if splicingType is "OV" or splicingType is "RI":
                             continue                    # skip RI and OV... not well defined yet
@@ -436,7 +432,7 @@ def main(options):
     args = []
     for g in genes:
         args.append([g, splicing[g], bamfile, options.slop, options.flip, splicetypes])
-    debug = False
+    debug = True
     data = list()
     if debug:
         for arg in args:
