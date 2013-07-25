@@ -313,7 +313,7 @@ def main():
             sample_id1_dir = '%s/miso/%s/%s/' % (base_dir, event_type,
                                                 sample_id1)
             for sample_id2 in sample_ids:
-                pair = set(sample_id1, sample_id2)
+                pair = set([sample_id1, sample_id2])
                 sample_id2_dir = '%s/miso/%s/%s/' % (base_dir, event_type,
                                                      sample_id2)
 
