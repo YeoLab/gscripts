@@ -202,7 +202,7 @@ def main():
                                  for bam, sample_id in zip(bams, sample_ids) ))
 
         commands.append('EVENT_TYPE=%s\n' % event_type)
-        commands.append('for BAM, ID in $BAMS_AND_IDS ; do IFS=","')
+        commands.append('for BAM,ID in $BAMS_AND_IDS ; do IFS=","')
         commands.append('    echo')
         commands.append('    # Write down the sample ID and the time started '
                         'to know how long each one takes')
@@ -288,7 +288,7 @@ def main():
         # commands.append('IDS="%s"' % ' '.join(sample_ids))
         # commands.append('EVENT_TYPE=%s\n' % event_type)
         #
-        # commands.append('\nfor BAM, ID1 in $BAMS_AND_IDS ; do IFS=","')
+        # commands.append('\nfor BAM,ID1 in $BAMS_AND_IDS ; do IFS=","')
         # commands.append('    DIR=$(dirname $BAM)')
         # commands.append('    mkdir -p $DIR/miso/$EVENT_TYPE/comparisons')
         # commands.append('    for ID2 in $IDS ; do')
