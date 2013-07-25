@@ -93,6 +93,13 @@ class CommandLine(object):
         self.parser.add_argument('--read-len', '-l', type=int, action='store',
                                  help='Read lengths. Assumed to be the same '
                                       'for all samples', required=True)
+        self.parser.add_argument('--num-processes', '-p', type=int,
+                                 action='store', default=16,
+                                 help='Number of subprocesses for MISO to run'
+                                      '. If you are using a computing cluster'
+                                      ' with several processors on a single '
+                                      'node, use the number of processors '
+                                      'you are requesting')
         if inOpts is None:
             self.args = vars(self.parser.parse_args())
         else:
@@ -141,7 +148,8 @@ def main():
         sample_info_file = cl.args['sample_info_file']
 
         try:
-            miso_scripts_dir = os.path.dirname(which('miso')[0])
+            miso = (which('miso')[0]
+            miso_scripts_dir = os.path.dirname(miso)
         except IndexError:
             # If there is an IndexError, that means that 'which' returned an
             # empty list, and thus there is no miso installed on the path.
@@ -159,9 +167,7 @@ def main():
         event_type_gff = glob('%s/%s*.gff' % (base_annotation_dir,
                                                     event_type))
         event_type_index = '%s/%s_index' % (base_annotation_dir, event_type)
-
-        read_len = cl.args['read_len']
-
+        num_processes = cl.args['num_processes']
 
         bams = []
         sample_ids = []
@@ -179,169 +185,119 @@ def main():
 
         # Command-line commands to submit to the cluster
         commands = []
-        output_dirs = []
+        constitutive_exons_dir = '%s/%s_constitutive' % (base_annotation_dir, event_type)
+        # print 'constitutive_exons_dir', constitutive_exons_dir
+        # try:
+        constitutive_exons_gff = glob('%s/*.gff' % constitutive_exons_dir)[0]
 
+        commands.append('MISO=%s' % miso)
+        commands.append('MISO_SCRIPTS_DIR=$(dirname $MISO)')
+        commands.append('RUN_MISO_PY=$MISO_SCRIPTS_DIR/run_miso.py')
+        commands.append('PAIRED_END_UTILS_PY=$MISO_SCRIPTS_DIR/pe_utils.py')
+        commands.append('EVENT_TYPE=%s' % event_type)
+        commands.append('EVENT_TYPE_INDEX=%s' % event_type_index)
+        commands.append('CONSTITUTIVE_EXONS_GFF=%s' % constitutive_exons_gff)
         commands.append('BAMS_AND_IDS="%s"' %
                         ' '.join(','.join([bam, sample_id])
                                  for bam, sample_id in zip(bams, sample_ids) ))
+
         commands.append('EVENT_TYPE=%s\n' % event_type)
         commands.append('for BAM, ID in $BAMS_AND_IDS ; do IFS=","')
-        commands.append('   echo')
-        commands.append('   echo "----- $ID -----"')
-        commands.append('   DIR=$(dirname $BAM)')
-        commands.append('   OUT_DIR=$DIR/miso/$EVENT_TYPE/$ID')
-        commands.append("\n   # Create the output directory if it doesn't "
+        commands.append('    echo')
+        commands.append('    # Write down the sample ID and the time started '
+                        'to know how long each one takes')
+        commands.append('    echo "----- $ID -----"')
+        commands.append('    date')
+        commands.append('    DIR=$(dirname $BAM)')
+        commands.append('    OUT_DIR=$DIR/miso/$EVENT_TYPE/$ID')
+        commands.append("\n   # Create the output directory if it doesn't "\
                         "exist")
-        commands.append('   if [ ! -d $OUT_DIR ] ; then')
-        commands.append('       mkdir -p $OUT_DIR')
-        commands.append('   fi')
-        commands.append('\n   # Remove any *.bed files '
+        commands.append('    if [ ! -d $OUT_DIR ] ; then')
+        commands.append('        mkdir -p $OUT_DIR')
+        commands.append('    fi')
+        commands.append('\n    # Remove any *.bed files '\
                         'previously created by --prefilter')
-        commands.append('   rm -rf $OUT_DIR/*.bed\n')
-        commands.append("   # Create the insert size file if it doesn't exist"
+        commands.append('    rm -rf $OUT_DIR/*.bed\n')
+        commands.append("    # Create the insert size file if it doesn't exist"
                         "already")
-        commands.append('   INSERT_SIZE_FILE=$BAM.insert_len')
-        commands.append('   if [ ! -e $INSERT_SIZE_FILE ] ; then')
-        commands.append('       INSERT_SIZE_COMMAND="python '
-                        '$PAIRED_END_UTILS_PY $BAM $CONSTITUTIVE_EXONS_GFF '
+        commands.append('    INSERT_SIZE_FILE=$BAM.insert_len')
+        commands.append('    if [ ! -e $INSERT_SIZE_FILE ] ; then')
+        commands.append('        INSERT_SIZE_COMMAND="python ' \
+                        '$PAIRED_END_UTILS_PY $BAM $CONSTITUTIVE_EXONS_GFF '\
                         '$DIR"')
-        commands.append('       date')
-        commands.append('       echo Starting ... $INSERT_SIZE_COMMAND')
-        commands.append('       $INSERT_SIZE_COMMAND')
-        commands.append('   fi')
-        paired_end_utils_command = 'python %s --compute-insert-len ' \
-                                           '%s %s --no-bam-filter ' \
-                                           '--output-dir %s' \
-                                           % (paired_end_utils_py, bam,
-                                              constitutive_exons_gff,
-                                              base_bam_dir)
-
-        for sample_id, bam, note in zip(sample_ids, bams, notes):
-            commands.append('\n# --- %s --- #' % sample_id)
-            commands.append('DIR=$(dirname $BAM)')
-            commands.append('OUT_DIR=$DIR/miso/$EVENT_TYPE/')
-            # os.path.dirname returns the directory containing the bam file WITHOUT
-            # the trailing forward slash: '/'
-            # e.g.:
-            # >>> os.path.dirname(
-            # '/home/gpratt/projects/upf1/analysis/rna/318_UPF11_NoIndex_L004_R1.fq.polyATrim.adapterTrim.rmRep.sorted.bam')
-            # '/home/gpratt/projects/upf1/analysis/rna'
-            base_bam_dir = os.path.dirname(bam)
-            output_dir = '%s/miso/%s/%s' % (base_bam_dir, event_type,
-                                            sample_id)
-            output_dirs.append(output_dir)
-            try:
-                os.makedirs(output_dir)
-            except:
-                # This is just to silence the error of directory creation
-                # if it's
-                pass
-
-            # Get the insert size from the *.insert_len file created by
-            # pe_utils.py
-            # First line of '.insert_len' file:
-            # #mean=158.4,sdev=13.7,dispersion=1.1,num_pairs=20091
-            # This file is assumed to be the '.bam' file + '.insert_len'
-            insert_size_file = bam + '.insert_len'
-
-            # first compute insert sizes
-            # python ~/obot_virtualenv/bin/pe_utils.py --compute-insert-len $(
-            # echo $BAMS | tr ' ' ,) ~/genomes/miso_annotations/hg19/AFE_constitutive/AFE.hg19.min_20.const_exons.gff --no-bam-filter --output-dir insert_sizes
-
-            try:
-                with open(insert_size_file) as f:
-                    pass
-
-            except IOError:
-                # ***
-                # Assume that the corresponding constitutive exon file
-                # exists
-                # ***
-
-                constitutive_exons_dir = '%s/%s_constitutive' % (
-                    base_annotation_dir, event_type)
-                # print 'constitutive_exons_dir', constitutive_exons_dir
-                # try:
-                constitutive_exons_gff = glob('%s/*.gff' %
-                                          constitutive_exons_dir)[0]
-                #     with open(constitutive_exons_gff) as f:
-                #         print 'trying to open', constitutive_exons_gff
-                #         pass
-                # except IndexError:
-                #     print 'IndexError!'
-                #     # Make the constitutive exons gff file for finding
-                #     exon_utils = '%s/exon_utils.py' % miso_scripts_dir
-                #     # event_type_constitutive_dir = '%s/%s_constitutive/' \
-                #     #                               % (base_annotation_dir,
-                #     #                                  event_type)
-                #     exon_utils_command = 'python %s --get-const-exons %s ' \
-                #                  '--output-dir %s' \
-                #               % (exon_utils, event_type_gff,
-                #                  constitutive_exons_dir)
-                #     commands.append(exon_utils_command)
-                #
-                #     # Make sure the exon_utils.py command of finding
-                #     # constitutive exons finished before continuing on to
-                #     # find the insert length mean and standard deviation
-                #     commands.append('sleep 500')
-
-                # constitutive_exons_gff = glob('%s/*.gff' %
-                #                               constitutive_exons_dir)[0]
-                paired_end_utils_command = 'python %s --compute-insert-len ' \
-                                           '%s %s --no-bam-filter ' \
-                                           '--output-dir %s' \
-                                           % (paired_end_utils_py, bam,
-                                              constitutive_exons_gff,
-                                              base_bam_dir)
-                commands.append(paired_end_utils_command)
-
-                # Make sure the insert size calculation finishes before the
-                # run_events_analysis.py command
-                commands.append('sleep 500')
-            #
-            # with open(insert_size_file) as f:
-            #     # remove the starting comment mark '#' and split on commas
-            #     line = f.readline().lstrip('#').split(',')
-            #
-            #     # Keep the insert size mean and standard dev as a string so
-            #     # we don't have to deal with conversion
-            #     insert_size_mean = line[0].split('=')[1]
-            #     insert_size_stddev = line[1].split('=')[1]
-
-            insert_size_mean_command = "INSERT_SIZE_MEAN=$(head -n 1 %s | " \
-                                       "sed 's:#::' | cut -d'," \
-                                       "' -f1 | cut -d'=' -f2)" \
-                                       % (insert_size_file)
-            insert_size_stddev_command = "INSERT_SIZE_STDDEV=$(head -n 1 " \
-                                         "%s | sed 's:#::' | cut -d'," \
-                                         "' -f2 | cut -d'=' -f2)" \
-                                         % (insert_size_file)
-            commands.append(insert_size_mean_command)
-            commands.append(insert_size_stddev_command)
-
-            run_events_analysis_command = 'python %s' \
-                      ' --compute-genes-psi %s %s --output-dir %s' \
-                      ' --read-len %d --paired-end $INSERT_SIZE_MEAN ' \
-                      '$INSERT_SIZE_STDDEV --prefilter -p 16' \
-                      % (run_events_analysis_py, event_type_index, bam,
-                         output_dir, read_len)
-            commands.append(run_events_analysis_command)
-
-        # Try to make it so that the summarization only happens after the
-        # psi computation
-        commands.append('sleep 1000')
-        for output_dir in output_dirs:
-            run_miso_py = '%s/run_miso.py' % miso_scripts_dir
-            summarize_command = 'python %s --summarize-samples %s %s' \
-                                % (run_miso_py, output_dir, output_dir)
-            commands.append(summarize_command)
+        commands.append('        date')
+        commands.append('        echo Starting ... $INSERT_SIZE_COMMAND')
+        commands.append('        $INSERT_SIZE_COMMAND')
+        commands.append('    fi')
+        commands.append('    # Extract the insert size mean and standard '
+                        'deviation')
+        commands.append("    INSERT_SIZE_MEAN=$(head -n 1 $INSERT_SIZE_FILE "
+                            "| sed 's:#::' | cut -d'," \
+                            "' -f1 | cut -d'=' -f2)")
+        commands.append("    INSERT_SIZE_STDDEV=$(head -n 1 "
+                            "$INSERT_SIZE_FILE "
+                            "| sed 's:#::' | cut -d'," \
+                            "' -f2 | cut -d'=' -f2)")
+        commands.append('\n    # Assuming that the first read of the bam file'
+                        ' is representative, such that all the reads in the '
+                        '# file are exactly the same length, we can take the '
+                        'first read from the bam file and measure its length,'
+                        '# and use that for our algorithm')
+        commands.append("    READ_LEN=$(samtools view $BAM | head -n 1 | "
+                        "cut -f 10 | awk '{ print length }')")
+        commands.append('\n    echo')
+        commands.append('    date')
+        commands.append('    MISO_COMMAND="python $MISO --run '
+                        '$EVENT_TYPE_INDEX $BAM '
+                        '--output_dir $OUT_DIR --read-len $READ_LEN '
+                        '--paired-end '
+                        '$INSERT_SIZE_MEAN $INSERT_SIZE_STDDEV -p %d '
+                        '--no-filter-events"' % num_processes)
+        commands.append('    echo Starting ...... $MISO_COMMAND')
+        commands.append('    $MISO_COMMAND')
+        commands.append('\n    # Now summarize the findings')
+        commands.append('    '
+                        'SUMMARIZE_COMMAND="python $RUN_MISO_PY '
+                        '--summarize-samples $OUT_DIR $OUT_DIR"')
+        commands.append('    echo')
+        commands.append('    date')
+        commands.append('    echo Starting .... $SUMMARIZE_COMMAND')
+        commands.append('done')
 
         # Put the submitter script wherever the command was run from
-        submit_sh = 'submit_miso.sh'
-        job_name = 'miso_pipeline'
+        submit_sh = 'miso.sh'
+        job_name = 'miso'
         sub = Submitter(queue_type='PBS', sh_file=submit_sh,
                         command_list=commands, job_name=job_name)
-        print sub.write_sh(submit=True, nodes=1, ppn=16, queue='glean')
+        pbs_id = sub.write_sh(submit=True, nodes=1, ppn=16, queue='home-yeo')
+        print pbs_id
+
+        #TODO: write run comparisons script. skip duplicates
+        # # Run comparisons
+        # commands = []
+        # commands.append('MISO=%s' % miso)
+        # commands.append('MISO_SCRIPTS_DIR=$(dirname $MISO)')
+        # commands.append('RUN_MISO_PY=$MISO_SCRIPTS_DIR/run_miso.py')
+        # commands.append('PAIRED_END_UTILS_PY=$MISO_SCRIPTS_DIR/pe_utils.py')
+        # commands.append('EVENT_TYPE=%s' % event_type)
+        # commands.append('EVENT_TYPE_INDEX=%s' % event_type_index)
+        # commands.append('CONSTITUTIVE_EXONS_GFF=%s' % constitutive_exons_gff)
+        # commands.append('BAMS_AND_IDS="%s"' %
+        #                 ' '.join(','.join([bam, sample_id])
+        #                          for bam, sample_id in zip(bams, sample_ids) ))
+        # commands.append('IDS="%s"' % ' '.join(sample_ids))
+        # commands.append('EVENT_TYPE=%s\n' % event_type)
+        #
+        # commands.append('\nfor BAM, ID1 in $BAMS_AND_IDS ; do IFS=","')
+        # commands.append('    DIR=$(dirname $BAM)')
+        # commands.append('    mkdir -p $DIR/miso/$EVENT_TYPE/comparisons')
+        # commands.append('    for ID2 in $IDS ; do')
+        # commands.append('        if [ $ID1 != $ID2 ] ; then')
+        # commands.append('            mkdir -p '
+        #                 '$DIR/miso/$EVENT_TYPE/comparisons/$ID1\_vs_$ID2')
+        # commands.append('            echo')
+
+
         '''
         ## Run MISO on a pair of paired-end sample (with insert length distribution with mean 250,
         ## standard deviation 15) using the mouse genome skipped exon annotations using the
