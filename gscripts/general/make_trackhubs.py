@@ -1,5 +1,5 @@
 '''
-Created on Mar 7, 2013
+reated on Mar 7, 2013
 
 @author: gabrielp
 
@@ -108,7 +108,9 @@ if __name__ == "__main__":
             trackdb.add_tracks(aggregate)
     
     bigBed_files = [track for track in remaining_files if track.endswith(".bb") or track.endswith(".bigBed")]
+
     for bigBed_file in bigBed_files:
+        color = "0,100,0" if "pos" in bigBed_file else "100,0,0"
         base_track = os.path.basename(bigBed_file)
         track = Track(
             name = base_track,
@@ -120,7 +122,7 @@ if __name__ == "__main__":
             local_fn = track,
             remote_fn = os.path.join(upload_dir, GENOME, base_track)
             )
-
+        trackdb.add_tracks(track)
     result = hub.render()
     hub.remote_fn = os.path.join(upload_dir, "hub.txt") 
     for track in trackdb.tracks:

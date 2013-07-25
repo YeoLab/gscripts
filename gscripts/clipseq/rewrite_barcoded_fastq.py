@@ -24,5 +24,5 @@ with open(options.fastq) as fastq_file, open(options.out_file, 'w') as out_file,
     read_iterator = (reformat_read(read) for read in SeqIO.parse(fastq_file, 'fastq'))
 
     SeqIO.write(read_iterator, out_file, 'fastq')
-    for barcode, count in sorted(barcode_counts.items(), key=lambda x: x[1]):
+    for barcode, count in sorted(barcode_counts.items(), key=lambda x: x[1], reverse=True):
         metrics_file.write("%s\t%s\n" % (barcode, count))
