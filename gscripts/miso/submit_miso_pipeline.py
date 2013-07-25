@@ -175,9 +175,9 @@ def main():
 
         with open(sample_info_file) as f:
             header = f.readline()
-            print 'header', header
+            # print 'header', header
             for line in f:
-                print 'line', line.rstrip().split('\t')
+                # print 'line', line.rstrip().split('\t')
                 sample_id, bam, note = line.rstrip().split('\t')
                 sample_ids.append(sample_id)
                 bams.append(bam)
@@ -202,8 +202,12 @@ def main():
                                  for bam, sample_id in zip(bams, sample_ids) ))
 
         commands.append('EVENT_TYPE=%s\n' % event_type)
-        commands.append('for BAM,ID in $BAMS_AND_IDS ; do IFS=","')
-        commands.append('    echo')
+        commands.append('for i in $BAMS_AND_IDS ; do IFS=","')
+        commands.append('    # Extract the data from the tuple')
+        commands.append('    set $i')
+        commands.append('    BAM=$1')
+        commands.append('    ID=$2')
+        commands.append('\n    echo')
         commands.append('    # Write down the sample ID and the time started '
                         'to know how long each one takes')
         commands.append('    echo "----- $ID -----"')
