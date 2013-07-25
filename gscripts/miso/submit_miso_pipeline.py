@@ -148,7 +148,7 @@ def main():
         sample_info_file = cl.args['sample_info_file']
 
         try:
-            miso = (which('miso')[0]
+            miso = (which('miso')[0])
             miso_scripts_dir = os.path.dirname(miso)
         except IndexError:
             # If there is an IndexError, that means that 'which' returned an
