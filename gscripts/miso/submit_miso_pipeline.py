@@ -90,9 +90,9 @@ class CommandLine(object):
                                       ' in folder'
                                       '/home/obotvinnik/genomes/miso_annotations/hg19/AFE_index/',
                                  default='/home/obotvinnik/genomes/miso_annotations/hg19')
-        self.parser.add_argument('--read-len', '-l', type=int, action='store',
-                                 help='Read lengths. Assumed to be the same '
-                                      'for all samples', required=True)
+        # self.parser.add_argument('--read-len', '-l', type=int, action='store',
+        #                          help='Read lengths. Assumed to be the same '
+        #                               'for all samples', required=True)
         self.parser.add_argument('--num-processes', '-p', type=int,
                                  action='store', default=16,
                                  help='Number of subprocesses for MISO to run'
@@ -100,6 +100,11 @@ class CommandLine(object):
                                       ' with several processors on a single '
                                       'node, use the number of processors '
                                       'you are requesting')
+        self.parser.add_argument('--script-name', type=str, action='store',
+                                 default='miso.sh',
+                                 help='Assign a different name to this '
+                                      'script, and the stderr/stdout produced'
+                                      ' by the PBS job, too.')
         if inOpts is None:
             self.args = vars(self.parser.parse_args())
         else:
