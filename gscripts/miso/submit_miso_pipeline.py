@@ -100,11 +100,14 @@ class CommandLine(object):
                                       ' with several processors on a single '
                                       'node, use the number of processors '
                                       'you are requesting')
-        self.parser.add_argument('--script-name', type=str, action='store',
-                                 default='miso.sh',
+        self.parser.add_argument('--submit-sh-name', type=str, action='store',
+                                 default=None,
                                  help='Assign a different name to this '
                                       'script, and the stderr/stdout produced'
-                                      ' by the PBS job, too.')
+                                      ' by the PBS job, too. The default is '
+                                      'miso_[event_type].sh, for example if '
+                                      'your event type is skipped exons (SE),'
+                                      ' then the script is called miso_SE.sh')
         if inOpts is None:
             self.args = vars(self.parser.parse_args())
         else:
@@ -232,7 +235,9 @@ def main():
         commands.append('    INSERT_SIZE_FILE=$BAM.insert_len')
         commands.append('    if [ ! -e $INSERT_SIZE_FILE ] ; then')
         commands.append('        INSERT_SIZE_COMMAND="python ' \
-                        '$PAIRED_END_UTILS_PY $BAM $CONSTITUTIVE_EXONS_GFF '\
+                        '$PAIRED_END_UTILS_PY --compute-insert-len '
+                        '$CONSTITUTIVE_EXONS_GFF $BAM  --no-bam-filter '
+                        '--output-dir'\
                         '$DIR"')
         commands.append('        date')
         commands.append('        echo Starting ... $INSERT_SIZE_COMMAND')
@@ -274,38 +279,79 @@ def main():
         commands.append('done')
 
         # Put the submitter script wherever the command was run from
-        submit_sh = 'miso.sh'
-        job_name = 'miso'
+        submit_sh = cl.args['submit_sh_name'] if cl.args['submit_sh_name'] is\
+            not None else 'miso_%s.sh' % event_type
+        job_name = 'miso_psi'
         sub = Submitter(queue_type='PBS', sh_file=submit_sh,
                         command_list=commands, job_name=job_name)
-        pbs_id = sub.write_sh(submit=True, nodes=1, ppn=16, queue='home-yeo')
-        print pbs_id
+        compute_psi_pbs_id = sub.write_sh(submit=True, nodes=1, ppn=16,
+                                 queue='home-yeo')
+        print compute_psi_pbs_id
 
         #TODO: write run comparisons script. skip duplicates
         # # Run comparisons
-        # commands = []
-        # commands.append('MISO=%s' % miso)
-        # commands.append('MISO_SCRIPTS_DIR=$(dirname $MISO)')
-        # commands.append('RUN_MISO_PY=$MISO_SCRIPTS_DIR/run_miso.py')
-        # commands.append('PAIRED_END_UTILS_PY=$MISO_SCRIPTS_DIR/pe_utils.py')
-        # commands.append('EVENT_TYPE=%s' % event_type)
-        # commands.append('EVENT_TYPE_INDEX=%s' % event_type_index)
-        # commands.append('CONSTITUTIVE_EXONS_GFF=%s' % constitutive_exons_gff)
-        # commands.append('BAMS_AND_IDS="%s"' %
-        #                 ' '.join(','.join([bam, sample_id])
-        #                          for bam, sample_id in zip(bams, sample_ids) ))
-        # commands.append('IDS="%s"' % ' '.join(sample_ids))
-        # commands.append('EVENT_TYPE=%s\n' % event_type)
-        #
-        # commands.append('\nfor BAM,ID1 in $BAMS_AND_IDS ; do IFS=","')
-        # commands.append('    DIR=$(dirname $BAM)')
-        # commands.append('    mkdir -p $DIR/miso/$EVENT_TYPE/comparisons')
-        # commands.append('    for ID2 in $IDS ; do')
-        # commands.append('        if [ $ID1 != $ID2 ] ; then')
-        # commands.append('            mkdir -p '
-        #                 '$DIR/miso/$EVENT_TYPE/comparisons/$ID1\_vs_$ID2')
-        # commands.append('            echo')
+        commands = []
+        commands.append('MISO=%s' % miso)
+        commands.append('MISO_SCRIPTS_DIR=$(dirname $MISO)')
+        commands.append('RUN_MISO_PY=$MISO_SCRIPTS_DIR/run_miso.py')
+        commands.append('PAIRED_END_UTILS_PY=$MISO_SCRIPTS_DIR/pe_utils.py')
+        commands.append('EVENT_TYPE=%s' % event_type)
+        commands.append('EVENT_TYPE_INDEX=%s' % event_type_index)
+        commands.append('CONSTITUTIVE_EXONS_GFF=%s' % constitutive_exons_gff)
+        commands.append('BAMS_AND_IDS="%s"' %
+                        ' '.join(','.join([bam, sample_id])
+                                 for bam, sample_id in zip(bams, sample_ids) ))
+        commands.append('IDS="%s"' % ' '.join(sample_ids))
+        commands.append('EVENT_TYPE=%s\n' % event_type)
 
+        # Don't know how to keep track of variables already encountered in
+        # bash, so just going to use sets in python
+
+        compared_pairs = set()
+        for bam, sample_id1 in zip(bams, sample_ids):
+            base_dir = os.path.dirname(bam)
+            sample_id1_dir = '%s/miso/%s/%s/' % (base_dir, event_type,
+                                                sample_id1)
+            for sample_id2 in sample_ids:
+                pair = set(sample_id1, sample_id2)
+                sample_id2_dir = '%s/miso/%s/%s/' % (base_dir, event_type,
+                                                     sample_id2)
+
+                vs = '%s_vs_%s' % (sample_id1, sample_id2)
+                comparison_dir = '%s/miso/%s/comparisons/%s' \
+                                 % (base_dir, event_type, vs)
+                if pair not in compared_pairs:
+                    commands.append('\n# Comparing: %s vs %s'
+                                    % (sample_id1, sample_id2))
+                    commands.append('mkdir -p %s' % comparison_dir)
+                    commands.append('\n# Save the comparison command. Needs '
+                                    'to be unique so we can run this in '
+                                    'parallel')
+                    commands.append('%s="python %s/run_miso.py '
+                                    '--compare-samples %s %s %s"'
+                                    % (vs, miso_scripts_dir, sample_id1_dir,
+                                       sample_id2_dir, comparison_dir))
+                    commands.append('# Print the command to stdout with the '
+                                    'date as a record')
+                    commands.append('echo')
+                    commands.append('date')
+                    commands.append('echo Starting ....... $%s' % vs)
+                    commands.append('$%s' % vs)
+
+        # TODO: submit the job but tell it to wait for the previous one.
+        # Maybe also make the summary script a separate thing so we can
+        # parallelize everything.
+        # Put the submitter script wherever the command was run from
+        submit_sh = cl.args['submit_sh_name'].replace('.sh', '_summary.sh') if\
+            cl.args[
+                                                         'submit_sh_name'] is\
+            not None else 'miso_summary_%s.sh' % event_type
+        job_name = 'miso_summary'
+        sub = Submitter(queue_type='PBS', sh_file=submit_sh,
+                        command_list=commands, job_name=job_name,
+                        wait_for=compute_psi_pbs_id)
+        pbs_id = sub.write_sh(submit=True, nodes=1, ppn=16, queue='home-yeo')
+        print pbs_id
 
         '''
         ## Run MISO on a pair of paired-end sample (with insert length distribution with mean 250,
