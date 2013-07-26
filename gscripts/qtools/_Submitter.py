@@ -97,7 +97,7 @@ class Submitter:
         if 'walltime' in kwargs:
             walltime = kwargs['walltime']
         else:
-            walltime = "72:00:00"
+            walltime = "18:00:00"
 
         if 'nodes' in kwargs:
             nodes = kwargs['nodes']

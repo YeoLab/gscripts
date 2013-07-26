@@ -238,7 +238,7 @@ def main():
                         '$PAIRED_END_UTILS_PY --compute-insert-len '
                         '$CONSTITUTIVE_EXONS_GFF $BAM  --no-bam-filter '
                         '--output-dir'\
-                        '$DIR"')
+                        ' $DIR"')
         commands.append('        date')
         commands.append('        echo Starting ... $INSERT_SIZE_COMMAND')
         commands.append('        $INSERT_SIZE_COMMAND')
@@ -281,11 +281,11 @@ def main():
         # Put the submitter script wherever the command was run from
         submit_sh = cl.args['submit_sh_name'] if cl.args['submit_sh_name'] is\
             not None else 'miso_%s.sh' % event_type
-        job_name = 'miso_psi'
+        job_name = 'miso_%s_psi' % event_type
         sub = Submitter(queue_type='PBS', sh_file=submit_sh,
                         command_list=commands, job_name=job_name)
         compute_psi_pbs_id = sub.write_sh(submit=True, nodes=1, ppn=16,
-                                 queue='home-yeo')
+                                 queue='home-yeo', walltime='3:00:00')
         print compute_psi_pbs_id
 
         #TODO: write run comparisons script. skip duplicates
@@ -342,11 +342,13 @@ def main():
         # Maybe also make the summary script a separate thing so we can
         # parallelize everything.
         # Put the submitter script wherever the command was run from
-        submit_sh = cl.args['submit_sh_name'].replace('.sh', '_summary.sh') if\
-            cl.args[
-                                                         'submit_sh_name'] is\
-            not None else 'miso_summary_%s.sh' % event_type
-        job_name = 'miso_summary'
+        submit_sh = cl.args['submit_sh_name'].replace('.sh',
+                                                      '_%s_summary.sh' %
+                                                      event_type) \
+            if cl.args['submit_sh_name'] is \
+            not None else 'miso_%s_summary.sh' % event_type
+
+        job_name = 'miso_%s_summary' % event_type
         sub = Submitter(queue_type='PBS', sh_file=submit_sh,
                         command_list=commands, job_name=job_name,
                         wait_for=compute_psi_pbs_id)
