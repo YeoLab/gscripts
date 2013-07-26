@@ -236,7 +236,7 @@ def main():
         commands.append('    if [ ! -e $INSERT_SIZE_FILE ] ; then')
         commands.append('        INSERT_SIZE_COMMAND="python ' \
                         '$PAIRED_END_UTILS_PY --compute-insert-len '
-                        '$CONSTITUTIVE_EXONS_GFF $BAM  --no-bam-filter '
+                        '$BAM $CONSTITUTIVE_EXONS_GFF  --no-bam-filter '
                         '--output-dir'\
                         ' $DIR"')
         commands.append('        date')
@@ -352,7 +352,8 @@ def main():
         sub = Submitter(queue_type='PBS', sh_file=submit_sh,
                         command_list=commands, job_name=job_name,
                         wait_for=compute_psi_pbs_id)
-        pbs_id = sub.write_sh(submit=True, nodes=1, ppn=16, queue='home-yeo')
+        pbs_id = sub.write_sh(submit=True, nodes=1, ppn=16, queue='home-yeo',
+                              walltime='8`:00:00')
         print pbs_id
 
         '''
