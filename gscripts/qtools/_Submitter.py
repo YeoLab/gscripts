@@ -2,6 +2,23 @@
 
 __author__ = 'Patrick Liu'
 
+# TODO: simplify Submitter()/write_sh() workflow. Right now it's confusing
+# which options go where. (talk to Patrick)
+# Also, add email option that checks for $EMAIL variable (Olga: also add this
+#  to your miso pipeline script)
+
+# To depend on a job array:
+#    Array Dependencies
+#        It  is  now possible to have a job depend on an array. These dependencies are in the form depend=arraydep:arrayid[num]. If [num] is not
+#        present, then the dependencies applies to the entire array. If [num] is present, then num means the number of jobs that must  meet  the
+#        condition for the dependency to be satisfied.
+#    afterstartarray:arrayid[count]
+#        This job may be scheduled for execution only after jobs in arrayid have started execution.
+#
+#    afterokarray:arrayid[count]
+#        This job may be scheduled for execution only after jobs in arrayid have terminated with no errors.
+
+
 from collections import defaultdict
 import re
 import math
@@ -24,7 +41,7 @@ class Submitter:
 
     def set_value(self, **kwargs):
         """
-        Set class attributes by passing keyword arguement and values
+        Set class attributes by passing keyword argument and values
         """
         for key in kwargs:
             self.data[key] = kwargs[key]

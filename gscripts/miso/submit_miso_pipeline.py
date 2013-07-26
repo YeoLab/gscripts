@@ -241,7 +241,7 @@ def main():
                         ' $DIR"')
         commands.append('        date')
         commands.append('        echo Starting ... $INSERT_SIZE_COMMAND')
-        commands.append('        $INSERT_SIZE_COMMAND')
+        commands.append('        $INSERT_SIZE_COMMAND > $INSERT_SIZE_FILE.out')
         commands.append('    fi')
         commands.append('    # Extract the insert size mean and standard '
                         'deviation')
@@ -263,10 +263,12 @@ def main():
         commands.append('    date')
         commands.append('    MISO_COMMAND="python $MISO --run '
                         '$EVENT_TYPE_INDEX $BAM '
-                        '--output_dir $OUT_DIR --read-len $READ_LEN '
+                        '--output-dir $OUT_DIR --read-len $READ_LEN '
                         '--paired-end '
                         '$INSERT_SIZE_MEAN $INSERT_SIZE_STDDEV -p %d '
-                        '--no-filter-events"' % num_processes)
+                        '--no-filter-events > $OUT_DIR/compute_psi.out '
+                        '2>$OUT_DIR/compute_psi.err"'
+                        % num_processes)
         commands.append('    echo Starting ...... $MISO_COMMAND')
         commands.append('    $MISO_COMMAND')
         commands.append('\n    # Now summarize the findings')
