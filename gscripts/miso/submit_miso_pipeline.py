@@ -6,17 +6,13 @@ import argparse
 
 # Submit jobs to the cluster
 from gscripts.qtools import Submitter
-#import gscripts
-from gscripts import which
 
 # File name manipulations
 import os
 
-# Exit the program cleanly
-import sys
+# The program that does all the heavy lifting of creating the submitter scripts
+from MisoPipeline import MisoPipeline
 
-# Get groups of files with similar names
-from glob import glob
 
 '''
 Author: olga
@@ -100,14 +96,85 @@ class CommandLine(object):
                                       ' with several processors on a single '
                                       'node, use the number of processors '
                                       'you are requesting')
-        self.parser.add_argument('--submit-sh-name', type=str, action='store',
-                                 default=None,
-                                 help='Assign a different name to this '
-                                      'script, and the stderr/stdout produced'
+        self.parser.add_argument('--submit-sh-suffix', type=str,
+                                 action='store',
+                                 default='',
+                                 help='Add a suffix to this '
+                                      'script name, and the stderr/stdout '
+                                      'produced'
                                       ' by the PBS job, too. The default is '
                                       'miso_[event_type].sh, for example if '
                                       'your event type is skipped exons (SE),'
-                                      ' then the script is called miso_SE.sh')
+                                      ' then the script is called miso_SE.sh '
+                                      'If you add the argument '
+                                      '"--submit-sh-suffix pooled" then the '
+                                      'submit filename would be '
+                                      '"miso_pooled_SE.sh"')
+        self.parser.add_argument('--extra-miso-arguments', type=str,
+                                 action='store',
+                                 default='',
+                                 help='Any additional MISO "compute psi" '
+                                      'arguments you want'
+                                      ' to supply to all the samples. The '
+                                      'default is no additional arguments. '
+                                      'Protect this argument with quotes so '
+                                      'it does not get interpreted as an '
+                                      'argument to the MISO pipeline script, '
+                                      'e.g. --miso-arguments "--no-bam-filter'
+                                      ' --settings-filename '
+                                      'miso_settings_min_event_reads5.txt"')
+
+        # Which part of the pipeline do you want to run?
+        pipeline_part = self.parser.add_mutually_exclusive_group(required=True)
+        pipeline_part.add_argument('--insert-len-only', type=bool,
+                                 action='store_true', default=False,
+                                 required=False,
+                                 help='Only compute the insert lengths of the'
+                                      ' bam files provided in the sample info'
+                                      ' file. Need the event type for this '
+                                      'because we will build the library of '
+                                      'insert sizes from these events. A '
+                                      'single job to the cluster will be '
+                                      'submitted.')
+        pipeline_part.add_argument('--psi-only', type=bool,
+                                   action='store_true', default=False,
+                                   required=False,
+                                   help='Only compute "psi" (percent-spliced-'
+                                        'in) values for the provided samples.'
+                                        ' Do not compute the insert lengths ('
+                                        'assumes the insert length files are '
+                                        'already there), '
+                                        'and do not summarize. A single job '
+                                        'to the cluster will be submitted.')
+        pipeline_part.add_argument('--summary-only', type=bool,
+                                   action='store_true', default=False,
+                                   help='Only compute the summary of all '
+                                        '"psi" (percent-spliced-in) values '
+                                        'for the provided samples, '
+                                        'creating a tab-delimited file of '
+                                        'every splicing event. Do not '
+                                        'compute the insert lengths or the '
+                                        'psi values themselves (assumes the '
+                                        'psi values are already there). A '
+                                        'single job to the cluster will be '
+                                        'submitted.')
+        pipeline_part.add_argument('--psi-and-summary', type=bool,
+                                   action='store_true', default=False,
+                                   help='Compute the "psi" ('
+                                        'percent-spliced-in) values for the '
+                                        'provided samples, and summarize the '
+                                        'output, which creates a '
+                                        'tab-delimited file of every splicing'
+                                        ' event. This is handy if you have '
+                                        'already computed the insert lengths '
+                                        'separately')
+        pipeline_part.add_argument('--run-all', type=bool, action='store_true',
+                                   help='Compute the insert length mean and '
+                                        'standard deviation, '
+                                        'the "psi" (percent spliced-in) '
+                                        'scores of all splicing events, '
+                                        'and summarize the relevant events')
+
         if inOpts is None:
             self.args = vars(self.parser.parse_args())
         else:
@@ -138,6 +205,8 @@ class Usage(Exception):
         self.msg = msg
 
 
+
+
 # Function: main
 def main():
     '''
@@ -151,212 +220,22 @@ def main():
     '''
     cl = CommandLine()
     try:
-        event_type = cl.args['event_type']
+        miso_pipeline = MisoPipeline(cl)
 
-        sample_info_file = cl.args['sample_info_file']
+        # Read the arguments to see which
+        if cl.args['run_all']:
+            miso_pipeline.run_all()
+        elif cl.args['insert_len_only']:
+            miso_pipeline.insert_len()
+        elif cl.args['psi_only']:
+            miso_pipeline.psi()
+        elif cl.args['summary_only']:
+            miso_pipeline.summary()
+        elif cl.args['psi_and_summary']:
+            miso_pipeline.psi_and_summary()
 
-        try:
-            miso = (which('miso')[0])
-            miso_scripts_dir = os.path.dirname(miso)
-        except IndexError:
-            # If there is an IndexError, that means that 'which' returned an
-            # empty list, and thus there is no miso installed on the path.
-            print >> sys.stderr, '"which miso" returned empty list, ' \
-                                 'the program miso does not exist on your ' \
-                                 'command line'
-            sys.exit(1)
 
-        run_events_analysis_py = '%s/run_events_analysis.py' % miso_scripts_dir
-        paired_end_utils_py = '%s/pe_utils.py' % miso_scripts_dir
-        base_annotation_dir = cl.args['base_annotation_dir']
-        base_annotation_dir = base_annotation_dir if not base_annotation_dir\
-            .endswith('/') else base_annotation_dir.rstrip('/')
 
-        event_type_gff = glob('%s/%s*.gff' % (base_annotation_dir,
-                                                    event_type))
-        event_type_index = '%s/%s_index' % (base_annotation_dir, event_type)
-        num_processes = cl.args['num_processes']
-
-        bams = []
-        sample_ids = []
-        notes = []
-
-        with open(sample_info_file) as f:
-            header = f.readline()
-            # print 'header', header
-            for line in f:
-                # print 'line', line.rstrip().split('\t')
-                sample_id, bam, note = line.rstrip().split('\t')
-                sample_ids.append(sample_id)
-                bams.append(bam)
-                notes.append(note)
-
-        # Command-line commands to submit to the cluster
-        commands = []
-        constitutive_exons_dir = '%s/%s_constitutive' % (base_annotation_dir, event_type)
-        # print 'constitutive_exons_dir', constitutive_exons_dir
-        # try:
-        constitutive_exons_gff = glob('%s/*.gff' % constitutive_exons_dir)[0]
-
-        commands.append('MISO=%s' % miso)
-        commands.append('MISO_SCRIPTS_DIR=$(dirname $MISO)')
-        commands.append('RUN_MISO_PY=$MISO_SCRIPTS_DIR/run_miso.py')
-        commands.append('PAIRED_END_UTILS_PY=$MISO_SCRIPTS_DIR/pe_utils.py')
-        commands.append('EVENT_TYPE=%s' % event_type)
-        commands.append('EVENT_TYPE_INDEX=%s' % event_type_index)
-        commands.append('CONSTITUTIVE_EXONS_GFF=%s' % constitutive_exons_gff)
-        commands.append('BAMS_AND_IDS="%s"' %
-                        ' '.join(','.join([bam, sample_id])
-                                 for bam, sample_id in zip(bams, sample_ids) ))
-
-        commands.append('EVENT_TYPE=%s\n' % event_type)
-        commands.append('for i in $BAMS_AND_IDS ; do IFS=","')
-        commands.append('    # Extract the data from the tuple')
-        commands.append('    set $i')
-        commands.append('    BAM=$1')
-        commands.append('    ID=$2')
-        commands.append('\n    echo')
-        commands.append('    # Write down the sample ID and the time started '
-                        'to know how long each one takes')
-        commands.append('    echo "----- $ID -----"')
-        commands.append('    date')
-        commands.append('    DIR=$(dirname $BAM)')
-        commands.append('    OUT_DIR=$DIR/miso/$EVENT_TYPE/$ID')
-        commands.append("\n   # Create the output directory if it doesn't "\
-                        "exist")
-        commands.append('    if [ ! -d $OUT_DIR ] ; then')
-        commands.append('        mkdir -p $OUT_DIR')
-        commands.append('    fi')
-        commands.append('\n    # Remove any *.bed files '\
-                        'previously created by --prefilter')
-        commands.append('    rm -rf $OUT_DIR/*.bed\n')
-        commands.append("    # Create the insert size file if it doesn't exist"
-                        "already")
-        commands.append('    INSERT_SIZE_FILE=$BAM.insert_len')
-        commands.append('    if [ ! -e $INSERT_SIZE_FILE ] ; then')
-        commands.append('        INSERT_SIZE_COMMAND="python ' \
-                        '$PAIRED_END_UTILS_PY --compute-insert-len '
-                        '$BAM $CONSTITUTIVE_EXONS_GFF  --no-bam-filter '
-                        '--output-dir'\
-                        ' $DIR"')
-        commands.append('        date')
-        commands.append('        echo Starting ... $INSERT_SIZE_COMMAND')
-        commands.append('        $INSERT_SIZE_COMMAND > $INSERT_SIZE_FILE.out')
-        commands.append('    fi')
-        commands.append('    # Extract the insert size mean and standard '
-                        'deviation')
-        commands.append("    INSERT_SIZE_MEAN=$(head -n 1 $INSERT_SIZE_FILE "
-                            "| sed 's:#::' | cut -d'," \
-                            "' -f1 | cut -d'=' -f2)")
-        commands.append("    INSERT_SIZE_STDDEV=$(head -n 1 "
-                            "$INSERT_SIZE_FILE "
-                            "| sed 's:#::' | cut -d'," \
-                            "' -f2 | cut -d'=' -f2)")
-        commands.append('\n    # Assuming that the first read of the bam file'
-                        ' is representative, such that all the reads in the '
-                        '# file are exactly the same length, we can take the '
-                        'first read from the bam file and measure its length,'
-                        '# and use that for our algorithm')
-        commands.append("    READ_LEN=$(samtools view $BAM | head -n 1 | "
-                        "cut -f 10 | awk '{ print length }')")
-        commands.append('\n    echo')
-        commands.append('    date')
-        commands.append('    MISO_COMMAND="python $MISO --run '
-                        '$EVENT_TYPE_INDEX $BAM '
-                        '--output-dir $OUT_DIR --read-len $READ_LEN '
-                        '--paired-end '
-                        '$INSERT_SIZE_MEAN $INSERT_SIZE_STDDEV -p %d '
-                        '--no-filter-events > $OUT_DIR/compute_psi.out '
-                        '2>$OUT_DIR/compute_psi.err"'
-                        % num_processes)
-        commands.append('    echo Starting ...... $MISO_COMMAND')
-        commands.append('    $MISO_COMMAND')
-        commands.append('\n    # Now summarize the findings')
-        commands.append('    '
-                        'SUMMARIZE_COMMAND="python $RUN_MISO_PY '
-                        '--summarize-samples $OUT_DIR $OUT_DIR"')
-        commands.append('    echo')
-        commands.append('    date')
-        commands.append('    echo Starting .... $SUMMARIZE_COMMAND')
-        commands.append('done')
-
-        # Put the submitter script wherever the command was run from
-        submit_sh = cl.args['submit_sh_name'] if cl.args['submit_sh_name'] is\
-            not None else 'miso_%s.sh' % event_type
-        job_name = 'miso_%s_psi' % event_type
-        sub = Submitter(queue_type='PBS', sh_file=submit_sh,
-                        command_list=commands, job_name=job_name)
-        compute_psi_pbs_id = sub.write_sh(submit=True, nodes=1, ppn=16,
-                                 queue='home-yeo', walltime='3:00:00')
-        print compute_psi_pbs_id
-
-        #TODO: write run comparisons script. skip duplicates
-        # # Run comparisons
-        commands = []
-        commands.append('MISO=%s' % miso)
-        commands.append('MISO_SCRIPTS_DIR=$(dirname $MISO)')
-        commands.append('RUN_MISO_PY=$MISO_SCRIPTS_DIR/run_miso.py')
-        commands.append('PAIRED_END_UTILS_PY=$MISO_SCRIPTS_DIR/pe_utils.py')
-        commands.append('EVENT_TYPE=%s' % event_type)
-        commands.append('EVENT_TYPE_INDEX=%s' % event_type_index)
-        commands.append('CONSTITUTIVE_EXONS_GFF=%s' % constitutive_exons_gff)
-        commands.append('BAMS_AND_IDS="%s"' %
-                        ' '.join(','.join([bam, sample_id])
-                                 for bam, sample_id in zip(bams, sample_ids) ))
-        commands.append('IDS="%s"' % ' '.join(sample_ids))
-        commands.append('EVENT_TYPE=%s\n' % event_type)
-
-        # Don't know how to keep track of variables already encountered in
-        # bash, so just going to use sets in python
-
-        compared_pairs = set()
-        for bam, sample_id1 in zip(bams, sample_ids):
-            base_dir = os.path.dirname(bam)
-            sample_id1_dir = '%s/miso/%s/%s/' % (base_dir, event_type,
-                                                sample_id1)
-            for sample_id2 in sample_ids:
-                pair = set([sample_id1, sample_id2])
-                sample_id2_dir = '%s/miso/%s/%s/' % (base_dir, event_type,
-                                                     sample_id2)
-
-                vs = '%s_vs_%s' % (sample_id1, sample_id2)
-                comparison_dir = '%s/miso/%s/comparisons/%s' \
-                                 % (base_dir, event_type, vs)
-                if pair not in compared_pairs:
-                    commands.append('\n# Comparing: %s vs %s'
-                                    % (sample_id1, sample_id2))
-                    commands.append('mkdir -p %s' % comparison_dir)
-                    commands.append('\n# Save the comparison command. Needs '
-                                    'to be unique so we can run this in '
-                                    'parallel')
-                    commands.append('%s="python %s/run_miso.py '
-                                    '--compare-samples %s %s %s"'
-                                    % (vs, miso_scripts_dir, sample_id1_dir,
-                                       sample_id2_dir, comparison_dir))
-                    commands.append('# Print the command to stdout with the '
-                                    'date as a record')
-                    commands.append('echo')
-                    commands.append('date')
-                    commands.append('echo Starting ....... $%s' % vs)
-                    commands.append('$%s' % vs)
-
-        # TODO: submit the job but tell it to wait for the previous one.
-        # Maybe also make the summary script a separate thing so we can
-        # parallelize everything.
-        # Put the submitter script wherever the command was run from
-        submit_sh = cl.args['submit_sh_name'].replace('.sh',
-                                                      '_%s_summary.sh' %
-                                                      event_type) \
-            if cl.args['submit_sh_name'] is \
-            not None else 'miso_%s_summary.sh' % event_type
-
-        job_name = 'miso_%s_summary' % event_type
-        sub = Submitter(queue_type='PBS', sh_file=submit_sh,
-                        command_list=commands, job_name=job_name,
-                        wait_for=compute_psi_pbs_id)
-        pbs_id = sub.write_sh(submit=True, nodes=1, ppn=16, queue='home-yeo',
-                              walltime='8:00:00')
-        print pbs_id
 
         '''
         ## Run MISO on a pair of paired-end sample (with insert length distribution with mean 250,

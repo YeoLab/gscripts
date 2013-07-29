@@ -61,10 +61,10 @@ class Submitter:
         Add passed keyword and value to a list of attributes that
         will be passed to the scheduler
         """
-        if 'addtl_resc' not in self.data:
-            self.data['addtl_resc'] = defaultdict(list)
+        if 'additional_resources' not in self.data:
+            self.data['additional_resources'] = defaultdict(list)
 
-        self.data['addtl_resc'][kw].append(value)
+        self.data['additional_resources'][kw].append(value)
 
     def write_sh(self, **kwargs):
         """
@@ -88,7 +88,7 @@ class Submitter:
 
         Optional class attributes:
         wait_for: list of ID's that this job will wait for before starting
-        addtl_resc: keyword-value pairs of scheduler attributes, set with add_resource()
+        additional_resources: keyword-value pairs of scheduler attributes, set with add_resource()
         out: the standard output (stdout) file created by the queue. Defaults
         to [sh_file].out
         err: the standard error (stderr) file created by the queue. Defaults
@@ -124,7 +124,7 @@ class Submitter:
         if 'ppn' in kwargs:
             ppn = kwargs['ppn']
         else:
-            ppn = 1
+            ppn = 16
 
         if 'account' in kwargs:
             account = kwargs['account']
@@ -186,10 +186,10 @@ class Submitter:
                               % (queue_param_prefix,
                                  ''.join(self.data['wait_for'])))
 
-        if 'addtl_resc' in self.data:
-            if self.data['addtl_resc']:
-                for key in self.data['addtl_resc']:
-                    for value in self.data['addtl_resc'][key]:
+        if 'additional_resources' in self.data:
+            if self.data['additional_resources']:
+                for key in self.data['additional_resources']:
+                    for value in self.data['additional_resources'][key]:
                         sh_file.write("%s %s %s\n" % (queue_param_prefix,
                                                       key, value))
         # Olga: The 'number_jobs' variable is unused.
