@@ -68,7 +68,7 @@ if __name__ == "__main__":
 
     key_func = lambda x: x.split(".")[:-2]
     for bw_group, files in groupby(sorted(bw_files, key=key_func), key_func):
-            long_name = os.path.basename(bw_group[0])
+            long_name = os.path.basename(".".join(bw_group[:2]))
             aggregate = AggregateTrack(
                          name="_".join(bw_group),
                          tracktype='bigWig',
