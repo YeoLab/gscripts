@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 """"
 
 barcode_collapse.py  read in a .bam file where the 
@@ -6,7 +7,6 @@ are the barcode and merge reads mapped to the same position that have the same b
 
 """
 
-
 from collections import Counter
 import gzip
 from optparse import OptionParser
@@ -14,9 +14,6 @@ import sys
 
 import numpy as np
 import pysam
-
-
-
 
 def barcode_collapse(inBam, outBam, barcoded, use_stop):
     
