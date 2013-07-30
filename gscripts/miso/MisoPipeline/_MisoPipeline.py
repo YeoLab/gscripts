@@ -229,10 +229,10 @@ class MisoPipeline(object):
 
 
             psi_command = 'python %s --run %s %s --output-dir %s ' \
-                                  '-p %d %s >' \
+                                  '--read-len %s -p %d %s >' \
                                   ' %s 2> %s' \
                                   % (self.miso, self.event_type_index, bam,
-                                     output_dir, self.num_processes,
+                                     output_dir, read_len, self.num_processes,
                                      self.extra_miso_arguments, stdout,
                                      stderr)
             psi_commands.append('date')
