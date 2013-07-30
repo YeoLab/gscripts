@@ -9,7 +9,7 @@ from optparse import OptionParser, SUPPRESS_HELP
 from numpy import *
 from multiprocessing import Pool
 #from deap import dtm
-import pickle
+import cPickle as pickle
 import random
 
 
@@ -376,12 +376,12 @@ def retrieve_splicing(species):
     return info
 
 
-
-def mapper(f, argList):
+import multiprocessing        
+from multiprocessing import Pool
+def mapper(f, argList, np=multiprocessing.cpu_count()):
     """ map a function with a list of several args """
-    import multiprocessing        
-    from multiprocessing import Pool
-    p = Pool(processes=multiprocessing.cpu_count())
+
+    p = Pool(processes=np)
 
     mapper = [p.apply_async(f, args =args) for args in argList]
     [mapped.wait() for mapped in mapper]
@@ -390,10 +390,10 @@ def mapper(f, argList):
         if mapped.successful():
             data.append(mapped.get())
         else:
-            print "unsucessful"
-            #pickle.dump(argList[i], file=open("tmp", 'w'))
-            print argList[i]
+            sys.stderr.write("unsucessful\t%s" %argList[i][0])
             data.append(None)
+    p.close()
+
     return data
 
 
@@ -432,14 +432,14 @@ def main(options):
     args = []
     for g in genes:
         args.append([g, splicing[g], bamfile, options.slop, options.flip, splicetypes])
-    debug = True
+    debug = options.debug
     data = list()
     if debug:
         for arg in args:
 
             data.append(assign_reads(*arg))
     else:
-        data = mapper(assign_reads, args)
+        data = mapper(assign_reads, args, np = options.np)
     
     st = "_".join(splicetypes)
     if options.outfile is None:
@@ -463,19 +463,19 @@ if __name__ == "__main__":
     description = "Given a bam file, count reads to isoforms. comparisons come later"
     parser = OptionParser(usage=usage, description=description)
     parser.add_option("--bam", '-b', dest="bam", help = "bam file")
-    parser.add_option("--species", dest="species")
-    parser.add_option("--outfile", dest="outfile", default=None)
+    parser.add_option("--species", '-s', dest="species")
+    parser.add_option("--outfile", '-o', dest="outfile", default=None)
+    parser.add_option("--flip", '-f', dest="flip", default=False, action="store_true", help="flip read strand")
+    parser.add_option("--prefix", dest="prefix", default=os.getcwd(), help="output location")
+    parser.add_option("--processors",  dest="np", type="int", default=multiprocessing.cpu_count(), help="number of processors to use")
+    parser.add_option("--splicetypes", dest="splicetypes", default=None, action="append")
+    parser.add_option("--slop", dest="slop", default=0, help=SUPPRESS_HELP)#help="alignment slop tolerance (for overhangs)") #not implemented
+
+
+    parser.add_option("--debug", dest="debug", default=False, action="store_true", help="run in debug mode")
     parser.add_option("--gene", dest="gene", default=None, action="append", type="str")
     parser.add_option("--maxgenes", dest="maxgenes", type="int", default=None)    
-    parser.add_option("--start", dest="start", action="store_true", default=False, help=SUPPRESS_HELP)
-    parser.add_option("--prefix", dest="prefix", default=os.getcwd(), help="output location")
-    parser.add_option("--job_name", dest="job_name", default="splice", help="job name")
-    parser.add_option("--processors",  dest="np", type="int", default=32, help="number of processors to use")
-    parser.add_option("--notify",  dest="notify", default=None, help="email")
-    parser.add_option("--wait_to_exit", dest="wait", default=False, action ="store_true")
-    parser.add_option("--splicetypes", dest="splicetypes", default=None, action="append")
-    parser.add_option("--slop", dest="slop", default=0, help="alignment slop tolerance (for overhangs)")
-    parser.add_option("--flip", dest="flip", default=False, action="store_true", help="flip read strand")
+
     (options,args) = parser.parse_args()
     baiFile = options.bam + ".bai"
 
