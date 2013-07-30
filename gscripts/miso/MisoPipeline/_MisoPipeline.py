@@ -240,7 +240,7 @@ class MisoPipeline(object):
 
         # Put the submitter script wherever the command was run from
         submit_sh = self.submit_sh_suffix if self.submit_sh_suffix is\
-            not None else 'miso_%s.sh' %s self.event_type
+            not None else 'miso_%s.sh' % self.event_type
         job_name = 'miso_%s_%s_psi' % (self.submit_sh_suffix, self.event_type)
         sub = Submitter(queue_type='PBS', sh_file=submit_sh,
                         command_list=psi_commands, job_name=job_name)
@@ -276,7 +276,7 @@ class MisoPipeline(object):
         
         # Put the submitter script wherever the command was run from
         submit_sh = self.submit_sh_suffix if self.submit_sh_suffix is\
-            not None else 'miso_%s.sh' %s self.event_type
+            not None else 'miso_%s.sh' % self.event_type
         job_name = 'miso_%s_%s_summary' % (self.submit_sh_suffix,
                                            self.event_type)
         if self.psi_pbs_id is not None:
