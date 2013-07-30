@@ -50,8 +50,70 @@ class MisoPipeline(object):
         self.insert_len_job_id = None
         self.psi_job_id = None
 
+        self.psi_walltime = cl.args['psi_walltime']
+        self.summary_walltime = cl.args['summary_walltime']
+
+        self.sample_id_suffix = cl.args['sample_id_suffix']
+
+        # get all output dirs so we don't make a typo when redefining them
+        self.output_dirs = ['%s/miso/%s/%s%s'
+                            % (os.path.dirname(bam), self.event_type,
+                               sample_id, self.sample_id_suffix)
+                             for bam, sample_id in zip(self.bams,
+                                                       self.sample_ids)]
+
     def comparisons(self):
+        return 'comparisons are not implemented'
         pass
+        # #TODO: write run comparisons script. skip duplicates
+        # # # Run comparisons
+        # commands = []
+        # commands.append('MISO=%s' % miso)
+        # commands.append('MISO_SCRIPTS_DIR=$(dirname $MISO)')
+        # commands.append('RUN_MISO_PY=$MISO_SCRIPTS_DIR/run_miso.py')
+        # commands.append('PAIRED_END_UTILS_PY=$MISO_SCRIPTS_DIR/pe_utils.py')
+        # commands.append('EVENT_TYPE=%s' % event_type)
+        # commands.append('EVENT_TYPE_INDEX=%s' % event_type_index)
+        # commands.append('CONSTITUTIVE_EXONS_GFF=%s' % constitutive_exons_gff)
+        # commands.append('BAMS_AND_IDS="%s"' %
+        #                 ' '.join(','.join([bam, sample_id])
+        #                          for bam, sample_id in zip(bams, sample_ids) ))
+        # commands.append('IDS="%s"' % ' '.join(sample_ids))
+        # commands.append('EVENT_TYPE=%s\n' % event_type)
+        #
+        # # Don't know how to keep track of variables already encountered in
+        # # bash, so just going to use sets in python
+        #
+        # compared_pairs = set()
+        # for bam, sample_id1 in zip(bams, sample_ids):
+        #     base_dir = os.path.dirname(bam)
+        #     sample_id1_dir = '%s/miso/%s/%s/' % (base_dir, event_type,
+        #                                         sample_id1)
+        #     for sample_id2 in sample_ids:
+        #         pair = set([sample_id1, sample_id2])
+        #         sample_id2_dir = '%s/miso/%s/%s/' % (base_dir, event_type,
+        #                                              sample_id2)
+        #
+        #         vs = '%s_vs_%s' % (sample_id1, sample_id2)
+        #         comparison_dir = '%s/miso/%s/comparisons/%s' \
+        #                          % (base_dir, event_type, vs)
+        #         if pair not in compared_pairs:
+        #             commands.append('\n# Comparing: %s vs %s'
+        #                             % (sample_id1, sample_id2))
+        #             commands.append('mkdir -p %s' % comparison_dir)
+        #             commands.append('\n# Save the comparison command. Needs '
+        #                             'to be unique so we can run this in '
+        #                             'parallel')
+        #             commands.append('%s="python %s/run_miso.py '
+        #                             '--compare-samples %s %s %s"'
+        #                             % (vs, miso_scripts_dir, sample_id1_dir,
+        #                                sample_id2_dir, comparison_dir))
+        #             commands.append('# Print the command to stdout with the '
+        #                             'date as a record')
+        #             commands.append('echo')
+        #             commands.append('date')
+        #             commands.append('echo Starting ....... $%s' % vs)
+        #             commands.append('$%s' % vs)
 
     def insert_len(self):
         """
@@ -104,14 +166,15 @@ class MisoPipeline(object):
         Submit a job to the cluster to compute 'psi' (percent spliced-in)
         scores of the splicing events and bam files provided.
         """
-        compute_psi_commands = []
-        for bam, sample_id in zip(self.bams, self.sample_ids):
+        psi_commands = []
+        for bam, sample_id, output_dir in zip(self.bams, self.sample_ids,
+                                              self.output_dirs):
 
             # Establish which files we're working with
             insert_len_file = bam + '.insert_len'
-            bam_dir = os.path.dirname(bam)
-            output_dir = '%s/miso/%s/%s' % (bam_dir, self.event_type,
-                                            sample_id)
+            # bam_dir = os.path.dirname(bam)
+            # output_dir = '%s/miso/%s/%s' % (bam_dir, self.event_type,
+            #                                 sample_id)
 
             # Extract from files all the things we need
             insert_len_mean = '%s_insert_len_MEAN' % sample_id
@@ -119,41 +182,41 @@ class MisoPipeline(object):
 
 
             # Okay, now we are ready to write to the submitter script
-            compute_psi_commands.append('\n\n# --- %s --- #' % sample_id)
+            psi_commands.append('\n\n# --- %s --- #' % sample_id)
 
             # add a line of padding and the sample id to the output file
-            compute_psi_commands.append('\necho\necho "--- %s ----"' %
+            psi_commands.append('\necho\necho "--- %s ----"' %
                                         sample_id)
-            compute_psi_commands.append('date')
+            psi_commands.append('date')
 
             # Because the insert length file has not necessarily been written
             # yet, we cannot extract the insert length mean and std dev from
             # the file using python. We must use shell scripting instead
-            compute_psi_commands.append(
+            psi_commands.append(
                 '# Get the paired-end reads insert length mean and '
                 'standard deviation from the file computed earlier for sample'
                 ' %s' % sample_id)
 
             # Assign {sample_id}_insert_len_MEAN variable
-            compute_psi_commands.append(
+            psi_commands.append(
                 "%s=$(head -n 1 %s | sed 's:#::' | cut -d',' -f1 | cut -d'=' -f2)"
                 %(insert_len_mean, insert_len_file))
 
             # Assign {sample_id}_insert_len_STDDEV variable
-            compute_psi_commands.append(
+            psi_commands.append(
                 "%s=$(head -n 1 %s | sed 's:#::' | cut -d',' -f2 | cut -d'=' -f2)"
                 % (insert_len_stddev, insert_len_file))
 
             # Get the read length. Gonna keep this as bash because samtools
             # and less are very fast
             read_len = '%s_READ_LEN' % sample_id
-            compute_psi_commands.append(
+            psi_commands.append(
                 '\n# Assuming that the first read of the bam file is '
                 'representative, such that all the reads in the '
                 '\n# file are exactly the same length, we can take the first '
                 'read from the bam file and measure its length, '
                 '\n# and use that for our algorithm')
-            compute_psi_commands.append(
+            psi_commands.append(
                 "%s=$(samtools view %s | head -n 1 | cut -f 10 | awk '{ print"
                 " length }')" % (read_len, bam))
 
@@ -162,31 +225,28 @@ class MisoPipeline(object):
             stderr = '%s/%s.err' % (output_dir, log_filename)
             stdout = '%s/%s.out' % (output_dir, log_filename)
 
-            compute_psi_command = 'python %s --run %s %s --output-dir %s %s >' \
-                                  ' ' \
-                                  % (self.miso, self.event_type_index, bam,
-                                     output_dir, self.miso_arguments)
-            compute_psi_commands.append('    MISO_COMMAND="python $MISO --run '
-                            '$EVENT_TYPE_INDEX $BAM '
-                            '--output-dir $OUT_DIR --read-len $READ_LEN '
-                            '--paired-end '
-                            '$insert_len_MEAN $insert_len_STDDEV -p %d '
-                            '--no-filter-events > $OUT_DIR/compute_psi.out '
-                            '2>$OUT_DIR/compute_psi.err"'
-                            % self.num_processes)
 
-        compute_psi_commands.append('echo Starting ...... $MISO_COMMAND')
-        compute_psi_commands.append('$MISO_COMMAND')
+            psi_command = 'python %s --run %s %s --output-dir %s ' \
+                                  '-p %d %s >' \
+                                  ' %s 2> %s' \
+                                  % (self.miso, self.event_type_index, bam,
+                                     output_dir, self.num_processes,
+                                     self.miso_arguments, stdout,
+                                     stderr)
+            psi_commands.append('date')
+            psi_commands.append("echo Starting ...... '%s'"
+                                    % psi_command)
+            psi_commands.append(psi_command)
 
         # Put the submitter script wherever the command was run from
-        submit_sh = self.submit_sh_name if self.submit_sh_name is\
+        submit_sh = self.submit_sh_suffix if self.submit_sh_suffix is\
             not None else 'miso_%s.sh' %s self.event_type
-        job_name = 'miso_%s_psi' % self.event_type
+        job_name = 'miso_%s_%s_psi' % (self.submit_sh_suffix, self.event_type)
         sub = Submitter(queue_type='PBS', sh_file=submit_sh,
-                        command_list=commands, job_name=job_name)
-        self.compute_psi_pbs_id = sub.write_sh(submit=True, nodes=1, ppn=16,
-                                 queue='home-yeo', walltime='3:00:00')
-        print self.compute_psi_pbs_id
+                        command_list=psi_commands, job_name=job_name)
+        self.psi_pbs_id = sub.write_sh(submit=True, nodes=1, ppn=16,
+                                 queue='home-yeo', walltime=self.psi_walltime)
+        print self.psi_pbs_id
 
     def psi_and_summary(self):
         self.psi()
@@ -199,84 +259,34 @@ class MisoPipeline(object):
 
     def summary(self):
         summary_commands = []
-        summary_commands.append('\n    # Now summarize the findings')
-        summary_commands.append('    '
-                        'SUMMARIZE_COMMAND="python $RUN_MISO_PY '
-                        '--summarize-samples $OUT_DIR $OUT_DIR"')
-        summary_commands.append('    echo')
-        summary_commands.append('    date')
-        summary_commands.append('    echo Starting .... $SUMMARIZE_COMMAND')
-        summary_commands.append('done')
+        for bam, sample_id, output_dir in zip(self.bams, self.sample_ids,
+                                              self.output_dirs):
+            # Okay, now we are ready to write to the submitter script
+            summary_commands.append('\n\n# --- %s --- #' % sample_id)
 
-        #TODO: write run comparisons script. skip duplicates
-        # # Run comparisons
-        commands = []
-        commands.append('MISO=%s' % miso)
-        commands.append('MISO_SCRIPTS_DIR=$(dirname $MISO)')
-        commands.append('RUN_MISO_PY=$MISO_SCRIPTS_DIR/run_miso.py')
-        commands.append('PAIRED_END_UTILS_PY=$MISO_SCRIPTS_DIR/pe_utils.py')
-        commands.append('EVENT_TYPE=%s' % event_type)
-        commands.append('EVENT_TYPE_INDEX=%s' % event_type_index)
-        commands.append('CONSTITUTIVE_EXONS_GFF=%s' % constitutive_exons_gff)
-        commands.append('BAMS_AND_IDS="%s"' %
-                        ' '.join(','.join([bam, sample_id])
-                                 for bam, sample_id in zip(bams, sample_ids) ))
-        commands.append('IDS="%s"' % ' '.join(sample_ids))
-        commands.append('EVENT_TYPE=%s\n' % event_type)
-
-        # Don't know how to keep track of variables already encountered in
-        # bash, so just going to use sets in python
-
-        compared_pairs = set()
-        for bam, sample_id1 in zip(bams, sample_ids):
-            base_dir = os.path.dirname(bam)
-            sample_id1_dir = '%s/miso/%s/%s/' % (base_dir, event_type,
-                                                sample_id1)
-            for sample_id2 in sample_ids:
-                pair = set([sample_id1, sample_id2])
-                sample_id2_dir = '%s/miso/%s/%s/' % (base_dir, event_type,
-                                                     sample_id2)
-
-                vs = '%s_vs_%s' % (sample_id1, sample_id2)
-                comparison_dir = '%s/miso/%s/comparisons/%s' \
-                                 % (base_dir, event_type, vs)
-                if pair not in compared_pairs:
-                    commands.append('\n# Comparing: %s vs %s'
-                                    % (sample_id1, sample_id2))
-                    commands.append('mkdir -p %s' % comparison_dir)
-                    commands.append('\n# Save the comparison command. Needs '
-                                    'to be unique so we can run this in '
-                                    'parallel')
-                    commands.append('%s="python %s/run_miso.py '
-                                    '--compare-samples %s %s %s"'
-                                    % (vs, miso_scripts_dir, sample_id1_dir,
-                                       sample_id2_dir, comparison_dir))
-                    commands.append('# Print the command to stdout with the '
-                                    'date as a record')
-                    commands.append('echo')
-                    commands.append('date')
-                    commands.append('echo Starting ....... $%s' % vs)
-                    commands.append('$%s' % vs)
-
-        # TODO: submit the job but tell it to wait for the previous one.
-        # Maybe also make the summary script a separate thing so we can
-        # parallelize everything.
+            # add a line of padding and the sample id to the output file
+            summary_commands.append('\necho\necho "--- %s ----"' %
+                                        sample_id)
+            summary_commands.append('date')
+            summary_command = 'python %s/run_miso.py --summarize-samples %s ' \
+                              '%s >%s/summary.out 2>%s/summary.err' \
+                              % (self.miso_scripts_dir, output_dir,
+                                 output_dir, output_dir, output_dir)
+            summary_commands.append(summary_command)
+        
         # Put the submitter script wherever the command was run from
-        submit_sh = cl.args['submit_sh_name'].replace('.sh',
-                                                      '_%s_summary.sh' %
-                                                      event_type) \
-            if cl.args['submit_sh_name'] is \
-            not None else 'miso_%s_summary.sh' % event_type
-
-        job_name = 'miso_%s_summary' % event_type
-        if self.compute_psi_pbs_id is not None:
+        submit_sh = self.submit_sh_suffix if self.submit_sh_suffix is\
+            not None else 'miso_%s.sh' %s self.event_type
+        job_name = 'miso_%s_%s_summary' % (self.submit_sh_suffix,
+                                           self.event_type)
+        if self.psi_pbs_id is not None:
             sub = Submitter(queue_type='PBS', sh_file=submit_sh,
-                            command_list=commands, job_name=job_name,
-                        wait_for=self.compute_psi_pbs_id)
+                            command_list=summary_commands,
+                            job_name=job_name, wait_for=self.psi_pbs_id)
         else:
             sub = Submitter(queue_type='PBS', sh_file=submit_sh,
-                            command_list=commands, job_name=job_name)
-
-        pbs_id = sub.write_sh(submit=True, nodes=1, ppn=16, queue='home-yeo',
-                              walltime='8:00:00')
-        print pbs_id
+                            command_list=summary_commands, job_name=job_name)
+        self.summary_pbs_id = sub.write_sh(submit=True, nodes=1, ppn=16,
+                                 queue='home-yeo',
+                                 walltime=self.summary_walltime)
+        print self.summary_pbs_id

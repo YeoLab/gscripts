@@ -124,6 +124,21 @@ class CommandLine(object):
                                       ' --settings-filename '
                                       'miso_settings_min_event_reads5.txt"')
 
+        self.parser.add_argument('--sample-id-suffix', type=str,
+                                 action='store', default='',
+                                 help='Extra identification to add to these '
+                                      'samples, e.g. if you are running with '
+                                      'a settings file that specifies a '
+                                      'minimum of 10 reads instead of 20, '
+                                      'you could say "_min_event_reads10" as '
+                                      'a suffix')
+
+        self.parser.add_argument('--psi-walltime', type=str, action='store',
+                                 default='24:00:00')
+        self.parser.add_argument('--summary-walltime', type=str,
+                                 action='store',
+                                 default='24:00:00')
+
         # Which part of the pipeline do you want to run?
         pipeline_part = self.parser.add_mutually_exclusive_group(required=True)
         pipeline_part.add_argument('--insert-len-only', type=bool,
