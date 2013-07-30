@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 """"
 
 barcode_collapse.py  read in a .bam file where the 
@@ -125,7 +124,6 @@ if __name__ == "__main__":
                                                   options.out_file,
                                                   options.barcoded,
                                                   options.use_stop)
-
     
     with open(options.metrics_file, 'w') as metrics:
         metrics.write("\t".join(["randomer", "total_count", "removed_count"]) + "\n")
