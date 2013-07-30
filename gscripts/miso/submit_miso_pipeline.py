@@ -141,7 +141,7 @@ class CommandLine(object):
 
         # Which part of the pipeline do you want to run?
         pipeline_part = self.parser.add_mutually_exclusive_group(required=True)
-        pipeline_part.add_argument('--insert-len-only', type=bool,
+        pipeline_part.add_argument('--insert-len-only',
                                  action='store_true', default=False,
                                  required=False,
                                  help='Only compute the insert lengths of the'
@@ -151,7 +151,7 @@ class CommandLine(object):
                                       'insert sizes from these events. A '
                                       'single job to the cluster will be '
                                       'submitted.')
-        pipeline_part.add_argument('--psi-only', type=bool,
+        pipeline_part.add_argument('--psi-only',
                                    action='store_true', default=False,
                                    required=False,
                                    help='Only compute "psi" (percent-spliced-'
@@ -161,7 +161,7 @@ class CommandLine(object):
                                         'already there), '
                                         'and do not summarize. A single job '
                                         'to the cluster will be submitted.')
-        pipeline_part.add_argument('--summary-only', type=bool,
+        pipeline_part.add_argument('--summary-only',
                                    action='store_true', default=False,
                                    help='Only compute the summary of all '
                                         '"psi" (percent-spliced-in) values '
@@ -173,7 +173,7 @@ class CommandLine(object):
                                         'psi values are already there). A '
                                         'single job to the cluster will be '
                                         'submitted.')
-        pipeline_part.add_argument('--psi-and-summary', type=bool,
+        pipeline_part.add_argument('--psi-and-summary',
                                    action='store_true', default=False,
                                    help='Compute the "psi" ('
                                         'percent-spliced-in) values for the '
@@ -183,7 +183,7 @@ class CommandLine(object):
                                         ' event. This is handy if you have '
                                         'already computed the insert lengths '
                                         'separately')
-        pipeline_part.add_argument('--run-all', type=bool, action='store_true',
+        pipeline_part.add_argument('--run-all', action='store_true',
                                    help='Compute the insert length mean and '
                                         'standard deviation, '
                                         'the "psi" (percent spliced-in) '
