@@ -289,19 +289,19 @@ class InteractiveSubmitter(object): #use ClassName(object) to use new python cla
     elif ("tscc" in hostname):
       self.data['queueType'] = "PBS"
       self.data['useArray'] = True
-      if !self.data['walltime']:
+      if 'walltime' not in self.data:
         self.data['walltime']="00:72:00"
-        print "automatically set walltime to %s" %(self.data['walltime']="00:72:00")
-      if !self.data['nodes']:
+      if 'nodes' not in self.data:
         self.data['nodes']=1
-      if !self.data['ppn']:
+      if 'ppn' not in self.data:
         self.data['ppn']=1
-      if !self.data['  
         
 
         
-      nodes = 1
-      ppn = 1
+      nodes = self.data['nodes']
+      ppn = self.data['ppn']
+      walltime = self.data['walltime']
+	
 
       self.data['addtlResc'][kw].append(value)      
       sf.write("#PBS -l walltime={}\n".format(walltime))
@@ -467,9 +467,9 @@ class InteractiveSubmitter(object): #use ClassName(object) to use new python cla
         sf.write("#$ -S /bin/sh\n")
         sf.write("#$ -cwd\n")
       sf.write("#!/bin/sh\n")
-      sf.write("#PBS -N "+self.data['job_name']+"\n")
-      sf.write("#PBS -o "+self.data['job_name']+".out\n")
-      sf.write("#PBS -e "+self.data['job_name']+".err\n")
+      sf.write("#PBS -N "+self.data['jobName']+"\n")
+      sf.write("#PBS -o "+self.data['jobName']+".out\n")
+      sf.write("#PBS -e "+self.data['jobName']+".err\n")
       sf.write("#PBS -V\n")
       sf.write("cd $PBS_O_WORKDIR\n")
 
