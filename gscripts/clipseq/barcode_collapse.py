@@ -33,7 +33,7 @@ def barcode_collapse(inBam, outBam):
     
     outBam = pysam.Samfile(outBam, 'wb', template=inBam)
     
-    prev_pos = 0
+    prev_pos = (0, 0)
     
     #want total number of reads assocated with each barcode
     #number of reads removed assocated with each barcode
@@ -42,9 +42,12 @@ def barcode_collapse(inBam, outBam):
     barcode_set = set([])
     removed_count = Counter()
     total_count = Counter()
+    
     for i, read in enumerate(inBam.fetch()):
+        cur_pos = (read.positions[0], read.positions[-1])
+        
         #if we advance a position, reset barcode counting
-        if not read.pos == prev_pos:
+        if not cur_pos == prev_pos:
             barcode_set = set([])
             
         barcode = read.qname[:9]
@@ -56,7 +59,7 @@ def barcode_collapse(inBam, outBam):
             outBam.write(read)
             
         barcode_set.add(barcode)    
-        prev_pos = read.pos
+        prev_pos = cur_pos
     
     inBam.close()
     outBam.close()
