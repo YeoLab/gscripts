@@ -53,6 +53,8 @@ class MisoPipeline(object):
         self.psi_walltime = cl.args['psi_walltime']
         self.summary_walltime = cl.args['summary_walltime']
 
+        self.submit_sh_suffix = cl.args['submit_sh_suffix']
+
         self.sample_id_suffix = cl.args['sample_id_suffix']
 
         # get all output dirs so we don't make a typo when redefining them
