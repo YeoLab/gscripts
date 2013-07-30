@@ -231,7 +231,7 @@ class MisoPipeline(object):
                                   ' %s 2> %s' \
                                   % (self.miso, self.event_type_index, bam,
                                      output_dir, self.num_processes,
-                                     self.miso_arguments, stdout,
+                                     self.extra_miso_arguments, stdout,
                                      stderr)
             psi_commands.append('date')
             psi_commands.append("echo Starting ...... '%s'"
