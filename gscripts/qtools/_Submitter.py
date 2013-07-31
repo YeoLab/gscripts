@@ -168,6 +168,15 @@ class Submitter:
         if self.data['queue_type'] == 'SGE':
             sh_file.write("%s -S /bin/sh\n" % queue_param_prefix)
             sh_file.write("%s -cwd\n" % queue_param_prefix)
+
+            # First check that we even have this parameter
+            if 'wait_for' in self.data:
+                # Now check that the list is nonempty
+                if self.data['wait_for']:
+                    sh_file.write("%s -hold_jid %s \n"
+                                  % (queue_param_prefix,
+                                     ''.join(self.data['wait_for'])))
+
         elif self.data['queue_type'] == 'PBS':
             queue_param_prefix = '#PBS'
             sh_file.write("%s -l walltime=%s\n" % (queue_param_prefix,
@@ -176,16 +185,17 @@ class Submitter:
                                                        str(nodes), str(ppn)))
             sh_file.write("%s -A %s\n" % (queue_param_prefix, account))
             sh_file.write("%s -q %s\n" % (queue_param_prefix, queue))
-            sh_file.write("-W depend=afterok:'+':'.join(self.data['wait_for'])")
+
+            # First check that we even have this parameter
+            if 'wait_for' in self.data:
+                # Now check that the list is nonempty
+                if self.data['wait_for']:
+                    sh_file.write("-W depend=afterok:%s"
+                                  % ':'.join(self.data['wait_for']))
             sh_file.write('\n# Go to the directory from which the script was '
                           'called')
             sh_file.write("cd $PBS_O_WORKDIR\n")
 
-        if 'wait_for' in self.data:
-            if self.data['wait_for']:
-                sh_file.write("%s -hold_jid %s \n"
-                              % (queue_param_prefix,
-                                 ''.join(self.data['wait_for'])))
 
         if 'additional_resources' in self.data:
             if self.data['additional_resources']:
