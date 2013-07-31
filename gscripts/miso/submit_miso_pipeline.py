@@ -172,6 +172,11 @@ class CommandLine(object):
                                       'then the MISO output for the same '
                                       'sample would be in: '
                                       '~/projects/single_cell/analysis/miso/SE/A1_02')
+        self.parser.add_argument('--sh-scripts-dir', type=str,
+                                 action='store', default='',
+                                 help='Where to put the cluster (PBS/SGE) '
+                                      'submitter scripts. The default is the '
+                                      'directory this script was run from.')
         self.parser.add_argument('--queue', type=str, action='store',
                                  default='home-yeo',
                                  help='The cluster computing queue you would '
