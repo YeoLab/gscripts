@@ -192,6 +192,13 @@ class Submitter:
                 if self.data['wait_for']:
                     sh_file.write("-W depend=afterok:%s"
                                   % ':'.join(self.data['wait_for']))
+
+            # Wait for an array of submitted jobs
+            if 'wait_for_array' in self.data:
+                if self.data['wait_for_array']:
+                    sh_file.write("-w depend=afterokarray:%s"
+                        % ''.join(self.data['wait_for_array']))
+
             sh_file.write('\n# Go to the directory from which the script was '
                           'called')
             sh_file.write("cd $PBS_O_WORKDIR\n")

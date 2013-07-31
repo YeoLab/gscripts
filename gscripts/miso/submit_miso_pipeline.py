@@ -18,18 +18,24 @@ from MisoPipeline import MisoPipeline
 Author: olga
 Date created: 7/12/13 9:38 AM
 
-The purpose of this program is to ...
+The purpose of this program is to write submitter scripts to perform MISO
+analysis on a large amount of files. This script assumes paired-end reads.
+
+# **Note** for some reason,
 
 Example run:
-python ~/gscripts/gscripts/miso/submit_miso_pipeline.py --sample-info-file sample_info_individual_miso_failed.txt --event-type SE --submit-sh-suffix rerun_failed --psi-and-summary
+python ~/gscripts/gscripts/miso/submit_miso_pipeline.py --sample-info-file
+sample_info_individual_miso_failed.txt --event-type SE --submit-sh-suffix
+rerun_failed --psi-and-summary --output-dir-base
+~/projects/single_cell/analysis --extra-miso-arguments ' --no-filter-events'
 '''
 
 # Class: CommandLine
 class CommandLine(object):
     def __init__(self, inOpts=None):
         self.parser = argparse.ArgumentParser(
-            description=''' Given a number of digits "n" and number of
-            iterations "N", calculate .....
+            description='''Write submitter scripts to perform MISO analysis
+            on many samples at once. This script assumes paired-end reads.
             ''',
             add_help=True, prefix_chars='-')
         # self.parser.add_argument('--index-base-dir',
@@ -62,7 +68,9 @@ class CommandLine(object):
                                  action='store',
                                  help='A tab-delimited sample info file with '
                                       'the header:\n'
-                                      'Sample ID\tBam File\t Notes')
+                                      'Sample ID\tBam File\t Notes.\n This is'
+                                      ' the same format file as required by '
+                                      'RNA-SeQC.')
         self.parser.add_argument('--miso-scripts-dir', type=str,
                                  action='store',
                                  help='Which directory to use as the prefix for '
@@ -116,9 +124,15 @@ class CommandLine(object):
                                       'Protect this argument with quotes so '
                                       'it does not get interpreted as an '
                                       'argument to the MISO pipeline script, '
-                                      'e.g. --miso-arguments "--no-bam-filter'
+                                      'e.g. --extra-miso-arguments " '
+                                      '--no-bam-filter'
                                       ' --settings-filename '
-                                      'miso_settings_min_event_reads5.txt"')
+                                      'miso_settings_min_event_reads5.txt". '
+                                      'If this is not working for you, '
+                                      'try adding a space between the first '
+                                      'quote and the first dash of the miso '
+                                      'argument. For some reason this helps..'
+                                      '..')
 
         self.parser.add_argument('--sample-id-suffix', type=str,
                                  action='store', default='',
@@ -130,10 +144,38 @@ class CommandLine(object):
                                       'a suffix')
 
         self.parser.add_argument('--psi-walltime', type=str, action='store',
-                                 default='24:00:00')
+                                 default='24:00:00',
+                                 help='How much time to tell the cluster to '
+                                      'allow the calculating psi score job to'
+                                      ' run')
         self.parser.add_argument('--summary-walltime', type=str,
                                  action='store',
-                                 default='24:00:00')
+                                 default='24:00:00',
+                                 help='How much time to tell the cluster to '
+                                      'allow the summarization job to run.')
+        self.parser.add_argument('--output-dir-base', type=str,
+                                 action='store', default='',
+                                 help='The base directory for which to place '
+                                      'the MISO outputs. MISO outputs are of '
+                                      'the format: (base_dir)/miso/('
+                                      'event_type)/(sample_id). The default '
+                                      'base dir is the directory of the .bam '
+                                      'file, e.g. if the bam you provide is '
+                                      'in ~/scratch/single_cell and your '
+                                      'event type is "SE", then miso outputs '
+                                      'for sample id "A1_02"'
+                                      ' will be in the folder'
+                                      '~/scratch/single_cell/miso/SE/A1_02/. '
+                                      'Otherwise, if you provide a folder '
+                                      'such as '
+                                      '~/projects/single_cell/analysis, '
+                                      'then the MISO output for the same '
+                                      'sample would be in: '
+                                      '~/projects/single_cell/analysis/miso/SE/A1_02')
+        self.parser.add_argument('--queue', type=str, action='store',
+                                 default='home-yeo',
+                                 help='The cluster computing queue you would '
+                                      'like to use.')
 
         # Which part of the pipeline do you want to run?
         pipeline_part = self.parser.add_mutually_exclusive_group(required=True)
@@ -223,9 +265,9 @@ def main():
     '''
     This function is invoked when the program is run from the command line,
     i.e. as:
-        python program.py
+        python submit_miso_pipeline.py
     or as:
-        ./program.py
+        ./submit_miso_pipeline.py
     If the user has executable permissions on the user (set by chmod ug+x
     program.py or by chmod 775 program py. Just need the 4th bit set to true)
     '''
@@ -233,7 +275,7 @@ def main():
     try:
         miso_pipeline = MisoPipeline(cl)
 
-        # Read the arguments to see which
+        # Read the arguments to see which piece of the MISO pipeline to run
         if cl.args['run_all']:
             miso_pipeline.run_all()
         elif cl.args['insert_len_only']:
@@ -244,36 +286,6 @@ def main():
             miso_pipeline.summary()
         elif cl.args['psi_and_summary']:
             miso_pipeline.psi_and_summary()
-
-
-
-
-        '''
-        ## Run MISO on a pair of paired-end sample (with insert length distribution with mean 250,
-        ## standard deviation 15) using the mouse genome skipped exon annotations using the
-        ## the cluster
-
-        # Compute Psi values for control sample
-        python run_events_analysis.py
-        --compute-genes-psi mm9/pickled/SE data/control.bam --output-dir SE/control/
-        --read-len 35 --paired-end 250 15 --use-cluster
-
-        # Compute Psi values for knockdown sample
-        python run_events_analysis.py
-        --compute-genes-psi mm9/pickled/SE data/knockdown.bam --output-dir SE/knockdown/
-         --read-len 35 --paired-end 250 15 --use-cluster
-
-
-        ## Summarize the output (only run this once --compute-genes-psi finished!)
-        ## This will create a "summary" directory in SE/control/ and in SE/knockdown/
-        python run_miso.py --summarize-samples SE/control/ SE/control/
-        python run_miso.py --summarize-samples SE/knockdown/ SE/knockdown/
-
-        ## Detect differentially expressed isoforms between "control" and "knockdown"
-        ## This will compute Bayes factors and delta Psi values between the samples
-        ## and place the results in the directory SE/comparisons/control_vs_knockdown
-        python run_miso.py --compare-samples SE/control/ SE/knockdown/ SE/comparisons/
-        '''
 
     # If not all the correct arguments are given, break the program and
     # show the usage information

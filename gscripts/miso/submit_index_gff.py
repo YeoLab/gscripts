@@ -12,7 +12,7 @@ Date created: 7/11/13 7:52 AM
 The purpose of this program is to ...
 
 Example run:
-submit_miso_index_gff.py --gff \
+submit_index_gff.py --gff \
 /nas3/yeolab/Genome/ensembl/gtf/gencode.v17.annotation.first.two.exons.gtf \
 --index-dir \
 /nas3/yeolab/Genome/ensembl/gtf/gencode_v17_indexed_first_two_exon_events/

@@ -57,8 +57,17 @@ class MisoPipeline(object):
 
         self.sample_id_suffix = cl.args['sample_id_suffix']
 
+        self.queue = cl.args['queue']
+
         # get all output dirs so we don't make a typo when redefining them
-        self.output_dirs = ['%s/miso/%s/%s%s'
+        if cl.args['output_dir_base']:
+            self.output_dirs = ['%s/miso/%s/%s%s'
+                                % (cl.args['output_dir_base'],
+                                   self.event_type, sample_id,
+                                   self.sample_id_suffix)
+                                for sample_id in self.sample_ids]
+        else:
+            self.output_dirs = ['%s/miso/%s/%s%s'
                             % (os.path.dirname(bam), self.event_type,
                                sample_id, self.sample_id_suffix)
                              for bam, sample_id in zip(self.bams,
@@ -158,7 +167,7 @@ class MisoPipeline(object):
                         command_list=insert_len_commands,
                         job_name=insert_len_name)
         self.insert_len_job_id = sub.write_sh(submit=True, nodes=1, ppn=16,
-                                 queue='home-yeo', walltime='3:00:00',
+                                 queue=self.queue, walltime='3:00:00',
                                  # Tell the queue to parallelize this job
                                  # into a job array
                                  additional_resources={'-t': '1-16'})
@@ -245,10 +254,12 @@ class MisoPipeline(object):
                                          self.event_type)
 
         job_name = 'miso_%s_%s_psi' % (self.submit_sh_suffix, self.event_type)
+
+        # TODO: wait for the insert_len job to finish (it is an array)
         sub = Submitter(queue_type='PBS', sh_file=submit_sh,
                         command_list=psi_commands, job_name=job_name)
         self.psi_pbs_id = sub.write_sh(submit=True, nodes=1, ppn=16,
-                                 queue='home-yeo', walltime=self.psi_walltime)
+                                 queue=self.queue, walltime=self.psi_walltime)
         print self.psi_pbs_id
 
     def psi_and_summary(self):
@@ -290,6 +301,6 @@ class MisoPipeline(object):
             sub = Submitter(queue_type='PBS', sh_file=submit_sh,
                             command_list=summary_commands, job_name=job_name)
         self.summary_pbs_id = sub.write_sh(submit=True, nodes=1, ppn=16,
-                                 queue='home-yeo',
+                                 queue=self.queue,
                                  walltime=self.summary_walltime)
         print self.summary_pbs_id

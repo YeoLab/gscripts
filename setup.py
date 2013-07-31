@@ -15,7 +15,7 @@ scripts = ['rnaseq/count_tags.py',
            'mapping/map_paired_with_STAR.py',
            'mapping/sam_to_bam_and_sort.py',
            'miso/submit_miso_pipeline.py',
-           'miso/submit_miso_index_gff.py']
+           'miso/submit_index_gff.py']
 =======
 scripts=['rnaseq/count_tags.py',
          'rnaseq/single_RPKM.py',
