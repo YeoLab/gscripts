@@ -1,5 +1,6 @@
 from setuptools import setup, find_packages
 
+<<<<<<< HEAD
 scripts = ['rnaseq/count_tags.py',
            'rnaseq/single_RPKM.py',
            'general/gtf2gff3.pl',
@@ -15,13 +16,30 @@ scripts = ['rnaseq/count_tags.py',
            'mapping/sam_to_bam_and_sort.py',
            'miso/submit_miso_pipeline.py',
            'miso/submit_miso_index_gff.py']
+=======
+scripts=['rnaseq/count_tags.py',
+         'rnaseq/single_RPKM.py',
+         'general/calculate_NRF.py',
+         'general/calculate_NRF.py',
+         'general/make_trackhubs.py',
+         'general/count_aligned_from_sam.py',
+         'general/negBedGraph.py',
+         'clipseq/perform_idr.py',
+         'clipseq/run_piranha.py',
+         'riboseq/riboseq_coverage.py',
+	 'rnaseq/oldsplice.py',
+	 'rnaseq/compare_oldsplice.py',
+	 'output_parsers/parseMiso.py'	]
+scripts = map((lambda x: "gscripts/" + x), scripts)
+>>>>>>> upstream/master
 
 scripts = map((lambda x: "gscripts/" + x), scripts)
 
-with open("README") as file:
+with open("README.rst") as file:
     long_description = file.read()
 
 setup(
+<<<<<<< HEAD
     name="gscripts",
     long_description=long_description,
     version="0.1.2",
@@ -37,6 +55,25 @@ setup(
                       'scikit-learn >= 0.13.0'],
 
     setup_requires=["setuptools_git >= 0.3", ],
+=======
+    name = "gscripts",
+    long_description = long_description,
+    version = "0.1.1",
+    packages = find_packages(),
+    
+    
+    
+    install_requires = ['setuptools', 
+                        'pysam >= 0.6',
+                        'numpy >= 1.5.1 ',
+                        'scipy >= 0.11.0',
+                        'matplotlib >= 1.1.0',
+                        'pybedtools >= 0.5',
+                        'scikit-learn >= 0.13.0',
+                        ],
+      
+    setup_requires = ["setuptools_git >= 0.3",],
+>>>>>>> upstream/master
     scripts=scripts,
 
     #metadata for upload to PyPI

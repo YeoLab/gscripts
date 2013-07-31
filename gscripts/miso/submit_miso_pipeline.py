@@ -21,11 +21,7 @@ Date created: 7/12/13 9:38 AM
 The purpose of this program is to ...
 
 Example run:
-python ~/gscripts/gscripts/miso/submit_miso_pipeline.py \
-  --base-annotation-dir ~/genomes/miso_annotations/hg19/ \
-  --event-type AFE \
-  --sample-info-file ~/projects/alt_first_exon/gm12878_samples_read_groups.txt \
-  --read-len 76
+python ~/gscripts/gscripts/miso/submit_miso_pipeline.py --sample-info-file sample_info_individual_miso_failed.txt --event-type SE --submit-sh-suffix rerun_failed --psi-and-summary
 '''
 
 # Class: CommandLine
