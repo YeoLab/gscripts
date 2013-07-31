@@ -16,7 +16,7 @@ import sys
 import numpy as np
 import pysam
 
-def barcode_collapse(inBam, outBam):
+def barcode_collapse(inBam, outBam, barcoded):
     
     """
     
@@ -46,17 +46,23 @@ def barcode_collapse(inBam, outBam):
     for i, read in enumerate(inBam.fetch()):
         cur_pos = (read.positions[0], read.positions[-1])
         
+        if barcoded:
+            barcode = read.qname[:9]
+        else:
+            barcode = "total"
+            
         #if we advance a position, reset barcode counting
         if not cur_pos == prev_pos:
             barcode_set = set([])
             
-        barcode = read.qname[:9]
+
         
         total_count[barcode] += 1
         if barcode in barcode_set:
             removed_count[barcode] += 1
         else:
             outBam.write(read)
+
             
         barcode_set.add(barcode)    
         prev_pos = cur_pos
@@ -68,6 +74,7 @@ def barcode_collapse(inBam, outBam):
 if __name__ == "__main__":
     parser = OptionParser()
     parser.add_option("-b", "--bam", dest="bam", help="bam file to barcode collapse")
+    parser.add_option("-c", "--barcoded", action="store_true", dest="barcoded", help="bam files are iclip barcoded")
     parser.add_option("-o", "--out_file", dest="out_file")
     parser.add_option("-m", "--metrics_file", dest="metrics_file")
     
@@ -77,7 +84,7 @@ if __name__ == "__main__":
     if not (options.bam.endswith(".bam")):
         raise TypeError("%s, not bam file" % (options.bam))
     
-    total_count, removed_count = barcode_collapse(options.bam, options.out_file)
+    total_count, removed_count = barcode_collapse(options.bam, options.out_file, options.barcoded)
     
     with open(options.metrics_file, 'w') as metrics:
         metrics.write("\t".join(["barcode", "total_count", "removed_count"]) + "\n")
