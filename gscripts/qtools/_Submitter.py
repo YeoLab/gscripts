@@ -176,6 +176,7 @@ class Submitter:
                                                        str(nodes), str(ppn)))
             sh_file.write("%s -A %s\n" % (queue_param_prefix, account))
             sh_file.write("%s -q %s\n" % (queue_param_prefix, queue))
+            sh_file.write("-W depend=afterok:'+':'.join(self.data['wait_for'])")
             sh_file.write('\n# Go to the directory from which the script was '
                           'called')
             sh_file.write("cd $PBS_O_WORKDIR\n")

@@ -229,7 +229,7 @@ class MisoPipeline(object):
 
 
             psi_command = 'python %s --run %s %s --output-dir %s ' \
-                                  '--read-len %s -p %d %s >' \
+                                  '--read-len $%s -p %d %s >' \
                                   ' %s 2> %s' \
                                   % (self.miso, self.event_type_index, bam,
                                      output_dir, read_len, self.num_processes,
