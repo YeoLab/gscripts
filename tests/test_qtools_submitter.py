@@ -14,7 +14,7 @@ class Test(unittest.TestCase):
     def test_main(self):
         commands = ['date', 'echo testing PBS']
         job_name = 'test_qtools_submitter'
-        submit_sh = tests.get_file('%s.sh' % job_name)
+        submit_sh = '%s/%s.sh' % (tests.get_test_dir(), job_name)
         sub = Submitter(queue_type='PBS', sh_file= submit_sh,
                         command_list=commands,
                         job_name=job_name)

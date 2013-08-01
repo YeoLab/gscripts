@@ -9,6 +9,9 @@ def read_sample_info_file(sample_info_file):
     sample_ids = []
     notes = []
     with open(sample_info_file) as f:
+
+        # Skip the first line
+        f.next()
         for line in f:
 
             # Skip commented out lines
