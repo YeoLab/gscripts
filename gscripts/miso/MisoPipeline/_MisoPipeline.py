@@ -68,7 +68,7 @@ class MisoPipeline(object):
 
         if cl.args['summary_output_dir_base']:
             self.summary_output_dirs = ['%s/miso/%s/%s%s'
-                                % (cl.args['output_dir_base'],
+                                % (cl.args['summary_output_dir_base'],
                                    self.event_type, sample_id,
                                    self.sample_id_suffix)
                                 for sample_id in self.sample_ids]
