@@ -20,7 +20,7 @@ class Test(unittest.TestCase):
                         job_name=job_name)
         job_id = sub.write_sh(submit=True, nodes=1, ppn=16,
                                  queue='home-yeo', walltime='0:01:00')
-        true_result = '''#!/bin/sh
+        true_result_string = '''#!/bin/sh
 #PBS -N test_qtools_submitter
 #PBS -o %s/data/test_qtools_submitter.sh.out
 #PBS -e %s/data/test_qtools_submitter.sh.err
@@ -31,7 +31,8 @@ class Test(unittest.TestCase):
 #PBS -q home-yeo
 cd $PBS_O_WORKDIR
 date
-echo testing PBS''' % (tests.get_test_dir(), tests.get_test_dir()).split('\n')
+echo testing PBS''' % (tests.get_test_dir(), tests.get_test_dir())
+        true_result = true_result_string.split('\n')
 
         with open(submit_sh) as f:
             print f.readlines()
@@ -51,7 +52,7 @@ echo testing PBS''' % (tests.get_test_dir(), tests.get_test_dir()).split('\n')
                         job_name=job_name, wait_for='11111')
         job_id = sub.write_sh(submit=True, nodes=1, ppn=16,
                                  queue='home-yeo', walltime='0:01:00')
-        true_result = '''#!/bin/sh
+        true_result_string = '''#!/bin/sh
 #PBS -N test_qtools_submitter_wait_for_pbs
 #PBS -o %s/data/test_qtools_submitter_wait_for_pbs.sh.out
 #PBS -e %s/data/test_qtools_submitter_wait_for_pbs.sh.err
@@ -62,7 +63,8 @@ echo testing PBS''' % (tests.get_test_dir(), tests.get_test_dir()).split('\n')
 #PBS -q home-yeo
 cd $PBS_O_WORKDIR
 date
-echo testing PBS''' % (tests.get_test_dir(), tests.get_test_dir()).split('\n')
+echo testing PBS''' % (tests.get_test_dir(), tests.get_test_dir())
+        true_result = true_result_string.split('\n')
 
         with open(submit_sh) as f:
             print f.readlines()
