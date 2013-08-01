@@ -72,6 +72,15 @@ class MisoPipeline(object):
                                    self.event_type, sample_id,
                                    self.sample_id_suffix)
                                 for sample_id in self.sample_ids]
+
+            # Need to create the directories if they're not there already
+            # Using 'os.makedirs' instead of 'os.mkdir' because 'os.makedirs'
+            # is recursive and will make the leaf directory and all other
+            # parent directories. 'os.mkdir' will only make the leaf
+            # directory and whines when the parent directories aren't there
+            for d in self.summary_output_dirs:
+                os.makedirs(d)
+
         else:
             self.summary_output_dirs = self.psi_output_dirs
 
