@@ -100,7 +100,7 @@ echo testing PBS''' % (tests.get_test_dir(), tests.get_test_dir())
 #PBS -l nodes=1:ppn=16
 #PBS -A yeo-group
 #PBS -q home-yeo
-#PBS -W depend=afterarrayok:11111
+#PBS -W depend=afterokarray:11111
 
 # Go to the directory from which the script was called
 cd $PBS_O_WORKDIR
