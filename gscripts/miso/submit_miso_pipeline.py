@@ -38,157 +38,6 @@ class CommandLine(object):
             on many samples at once. This script assumes paired-end reads.
             ''',
             add_help=True, prefix_chars='-')
-        # self.parser.add_argument('--index-base-dir',
-        #                          action='store',
-        #                          type=str,
-        #                          default='/home/obotvinnik/genomes/miso_annotations/hg19',
-        #                          help='The base directory to use for '
-        #                               'annotations. The annotation is assumed'
-        #                               ' to be (index_base_dir)/('
-        #                               'event_type)_indexed/')
-        self.parser.add_argument('--event-type', '-e',
-                                 action='store', type=str, required=True,
-                                 help="Which event you'd like to index. One "
-                                      "of:"+
-                                      ('\n'
-                                       '1. Skipped exons (SE)\n'
-                                       '2. Alternative 3’/5’ splice sites ('
-                                       'A3SS, A5SS)\n'
-                                       '3. Mutually exclusive exons (MXE)\n'
-                                       '4. Tandem 3’ UTRs (TandemUTR)\n'
-                                       '5. Retained introns (RI)\n'
-                                       '6. Alternative first exons (AFE)\n'
-                                       '7. Alternative last exons (ALE)\n'
-                                       '                                      '
-                                      ) +
-                                      "See http://genes.mit"
-                                      ".edu/burgelab/miso/docs/#alternative-event-annotations for more information")
-        self.parser.add_argument('--sample-info-file', required=True,
-                                 type=str,
-                                 action='store',
-                                 help='A tab-delimited sample info file with '
-                                      'the header:\n'
-                                      'Sample ID\tBam File\t Notes.\n This is'
-                                      ' the same format file as required by '
-                                      'RNA-SeQC.')
-        self.parser.add_argument('--miso-scripts-dir', type=str,
-                                 action='store',
-                                 help='Which directory to use as the prefix for '
-                                      'miso scripts. Default is the directory'
-                                      ' returned from the unix command line '
-                                      'command "which miso".', required=False)
-        self.parser.add_argument('--base-annotation-dir',
-                                 type=str, action='store',
-                                 help='Where the MISO annotations are housed.'
-                                      ' The indexed version are assumed to be'
-                                      ' [base_annotation_dir]/['
-                                      'event_type]_index. For example, '
-                                      'if the base annotation dir is '
-                                      '/home/obotvinnik/genomes/miso_annotations/hg19 '
-                                      'and the event type is AFE, '
-                                      'then the annotations are assumed to be'
-                                      ' in folder'
-                                      '/home/obotvinnik/genomes/miso_annotations/hg19/AFE_index/',
-                                 default='/home/obotvinnik/genomes/miso_annotations/hg19')
-        # self.parser.add_argument('--read-len', '-l', type=int, action='store',
-        #                          help='Read lengths. Assumed to be the same '
-        #                               'for all samples', required=True)
-        self.parser.add_argument('--num-processes', '-p', type=int,
-                                 action='store', default=16,
-                                 help='Number of subprocesses for MISO to run'
-                                      '. If you are using a computing cluster'
-                                      ' with several processors on a single '
-                                      'node, use the number of processors '
-                                      'you are requesting')
-        self.parser.add_argument('--submit-sh-suffix', type=str,
-                                 action='store',
-                                 default='',
-                                 help='Add a suffix to this '
-                                      'script name, and the stderr/stdout '
-                                      'produced'
-                                      ' by the PBS job, too. The default is '
-                                      'miso_[event_type].sh, for example if '
-                                      'your event type is skipped exons (SE),'
-                                      ' then the script is called miso_SE.sh '
-                                      'If you add the argument '
-                                      '"--submit-sh-suffix pooled" then the '
-                                      'submit filename would be '
-                                      '"miso_pooled_SE.sh"')
-        self.parser.add_argument('--extra-miso-arguments', type=str,
-                                 action='store',
-                                 default='',
-                                 help='Any additional MISO "compute psi" '
-                                      'arguments you want'
-                                      ' to supply to all the samples. The '
-                                      'default is no additional arguments. '
-                                      'Protect this argument with quotes so '
-                                      'it does not get interpreted as an '
-                                      'argument to the MISO pipeline script, '
-                                      'e.g. --extra-miso-arguments " '
-                                      '--no-bam-filter'
-                                      ' --settings-filename '
-                                      'miso_settings_min_event_reads5.txt". '
-                                      'If this is not working for you, '
-                                      'try adding a space between the first '
-                                      'quote and the first dash of the miso '
-                                      'argument. For some reason this helps..'
-                                      '..')
-
-        self.parser.add_argument('--sample-id-suffix', type=str,
-                                 action='store', default='',
-                                 help='Extra identification to add to these '
-                                      'samples, e.g. if you are running with '
-                                      'a settings file that specifies a '
-                                      'minimum of 10 reads instead of 20, '
-                                      'you could say "_min_event_reads10" as '
-                                      'a suffix')
-
-        self.parser.add_argument('--psi-walltime', type=str, action='store',
-                                 default='24:00:00',
-                                 help='How much time to tell the cluster to '
-                                      'allow the calculating psi score job to'
-                                      ' run')
-        self.parser.add_argument('--summary-walltime', type=str,
-                                 action='store',
-                                 default='24:00:00',
-                                 help='How much time to tell the cluster to '
-                                      'allow the summarization job to run.')
-        self.parser.add_argument('--summary-output-dir-base', type=str,
-                                 action='store', default='',
-                                 help='The base directory for which to place '
-                                      'the MISO summary outputs. By '
-                                      'default, MISO outputs are of '
-                                      'the format: (base_dir)/miso/('
-                                      'event_type)/(sample_id). The default '
-                                      'base dir is the directory of the .bam '
-                                      'file, e.g. if the bam you provide is '
-                                      'in ~/scratch/single_cell and your '
-                                      'event type is "SE", then miso outputs '
-                                      'for sample id "A1_02"'
-                                      ' will be in the folder'
-                                      '~/scratch/single_cell/miso/SE/A1_02/. '
-                                      'However, the intermediate output would'
-                                      ' still be in (bam_dir)/miso/('
-                                      'event_type)/(sample_id) because MISO '
-                                      'outputs a TON of intermediate files '
-                                      'that nobody wants to deal with.'
-                                      'Otherwise, if you provide a folder '
-                                      'such as '
-                                      '~/projects/single_cell/analysis, '
-                                      'then the MISO summary output for the '
-                                      'same '
-                                      'sample would be in: '
-                                      '~/projects/single_cell/analysis/miso/SE/A1_02')
-
-        self.parser.add_argument('--sh-scripts-dir', type=str,
-                                 action='store', default='',
-                                 help='Where to put the cluster (PBS/SGE) '
-                                      'submitter scripts. The default is the '
-                                      'directory this script was run from.')
-        self.parser.add_argument('--queue', type=str, action='store',
-                                 default='home-yeo',
-                                 help='The cluster computing queue you would '
-                                      'like to use.')
 
         # Which part of the pipeline do you want to run?
         pipeline_part = self.parser.add_mutually_exclusive_group(required=True)
@@ -240,6 +89,157 @@ class CommandLine(object):
                                         'the "psi" (percent spliced-in) '
                                         'scores of all splicing events, '
                                         'and summarize the relevant events')
+
+        # self.parser.add_argument('--index-base-dir',
+        #                          action='store',
+        #                          type=str,
+        #                          default='/home/obotvinnik/genomes/miso_annotations/hg19',
+        #                          help='The base directory to use for '
+        #                               'annotations. The annotation is assumed'
+        #                               ' to be (index_base_dir)/('
+        #                               'event_type)_indexed/')
+        self.parser.add_argument('--base-annotation-dir',
+                                 type=str, action='store',
+                                 help='Where the MISO annotations are housed.'
+                                      ' The indexed version are assumed to be'
+                                      ' [base_annotation_dir]/['
+                                      'event_type]_index. For example, '
+                                      'if the base annotation dir is '
+                                      '/home/obotvinnik/genomes/miso_annotations/hg19 '
+                                      'and the event type is AFE, '
+                                      'then the annotations are assumed to be'
+                                      ' in folder'
+                                      '/home/obotvinnik/genomes/miso_annotations/hg19/AFE_index/',
+                                 default='/home/obotvinnik/genomes/miso_annotations/hg19')
+        self.parser.add_argument('--event-type', '-e',
+                                 action='store', type=str, required=True,
+                                 help="Which event you'd like to index. One "
+                                      "of:"+
+                                      ('\n'
+                                       '1. Skipped exons (SE)\n'
+                                       '2. Alternative 3’/5’ splice sites ('
+                                       'A3SS, A5SS)\n'
+                                       '3. Mutually exclusive exons (MXE)\n'
+                                       '4. Tandem 3’ UTRs (TandemUTR)\n'
+                                       '5. Retained introns (RI)\n'
+                                       '6. Alternative first exons (AFE)\n'
+                                       '7. Alternative last exons (ALE)\n'
+                                       '                                      '
+                                      ) +
+                                      "See http://genes.mit"
+                                      ".edu/burgelab/miso/docs/#alternative-event-annotations for more information")
+        self.parser.add_argument('--extra-miso-arguments', type=str,
+                                 action='store',
+                                 default='',
+                                 help='Any additional MISO "compute psi" '
+                                      'arguments you want'
+                                      ' to supply to all the samples. The '
+                                      'default is no additional arguments. '
+                                      'Protect this argument with quotes so '
+                                      'it does not get interpreted as an '
+                                      'argument to the MISO pipeline script, '
+                                      'e.g. --extra-miso-arguments " '
+                                      '--no-bam-filter'
+                                      ' --settings-filename '
+                                      'miso_settings_min_event_reads5.txt". '
+                                      'If this is not working for you, '
+                                      'try adding a space between the first '
+                                      'quote and the first dash of the miso '
+                                      'argument. For some reason this helps..'
+                                      '..')
+        self.parser.add_argument('--miso-scripts-dir', type=str,
+                                 action='store',
+                                 help='Which directory to use as the prefix for '
+                                      'miso scripts. Default is the directory'
+                                      ' returned from the unix command line '
+                                      'command "which miso".', required=False)
+        # self.parser.add_argument('--read-len', '-l', type=int, action='store',
+        #                          help='Read lengths. Assumed to be the same '
+        #                               'for all samples', required=True)
+        self.parser.add_argument('--num-processes', '-p', type=int,
+                                 action='store', default=16,
+                                 help='Number of subprocesses for MISO to run'
+                                      '. If you are using a computing cluster'
+                                      ' with several processors on a single '
+                                      'node, use the number of processors '
+                                      'you are requesting')
+        self.parser.add_argument('--psi-walltime', type=str, action='store',
+                                 default='24:00:00',
+                                 help='How much time to tell the cluster to '
+                                      'allow the calculating psi score job to'
+                                      ' run')
+        self.parser.add_argument('--queue', type=str, action='store',
+                                 default='home-yeo',
+                                 help='The cluster computing queue you would '
+                                      'like to use.')
+        self.parser.add_argument('--sample-id-suffix', type=str,
+                                 action='store', default='',
+                                 help='Extra identification to add to these '
+                                      'samples, e.g. if you are running with '
+                                      'a settings file that specifies a '
+                                      'minimum of 10 reads instead of 20, '
+                                      'you could say "_min_event_reads10" as '
+                                      'a suffix')
+        self.parser.add_argument('--sample-info-file', required=True,
+                                 type=str,
+                                 action='store',
+                                 help='A tab-delimited sample info file with '
+                                      'the header:\n'
+                                      'Sample ID\tBam File\t Notes.\n This is'
+                                      ' the same format file as required by '
+                                      'RNA-SeQC.')
+        self.parser.add_argument('--sh-scripts-dir', type=str,
+                                 action='store', default='',
+                                 help='Where to put the cluster (PBS/SGE) '
+                                      'submitter scripts. The default is the '
+                                      'directory this script was run from.')
+        self.parser.add_argument('--submit-sh-suffix', type=str,
+                                 action='store',
+                                 default='',
+                                 help='Add a suffix to this '
+                                      'script name, and the stderr/stdout '
+                                      'produced'
+                                      ' by the PBS job, too. The default is '
+                                      'miso_[event_type].sh, for example if '
+                                      'your event type is skipped exons (SE),'
+                                      ' then the script is called miso_SE.sh '
+                                      'If you add the argument '
+                                      '"--submit-sh-suffix pooled" then the '
+                                      'submit filename would be '
+                                      '"miso_pooled_SE.sh"')
+        self.parser.add_argument('--summary-walltime', type=str,
+                                 action='store',
+                                 default='24:00:00',
+                                 help='How much time to tell the cluster to '
+                                      'allow the summarization job to run.')
+        self.parser.add_argument('--summary-output-dir-base', type=str,
+                                 action='store', default='',
+                                 help='The base directory for which to place '
+                                      'the MISO summary outputs. By '
+                                      'default, MISO outputs are of '
+                                      'the format: (base_dir)/miso/('
+                                      'event_type)/(sample_id). The default '
+                                      'base dir is the directory of the .bam '
+                                      'file, e.g. if the bam you provide is '
+                                      'in ~/scratch/single_cell and your '
+                                      'event type is "SE", then miso outputs '
+                                      'for sample id "A1_02"'
+                                      ' will be in the folder'
+                                      '~/scratch/single_cell/miso/SE/A1_02/. '
+                                      'However, the intermediate output would'
+                                      ' still be in (bam_dir)/miso/('
+                                      'event_type)/(sample_id) because MISO '
+                                      'outputs a TON of intermediate files '
+                                      'that nobody wants to deal with.'
+                                      'Otherwise, if you provide a folder '
+                                      'such as '
+                                      '~/projects/single_cell/analysis, '
+                                      'then the MISO summary output for the '
+                                      'same '
+                                      'sample would be in: '
+                                      '~/projects/single_cell/analysis/miso/SE/A1_02')
+
+
 
         if inOpts is None:
             self.args = vars(self.parser.parse_args())
