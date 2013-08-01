@@ -260,9 +260,9 @@ class MisoPipeline(object):
         # TODO: wait for the insert_len job to finish (it is an array)
         sub = Submitter(queue_type='PBS', sh_file=submit_sh,
                         command_list=psi_commands, job_name=job_name)
-        self.psi_pbs_id = sub.write_sh(submit=True, nodes=1, ppn=16,
+        self.psi_job_id = sub.write_sh(submit=True, nodes=1, ppn=16,
                                  queue=self.queue, walltime=self.psi_walltime)
-        print self.psi_pbs_id
+        print self.psi_job_id
 
     def psi_and_summary(self):
         self.psi()
@@ -297,14 +297,14 @@ class MisoPipeline(object):
                                          self.event_type)
         job_name = 'miso_%s_%s_summary' % (self.submit_sh_suffix,
                                            self.event_type)
-        if self.psi_pbs_id is not None:
+        if self.psi_job_id is not None:
             sub = Submitter(queue_type='PBS', sh_file=submit_sh,
                             command_list=summary_commands,
-                            job_name=job_name, wait_for=self.psi_pbs_id)
+                            job_name=job_name, wait_for=self.psi_job_id)
         else:
             sub = Submitter(queue_type='PBS', sh_file=submit_sh,
                             command_list=summary_commands, job_name=job_name)
-        self.summary_pbs_id = sub.write_sh(submit=True, nodes=1, ppn=16,
+        self.summary_job_id = sub.write_sh(submit=True, nodes=1, ppn=16,
                                  queue=self.queue,
                                  walltime=self.summary_walltime)
-        print self.summary_pbs_id
+        print self.summary_job_id
