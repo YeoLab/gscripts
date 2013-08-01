@@ -60,18 +60,20 @@ class MisoPipeline(object):
         self.queue = cl.args['queue']
 
         # get all output dirs so we don't make a typo when redefining them
-        if cl.args['output_dir_base']:
-            self.output_dirs = ['%s/miso/%s/%s%s'
+        self.psi_output_dirs = ['%s/miso/%s/%s%s'
+                        % (os.path.dirname(bam), self.event_type,
+                           sample_id, self.sample_id_suffix)
+                         for bam, sample_id in zip(self.bams,
+                                                   self.sample_ids)]
+
+        if cl.args['summary_output_dir_base']:
+            self.summary_output_dirs = ['%s/miso/%s/%s%s'
                                 % (cl.args['output_dir_base'],
                                    self.event_type, sample_id,
                                    self.sample_id_suffix)
                                 for sample_id in self.sample_ids]
         else:
-            self.output_dirs = ['%s/miso/%s/%s%s'
-                            % (os.path.dirname(bam), self.event_type,
-                               sample_id, self.sample_id_suffix)
-                             for bam, sample_id in zip(self.bams,
-                                                       self.sample_ids)]
+            self.summary_output_dirs = self.psi_output_dirs
 
     def comparisons(self):
         return 'comparisons are not implemented'
@@ -179,7 +181,7 @@ class MisoPipeline(object):
         """
         psi_commands = []
         for bam, sample_id, output_dir in zip(self.bams, self.sample_ids,
-                                              self.output_dirs):
+                                              self.psi_output_dirs):
 
             # Establish which files we're working with
             insert_len_file = bam + '.insert_len'
@@ -273,8 +275,9 @@ class MisoPipeline(object):
 
     def summary(self):
         summary_commands = []
-        for bam, sample_id, output_dir in zip(self.bams, self.sample_ids,
-                                              self.output_dirs):
+        for bam, sample_id, psi_output_dir, summary_output_dir in \
+                zip(self.bams, self.sample_ids, self.psi_output_dirs,
+                    self.summary_output_dirs):
             # Okay, now we are ready to write to the submitter script
             summary_commands.append('\n\n# --- %s --- #' % sample_id)
 
@@ -284,8 +287,9 @@ class MisoPipeline(object):
             summary_commands.append('date')
             summary_command = 'python %s/run_miso.py --summarize-samples %s ' \
                               '%s >%s/summary.out 2>%s/summary.err' \
-                              % (self.miso_scripts_dir, output_dir,
-                                 output_dir, output_dir, output_dir)
+                              % (self.miso_scripts_dir, psi_output_dir,
+                                 summary_output_dir, summary_output_dir,
+                                 summary_output_dir)
             summary_commands.append(summary_command)
         
         # Put the submitter script wherever the command was run from

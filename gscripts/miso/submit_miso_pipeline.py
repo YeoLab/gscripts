@@ -24,9 +24,9 @@ analysis on a large amount of files. This script assumes paired-end reads.
 # **Note** for some reason,
 
 Example run:
-python ~/gscripts/gscripts/miso/submit_miso_pipeline.py --sample-info-file
-sample_info_individual_miso_failed.txt --event-type SE --submit-sh-suffix
-rerun_failed --psi-and-summary --output-dir-base
+python ~/gscripts/gscripts/miso/submit_miso_pipeline.py --sample-info-file \
+sample_info_individual_miso_failed.txt --event-type SE --submit-sh-suffix \
+rerun_failed --psi-and-summary --output-dir-base \
 ~/projects/single_cell/analysis --extra-miso-arguments ' --no-filter-events'
 '''
 
@@ -153,10 +153,11 @@ class CommandLine(object):
                                  default='24:00:00',
                                  help='How much time to tell the cluster to '
                                       'allow the summarization job to run.')
-        self.parser.add_argument('--output-dir-base', type=str,
+        self.parser.add_argument('--summmary-output-dir-base', type=str,
                                  action='store', default='',
                                  help='The base directory for which to place '
-                                      'the MISO outputs. MISO outputs are of '
+                                      'the MISO summary outputs. By '
+                                      'default, MISO outputs are of '
                                       'the format: (base_dir)/miso/('
                                       'event_type)/(sample_id). The default '
                                       'base dir is the directory of the .bam '
@@ -166,12 +167,19 @@ class CommandLine(object):
                                       'for sample id "A1_02"'
                                       ' will be in the folder'
                                       '~/scratch/single_cell/miso/SE/A1_02/. '
+                                      'However, the intermediate output would'
+                                      ' still be in (bam_dir)/miso/('
+                                      'event_type)/(sample_id) because MISO '
+                                      'outputs a TON of intermediate files '
+                                      'that nobody wants to deal with.'
                                       'Otherwise, if you provide a folder '
                                       'such as '
                                       '~/projects/single_cell/analysis, '
-                                      'then the MISO output for the same '
+                                      'then the MISO summary output for the '
+                                      'same '
                                       'sample would be in: '
                                       '~/projects/single_cell/analysis/miso/SE/A1_02')
+
         self.parser.add_argument('--sh-scripts-dir', type=str,
                                  action='store', default='',
                                  help='Where to put the cluster (PBS/SGE) '
