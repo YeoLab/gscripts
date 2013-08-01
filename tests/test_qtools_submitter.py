@@ -50,7 +50,7 @@ echo testing PBS''' % (tests.get_test_dir(), tests.get_test_dir())
         submit_sh = '%s/%s.sh' % (tests.get_test_dir(), job_name)
         sub = Submitter(queue_type='PBS', sh_file= submit_sh,
                         command_list=commands,
-                        job_name=job_name, wait_for='11111')
+                        job_name=job_name, wait_for=['11111'])
         job_id = sub.write_sh(submit=True, nodes=1, ppn=16,
                                  queue='home-yeo', walltime='0:01:00')
         true_result_string = '''#!/bin/sh

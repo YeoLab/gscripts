@@ -309,7 +309,7 @@ class MisoPipeline(object):
         if self.psi_job_id is not None:
             sub = Submitter(queue_type='PBS', sh_file=submit_sh,
                             command_list=summary_commands,
-                            job_name=job_name, wait_for=self.psi_job_id)
+                            job_name=job_name, wait_for=[self.psi_job_id])
         else:
             sub = Submitter(queue_type='PBS', sh_file=submit_sh,
                             command_list=summary_commands, job_name=job_name)
