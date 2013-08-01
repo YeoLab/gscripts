@@ -22,8 +22,8 @@ class Test(unittest.TestCase):
                                  queue='home-yeo', walltime='0:01:00')
         true_result_string = '''#!/bin/sh
 #PBS -N test_qtools_submitter
-#PBS -o %s/data/test_qtools_submitter.sh.out
-#PBS -e %s/data/test_qtools_submitter.sh.err
+#PBS -o %s/test_qtools_submitter.sh.out
+#PBS -e %s/test_qtools_submitter.sh.err
 #PBS -V
 #PBS -l walltime=0:01:00
 #PBS -l nodes=1:ppn=16
@@ -54,8 +54,8 @@ echo testing PBS''' % (tests.get_test_dir(), tests.get_test_dir())
                                  queue='home-yeo', walltime='0:01:00')
         true_result_string = '''#!/bin/sh
 #PBS -N test_qtools_submitter_wait_for_pbs
-#PBS -o %s/data/test_qtools_submitter_wait_for_pbs.sh.out
-#PBS -e %s/data/test_qtools_submitter_wait_for_pbs.sh.err
+#PBS -o %s/test_qtools_submitter_wait_for_pbs.sh.out
+#PBS -e %s/test_qtools_submitter_wait_for_pbs.sh.err
 #PBS -V
 #PBS -l walltime=0:01:00
 #PBS -l nodes=1:ppn=16
