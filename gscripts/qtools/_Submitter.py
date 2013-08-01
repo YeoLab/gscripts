@@ -190,14 +190,14 @@ class Submitter:
             if 'wait_for' in self.data:
                 # Now check that the list is nonempty
                 if self.data['wait_for']:
-                    sh_file.write("%s -W depend=afterok:%s"
+                    sh_file.write("%s -W depend=afterok:%s\n"
                                   % (queue_param_prefix,
                                      ':'.join(self.data['wait_for'])))
 
             # Wait for an array of submitted jobs
             if 'wait_for_array' in self.data:
                 if self.data['wait_for_array']:
-                    sh_file.write("%s -W depend=afterokarray:%s"
+                    sh_file.write("%s -W depend=afterokarray:%s\n"
                         % (queue_param_prefix, ''.join(self.data[
                         'wait_for_array'])))
 
