@@ -49,9 +49,9 @@ echo testing PBS'''.split('\n')
         job_id = sub.write_sh(submit=True, nodes=1, ppn=16,
                                  queue='home-yeo', walltime='0:01:00')
         true_result = '''#!/bin/sh
-#PBS -N test_qtools_submitter
-#PBS -o test_qtools_submitter.out
-#PBS -e test_qtools_submitter.err
+#PBS -N test_qtools_submitter_wait_for_pbs
+#PBS -o test_qtools_submitter_wait_for_pbs.out
+#PBS -e test_qtools_submitter_wait_for_pbs.err
 #PBS -V
 #PBS -l walltime=0:01:00
 #PBS -l nodes=1:ppn=16
