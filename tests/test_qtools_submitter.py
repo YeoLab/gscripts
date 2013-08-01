@@ -22,8 +22,8 @@ class Test(unittest.TestCase):
                                  queue='home-yeo', walltime='0:01:00')
         true_result = '''#!/bin/sh
 #PBS -N test_qtools_submitter
-#PBS -o test_qtools_submitter.out
-#PBS -e test_qtools_submitter.err
+#PBS -o %s/data/test_qtools_submitter.sh.out
+#PBS -e %s/data/test_qtools_submitter.sh.err
 #PBS -V
 #PBS -l walltime=0:01:00
 #PBS -l nodes=1:ppn=16
@@ -31,7 +31,10 @@ class Test(unittest.TestCase):
 #PBS -q home-yeo
 cd $PBS_O_WORKDIR
 date
-echo testing PBS'''.split('\n')
+echo testing PBS''' % (tests.get_test_dir(), tests.get_test_dir()).split('\n')
+
+        with open(submit_sh) as f:
+            print f.readlines()
 
         for true, test in zip(true_result, open(submit_sh)):
             self.assertEqual(true.strip().split(), test.strip().split())
@@ -50,8 +53,8 @@ echo testing PBS'''.split('\n')
                                  queue='home-yeo', walltime='0:01:00')
         true_result = '''#!/bin/sh
 #PBS -N test_qtools_submitter_wait_for_pbs
-#PBS -o test_qtools_submitter_wait_for_pbs.out
-#PBS -e test_qtools_submitter_wait_for_pbs.err
+#PBS -o %s/data/test_qtools_submitter_wait_for_pbs.sh.out
+#PBS -e %s/data/test_qtools_submitter_wait_for_pbs.sh.err
 #PBS -V
 #PBS -l walltime=0:01:00
 #PBS -l nodes=1:ppn=16
@@ -60,6 +63,9 @@ echo testing PBS'''.split('\n')
 cd $PBS_O_WORKDIR
 date
 echo testing PBS'''.split('\n')
+
+        with open(submit_sh) as f:
+            print f.readlines()
 
         for true, test in zip(true_result, open(submit_sh)):
             self.assertEqual(true.strip().split(), test.strip().split())
