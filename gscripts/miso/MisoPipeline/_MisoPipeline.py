@@ -267,7 +267,12 @@ class MisoPipeline(object):
         job_name = 'miso_%s_%s_psi' % (self.submit_sh_suffix, self.event_type)
 
         # TODO: wait for the insert_len job to finish (it is an array)
-        sub = Submitter(queue_type='PBS', sh_file=submit_sh,
+        if self.insert_len_job_id is not None:
+            sub = Submitter(queue_type='PBS', sh_file=submit_sh,
+                        command_list=psi_commands, job_name=job_name,
+                        wait_for=[self.insert_len_job_id])
+        else:
+            sub = Submitter(queue_type='PBS', sh_file=submit_sh,
                         command_list=psi_commands, job_name=job_name)
         self.psi_job_id = sub.write_sh(submit=True, nodes=1, ppn=16,
                                  queue=self.queue, walltime=self.psi_walltime)

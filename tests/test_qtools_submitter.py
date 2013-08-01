@@ -36,7 +36,7 @@ echo testing PBS''' % (tests.get_test_dir(), tests.get_test_dir())
 
         with open(submit_sh) as f:
             for x in f.readlines():
-                print x
+                print x,
 
         for true, test in zip(true_result, open(submit_sh)):
             self.assertEqual(true.strip().split(), test.strip().split())
@@ -69,7 +69,7 @@ echo testing PBS''' % (tests.get_test_dir(), tests.get_test_dir())
 
         with open(submit_sh) as f:
             for x in f.readlines():
-                print x
+                print x,
 
         for true, test in zip(true_result, open(submit_sh)):
             self.assertEqual(true.strip().split(), test.strip().split())
