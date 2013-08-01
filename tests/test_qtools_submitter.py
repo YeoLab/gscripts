@@ -5,7 +5,7 @@ Created on Aug 1, 2013
 '''
 import unittest
 
-from qtools import Submitter
+from gscripts.qtools import Submitter
 
 import tests
 

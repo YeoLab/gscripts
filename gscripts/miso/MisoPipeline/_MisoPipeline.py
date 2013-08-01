@@ -1,6 +1,6 @@
 __author__ = 'olga'
 
-from qtools import Submitter
+from gscripts.qtools import Submitter
 import os
 from glob import glob
 import sys
