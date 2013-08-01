@@ -220,6 +220,7 @@ class Submitter:
 
         for command in self.data['command_list']:
             sh_file.write(str(command) + "\n")
+        sh_file.write('\n')
 
         sh_file.close()
         if submit:

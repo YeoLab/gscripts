@@ -33,7 +33,8 @@ class Test(unittest.TestCase):
 # Go to the directory from which the script was called
 cd $PBS_O_WORKDIR
 date
-echo testing PBS''' % (tests.get_test_dir(), tests.get_test_dir())
+echo testing PBS
+''' % (tests.get_test_dir(), tests.get_test_dir())
         true_result = true_result_string.split('\n')
 
         # with open(submit_sh) as f:
@@ -69,7 +70,8 @@ echo testing PBS''' % (tests.get_test_dir(), tests.get_test_dir())
 # Go to the directory from which the script was called
 cd $PBS_O_WORKDIR
 date
-echo testing PBS''' % (tests.get_test_dir(), tests.get_test_dir())
+echo testing PBS
+''' % (tests.get_test_dir(), tests.get_test_dir())
         true_result = true_result_string.split('\n')
 
         # with open(submit_sh) as f:
@@ -105,7 +107,8 @@ echo testing PBS''' % (tests.get_test_dir(), tests.get_test_dir())
 # Go to the directory from which the script was called
 cd $PBS_O_WORKDIR
 date
-echo testing PBS''' % (tests.get_test_dir(), tests.get_test_dir())
+echo testing PBS
+''' % (tests.get_test_dir(), tests.get_test_dir())
         true_result = true_result_string.split('\n')
 
         # with open(submit_sh) as f:
