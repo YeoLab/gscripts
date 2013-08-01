@@ -14,7 +14,7 @@ class Test(unittest.TestCase):
     def test_main(self):
         commands = ['date', 'echo testing PBS']
         job_name = 'test_qtools_submitter'
-        submit_sh = '%s.sh' % job_name
+        submit_sh = tests.get_file('%s.sh' % job_name)
         sub = Submitter(queue_type='PBS', sh_file= submit_sh,
                         command_list=commands,
                         job_name=job_name)
@@ -34,7 +34,7 @@ date
 echo testing PBS'''.split('\n')
 
 
-        for true, test in zip(true_result, open(tests.get_file(submit_sh))):
+        for true, test in zip(true_result, open(submit_sh)):
             self.assertEqual(true.strip().split(), test.strip().split())
         print 'job_id', job_id
 
