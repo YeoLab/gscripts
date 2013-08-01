@@ -62,7 +62,7 @@ echo testing PBS''' % (tests.get_test_dir(), tests.get_test_dir()).split('\n')
 #PBS -q home-yeo
 cd $PBS_O_WORKDIR
 date
-echo testing PBS'''.split('\n')
+echo testing PBS''' % (tests.get_test_dir(), tests.get_test_dir()).split('\n')
 
         with open(submit_sh) as f:
             print f.readlines()
