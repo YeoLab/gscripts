@@ -202,7 +202,7 @@ class Submitter:
                         'wait_for_array'])))
 
             sh_file.write('\n# Go to the directory from which the script was '
-                          'called')
+                          'called\n')
             sh_file.write("cd $PBS_O_WORKDIR\n")
 
 

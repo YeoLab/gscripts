@@ -15,7 +15,7 @@ class Test(unittest.TestCase):
         commands = ['date', 'echo testing PBS']
         job_name = 'test_qtools_submitter'
         submit_sh = '%s/%s.sh' % (tests.get_test_dir(), job_name)
-        sub = Submitter(queue_type='PBS', sh_file= submit_sh,
+        sub = Submitter(queue_type='PBS', sh_file=submit_sh,
                         command_list=commands,
                         job_name=job_name)
         job_id = sub.write_sh(submit=True, nodes=1, ppn=16,
@@ -35,7 +35,8 @@ echo testing PBS''' % (tests.get_test_dir(), tests.get_test_dir())
         true_result = true_result_string.split('\n')
 
         with open(submit_sh) as f:
-            print f.readlines()
+            for x in f.readlines():
+                print x
 
         for true, test in zip(true_result, open(submit_sh)):
             self.assertEqual(true.strip().split(), test.strip().split())
@@ -67,7 +68,8 @@ echo testing PBS''' % (tests.get_test_dir(), tests.get_test_dir())
         true_result = true_result_string.split('\n')
 
         with open(submit_sh) as f:
-            print f.readlines()
+            for x in f.readlines():
+                print x
 
         for true, test in zip(true_result, open(submit_sh)):
             self.assertEqual(true.strip().split(), test.strip().split())
