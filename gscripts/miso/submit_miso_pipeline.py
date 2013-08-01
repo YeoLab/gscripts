@@ -153,7 +153,7 @@ class CommandLine(object):
                                  default='24:00:00',
                                  help='How much time to tell the cluster to '
                                       'allow the summarization job to run.')
-        self.parser.add_argument('--summmary-output-dir-base', type=str,
+        self.parser.add_argument('--summary-output-dir-base', type=str,
                                  action='store', default='',
                                  help='The base directory for which to place '
                                       'the MISO summary outputs. By '
