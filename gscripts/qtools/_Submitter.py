@@ -178,7 +178,7 @@ class Submitter:
                                      ''.join(self.data['wait_for'])))
 
         elif self.data['queue_type'] == 'PBS':
-            queue_param_prefix = '#PBS'
+#            queue_param_prefix = '#PBS'
             sh_file.write("%s -l walltime=%s\n" % (queue_param_prefix,
                                                    walltime))
             sh_file.write("%s -l nodes=%s:ppn=%s\n" % (queue_param_prefix,

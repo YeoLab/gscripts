@@ -37,15 +37,15 @@ echo testing PBS'''.split('\n')
             self.assertEqual(true.strip().split(), test.strip().split())
 
         # Make sure the job ID is a single (potentially multi-digit) integer
-        self.assertRegexpMatches(job_id, '^\d$')
+        self.assertRegexpMatches(job_id, '^\d+$')
 
     def test_wait_for_pbs(self):
         commands = ['date', 'echo testing PBS']
-        job_name = 'test_qtools_submitter'
+        job_name = 'test_qtools_submitter_wait_for_pbs'
         submit_sh = '%s/%s.sh' % (tests.get_test_dir(), job_name)
         sub = Submitter(queue_type='PBS', sh_file= submit_sh,
                         command_list=commands,
-                        job_name=job_name, wait_for='12345')
+                        job_name=job_name, wait_for='11111')
         job_id = sub.write_sh(submit=True, nodes=1, ppn=16,
                                  queue='home-yeo', walltime='0:01:00')
         true_result = '''#!/bin/sh
@@ -65,7 +65,7 @@ echo testing PBS'''.split('\n')
             self.assertEqual(true.strip().split(), test.strip().split())
 
         # Make sure the job ID is a single (potentially multi-digit) integer
-        self.assertRegexpMatches(job_id, '^\d$')
+        self.assertRegexpMatches(job_id, '^\d+$')
 
 if __name__ == "__main__":
     #import sys;sys.argv = ['', 'Test.test_main']
