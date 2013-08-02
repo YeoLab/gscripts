@@ -54,8 +54,10 @@ class MisoPipeline(object):
         self.summary_walltime = cl.args['summary_walltime']
 
         self.submit_sh_suffix = cl.args['submit_sh_suffix']
-
         self.sample_id_suffix = cl.args['sample_id_suffix']
+        self.sh_scripts_dir = cl.args['sh_scripts_dir'].rstrip('/')
+        if self.sh_scripts_dir == '':
+            self.sh_scripts_dir = os.curdir()
 
         self.queue = cl.args['queue']
 
@@ -79,7 +81,11 @@ class MisoPipeline(object):
             # parent directories. 'os.mkdir' will only make the leaf
             # directory and whines when the parent directories aren't there
             for d in self.summary_output_dirs:
-                os.makedirs(d)
+                try:
+                    os.makedirs(d)
+                except OSError:
+                    # If the directory is already there, don't do anything
+                    pass
 
         else:
             self.summary_output_dirs = self.psi_output_dirs
@@ -172,8 +178,12 @@ class MisoPipeline(object):
                                             insert_len_command)
                 insert_len_commands.append(insert_len_command)
 
-        insert_len_name = 'insert_len_%s' % self.submit_sh_suffix
-        insert_len_sh = '%s.sh' % insert_len_name
+        if self.submit_sh_suffix:
+            insert_len_name = 'miso_insert_len_%s' % self.submit_sh_suffix
+        else:
+            insert_len_name = 'miso_insert_len'
+
+        insert_len_sh = '%s/%s.sh' % (self.sh_scripts_dir, insert_len_name)
         sub = Submitter(queue_type='PBS', sh_file=insert_len_sh,
                         command_list=insert_len_commands,
                         job_name=insert_len_name)
@@ -261,16 +271,20 @@ class MisoPipeline(object):
             psi_commands.append(psi_command)
 
         # Put the submitter script wherever the command was run from
-        submit_sh = 'miso_%s_psi_%s.sh' % (self.submit_sh_suffix,
+        if self.submit_sh_suffix:
+            psi_name = 'miso_%s_%s_psi' % (self.submit_sh_suffix,
                                          self.event_type)
+        else:
+            psi_name = 'miso_%s_psi' % (self.event_type)
 
-        job_name = 'miso_%s_%s_psi' % (self.submit_sh_suffix, self.event_type)
+        submit_sh = '%s/%s.sh' % (self.sc, psi_name)
+        job_name = psi_name
 
         # TODO: wait for the insert_len job to finish (it is an array)
         if self.insert_len_job_id is not None:
             sub = Submitter(queue_type='PBS', sh_file=submit_sh,
                         command_list=psi_commands, job_name=job_name,
-                        wait_for=[self.insert_len_job_id])
+                        wait_for_array=[self.insert_len_job_id])
         else:
             sub = Submitter(queue_type='PBS', sh_file=submit_sh,
                         command_list=psi_commands, job_name=job_name)
@@ -307,10 +321,15 @@ class MisoPipeline(object):
             summary_commands.append(summary_command)
         
         # Put the submitter script wherever the command was run from
-        submit_sh = 'miso_%s_summary_%s.sh' % (self.submit_sh_suffix,
-                                         self.event_type)
-        job_name = 'miso_%s_%s_summary' % (self.submit_sh_suffix,
+        if self.submit_sh_suffix:
+            job_name = 'miso_%s_%s_summary' % (self.submit_sh_suffix,
                                            self.event_type)
+        else:
+            job_name = 'miso_%s_summary' % self.event_type
+
+        submit_sh = '%s/miso_%s_summary_%s.sh' \
+                    % (self.sh_scripts_dir, self.submit_sh_suffix,
+                                         self.event_type)
         if self.psi_job_id is not None:
             sub = Submitter(queue_type='PBS', sh_file=submit_sh,
                             command_list=summary_commands,
@@ -320,5 +339,8 @@ class MisoPipeline(object):
                             command_list=summary_commands, job_name=job_name)
         self.summary_job_id = sub.write_sh(submit=True, nodes=1, ppn=16,
                                  queue=self.queue,
-                                 walltime=self.summary_walltime)
+                                 walltime=self.summary_walltime,
+                                 # Tell the queue to parallelize this job
+                                 # into a job array
+                                 additional_resources={'-t': '1-16'})
         print self.summary_job_id
