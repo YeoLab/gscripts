@@ -277,7 +277,7 @@ class MisoPipeline(object):
         else:
             psi_name = 'miso_%s_psi' % (self.event_type)
 
-        submit_sh = '%s/%s.sh' % (self.sc, psi_name)
+        submit_sh = '%s/%s.sh' % (self.sh_scripts_dir, psi_name)
         job_name = psi_name
 
         # TODO: wait for the insert_len job to finish (it is an array)
