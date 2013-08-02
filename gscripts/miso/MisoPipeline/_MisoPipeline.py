@@ -53,8 +53,12 @@ class MisoPipeline(object):
         self.psi_walltime = cl.args['psi_walltime']
         self.summary_walltime = cl.args['summary_walltime']
 
-        self.submit_sh_suffix = cl.args['submit_sh_suffix']
-        self.sample_id_suffix = cl.args['sample_id_suffix']
+        self.submit_sh_suffix = cl.args['submit_sh_suffix'] if cl.args[
+            'submit_sh_suffix'].startswith('_') or cl.args[
+            'submit_sh_suffix'] == '' else '_' + cl.args['submit_sh_suffix']
+        self.sample_id_suffix = cl.args['sample_id_suffix'] if cl.args[
+            'sample_id_suffix'].startswith('_') or cl.args[
+            'sample_id_suffix'] == '' else '_' + cl.args['sample_id_suffix']
         self.sh_scripts_dir = cl.args['sh_scripts_dir'].rstrip('/')
         if self.sh_scripts_dir == '':
             self.sh_scripts_dir = os.curdir()
@@ -62,7 +66,7 @@ class MisoPipeline(object):
         self.queue = cl.args['queue']
 
         # get all output dirs so we don't make a typo when redefining them
-        self.psi_output_dirs = ['%s/miso/%s/%s_%s'
+        self.psi_output_dirs = ['%s/miso/%s/%s%s'
                         % (os.path.dirname(bam), self.event_type,
                            sample_id, self.sample_id_suffix)
                          for bam, sample_id in zip(self.bams,
@@ -184,10 +188,10 @@ class MisoPipeline(object):
                                             insert_len_command)
                 insert_len_commands.append(insert_len_command)
 
-        if self.submit_sh_suffix:
-            insert_len_name = 'miso_insert_len_%s' % self.submit_sh_suffix
-        else:
-            insert_len_name = 'miso_insert_len'
+#        if self.submit_sh_suffix:
+        insert_len_name = 'miso_insert_len%s' % self.submit_sh_suffix
+#        else:
+#            insert_len_name = 'miso_insert_len'
 
         insert_len_sh = '%s/%s.sh' % (self.sh_scripts_dir, insert_len_name)
         sub = Submitter(queue_type='PBS', sh_file=insert_len_sh,
@@ -277,11 +281,11 @@ class MisoPipeline(object):
             psi_commands.append(psi_command)
 
         # Put the submitter script wherever the command was run from
-        if self.submit_sh_suffix:
-            psi_name = 'miso_%s_%s_psi' % (self.submit_sh_suffix,
-                                         self.event_type)
-        else:
-            psi_name = 'miso_%s_psi' % (self.event_type)
+#        if self.submit_sh_suffix:
+        psi_name = 'miso_%s%s_psi' % (self.submit_sh_suffix,
+                                     self.event_type)
+#        else:
+#            psi_name = 'miso_%s_psi' % (self.event_type)
 
         submit_sh = '%s/%s.sh' % (self.sh_scripts_dir, psi_name)
         job_name = psi_name
@@ -327,15 +331,15 @@ class MisoPipeline(object):
             summary_commands.append(summary_command)
         
         # Put the submitter script wherever the command was run from
-        if self.submit_sh_suffix:
-            job_name = 'miso_%s_%s_summary' % (self.submit_sh_suffix,
-                                           self.event_type)
-        else:
-            job_name = 'miso_%s_summary' % self.event_type
+#        if self.submit_sh_suffix:
+        job_name = 'miso_%s%s_summary' % (self.submit_sh_suffix,
+                                       self.event_type)
+#        else:
+#            job_name = 'miso_%s_summary' % self.event_type
 
-        submit_sh = '%s/miso_%s_summary_%s.sh' \
-                    % (self.sh_scripts_dir, self.submit_sh_suffix,
-                                         self.event_type)
+        submit_sh = '%s/%s.sh' \
+                    % (self.sh_scripts_dir, job_name)
+        
         if self.psi_job_id is not None:
             sub = Submitter(queue_type='PBS', sh_file=submit_sh,
                             command_list=summary_commands,
