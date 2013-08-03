@@ -64,10 +64,10 @@ class MisoPipeline(object):
             'sample_id_suffix'] == '' else '_' + cl.args['sample_id_suffix']
         self.sh_scripts_dir = cl.args['sh_scripts_dir'].rstrip('/')
         if self.sh_scripts_dir == '':
-            self.sh_scripts_dir = os.curdir()
+            self.sh_scripts_dir = os.curdir
 
         self.job_name_prefix = 'miso%s_%s' % (self.submit_sh_suffix,
-                                              self.event_name)
+                                              self.event_type)
 
         self.queue = cl.args['queue']
 
