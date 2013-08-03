@@ -15,6 +15,7 @@ class MisoPipeline(object):
         attributes of this class. And initialize the cluster job IDs as None,
          so we can check if they're there or not in the future.
         """
+        self.read_type = cl.args['read_type']
         self.event_type = cl.args['event_type']
         self.sample_info_file = cl.args['sample_info_file']
 
@@ -62,6 +63,9 @@ class MisoPipeline(object):
         self.sh_scripts_dir = cl.args['sh_scripts_dir'].rstrip('/')
         if self.sh_scripts_dir == '':
             self.sh_scripts_dir = os.curdir()
+
+        self.job_name_prefix = 'miso%s_%s' % (self.submit_sh_suffix,
+                                              self.event_name)
 
         self.queue = cl.args['queue']
 
@@ -161,6 +165,10 @@ class MisoPipeline(object):
 
         Outputs the job ID of the insert_len script
         """
+        # If we are treating these as single-ended reads, don't do anything
+        if self.read_type == 'single_end':
+            return
+
         # Command-line commands to submit to the cluster
         insert_len_commands = []
         constitutive_exons_dir = '%s/%s_constitutive' % (
@@ -189,7 +197,8 @@ class MisoPipeline(object):
                 insert_len_commands.append(insert_len_command)
 
 #        if self.submit_sh_suffix:
-        insert_len_name = 'miso_insert_len%s' % self.submit_sh_suffix
+        insert_len_name = '%s_insert_len%s' % (self.job_name_prefix,
+                                               self.submit_sh_suffix)
 #        else:
 #            insert_len_name = 'miso_insert_len'
 
@@ -218,10 +227,10 @@ class MisoPipeline(object):
             # output_dir = '%s/miso/%s/%s' % (bam_dir, self.event_type,
             #                                 sample_id)
 
-            # Extract from files all the things we need
-            insert_len_mean = '%s_insert_len_MEAN' % sample_id
-            insert_len_stddev = '%s_insert_len_STDDEV' % sample_id
+            insert_len_commands, insert_len_arguments = self\
+                ._get_psi_insert_len_argument(sample_id, insert_len_file)
 
+            psi_commands.append(insert_len_commands)
 
             # Okay, now we are ready to write to the submitter script
             psi_commands.append('\n\n# --- %s --- #' % sample_id)
@@ -231,23 +240,6 @@ class MisoPipeline(object):
                                         sample_id)
             psi_commands.append('date')
 
-            # Because the insert length file has not necessarily been written
-            # yet, we cannot extract the insert length mean and std dev from
-            # the file using python. We must use shell scripting instead
-            psi_commands.append(
-                '# Get the paired-end reads insert length mean and '
-                'standard deviation from the file computed earlier for sample'
-                ' %s' % sample_id)
-
-            # Assign {sample_id}_insert_len_MEAN variable
-            psi_commands.append(
-                "%s=$(head -n 1 %s | sed 's:#::' | cut -d',' -f1 | cut -d'=' -f2)"
-                %(insert_len_mean, insert_len_file))
-
-            # Assign {sample_id}_insert_len_STDDEV variable
-            psi_commands.append(
-                "%s=$(head -n 1 %s | sed 's:#::' | cut -d',' -f2 | cut -d'=' -f2)"
-                % (insert_len_stddev, insert_len_file))
 
             # Get the read length. Gonna keep this as bash because samtools
             # and less are very fast
@@ -263,16 +255,17 @@ class MisoPipeline(object):
                 " length }')" % (read_len, bam))
 
             # Finally we are ready to write the actual miso command!
-            log_filename = 'compute_psi'
+            log_filename = 'psi'
             stderr = '%s/%s.err' % (output_dir, log_filename)
             stdout = '%s/%s.out' % (output_dir, log_filename)
 
 
             psi_command = 'python %s --run %s %s --output-dir %s ' \
-                                  '--read-len $%s -p %d %s >' \
+                                  '--read-len $%s %s -p %d %s >' \
                                   ' %s 2> %s' \
                                   % (self.miso, self.event_type_index, bam,
-                                     output_dir, read_len, self.num_processes,
+                                     output_dir, read_len,
+                                     insert_len_arguments, self.num_processes,
                                      self.extra_miso_arguments, stdout,
                                      stderr)
             psi_commands.append('date')
@@ -282,8 +275,7 @@ class MisoPipeline(object):
 
         # Put the submitter script wherever the command was run from
 #        if self.submit_sh_suffix:
-        psi_name = 'miso_%s%s_psi' % (self.submit_sh_suffix,
-                                     self.event_type)
+        psi_name = '%s_psi' % self.job_name_prefix
 #        else:
 #            psi_name = 'miso_%s_psi' % (self.event_type)
 
@@ -301,6 +293,42 @@ class MisoPipeline(object):
         self.psi_job_id = sub.write_sh(submit=True, nodes=1, ppn=16,
                                  queue=self.queue, walltime=self.psi_walltime)
         print self.psi_job_id
+
+    def _get_psi_insert_len_argument(self, sample_id, insert_len_file):
+        '''
+        Returns a tuple: list of commands for the cluster, and an arguments
+        string to add to the "python $(which miso) --run" script specifying
+        the insert length mean and standard deviation.
+        '''
+        if self.read_type == 'single_end':
+            return [], ''
+
+        insert_len_commands = []
+        # Extract from files all the things we need
+        insert_len_mean = '%s_insert_len_MEAN' % sample_id
+        insert_len_stddev = '%s_insert_len_STDDEV' % sample_id
+
+        # Because the insert length file has not necessarily been written
+        # yet, we cannot extract the insert length mean and std dev from
+        # the file using python. We must use shell scripting instead
+        insert_len_commands.append(
+            '# Get the paired-end reads insert length mean and '
+            'standard deviation from the file computed earlier for sample'
+            ' %s' % sample_id)
+
+        # Assign {sample_id}_insert_len_MEAN variable
+        insert_len_commands.append(
+            "%s=$(head -n 1 %s | sed 's:#::' | cut -d',' -f1 | cut -d'=' -f2)"
+            %(insert_len_mean, insert_len_file))
+
+        # Assign {sample_id}_insert_len_STDDEV variable
+        insert_len_commands.append(
+            "%s=$(head -n 1 %s | sed 's:#::' | cut -d',' -f2 | cut -d'=' -f2)"
+            % (insert_len_stddev, insert_len_file))
+
+        insert_len_arguments = ' --paired-end $%s $%s ' % (insert_len_mean,
+                                                         insert_len_stddev)
+        return insert_len_commands, insert_len_arguments
 
     def psi_and_summary(self):
         self.psi()
@@ -332,14 +360,13 @@ class MisoPipeline(object):
         
         # Put the submitter script wherever the command was run from
 #        if self.submit_sh_suffix:
-        job_name = 'miso_%s%s_summary' % (self.submit_sh_suffix,
-                                       self.event_type)
+        job_name = '%s_summary' % (self.job_name_prefix)
 #        else:
 #            job_name = 'miso_%s_summary' % self.event_type
 
         submit_sh = '%s/%s.sh' \
                     % (self.sh_scripts_dir, job_name)
-        
+
         if self.psi_job_id is not None:
             sub = Submitter(queue_type='PBS', sh_file=submit_sh,
                             command_list=summary_commands,

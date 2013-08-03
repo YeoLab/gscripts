@@ -90,6 +90,19 @@ class CommandLine(object):
                                         'scores of all splicing events, '
                                         'and summarize the relevant events')
 
+        read_type = self.parser.add_mutually_exclusive_group()
+        read_type.add_argument('--paired-end', action='store_const',
+                               dest='read_type', const='paired_end',
+                               help='Indicates that these are paired-end '
+                                    'reads. This is the default. Can compute '
+                                    'insert size using "--insert-len" or '
+                                    '"--run-all" options')
+        read_type.add_argument('--single-end', action='store_const',
+                               dest='read_type', const='single_end',
+                               help='Indicates that these reads are '
+                                    'single-ended, and treats them as such. '
+                                    'Does not compute insert size.')
+
         # self.parser.add_argument('--index-base-dir',
         #                          action='store',
         #                          type=str,
