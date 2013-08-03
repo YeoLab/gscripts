@@ -42,6 +42,7 @@ class MisoPipeline(object):
         self.event_type_index = '%s/%s_index' \
                                 % (self.base_annotation_dir, self.event_type)
         self.num_processes = cl.args['num_processes']
+        self.num_cores = cl.args['num_cores']
         self.sample_ids, self.bams, self.notes = read_sample_info_file(
             self.sample_info_file)
 
@@ -49,6 +50,7 @@ class MisoPipeline(object):
 
         # Initialize the IDs we're going to use
         self.insert_len_job_id = None
+        self.psi_job_is_array = False
         self.psi_job_id = None
 
         self.psi_walltime = cl.args['psi_walltime']
@@ -206,11 +208,15 @@ class MisoPipeline(object):
         sub = Submitter(queue_type='PBS', sh_file=insert_len_sh,
                         command_list=insert_len_commands,
                         job_name=insert_len_name)
-        self.insert_len_job_id = sub.write_sh(submit=True, nodes=1, ppn=16,
+        self.insert_len_job_id = sub.write_sh(submit=True,
+                                              nodes=self.num_cores,
+                                              ppn=self.num_processes,
                                  queue=self.queue, walltime='3:00:00',
                                  # Tell the queue to parallelize this job
                                  # into a job array
-                                 additional_resources={'-t': '1-16'})
+                                 additional_resources=
+                                 {'-t': '1-%d' % (self.num_cores*self
+                                 .num_processes)})
 
     def psi(self):
         """
@@ -290,8 +296,20 @@ class MisoPipeline(object):
         else:
             sub = Submitter(queue_type='PBS', sh_file=submit_sh,
                         command_list=psi_commands, job_name=job_name)
-        self.psi_job_id = sub.write_sh(submit=True, nodes=1, ppn=16,
-                                 queue=self.queue, walltime=self.psi_walltime)
+        if self.num_cores == 1:
+            self.psi_job_is_array = False
+            self.psi_job_id = sub.write_sh(submit=True,
+                                           nodes=self.num_cores,
+                                           ppn=self.num_processes,
+                                           queue=self.queue,
+                                           walltime=self.psi_walltime)
+        else:
+            self.psi_job_is_array = True
+            self.psi_job_id = sub.write_sh(
+                submit=True, nodes=self.num_cores, ppn=self.num_processes,
+                queue=self.queue, walltime=self.psi_walltime,
+                additional_resources={'-t': '1-%d' % self.num_cores})
+
         print self.psi_job_id
 
     def _get_psi_insert_len_argument(self, sample_id, insert_len_file):
@@ -370,14 +388,21 @@ class MisoPipeline(object):
         if self.psi_job_id is not None:
             sub = Submitter(queue_type='PBS', sh_file=submit_sh,
                             command_list=summary_commands,
-                            job_name=job_name, wait_for=[self.psi_job_id])
+                            job_name=job_name, wait_for=[self.psi_job_id],
+                            # Tell the queue to parallelize this job
+                                 # into a job array
+                            additional_resources=
+                            {'-t': '1-%d' % (self.num_processes*
+                                             self.num_cores)})
         else:
             sub = Submitter(queue_type='PBS', sh_file=submit_sh,
-                            command_list=summary_commands, job_name=job_name)
+                            command_list=summary_commands, job_name=job_name,
+                            # Tell the queue to parallelize this job
+                            # into a job array
+                            additional_resources=
+                            {'-t': '1-%d' % (self.num_processes*
+                                             self.num_cores)})
         self.summary_job_id = sub.write_sh(submit=True, nodes=1, ppn=16,
                                  queue=self.queue,
-                                 walltime=self.summary_walltime,
-                                 # Tell the queue to parallelize this job
-                                 # into a job array
-                                 additional_resources={'-t': '1-16'})
+                                 walltime=self.summary_walltime)
         print self.summary_job_id

@@ -176,6 +176,14 @@ class CommandLine(object):
                                       ' with several processors on a single '
                                       'node, use the number of processors '
                                       'you are requesting')
+        #self.parser.add_argument('--num-cores')
+        self.parser.add_argument('--num-cores', type=int,
+                                 action='store', default=1,
+                                 help='Number of cores to distribute the '
+                                      'computation to. The default is 1. If '
+                                      'the number of cores is greater than 1,'
+                                      ' then make the psi and summary jobs a '
+                                      'job array.')
         self.parser.add_argument('--psi-walltime', type=str, action='store',
                                  default='24:00:00',
                                  help='How much time to tell the cluster to '

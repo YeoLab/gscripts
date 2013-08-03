@@ -208,15 +208,17 @@ class Submitter:
 
         if 'additional_resources' in self.data:
             if self.data['additional_resources']:
-                for key in self.data['additional_resources']:
-                    for value in self.data['additional_resources'][key]:
-                        sh_file.write("%s %s %s\n" % (queue_param_prefix,
-                                                      key, value))
-        # Olga: The 'number_jobs' variable is unused.
-        # if use_array:
-        #     print "use array"
-        #     number_jobs = math.ceil(
-        #         len(self.data['command_list']) / int(chunks))
+                for key, value in self.data['additional_resources'].iteritems():
+                    # for value in self.data['additional_resources'][key]:
+                    sh_file.write("%s %s %s\n" % (queue_param_prefix,
+                                                  key, value))
+        if 'additional_resources' in kwargs:
+            if kwargs['additional_resources']:
+                for key, value in kwargs['additional_resources'].iteritems():
+                    # for value in kwargs['additional_resources'][key]:
+                    sh_file.write("%s %s %s\n" % (queue_param_prefix,
+                                                  key, value))
+
 
         for command in self.data['command_list']:
             sh_file.write(str(command) + "\n")
