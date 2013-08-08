@@ -6,6 +6,8 @@ Created on Aug 1, 2013
 import unittest
 
 from gscripts.qtools import Submitter
+import subprocess
+from subprocess import PIPE
 
 import tests
 
@@ -46,6 +48,8 @@ echo testing PBS
 
         # Make sure the job ID is a single (potentially multi-digit) integer
         self.assertRegexpMatches(job_id, '^\d+$')
+        subprocess.Popen(["qdel", job_id],
+                                 stdout=PIPE)
 
     def test_wait_for_pbs(self):
         commands = ['date', 'echo testing PBS']
@@ -83,6 +87,8 @@ echo testing PBS
 
         # Make sure the job ID is a single (potentially multi-digit) integer
         self.assertRegexpMatches(job_id, '^\d+$')
+        subprocess.Popen(["qdel", job_id],
+                                 stdout=PIPE)
 
     def test_wait_for_array_pbs(self):
         commands = ['date', 'echo testing PBS']
@@ -120,6 +126,8 @@ echo testing PBS
 
         # Make sure the job ID is a single (potentially multi-digit) integer
         self.assertRegexpMatches(job_id, '^\d+$')
+        subprocess.Popen(["qdel", job_id],
+                                 stdout=PIPE)
 
 if __name__ == "__main__":
     #import sys;sys.argv = ['', 'Test.test_main']
