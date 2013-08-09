@@ -385,6 +385,11 @@ class MisoPipeline(object):
 
         submit_sh = '%s/%s.sh' \
                     % (self.sh_scripts_dir, job_name)
+        if self.num_cores > 1:
+            additional_resources = {'-t': '1-%d' % (self.num_processes*
+                                             self.num_cores)}
+        else:
+            additional_resources = None
 
         if self.psi_job_id is not None:
             sub = Submitter(queue_type='PBS', sh_file=submit_sh,
@@ -392,18 +397,17 @@ class MisoPipeline(object):
                             job_name=job_name, wait_for=[self.psi_job_id],
                             # Tell the queue to parallelize this job
                                  # into a job array
-                            additional_resources=
-                            {'-t': '1-%d' % (self.num_processes*
-                                             self.num_cores)})
+                            additional_resources=additional_resources)
         else:
             sub = Submitter(queue_type='PBS', sh_file=submit_sh,
                             command_list=summary_commands, job_name=job_name,
                             # Tell the queue to parallelize this job
                             # into a job array
-                            additional_resources=
-                            {'-t': '1-%d' % (self.num_processes*
-                                             self.num_cores)})
-        self.summary_job_id = sub.write_sh(submit=True, nodes=1, ppn=16,
+                            additional_resources=additional_resources)
+
+        self.summary_job_id = sub.write_sh(submit=True,
+                                           nodes=self.num_cores,
+                                           ppn=16,
                                  queue=self.queue,
                                  walltime=self.summary_walltime)
         print self.summary_job_id
