@@ -122,8 +122,8 @@ class CommandLine(object):
                                       'and the event type is AFE, '
                                       'then the annotations are assumed to be'
                                       ' in folder'
-                                      '/home/obotvinnik/genomes/miso_annotations/hg19/AFE_index/',
-                                 default='/home/obotvinnik/genomes/miso_annotations/hg19')
+                                      '/home/obotvinnik/genomes/hg19/miso_annotations/AFE_index/',
+                                 default='/home/obotvinnik/genomes/hg19/miso_annotations')
         self.parser.add_argument('--event-type', '-e',
                                  action='store', type=str, required=True,
                                  help="Which event you'd like to index. One "
@@ -152,7 +152,7 @@ class CommandLine(object):
                                       'it does not get interpreted as an '
                                       'argument to the MISO pipeline script, '
                                       'e.g. --extra-miso-arguments " '
-                                      '--no-bam-filter'
+                                      '--no-filter-events'
                                       ' --settings-filename '
                                       'miso_settings_min_event_reads5.txt". '
                                       'If this is not working for you, '

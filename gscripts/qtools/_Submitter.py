@@ -176,6 +176,19 @@ class Submitter:
                     sh_file.write("%s -hold_jid %s \n"
                                   % (queue_param_prefix,
                                      ''.join(self.data['wait_for'])))
+            # need to write additional resources BEFORE the first commands
+            if 'additional_resources' in self.data:
+                if self.data['additional_resources']:
+                    for key, value in self.data['additional_resources'].iteritems():
+                        # for value in self.data['additional_resources'][key]:
+                        sh_file.write("%s %s %s\n" % (queue_param_prefix,
+                                                      key, value))
+            if 'additional_resources' in kwargs:
+                if kwargs['additional_resources']:
+                    for key, value in kwargs['additional_resources'].iteritems():
+                        # for value in kwargs['additional_resources'][key]:
+                        sh_file.write("%s %s %s\n" % (queue_param_prefix,
+                                                      key, value))
 
         elif self.data['queue_type'] == 'PBS':
 #            queue_param_prefix = '#PBS'
@@ -201,23 +214,27 @@ class Submitter:
                         % (queue_param_prefix, ''.join(self.data[
                         'wait_for_array'])))
 
+
+            # need to write additional resources BEFORE the first commands
+            if 'additional_resources' in self.data:
+                if self.data['additional_resources']:
+                    for key, value in self.data['additional_resources'].iteritems():
+                        # for value in self.data['additional_resources'][key]:
+                        sh_file.write("%s %s %s\n" % (queue_param_prefix,
+                                                      key, value))
+            if 'additional_resources' in kwargs:
+                if kwargs['additional_resources']:
+                    for key, value in kwargs['additional_resources'].iteritems():
+                        # for value in kwargs['additional_resources'][key]:
+                        sh_file.write("%s %s %s\n" % (queue_param_prefix,
+                                                      key, value))
+
             sh_file.write('\n# Go to the directory from which the script was '
                           'called\n')
             sh_file.write("cd $PBS_O_WORKDIR\n")
 
 
-        if 'additional_resources' in self.data:
-            if self.data['additional_resources']:
-                for key, value in self.data['additional_resources'].iteritems():
-                    # for value in self.data['additional_resources'][key]:
-                    sh_file.write("%s %s %s\n" % (queue_param_prefix,
-                                                  key, value))
-        if 'additional_resources' in kwargs:
-            if kwargs['additional_resources']:
-                for key, value in kwargs['additional_resources'].iteritems():
-                    # for value in kwargs['additional_resources'][key]:
-                    sh_file.write("%s %s %s\n" % (queue_param_prefix,
-                                                  key, value))
+
 
 
         for command in self.data['command_list']:
