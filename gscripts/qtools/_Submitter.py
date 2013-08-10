@@ -199,6 +199,9 @@ class Submitter:
             sh_file.write("%s -A %s\n" % (queue_param_prefix, account))
             sh_file.write("%s -q %s\n" % (queue_param_prefix, queue))
 
+            # Workaround to submit to 'glean' queue
+            sh_file.write('%s -W group_list=condo-group' % queue_param_prefix)
+
             # First check that we even have this parameter
             if 'wait_for' in self.data:
                 # Now check that the list is nonempty
