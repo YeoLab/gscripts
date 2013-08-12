@@ -236,11 +236,11 @@ class MisoPipeline(object):
             insert_len_commands, insert_len_arguments = self\
                 ._get_psi_insert_len_argument(sample_id, insert_len_file)
 
-            # Need to **extend** with a list, not append.
-            psi_commands.extend(insert_len_commands)
-
             # Okay, now we are ready to write to the submitter script
             psi_commands.append('\n\n# --- %s --- #' % sample_id)
+
+            # Need to **extend** with a list, not append.
+            psi_commands.extend(insert_len_commands)
 
             # add a line of padding and the sample id to the output file
             psi_commands.append('\necho\necho "--- %s ----"' %
