@@ -1,14 +1,23 @@
+import pandas
+import numpy as np
+import scipy as sp
+import pylab as pl
+from collections import defaultdict
+from glob import glob
+import itertools
+from sklearn import decomposition as dc
+import matplotlib.pyplot as plt
+from math import sqrt
+from numpy.linalg import norm
+from prettyplotlib import plt
+import prettyplotlib as ppl
+
 def plot_pca(df, c_scale=None, x_pc=1, y_pc=2, distance='L1', \
               save_as=None, save_format='png', whiten=True, num_vectors=30, \
               figsize=(10, 10), colors_dict=None, markers_dict=None, \
               title='PCA', show_vectors=True, show_point_labels=True, \
               show_vector_labels=True):
     
-    from sklearn import decomposition as dc
-    import matplotlib.pyplot as plt
-    import numpy as np
-    from math import sqrt
-    #from math.linalg import norm
     
     # gather ids and values
     row_ids = df.index
