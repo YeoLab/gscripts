@@ -1,5 +1,4 @@
-def graph_PCA(df, c_scale=None, x_pc=1, y_pc=2, distance='L1', V
-t_pca(df, c_scale=None, x_pc=1, y_pc=2, distance='L1', \
+def plot_pca(df, c_scale=None, x_pc=1, y_pc=2, distance='L1', \
               save_as=None, save_format='png', whiten=True, num_vectors=30, \
               figsize=(10, 10), colors_dict=None, markers_dict=None, \
               title='PCA', show_vectors=True, show_point_labels=True, \
@@ -91,80 +90,3 @@ t_pca(df, c_scale=None, x_pc=1, y_pc=2, distance='L1', \
         pca_fig.savefig(save_as, format=save_format)
         
     return vectors
-              save_as=None, save_format='png', whiten=True, num_vectors=30, \
-              figsize=(10, 10), colors_dict=None, title='PCA'):
-    
-    from sklearn import decomposition as dc
-    import matplotlib.pyplot as plt
-    import numpy as np
-    from math import sqrt
-    from math.linalg import norm
-    
-    # gather ids and values
-    row_ids = df.index
-    column_ids = df.columns
-    df_array = df.as_matrix()
-    
-    # perform pca
-    n_components = max(x_pc, y_pc, 2)
-    pca = decomposition.PCA(whiten=whiten, n_components=n_components)
-    pca.fit(df_array)
-    X = pca.transform(df_array)
-    (comp_x, comp_y) = (pca.components_[x_pc-1,:], pca.components_[y_pc-1,:])
-    
-    x_list = X[:, x_pc-1]
-    y_list = X[:, y_pc-1]
-    
-    if not c_scale:
-        c_scale = 2 * max([norm(point) for point in zip(x_list, y_list)])/\
-                  max([norm(vector) for vector in zip(comp_x, comp_y)])
-        
-    size_scale = sqrt(figsize[0]*figsize[1])/1.5
-    
-    # sort features by magnitude/contribution to transformation
-    comp_magn = []
-    for (x, y, an_id) in zip(comp_x, comp_y, column_ids):
-    
-        x = x*c_scale
-        y = y*c_scale
-        
-        if distance == 'L1':
-            comp_magn.append((x, y, an_id, abs(y)+abs(x)))
-        
-        elif distance == 'L2':       
-            comp_magn.append((x, y, an_id, math.sqrt((y**2)+(x**2))))
-    
-    # create figure and plot 
-    pca_fig, ax = plt.subplots(figsize=figsize)
-    
-    for (x, y, marker) in zip(x_list, y_list, row_ids):
-        
-        if colors_dict:
-            try: 
-                color = colors_dict[marker]
-            except:
-                color = 'black'
-        else:
-            color = 'black'
-                
-        ax.text(x, y, marker, color=color, size=size_scale)
-        ax.scatter(x, y, marker='x', color=color)
-    
-    vectors = sorted(comp_magn, key=lambda item: item[3], reverse=True)[:num_vectors]
-    for x, y, marker, distance in vectors:
-    
-        ax.plot([0, x], [0, y], color='black')
-        ax.text(x, y, marker, color='black', size=size_scale)
-        
-    var_1 = int(pca.explained_variance_ratio_[x_pc-1]*100)
-    var_2 = int(pca.explained_variance_ratio_[y_pc-1]*100)
-
-    ax.set_xlabel('Principal Component {} (Explains {}% Of Variance)'.format(str(x_pc), str(var_1)), size=size_scale*2)
-    ax.set_ylabel('Principal Component {} (Explains {}% Of Variance)'.format(str(y_pc), str(var_2)), size=size_scale*2)
-    ax.set_title(title, size=size_scale*3)
-
-    if save_as:
-        pca_fig.savefig(save_as, format=save_format)
-        
-    return vectors
-    
