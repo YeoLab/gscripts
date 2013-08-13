@@ -373,9 +373,20 @@ class MisoPipeline(object):
             summary_command = 'python %s/run_miso.py --summarize-samples %s ' \
                               '%s >%s/summary.out 2>%s/summary.err' \
                               % (self.miso_scripts_dir, psi_output_dir,
-                                 summary_output_dir, summary_output_dir,
-                                 summary_output_dir)
+                                 psi_output_dir, psi_output_dir,
+                                 psi_output_dir)
             summary_commands.append(summary_command)
+
+            summary_commands.append('# Copy over the summary files to prevent'
+                                    ' overloading the home directory')
+            temp_summary_file = '%s/summary/%s.miso_summary' % (
+                psi_output_dir, sample_id)
+            final_summary_file = '%s/summary/%s.miso_summary' % (
+                summary_output_dir, sample_id)
+            summary_commands.append('mkdir -p %s/summary' % (
+                summary_output_dir))
+            summary_commands.append('cp %s %s' % (temp_summary_file,
+                                                  final_summary_file))
         
         # Put the submitter script wherever the command was run from
 #        if self.submit_sh_suffix:
