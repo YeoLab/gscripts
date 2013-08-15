@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-__author__ = 'Patrick Liu'
+__author__ = 'Patrick Liu, Olga Botvinnik, Michael Lovci '
 
 # TODO: simplify Submitter()/write_sh() workflow. Right now it's confusing
 # which options go where. (talk to Patrick)
@@ -24,6 +24,9 @@ import re
 import math
 import subprocess
 from subprocess import PIPE
+import sys
+
+hostname = subprocess.Popen('hostname', stdout=subprocess.PIPE).communicate()[0].strip()
 
 
 class Submitter:
@@ -38,6 +41,34 @@ class Submitter:
         passed keyword arguments and values.
         """
         self.data = kwargs
+        if ("oolite" in hostname) or ("compute" in hostname):
+            sys.stderr.write("automatically setting pramaters for oolite\n")
+            self.data['queue_type'] = "SGE"
+            self.data['use_array'] = True
+            self.add_resource("-l", 'bigmem')
+            self.add_resource("-l", 'h_vmem=16G')
+
+        elif ("tscc" in hostname):
+            sys.stderr.write("automatically setting parameters for tscc\n")
+            self.data['queue_type'] = "PBS"
+            if 'array' not in self.data:
+                ar = False
+                sys.stderr.write("\tuse array?: %s\n" %ar)
+                self.data['use_array'] = ar
+            if 'walltime' not in self.data:
+                wt = "00:72:00"
+                sys.stderr.write("\twalltime:%s\n" %(wt))
+                self.data['walltime']=wt
+            if 'nodes' not in self.data:
+                nd = 1
+                sys.stderr.write("\tnodes:%d\n" %nd)
+                self.data['nodes']=nd
+            if 'ppn' not in self.data:
+                ppn = 1
+                sys.stderr.write("\tppn:%d\n" %ppn)
+                self.data['ppn']=ppn
+
+
 
     def set_value(self, **kwargs):
         """
@@ -65,8 +96,12 @@ class Submitter:
             self.data['additional_resources'] = defaultdict(list)
 
         self.data['additional_resources'][kw].append(value)
-
+    
     def write_sh(self, **kwargs):
+        #for backwards compatibility
+        self.job(**kwargs)
+
+    def job(self, use_array=False, submit=False, **kwargs):
         """
         Create a file that is the shell script to be submitted to the
         job scheduler.
@@ -96,13 +131,30 @@ class Submitter:
         """
         required_keys = "queue_type sh_file command_list job_name"\
             .split()
-        use_array = False
-        chunks = 1
-        submit = False
-        ret_val = 0
 
-        if 'array' in kwargs:
-            use_array = kwargs['array']
+        ret_val = 0
+        chunks = 1
+        number_jobs=1
+
+        self.data.update(kwargs)
+
+        for key in required_keys:
+            if not key in self.data:
+                raise ValueError("missing required key: " + str(key))
+
+
+            if not self.data[key]:
+                raise ValueError("missing value for required key: " + str(key))
+
+            
+
+        if 'array' in self.data:
+            use_array = self.data['array']
+
+            if chunks != 1:
+                raise ValueError("only a chunk size of 1 is allowed, please fix the Submitter code if you want to do that")
+            number_jobs = math.ceil(len(self.data['command_list'])/int(chunks))
+
 
         if 'chunks' in kwargs:
             if kwargs['chunks']:
@@ -136,14 +188,7 @@ class Submitter:
         else:
             queue = 'home'
 
-        for keys in required_keys:
-            if not keys in self.data:
-                print "missing required key: " + str(keys)
-                return
-
-            if not self.data[keys]:
-                print "missing value for required key: " + str(keys)
-                return
+      
 
         sh_filename = self.data['sh_file']
         sh_file = open(sh_filename, 'w')
@@ -151,9 +196,9 @@ class Submitter:
 
         # Default stdout/stderr .out/.err files to be the sh submit script file
         # plus .out or .err
-        out_file = self.data['out'] if 'out' in self.data else sh_filename + \
+        out_file = self.data['out'] if 'out' in self.data else self.data['job_name'] + \
                                                                '.out'
-        err_file = self.data['err'] if 'err' in self.data else sh_filename + \
+        err_file = self.data['err'] if 'err' in self.data else self.data['job_name'] + \
                                                                '.err'
 
         queue_param_prefixes = {'SGE': '#$', 'PBS': '#PBS'}
@@ -189,6 +234,7 @@ class Submitter:
                         # for value in kwargs['additional_resources'][key]:
                         sh_file.write("%s %s %s\n" % (queue_param_prefix,
                                                       key, value))
+            array_job_identifier = "$SGE_TASK_ID"
 
         elif self.data['queue_type'] == 'PBS':
 #            queue_param_prefix = '#PBS'
@@ -200,7 +246,8 @@ class Submitter:
             sh_file.write("%s -q %s\n" % (queue_param_prefix, queue))
 
             # Workaround to submit to 'glean' queue
-            sh_file.write('%s -W group_list=condo-group' % queue_param_prefix)
+            if queue == "glean":
+                sh_file.write('%s -W group_list=condo-group\n' % queue_param_prefix)
 
             # First check that we even have this parameter
             if 'wait_for' in self.data:
@@ -231,17 +278,24 @@ class Submitter:
                         # for value in kwargs['additional_resources'][key]:
                         sh_file.write("%s %s %s\n" % (queue_param_prefix,
                                                       key, value))
+            if use_array:
+                sh_file.write("%s -t 1-%d\n" %(queue_param_prefix, number_jobs))
 
             sh_file.write('\n# Go to the directory from which the script was '
                           'called\n')
             sh_file.write("cd $PBS_O_WORKDIR\n")
-
-
-
-
-
-        for command in self.data['command_list']:
-            sh_file.write(str(command) + "\n")
+            array_job_identifier = "$PBS_ARRAYID"
+            
+   
+        if use_array:
+            sys.stderr.write( "running %d tasks as an array-job. " %(len(self.data['command_list'])))
+            for i, cmd in enumerate(self.data['command_list']):
+                sh_file.write("cmd[%d]=\"%s\"\n" %((i+1), cmd))
+            sh_file.write("eval ${cmd[%s]}\n" %(array_job_identifier))
+        #    pass
+        else:
+            for command in self.data['command_list']:
+                sh_file.write(str(command) + "\n")
         sh_file.write('\n')
 
         sh_file.close()
@@ -250,5 +304,6 @@ class Submitter:
                                  stdout=PIPE)
             output = p.communicate()[0].strip()
             ret_val = re.findall(r'\d+', output)[0]
+            sys.stderr.write("jobID: %s\n" %ret_val)
 
         return ret_val
