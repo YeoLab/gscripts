@@ -1,0 +1,5 @@
+#!/bin/sh
+
+
+
+java -jar /home/yeo-lab/software/rnaseqc/RNA-SeQC_v1.1.7.jar -
