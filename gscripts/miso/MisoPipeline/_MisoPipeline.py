@@ -219,7 +219,7 @@ class MisoPipeline(object):
             sub = Submitter(queue_type='PBS', sh_file=insert_len_sh,
                             command_list=insert_len_commands,
                             job_name=insert_len_name)
-            self.insert_len_job_id = sub.write_sh(submit=True,
+            self.insert_len_job_id[sample_id] = sub.write_sh(submit=True,
                                                   nodes=self.num_cores,
                                                   ppn=self.num_processes,
                                      queue=self.queue, walltime='0:30:00')
@@ -322,14 +322,14 @@ class MisoPipeline(object):
                             command_list=psi_commands, job_name=job_name)
             if self.num_cores == 1:
                 self.psi_job_is_array = False
-                self.psi_job_id = sub.write_sh(submit=True,
+                self.psi_job_id[sample_id] = sub.write_sh(submit=True,
                                                nodes=self.num_cores,
                                                ppn=self.num_processes,
                                                queue=self.queue,
                                                walltime=self.psi_walltime)
             else:
                 self.psi_job_is_array = True
-                self.psi_job_id = sub.write_sh(
+                self.psi_job_id[sample_id] = sub.write_sh(
                     submit=True, nodes=self.num_cores, ppn=self.num_processes,
                     queue=self.queue, walltime=self.psi_walltime,
                     additional_resources={'-t': '1-%d' % self.num_cores})
