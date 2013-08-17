@@ -391,7 +391,7 @@ class MisoPipeline(object):
 
         job_name_base = '%s_summary' % (self.job_name_prefix)
         submit_sh_base = '%s/%s.sh' \
-            % (self.sh_scripts_dir, )
+            % (self.sh_scripts_dir, job_name_base)
         all_submit_sh = []
 
         for bam, sample_id, psi_output_dir, summary_output_dir in \
@@ -432,7 +432,7 @@ class MisoPipeline(object):
                         % (submit_sh_base, sample_id)
             all_submit_sh.append('\n# --- %s --- #\nqsub %s\n' %
                                  (sample_id, submit_sh))
-            
+
             if self.num_cores > 1:
                 additional_resources = {'-t': '1-%d'
                                               % (self.num_processes *

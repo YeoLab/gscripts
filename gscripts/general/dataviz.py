@@ -26,7 +26,7 @@ def plot_pca(df, c_scale=None, x_pc=1, y_pc=2, distance='L1', \
     
     # perform pca
     n_components = max(x_pc, y_pc, 2)
-    pca = decomposition.PCA(whiten=whiten, n_components=n_components)
+    pca = dc.PCA(whiten=whiten, n_components=n_components)
     pca.fit(df_array)
     X = pca.transform(df_array)
     (comp_x, comp_y) = (pca.components_[x_pc-1,:], pca.components_[y_pc-1,:])
