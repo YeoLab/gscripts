@@ -9,7 +9,7 @@ def mergeSamples(samples, splicetypes=["SE"]):
     
     data = {}
     for splicetype in splicetypes:
-        data[splicetype] = {}1
+        data[splicetype] = {}
     for sample in samples:
         sampleFilename, sampleLabel = sample
         sampleData = pickle.load(open(sampleFilename))
