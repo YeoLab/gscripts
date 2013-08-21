@@ -9,7 +9,7 @@ def mergeSamples(samples, splicetypes=["SE"]):
     
     data = {}
     for splicetype in splicetypes:
-        data[splicetype] = {}
+        data[splicetype] = {}1
     for sample in samples:
         sampleFilename, sampleLabel = sample
         sampleData = pickle.load(open(sampleFilename))
@@ -43,8 +43,52 @@ def main(options):
         annotation = retrieve_splicing(options.species)
     
     if "SE" in spliceData:
-        print "Checking SEs"
-        if len(options.samples) == 2:
+
+        for sample in samples:
+            sample_label = sample[1]
+            with open(sample_label + ".oldsplice.SE", 'w') as SEout:
+                for gene in spliceData["SE"]:
+                    for loc in spliceData["SE"]['gene']:
+                        sample_IN = spliceData["SE"][gene][loc][sample_label]["IN"]
+                        sample_EX = spliceData["SE"][gene][loc][sample_label]["EX"]
+                        psi = ((sample_IN +2.) / 2) / (((sample_IN +2.) / 2) + (sample_EX+1))
+
+                        if sample_IN == 0:
+                            psi = 0.0
+                        elif sample_EX == 0:
+                            psi = 1.0                            
+
+
+                        line = "\t".join(map(str, [gene, annotation[gene]["SE"][loc]['prettyName'],
+                                                   (chr + ":" + wholeLoc + "|" + strand), loc,
+                                                   sample_IN, sample_EX, "%1.2f" %(psi)]))
+                        SEout.write(line + "\n")
+
+    if "MXE" in spliceData:
+        
+            with open(sample_label + ".oldsplice.MXE", 'w') as MXEout:
+                for gene in spliceData["MXE"]:
+                    for loc in spliceData["MXE"]['gene']:
+                        sample_B = spliceData["MXE"][gene][loc][sample_label]["A"]
+                        sample_B = spliceData["MXE"][gene][loc][sample_label]["B"]
+                        psi = (sample_A / (sample_A + sample_B)) #percent of reads representing isoform A
+
+                        if sample_IN == 0:
+                            psi = 0.0
+                        elif sample_EX == 0:
+                            psi = 1.0                            
+
+
+                        line = "\t".join(map(str, [gene, annotation[gene]["MXE"][loc]['prettyName'],
+                                                   (chr + ":" + wholeLoc + "|" + strand), loc,
+                                                   sample_A, sample_B, "%1.2f" %(psi)]))
+                        MXEout.write(line + "\n")
+
+
+
+    if "SE" in spliceData:
+                        
+        if len(samples) == 2 and options.compare==True:
             s1_label = samples[0][1]
             s2_label = samples[1][1]            
             SEoutfile = s1_label + ".vs." + s2_label + ".SEs_comparison"
@@ -61,6 +105,7 @@ def main(options):
             s2_exlabel = "_".join([s2_label, "EX"])            
             s2_psilabel = "_".join([s2_label, "psi"])
             header= "\t".join(["Gene", "ExonName", "Exonloc", "p-value", "Test", "Testdetails", "significant?", "direction", s1_inlabel, s1_exlabel, s2_inlabel, s2_exlabel, s1_psilabel, s2_psilabel]) + "\n"
+            
 
                 
             SEout.write(header)
@@ -220,14 +265,13 @@ if __name__ == "__main__":
 
     
     parser.add_option("--sample", nargs=2, action="append", dest="samples", help="Two values: --sample filename label")
-
+    parser.add_option("--compare", dest="compare", default=False, action="store_true", help="run 2-way comparison (only works when 2 samples are provided)")
     parser.add_option("--pvalue", dest="pval", default=0.05, help="p-value cutoff for chi2 or fisher exact")
-
-    parser.add_option("--splice_type", dest="splicetype", default=None, action="append")
+    parser.add_option("--splice_type", dest="splicetype", default=["SE", "MXE"], action="append")
     parser.add_option("--species", dest="species", default=None)
 
-
-    options, args = parser.parse_args()
+    options, args = parser.parse_args() 
+    options.splicetype = list(set(options.splicetype)) #remove redundant items
     main(options)
 
 
