@@ -76,7 +76,7 @@ def main(options):
                     for loc in spliceData["MXE"][gene]:
                         chr, start, stop, name, score, strand = annotation[gene]["MXE"][loc]["bedTrack"].split("\t")
 
-                        sample_B = spliceData["MXE"][gene][loc][sample_label]["A"]
+                        sample_A = spliceData["MXE"][gene][loc][sample_label]["A"]
                         sample_B = spliceData["MXE"][gene][loc][sample_label]["B"]
                         psi = (sample_A / (sample_A + sample_B)) #percent of reads representing isoform A
 
