@@ -50,6 +50,8 @@ def main(options):
             with open(sample_label + ".oldsplice.SE", 'w') as SEout:
                 for gene in spliceData["SE"]:
                     for loc in spliceData["SE"][gene]:
+                        chr, start, stop, name, score, strand = annotation[gene]["SE"][loc]["bedTrack"].split("\t")
+                        
                         sample_IN = spliceData["SE"][gene][loc][sample_label]["IN"]
                         sample_EX = spliceData["SE"][gene][loc][sample_label]["EX"]
                         psi = ((sample_IN +2.) / 2) / (((sample_IN +2.) / 2) + (sample_EX+1))
@@ -70,6 +72,8 @@ def main(options):
             with open(sample_label + ".oldsplice.MXE", 'w') as MXEout:
                 for gene in spliceData["MXE"]:
                     for loc in spliceData["MXE"][gene]:
+                        chr, start, stop, name, score, strand = annotation[gene]["MXE"][loc]["bedTrack"].split("\t")
+
                         sample_B = spliceData["MXE"][gene][loc][sample_label]["A"]
                         sample_B = spliceData["MXE"][gene][loc][sample_label]["B"]
                         psi = (sample_A / (sample_A + sample_B)) #percent of reads representing isoform A
