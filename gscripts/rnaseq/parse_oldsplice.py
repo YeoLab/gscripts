@@ -70,7 +70,7 @@ def main(options):
         annotation = retrieve_splicing(options.species)
     
     if "SE" in spliceData:
-        with open("oldsplice.SE.table.txt") as out:
+        with open("oldsplice.SE.table.txt", 'w') as out:
             header= ["Gene", "ExonName", "Eventloc" "Exonloc"]
             for sample in samples:
                 sample_label = sample[1]
@@ -108,7 +108,7 @@ def main(options):
                         SEout.write(line + "\n")
 
     if "MXE" in spliceData:
-        with open("oldsplice.MXE.table.txt") as out:
+        with open("oldsplice.MXE.table.txt", 'w') as out:
             header= ["Gene", "ExonName", "Eventloc" "Exonloc"]
             for sample in samples:
                 sample_label = sample[1]
