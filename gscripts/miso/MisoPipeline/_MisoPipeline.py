@@ -54,6 +54,8 @@ class MisoPipeline(object):
         self.psi_job_is_array = False
         self.psi_job_id = dict((sample_id, None) for sample_id in
                                       self.sample_ids)
+        self.summary_job_id = dict((sample_id, None) for sample_id in
+                                      self.sample_ids)
 
         self.psi_walltime = cl.args['psi_walltime']
         self.summary_walltime = cl.args['summary_walltime']
@@ -457,7 +459,7 @@ class MisoPipeline(object):
 
             self.summary_job_id[sample_id] = sub.write_sh(submit=True,
                                                nodes=self.num_cores,
-                                               ppn=16,
+                                               ppn=2,
                                      queue=self.queue,
                                      walltime=self.summary_walltime)
             print self.summary_job_id[sample_id]
