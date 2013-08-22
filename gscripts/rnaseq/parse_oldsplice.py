@@ -71,7 +71,7 @@ def main(options):
     
     if "SE" in spliceData:
         with open("oldsplice.SE.table.txt", 'w') as out:
-            header= ["Gene", "ExonName", "Eventloc" "Exonloc"]
+            header= ["Gene", "ExonName", "Eventloc", "Exonloc"]
             for sample in samples:
                 sample_label = sample[1]
                 header.extend([sample_label + "_IN", sample_label + "_EX", sample_label + "_psi"])
@@ -109,7 +109,7 @@ def main(options):
 
     if "MXE" in spliceData:
         with open("oldsplice.MXE.table.txt", 'w') as out:
-            header= ["Gene", "ExonName", "Eventloc" "Exonloc"]
+            header= ["Gene", "ExonName", "Eventloc", "Exonloc"]
             for sample in samples:
                 sample_label = sample[1]
                 header.extend([sample_label + "_A", sample_label + "_B", sample_label + "_psi"])
