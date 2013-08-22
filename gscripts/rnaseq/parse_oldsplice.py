@@ -30,7 +30,7 @@ def mergeSamples(samples, splicetypes=["SE"]):
 
     return data
 
-def calculate_psi_SE(IN, EX)
+def calculate_psi_SE(IN, EX):
 
     if IN == 0 and EX == 0:
         psi = 0.0
@@ -44,7 +44,7 @@ def calculate_psi_SE(IN, EX)
 
     return psi
 
-def calculate_psi_MXE(A, B)
+def calculate_psi_MXE(A, B):
 
     if A == 0 and B == 0:
         psi = 0.0
