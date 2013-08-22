@@ -59,7 +59,9 @@ def main(options):
                         if sample_IN == 0:
                             psi = 0.0
                         elif sample_EX == 0:
-                            psi = 1.0                            
+                            psi = 1.0
+                        
+                        wholeLoc = start + "-" + stop
 
 
                         line = "\t".join(map(str, [gene, annotation[gene]["SE"][loc]['prettyName'],
@@ -83,6 +85,7 @@ def main(options):
                         elif sample_EX == 0:
                             psi = 1.0                            
 
+                        wholeLoc = start + "-" + stop
 
                         line = "\t".join(map(str, [gene, annotation[gene]["MXE"][loc]['prettyName'],
                                                    (chr + ":" + wholeLoc + "|" + strand), loc,
