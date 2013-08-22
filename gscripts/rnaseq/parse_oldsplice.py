@@ -54,13 +54,16 @@ def main(options):
                         
                         sample_IN = spliceData["SE"][gene][loc][sample_label]["IN"]
                         sample_EX = spliceData["SE"][gene][loc][sample_label]["EX"]
-                        psi = ((sample_IN +2.) / 2) / (((sample_IN +2.) / 2) + (sample_EX+1))
-
-                        if sample_IN == 0:
+                        if sample_IN == 0 and sample_EX == 0:
                             psi = 0.0
-                        elif sample_EX == 0:
-                            psi = 1.0
-                        
+                        else:
+                            psi = ((sample_IN +2.) / 2) / (((sample_IN +2.) / 2) + (sample_EX+1))
+
+                            if sample_IN == 0:
+                                psi = 0.0
+                            elif sample_EX == 0:
+                                psi = 1.0
+                            
                         wholeLoc = start + "-" + stop
 
 
@@ -78,12 +81,15 @@ def main(options):
 
                         sample_A = spliceData["MXE"][gene][loc][sample_label]["A"]
                         sample_B = spliceData["MXE"][gene][loc][sample_label]["B"]
-                        psi = (sample_A / (sample_A + sample_B)) #percent of reads representing isoform A
-
-                        if sample_IN == 0:
+                        if sample_A == 0 and sample_B == 0:
                             psi = 0.0
-                        elif sample_EX == 0:
-                            psi = 1.0                            
+                        else:
+                            psi = (sample_A / (sample_A + sample_B)) #percent of reads representing isoform A
+
+                            if sample_A == 0:
+                                psi = 0.0
+                            elif sample_B == 0:
+                                psi = 1.0                            
 
                         wholeLoc = start + "-" + stop
 
