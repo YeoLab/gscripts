@@ -12,6 +12,7 @@ from multiprocessing import Pool
 import cPickle as pickle
 import random
 
+__author__ = "Michael Lovci"
 
 basedir = ""
 
@@ -299,8 +300,10 @@ def retrieve_splicing(species):
 
                         elif "MXE" in splicingType:
                             #define A or B with varied 5' and 3' exon termini
+                            
                             if not loc in info[gene][splicingType]:
                                 info[gene][splicingType][loc] = {}
+                                info[gene][splicingType][loc]['prettyName'] = thisExonNumber                                                            
                                 info[gene][splicingType][loc]["A"] = {}
                                 info[gene][splicingType][loc]["B"] = {}
                                 info[gene][splicingType][loc]["rangestart"] = 100000000000
@@ -446,7 +449,31 @@ def main(options):
         outfile = os.path.join(options.prefix, (bamfile.replace(".bam", ".splices.pickle") + "." + st))
     else:
         outfile = options.outfile
+
+
+
+    for gene in f:
+        thisExonTypes = set(gene.keys()).intersection(exonTypes)
+        for exonType in thisExonTypes:
+                for exon in gene[exonType].keys():
+                        thisLine = gene['descriptor'] + "\t" + exonType + "\t" + exon
+                        thisReads = 0
+                        nIso = 0
+                        for isoform in sorted(gene[exonType][exon].keys()):
+                                if gene[exonType][exon][isoform] >= minReadsInEach:
+                                        nIso += 1
+                                thisReads += gene[exonType][exon][isoform]
+                                thisLine += "\t" + str(gene[exonType][exon][isoform])
+                        print thisLine
+                        if thisReads >= minReadsTotal:
+                                exonsDetected[exonType]['detected'] += 1
+                        else:
+                                        exonsDetected[exonType]['notDetected'] += 1
+        
     pickle.dump(data, file=open(outfile, 'w'))
+
+
+
 
     #AS, splicingTypes  = bulid_AS_STRUCTURE_dict("mm9")
     #SE_list = list()
