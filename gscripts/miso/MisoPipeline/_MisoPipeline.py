@@ -334,7 +334,7 @@ class MisoPipeline(object):
                     queue=self.queue, walltime=self.psi_walltime,
                     additional_resources={'-t': '1-%d' % self.num_cores})
 
-            print self.psi_job_id
+            print self.psi_job_id[sample_id]
 
         # Save all the qsub commands in one file
         with open('%s.sh' % submit_sh_base, 'w') as f:
@@ -440,27 +440,27 @@ class MisoPipeline(object):
             else:
                 additional_resources = None
 
-            if self.psi_job_id[sample_id] is not None:
-                sub = Submitter(queue_type='PBS', sh_file=submit_sh,
-                                command_list=summary_commands,
-                                job_name=job_name,
-                                wait_for=[self.psi_job_id[sample_id]],
-                                # Tell the queue to parallelize this job
-                                     # into a job array
-                                additional_resources=additional_resources)
-            else:
-                sub = Submitter(queue_type='PBS', sh_file=submit_sh,
-                                command_list=summary_commands, job_name=job_name,
-                                # Tell the queue to parallelize this job
-                                # into a job array
-                                additional_resources=additional_resources)
+            # if self.psi_job_id[sample_id] is not None:
+            #     sub = Submitter(queue_type='PBS', sh_file=submit_sh,
+            #                     command_list=summary_commands,
+            #                     job_name=job_name,
+            #                     wait_for=[self.psi_job_id[sample_id]],
+            #                     # Tell the queue to parallelize this job
+            #                          # into a job array
+            #                     additional_resources=additional_resources)
+            # else:
+            sub = Submitter(queue_type='PBS', sh_file=submit_sh,
+                            command_list=summary_commands, job_name=job_name,
+                            # Tell the queue to parallelize this job
+                            # into a job array
+                            additional_resources=additional_resources)
 
-            self.summary_job_id = sub.write_sh(submit=True,
+            self.summary_job_id[sample_id] = sub.write_sh(submit=True,
                                                nodes=self.num_cores,
                                                ppn=16,
                                      queue=self.queue,
                                      walltime=self.summary_walltime)
-            print self.summary_job_id
+            print self.summary_job_id[sample_id]
         # Save all the qsub commands in one file
         with open('%s.sh' % submit_sh_base, 'w') as f:
             # f.write('#!/bin/bash\n\n')
