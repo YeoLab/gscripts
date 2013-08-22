@@ -89,7 +89,7 @@ def main(options):
                         sample_EX = spliceData["SE"][gene][loc][sample_label]["EX"]
                         psi = calculate_psi_SE(sample_IN, sample_EX)
                         writeMe.extend([sample_IN, sample_EX, psi])
-                    out.write("\t".join(writeMe) + "\n")
+                    out.write("\t".join(map(str, writeMe)) + "\n")
 
         for sample in samples:
             sample_label = sample[1]
@@ -128,7 +128,7 @@ def main(options):
                         sample_B = spliceData["MXE"][gene][loc][sample_label]["B"]
                         psi = calculate_psi_MXE(sample_A, sample_A)
                         writeMe.extend([sample_A, sample_B, psi])
-                    out.write("\t".join(writeMe) + "\n")
+                    out.write("\t".join(map(str, writeMe)) + "\n")
     
         with open(sample_label + ".oldsplice.MXE", 'w') as MXEout:
             for gene in spliceData["MXE"]:
