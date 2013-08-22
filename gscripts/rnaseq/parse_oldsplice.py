@@ -269,7 +269,7 @@ if __name__ == "__main__":
     parser.add_option("--compare", dest="compare", default=False, action="store_true", help="run 2-way comparison (only works when 2 samples are provided)")
     parser.add_option("--pvalue", dest="pval", default=0.05, help="p-value cutoff for chi2 or fisher exact")
     parser.add_option("--splice_type", dest="splicetype", default=["SE", "MXE"], action="append")
-    parser.add_option("--species", dest="species", default=None)
+    parser.add_option("--species", "-s", dest="species", default=None)
 
     options, args = parser.parse_args() 
     options.splicetype = list(set(options.splicetype)) #remove redundant items
