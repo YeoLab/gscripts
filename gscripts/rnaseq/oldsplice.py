@@ -12,6 +12,7 @@ from multiprocessing import Pool
 import cPickle as pickle
 import random
 
+__author__ = "Michael Lovci"
 
 basedir = ""
 

@@ -3,7 +3,7 @@
 #	Count tags to regions script. 
 #	environments. Produces a genic counts file. 
 #
-#	ppliu,G gabriel Pratt
+#	ppliu, gabriel Pratt
 #
 #####
 
