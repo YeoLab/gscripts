@@ -399,6 +399,7 @@ class MisoPipeline(object):
         for bam, sample_id, psi_output_dir, summary_output_dir in \
                 zip(self.bams, self.sample_ids, self.psi_output_dirs,
                     self.summary_output_dirs):
+            summary_commands = []
             # Okay, now we are ready to write to the submitter script
             summary_commands.append('\n\n# --- %s --- #' % sample_id)
 
@@ -462,6 +463,7 @@ class MisoPipeline(object):
                                                ppn=2,
                                      queue=self.queue,
                                      walltime=self.summary_walltime)
+
             print self.summary_job_id[sample_id]
         # Save all the qsub commands in one file
         with open('%s.sh' % submit_sh_base, 'w') as f:
