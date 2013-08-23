@@ -175,8 +175,7 @@ class MisoPipeline(object):
         if self.read_type == 'single_end':
             return
 
-        # Command-line commands to submit to the cluster
-        insert_len_commands = []
+
         constitutive_exons_dir = '%s/%s_constitutive' % (
             self.base_annotation_dir, self.event_type)
 
@@ -191,6 +190,8 @@ class MisoPipeline(object):
         all_insert_len_sh = ['#!/bin/bash\n\n']
 
         for bam, sample_id in zip(self.bams, self.sample_ids):
+            # Command-line commands to submit to the cluster
+            insert_len_commands = []
             bam_dir = os.path.dirname(bam)
             insert_len_file = bam + '.insert_len'
             try:
