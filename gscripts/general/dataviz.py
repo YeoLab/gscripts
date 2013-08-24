@@ -17,10 +17,14 @@ def plot_pca(df, c_scale=None, x_pc=1, y_pc=2, distance='L1', \
              save_as=None, save_format='png', whiten=True, num_vectors=30, \
              figsize=(10, 10), colors_dict=None, markers_dict=None, \
              title='PCA', show_vectors=True, show_point_labels=True, \
-             show_vector_labels=True):
+             show_vector_labels=True, column_ids_dict=None):
     # gather ids and values
     row_ids = df.index
-    column_ids = df.columns
+    if column_ids_dict is not None:
+        column_ids = [column_ids_dict[col] for col in df.columns]
+    else:
+        column_ids = df.columns
+
     df_array = df.as_matrix()
 
     # perform pca
