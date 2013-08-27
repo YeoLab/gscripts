@@ -128,6 +128,8 @@ class Submitter:
         to [sh_file].out
         err: the standard error (stderr) file created by the queue. Defaults
         to [sh_file].err
+            
+        max_running: for array tasks, the maximum number of concurrently executed sub-jobs
         """
         required_keys = "queue_type sh_file command_list job_name"\
             .split()
@@ -245,8 +247,8 @@ class Submitter:
             sh_file.write("%s -A %s\n" % (queue_param_prefix, account))
             sh_file.write("%s -q %s\n" % (queue_param_prefix, queue))
 
-            # Workaround to submit to 'glean' queue
-            if queue == "glean":
+            # Workaround to submit to 'glean' queue and 'condo' queue
+            if (queue == "glean") or (queue == "condo"):
                 sh_file.write('%s -W group_list=condo-group\n' % queue_param_prefix)
 
             # First check that we even have this parameter
@@ -279,7 +281,10 @@ class Submitter:
                         sh_file.write("%s %s %s\n" % (queue_param_prefix,
                                                       key, value))
             if use_array:
-                sh_file.write("%s -t 1-%d\n" %(queue_param_prefix, number_jobs))
+                if self.data['max_running']:
+                    sh_file.write("%s -t 1-%d%%%d\n" %(queue_param_prefix, number_jobs, self.data['max_running']))
+                else:
+                    sh_file.write("%s -t 1-%d\n" %(queue_param_prefix, number_jobs))
 
             sh_file.write('\n# Go to the directory from which the script was '
                           'called\n')
