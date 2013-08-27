@@ -193,7 +193,7 @@ class CommandLine(object):
                                       ' then make the psi and summary jobs a '
                                       'job array.')
         self.parser.add_argument('--psi-walltime', type=str, action='store',
-                                 default='24:00:00',
+                                 default='00:50:00',
                                  help='How much time to tell the cluster to '
                                       'allow the calculating psi score job to'
                                       ' run')
@@ -238,7 +238,7 @@ class CommandLine(object):
                                       '"miso_pooled_SE.sh"')
         self.parser.add_argument('--summary-walltime', type=str,
                                  action='store',
-                                 default='24:00:00',
+                                 default='00:50:00',
                                  help='How much time to tell the cluster to '
                                       'allow the summarization job to run.')
         self.parser.add_argument('--summary-output-dir-base', type=str,
