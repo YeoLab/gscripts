@@ -245,8 +245,8 @@ class Submitter:
             sh_file.write("%s -A %s\n" % (queue_param_prefix, account))
             sh_file.write("%s -q %s\n" % (queue_param_prefix, queue))
 
-            # Workaround to submit to 'glean' queue
-            if queue == "glean":
+            # Workaround to submit to 'glean' queue and 'condo' queue
+            if (queue == "glean") or (queue == "condo"):
                 sh_file.write('%s -W group_list=condo-group\n' % queue_param_prefix)
 
             # First check that we even have this parameter
