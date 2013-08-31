@@ -181,7 +181,7 @@ def parseMisoSummary(line):
 import sys
 
 if __name__ == "__main__":
-    for misoFile in sys.argv[1:]:
+    for misoFile in sys.argv[1]:
         with open(misoFile) as f:
             print f.readline().strip() #header
             for line in f.readlines():
