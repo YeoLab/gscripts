@@ -22,7 +22,7 @@ class Collector(object):
 				key = key.replace('(', '')
 				key = key.replace(')', '')
 				key = key.replace('_of', '')
-				key = key.strip(',')[0]
+				key = key.split(',')[0]
 
 				value = value.lstrip().strip()
 				value = value.replace('%', '')
