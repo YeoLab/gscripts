@@ -4,7 +4,7 @@
 import argparse
 
 # To submit jobs to the PBS queue
-import qtools
+import gscripts.qtools as qtools
 
 # Get filenames matching a pattern
 from glob import glob
@@ -109,7 +109,7 @@ def main():
                                    sh_file=submitter_sh,
                                    command_list=qsub_commands,
                                    job_name=submitter_prefix)
-            sub.write_sh(submit=True, nodes=1, ppn=16, queue='glean')
+            sub.write_sh(submit=True, nodes=1, ppn=16, queue='home')
 
     # If not all the correct arguments are given, break the program and
     # show the usage information
