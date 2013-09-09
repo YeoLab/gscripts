@@ -11,6 +11,8 @@ from math import sqrt
 from numpy.linalg import norm
 from prettyplotlib import plt
 import prettyplotlib as ppl
+import matplotlib.patches as patches
+import math
 
 def plot_pca(df, c_scale=None, x_pc=1, y_pc=2, distance='L1', \
               save_as=None, save_format='png', whiten=True, num_vectors=30, \
@@ -112,8 +114,80 @@ def plot_pca(df, c_scale=None, x_pc=1, y_pc=2, distance='L1', \
         pca_fig.savefig(save_as, format=save_format)
         
     pca_fig.show()
-
     return vectors
 
+
+def skipped_exon_figure(ax, which_axis='y'):
+    """
+    Adds two annotations to an axis 'ax':
+    1. A skipped exon at 'which_axis'=0, e.g. if which_axis='x', at x=0
+    2. An included exon at 'which_axis'=1
+
+    @param ax: A matplotlib.axes instance
+    @param which_axis: A string, either 'x' or 'y'
+    @return: No return value. Modifies the object 'ax' directly by adding a
+    skipped exon at 0 and an included exon at 1.
+
+    Example:
+    >>> import prettyplotlib as ppl
+    >>> from prettyplotlib import plt
+    >>> import numpy as np
+    >>> fig, ax = plt.subplots(1)
+    >>> psi_scores = np.random.uniform(0, 1, 500)
+    >>> ppl.hist(ax, psi_scores)
+    >>> skipped_exon_figure(ax, 'x')
+    """
+    # fig.subplots_adjust(left=subplots_adjust_left)
+    limits = ax.axis()
+    delta_x = limits[1] - limits[0]
+    delta_y = limits[3] - limits[2]
+    leftmost_x = -.2 * delta_x if which_axis == 'y' else -0.05
+    width = 0.04 * delta_x
+    height = 0.025 * delta_y
+
+    bottom_y = -0.01
+    top_y = 0.975
+    # y = -0.1*delta_y
+
+    adjacent_exon_kwargs = {'fill': True, 'width': width, 'height': height,
+                            'clip_on': False, 'facecolor': 'white',
+                            'edgecolor': ppl.almost_black}
+    skipped_exon_kwargs = {'fill': True, 'width': width, 'height': height,
+                           'clip_on': False, 'facecolor': ppl.almost_black,
+                           'edgecolor': ppl.almost_black}
+
+    if which_axis == 'y':
+        # Spliced-out exon at bottom (psi_ci_halves_max_filtered_drop_na = 0)
+        ax.add_patch(patches.Rectangle((leftmost_x + width, bottom_y),
+                                       **adjacent_exon_kwargs))
+        ax.add_patch(patches.Rectangle((leftmost_x + 2 * width, bottom_y),
+                                       **adjacent_exon_kwargs))
+
+        # spliced-in exon at top (psi_ci_halves_max_filtered_drop_na = 1)
+        ax.add_patch(patches.Rectangle((leftmost_x, top_y),
+                                       **adjacent_exon_kwargs))
+        ax.add_patch(patches.Rectangle((leftmost_x + width, top_y),
+                                       **skipped_exon_kwargs))
+        ax.add_patch(patches.Rectangle((leftmost_x + 2 * width, top_y),
+                                       **adjacent_exon_kwargs))
+
+    if which_axis == 'x':
+        # Spliced-out exon on left (x=0)
+        y = -0.1 * delta_y
+        ax.add_patch(
+            patches.Rectangle((leftmost_x + width, y),
+                              **adjacent_exon_kwargs))
+        ax.add_patch(patches.Rectangle((leftmost_x + 2 * width, y),
+                                       **adjacent_exon_kwargs))
+
+        # spliced-in exon at right (psi_ci_halves_max_filtered_drop_na = 1)
+        right_x = 1.0 * delta_x
+        ax.add_patch(
+            patches.Rectangle((leftmost_x + right_x, y),
+                              **adjacent_exon_kwargs))
+        ax.add_patch(patches.Rectangle((leftmost_x + width + right_x, y),
+                                       **skipped_exon_kwargs))
+        ax.add_patch(patches.Rectangle((leftmost_x + 2 * width + right_x, y),
+                                       **adjacent_exon_kwargs))
 
 #
