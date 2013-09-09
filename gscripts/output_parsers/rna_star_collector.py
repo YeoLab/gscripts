@@ -30,9 +30,22 @@ class Collector(object):
                 key = key.replace('_of', '')
                 key = key.strip(',')[0]
 
+<<<<<<< HEAD
                 value = value.lstrip().strip()
                 value = value.replace('%', '')
                 metrics_dict[key] = value
+=======
+			try:
+				key, value = line.split('|')
+				key = key.lstrip().strip()
+				key = key.replace('%', 'percent')
+				key = key.replace(' ', '_')
+				key = key.replace(':', '')
+				key = key.replace('(', '')
+				key = key.replace(')', '')
+				key = key.replace('_of', '')
+				key = key.split(',')[0]
+>>>>>>> ce4d193543aa400993982e16a44352cbd008bc10
 
             except:
                 pass
