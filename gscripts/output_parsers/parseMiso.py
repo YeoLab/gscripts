@@ -1,6 +1,7 @@
 import numpy as np
 import itertools
 from collections import Counter
+import sys
 
 
 def uncertainty(msmts):
@@ -178,7 +179,7 @@ def parseMisoSummary(line):
                                repStarts, repEnds]))
 
 
-import sys
+
 
 if __name__ == "__main__":
     for misoFile in sys.argv[1]:
