@@ -51,7 +51,11 @@ def count_to_regions(annotation):
 
 	with open(annotation, 'r') as gene_file:
 		for line in gene_file:
-			chromosome, start, stop, name, score, strand, exon_number = line.strip().split()
+            try:
+                chromosome, start, stop, name, score, strand, exon_number = line.strip().split()
+            except ValueError:
+                chromosome, start, stop, name, score, strand = line.strip().split()
+                exon_number = 1
 						
 			genes[name]['regions'].append((int(start), int(stop)))
 			
