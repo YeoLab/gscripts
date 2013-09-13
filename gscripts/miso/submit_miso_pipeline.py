@@ -50,15 +50,15 @@ class CommandLine(object):
         # Which part of the pipeline do you want to run?
         pipeline_part = self.parser.add_mutually_exclusive_group(required=True)
         pipeline_part.add_argument('--insert-len-only',
-                                 action='store_true', default=False,
-                                 required=False,
-                                 help='Only compute the insert lengths of the'
-                                      ' bam files provided in the sample info'
-                                      ' file. Need the event type for this '
-                                      'because we will build the library of '
-                                      'insert sizes from these events. A '
-                                      'single job to the cluster will be '
-                                      'submitted.')
+                                   action='store_true', default=False,
+                                   required=False,
+                                   help='Only compute the insert lengths of the'
+                                        ' bam files provided in the sample info'
+                                        ' file. Need the event type for this '
+                                        'because we will build the library of '
+                                        'insert sizes from these events. A '
+                                        'single job to the cluster will be '
+                                        'submitted.')
         pipeline_part.add_argument('--psi-only',
                                    action='store_true', default=False,
                                    required=False,
@@ -123,19 +123,19 @@ class CommandLine(object):
                                  type=str, action='store',
                                  help='Where the MISO annotations are housed.'
                                       ' The indexed version are assumed to be'
-                                      ' [base_annotation_dir]/['
-                                      'event_type]_index. For example, '
+                                      ' [base_annotation_dir]/ASS_MISO_'
+                                      '[event_type]. For example, '
                                       'if the base annotation dir is '
-                                      '/home/obotvinnik/genomes/miso_annotations/hg19 '
+                                      '/projects/ps-yeolab/genomes/hg19/ASS_MISO '
                                       'and the event type is AFE, '
                                       'then the annotations are assumed to be'
                                       ' in folder'
-                                      '/home/obotvinnik/genomes/hg19/miso_annotations/AFE_index/',
-                                 default='/home/obotvinnik/genomes/hg19/miso_annotations')
+                                      '/projects/ps-yeolab/genomes/hg19/ASS_MISO/ASS_MISO_SE/',
+                                 default='/projects/ps-yeolab/genomes/hg19/ASS_MISO')
         self.parser.add_argument('--event-type', '-e',
                                  action='store', type=str, required=True,
                                  help="Which event you'd like to index. One "
-                                      "of:"+
+                                      "of:" +
                                       ('\n'
                                        '1. Skipped exons (SE)\n'
                                        '2. Alternative 3’/5’ splice sites ('
@@ -268,8 +268,6 @@ class CommandLine(object):
                                       'sample would be in: '
                                       '~/projects/single_cell/analysis/miso/SE/A1_02')
 
-
-
         if inOpts is None:
             self.args = vars(self.parser.parse_args())
         else:
@@ -298,8 +296,6 @@ class Usage(Exception):
 
     def __init__(self, msg):
         self.msg = msg
-
-
 
 
 # Function: main
