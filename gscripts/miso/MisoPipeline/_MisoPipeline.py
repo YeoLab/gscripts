@@ -62,8 +62,13 @@ class MisoPipeline(object):
 
         if cl.args['submit_sh_suffix'] != '':
             self.submit_sh_suffix = '_' + cl.args['submit_sh_suffix'].lstrip('_')
+        else:
+            self.submit_sh_suffix = ''
         if cl.args['sample_id_suffix'] != '':
             self.sample_id_suffix = '_' + cl.args['sample_id_suffix'].lstrip('_')
+        else:
+            self.sample_id_suffix = ''
+            
         self.sh_scripts_dir = cl.args['sh_scripts_dir'].rstrip('/')
         if self.sh_scripts_dir == '':
             self.sh_scripts_dir = os.curdir
