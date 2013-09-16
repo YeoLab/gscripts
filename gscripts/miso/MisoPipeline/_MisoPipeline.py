@@ -60,8 +60,10 @@ class MisoPipeline(object):
         self.psi_walltime = cl.args['psi_walltime']
         self.summary_walltime = cl.args['summary_walltime']
 
-        self.submit_sh_suffix = '_' + cl.args['submit_sh_suffix'].lstrip('_')
-        self.sample_id_suffix = '_' + cl.args['sample_id_suffix'].lstrip('_')
+        if cl.args['submit_sh_suffix'] != '':
+            self.submit_sh_suffix = '_' + cl.args['submit_sh_suffix'].lstrip('_')
+        if cl.args['sample_id_suffix'] != '':
+            self.sample_id_suffix = '_' + cl.args['sample_id_suffix'].lstrip('_')
         self.sh_scripts_dir = cl.args['sh_scripts_dir'].rstrip('/')
         if self.sh_scripts_dir == '':
             self.sh_scripts_dir = os.curdir
@@ -171,12 +173,12 @@ class MisoPipeline(object):
         if self.read_type == 'single_end':
             return
 
-        constitutive_exons_dir = '%s/%s_constitutive' % (
-            self.base_annotation_dir, self.event_type)
+        # constitutive_exons_dir = '%s/%s_constitutive' % (
+        #     self.base_annotation_dir, self.event_type)
 
         # Bug: there may be more than one constitutive exons GFF in this
         # folder, and we only grab the first one
-        constitutive_exons_gff = glob('%s/*.gff' % constitutive_exons_dir)[0]
+        # constitutive_exons_gff = glob('%s/*.gff' % constitutive_exons_dir)[0]
 
         insert_len_name = '%s_insert_len%s' % (self.job_name_prefix,
                                                self.submit_sh_suffix)
@@ -189,21 +191,21 @@ class MisoPipeline(object):
             insert_len_commands = []
             bam_dir = os.path.dirname(bam)
             insert_len_file = bam + '.insert_len'
-            try:
-                open(insert_len_file)
-            except IOError:
-                # There is no insert length file, so create it
-                insert_len_command = 'python %s/pe_utils.py ' \
-                                     '--compute-insert-len %s %s ' \
-                                     ' --output-dir %s ' \
-                                     '>%s.out 2>%s' \
-                                     % (self.miso_scripts_dir, bam,
-                                        constitutive_exons_gff, bam_dir,
-                                        insert_len_file, insert_len_file)
-                insert_len_commands.append('date')
-                insert_len_commands.append("echo Starting ... '%s'" %
-                                           insert_len_command)
-                insert_len_commands.append(insert_len_command)
+            # try:
+            #     open(insert_len_file)
+            # except IOError:
+            #     # There is no insert length file, so create it
+            #     insert_len_command = 'python %s/pe_utils.py ' \
+            #                          '--compute-insert-len %s %s ' \
+            #                          ' --output-dir %s ' \
+            #                          '>%s.out 2>%s' \
+            #                          % (self.miso_scripts_dir, bam,
+            #                             constitutive_exons_gff, bam_dir,
+            #                             insert_len_file, insert_len_file)
+            #     insert_len_commands.append('date')
+            #     insert_len_commands.append("echo Starting ... '%s'" %
+            #                                insert_len_command)
+            #     insert_len_commands.append(insert_len_command)
 
                 #        if self.submit_sh_suffix:
 
