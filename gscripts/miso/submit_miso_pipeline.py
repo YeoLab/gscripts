@@ -119,17 +119,16 @@ class CommandLine(object):
         #                               'annotations. The annotation is assumed'
         #                               ' to be (index_base_dir)/('
         #                               'event_type)_indexed/')
-        self.parser.add_argument('--base-annotation-dir',
+        self.parser.add_argument('--annotation-index-strfmt',
                                  type=str, action='store',
-                                 help='Where the MISO annotations are housed.'
-                                      ' The indexed version are assumed to be'
-                                      ' [base_annotation_dir]/ASS_MISO_'
-                                      '[event_type]. For example, '
-                                      'if the base annotation dir is '
-                                      '/projects/ps-yeolab/genomes/hg19/ASS_MISO '
-                                      'and the event type is AFE, '
-                                      'then the annotations are assumed to be'
-                                      ' in folder'
+                                 help='A "strfmt" type string describing '
+                                      'where the **indexed** MISO annotations'
+                                      ' are housed, where the "%s" is where the'
+                                      ' event type will be. The default is '
+                                      '/projects/ps-yeolab/genomes/hg19/ASS_MISO/ASS_MISO_%s/ '
+                                      'so if the event type is SE, '
+                                      'then the indexed MISO annotations are '
+                                      'in '
                                       '/projects/ps-yeolab/genomes/hg19/ASS_MISO/ASS_MISO_SE/',
                                  default='/projects/ps-yeolab/genomes/hg19/ASS_MISO')
         self.parser.add_argument('--event-type', '-e',

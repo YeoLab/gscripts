@@ -33,14 +33,14 @@ class MisoPipeline(object):
         self.paired_end_utils_py = '%s/pe_utils.py' % self.miso_scripts_dir
 
         # Remove the trailing slash. If it's not there, this won't do anything.
-        self.base_annotation_dir = cl.args['base_annotation_dir'].rstrip('/')
+        self.annotation_index_strfmt = cl.args['annotation_index_strfmt'].rstrip(
+            '/')
 
         # Assuming we're using the annotation index structure described in
         # 'submit_miso_pipeline.py'
-        self.event_type_gff = glob(
-            '%s/%s*.gff' % (self.base_annotation_dir, self.event_type))
-        self.event_type_index = '%s/ASS_MISO_%s' \
-                                % (self.base_annotation_dir, self.event_type)
+        # self.event_type_gff = glob(
+        #     '%s/%s*.gff' % (self.base_annotation_dir, self.event_type))
+        self.event_type_index = self.annotation_index_strfmt % self.event_type
         self.num_processes = cl.args['num_processes']
         self.num_cores = cl.args['num_cores']
         self.sample_ids, self.bams, self.notes = read_sample_info_file(
