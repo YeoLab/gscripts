@@ -60,18 +60,8 @@ class MisoPipeline(object):
         self.psi_walltime = cl.args['psi_walltime']
         self.summary_walltime = cl.args['summary_walltime']
 
-        self.submit_sh_suffix = cl.args['submit_sh_suffix'] if cl.args[
-                                                                   'submit_sh_suffix'].startswith(
-            '_') or cl.args[
-                                                                   'submit_sh_suffix'] == '' else '_' +
-                                                                                                  cl.args[
-                                                                                                      'submit_sh_suffix']
-        self.sample_id_suffix = cl.args['sample_id_suffix'] if cl.args[
-                                                                   'sample_id_suffix'].startswith(
-            '_') or cl.args[
-                                                                   'sample_id_suffix'] == '' else '_' +
-                                                                                                  cl.args[
-                                                                                                      'sample_id_suffix']
+        self.submit_sh_suffix = '_' + cl.args['submit_sh_suffix'].lstrip('_')
+        self.sample_id_suffix = '_' + cl.args['sample_id_suffix'].lstrip('_')
         self.sh_scripts_dir = cl.args['sh_scripts_dir'].rstrip('/')
         if self.sh_scripts_dir == '':
             self.sh_scripts_dir = os.curdir

@@ -11,7 +11,7 @@ from gscripts.qtools import Submitter
 import os
 
 # The program that does all the heavy lifting of creating the submitter scripts
-from MisoPipeline import MisoPipeline
+from gscripts.miso import MisoPipeline
 
 
 '''
