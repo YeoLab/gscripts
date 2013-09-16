@@ -68,7 +68,7 @@ class MisoPipeline(object):
             self.sample_id_suffix = '_' + cl.args['sample_id_suffix'].lstrip('_')
         else:
             self.sample_id_suffix = ''
-            
+
         self.sh_scripts_dir = cl.args['sh_scripts_dir'].rstrip('/')
         if self.sh_scripts_dir == '':
             self.sh_scripts_dir = os.curdir
