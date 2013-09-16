@@ -1,6 +1,6 @@
 __author__ = 'olga'
 
-from MisoPipeline import _MisoPipeline.MisoPipeline as MisoPipeline
+from MisoPipeline._MisoPipeline import MisoPipeline
 
 import pandas as pd
 
