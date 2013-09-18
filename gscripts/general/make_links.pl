@@ -1,3 +1,11 @@
+###
+#
+#   Provide a tab delimited file of link filename and path to 
+#   original file. Will go through file and make links for each
+#   pair of link filename and path. One per line. 
+#
+###
+
 use strict;
 use warnings;
 

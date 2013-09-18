@@ -1,3 +1,10 @@
+####
+#
+#   Run in directory to group files by their extension (string after last period).
+#   Will ignore dashes and things following it (err and out output of array jobs)
+#
+####
+
 use strict;
 use warnings;
 
