@@ -1,5 +1,7 @@
 __author__ = 'olga'
 
+from MisoPipeline._MisoPipeline import MisoPipeline
+
 import pandas as pd
 
 def max_csv(x):
