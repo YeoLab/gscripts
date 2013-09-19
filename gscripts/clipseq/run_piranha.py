@@ -22,6 +22,6 @@ subprocess.call("Piranha -b %s %s_input.bed > %s_results.bed" % (options.bin_siz
 subprocess.call("cat %s_results.bed | awk '{if($7 < %s ) print $0}' | awk 'BEGIN {OFS=\"\t\"} {print $1, $2, $3, $4, $7, $6}' > %s" % (options.bam, options.p_value, options.out_file), shell=True)
 
 #cleanup
-#subprocess.call("rm piranah_tmp.bed")
-#subprocess.call("rm piranah_input.bed")
-#subprocess.call("rm piranah_results.bed")
+subprocess.call("rm piranah_tmp.bed")
+subprocess.call("rm piranah_input.bed")
+subprocess.call("rm piranah_results.bed")

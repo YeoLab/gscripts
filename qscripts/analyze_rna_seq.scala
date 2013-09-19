@@ -79,6 +79,8 @@ class AnalizeCLIPSeq extends QScript {
        this.RGPU = "bar" //can record barcode information (once I get bardoding figured out)
        this.RGSM = "baz"
        this.RGCN = "Biogem" //need to add switch between biogem and singapore
+       this.RGID = "foo"
+
   }
 
   case class samtoolsIndexFunction(input: File, output: File) extends SamtoolsIndexFunction {

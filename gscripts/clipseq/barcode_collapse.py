@@ -34,6 +34,7 @@ def barcode_collapse(inBam, outBam, barcoded, use_stop):
     
     outTotal = open(outBam + ".total.wiggle", 'w')
     outBarcodes = open(outBam + ".barcodes.wiggle", 'w')
+    outEntropy = open(outBam + ".entropy.wiggle", 'w')
     inBam = pysam.Samfile(inBam, 'rb')
     
     outBam = pysam.Samfile(outBam, 'wb', template=inBam)
@@ -47,7 +48,7 @@ def barcode_collapse(inBam, outBam, barcoded, use_stop):
     else:
         prev_pos = 0
 
-    barcode_set = set([])
+    barcode_set = Counter()
     removed_count = Counter()
     total_count = Counter()
     
@@ -74,10 +75,14 @@ def barcode_collapse(inBam, outBam, barcoded, use_stop):
                 outBarcodes.write(var_step)
 
             out_pos = prev_pos[0] if use_stop else prev_pos
-
+            barcode_counts = np.array(barcode_set.values())
+            barcode_probablity = barcode_counts / float(sum(barcode_counts))
+            entropy = -1 * sum(barcode_probablity * np.log2(barcode_probablity))
+            
+            outEntropy.write("\t".join(map(str, [out_pos, entropy])) + "\n")
             outTotal.write("\t".join(map(str, [out_pos, cur_count])) + "\n")
             outBarcodes.write("\t".join(map(str, [out_pos, len(barcode_set)])) + "\n")
-            barcode_set = set([])
+            barcode_set = Counter()
             cur_count = 0 
 
         
@@ -88,16 +93,18 @@ def barcode_collapse(inBam, outBam, barcoded, use_stop):
             outBam.write(read)
 
             
-        barcode_set.add(barcode)    
+        barcode_set[barcode] += 1   
         prev_pos = cur_pos
         prev_chrom = cur_chrom
 
     out_pos = prev_pos[0] if use_stop else prev_pos
     outTotal.write("\t".join(map(str, [out_pos, cur_count])) + "\n")
     outBarcodes.write("\t".join(map(str, [out_pos, len(barcode_set)])) + "\n")
-
+    
     inBam.close()
     outBam.close()
+    
+    outEntropy.close()
     outTotal.close()
     outBarcodes.close()
     return total_count, removed_count
