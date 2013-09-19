@@ -84,10 +84,12 @@ def count_gene(bam_file, gene, flip):
     bam_file = pysam.Samfile(bam_file, 'rb')
     
     # fetch reads from bam file for the gene referenced by keys (Ensembl ID)
-    subset_reads = bam_file.fetch(reference = gene['chrom'],
+    try:
+        subset_reads = bam_file.fetch(reference = gene['chrom'],
                       start = int(gene["start"]),
                       end = int(gene["stop"]))
-        
+    except ValueError:
+        return None
     # determine strand to keep based on flip option
     keep_strand = gene["strand"]
     if str(flip) == "flip":
@@ -152,8 +154,8 @@ def count_tags(bam_file, flip, out_file, annotation, num_cpu = "autodetect", ):
     #region_counts =  [count_gene(bam_file, gene, flip) for gene in genes.values()]
 
     pool = multiprocessing.Pool(int(num_cpu))
-            
-    region_counts = pool.map(func_star, [(bam_file, gene, flip) for gene in genes.values()], chunksize=50)    
+    region_counts = map(func_star, [(bam_file, gene, flip) for gene in genes.values()])          
+    #region_counts = pool.map(func_star, [(bam_file, gene, flip) for gene in genes.values()], chunksize=50)    
     #region_counts = [job.get(timeout=360) for job in jobs]
     
     region_counts = dict(itertools.chain(*region_counts))
