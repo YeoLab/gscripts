@@ -25,10 +25,10 @@ for row, dat in sInfo.iterrows():
 
     out = id + ".splices"
     
-    if strand == 'sense' or strand == 'both':
+    if (strand == 'sense') or (strand == 'both'):
         oldsplice_command = "oldsplice.py -b %s -s %s -o %s --splice_type SE --splice_type MXE --processors 16" %(bam, species, out)
         cmds.append(oldsplice_command)
-    if strand == 'flip', or strand=='both':
+    if (strand == 'flip') or (strand=='both'):
         oldsplice_command = "oldsplice.py -f -b %s -s %s -o %s --splice_type SE --splice_type MXE --processors 16" %(bam, species, out.replace(".splices", ".flip.splices")  )
         cmds.append(oldsplice_command)
 
