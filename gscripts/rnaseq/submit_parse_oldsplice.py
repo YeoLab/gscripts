@@ -1,4 +1,5 @@
 import glob
+import sys, os
 
 files = glob.glob("*.splices")
 
@@ -7,13 +8,14 @@ filenames = []
 
 species = None
 try:
+    print sys.argv
     species = sys.argv[1]
-
+    print species
 except:
     print "usage: submit_parse_oldsplice.py <species>"
 
 
-assert len(species) > 0
+assert (species != None) and (len(species) > 0)
 
 for filename in files:
 
@@ -31,10 +33,10 @@ cmd = "parse_oldsplice.py --species %s" %species
 for filename, sample in zip(filenames, samples):
     cmd += " --sample %s %s " %(filename, sample)
 
-print cmd
+#print cmd
 
 
 cmd = [cmd]
 
 
-sub.job(command_list=cmd, array=False, sh_file="parse.sh", job_name="parse", submit=False, queue="home", ppn=1)
+sub.job(command_list=cmd, array=False, sh_file="parse.sh", job_name="parse", submit=True, queue="home", ppn=1)

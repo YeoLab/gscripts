@@ -98,7 +98,7 @@ def assign_reads(gene, splicedict=None, bam_file=None,
 
                 data["SE"][loc]["DOWNI_RPK"] = region_rpk(pybedtools.Interval(chrom, *map(int, downIntronLoc.split("-")), strand=signstrand), bam_fileobj)
             except:
-                raise
+                continue
 
             for structure in splicedict["SE"][loc]["IN"]:
                 if structure.startswith("j"):
@@ -260,7 +260,7 @@ def retrieve_splicing(species):
                             thisExonNumber = gene + "|" +  str(exN - 1) #convert to 0-based exon numbers
 
                         except:
-			    raise	
+                            continue
                             
                         if splicingType is "OV" or splicingType is "RI":
                             continue                    # skip RI and OV... not well defined yet
