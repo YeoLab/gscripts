@@ -18,6 +18,7 @@ scripts = ['rnaseq/count_tags.py',
            'rnaseq/oldsplice.py',
            'rnaseq/submit_oldsplice.py',
            'rnaseq/parse_oldsplice.py',
+           'rnaseq/submit_parse_oldsplice.py',
            'output_parsers/parseMiso.py']
 
 scripts = map((lambda x: "gscripts/" + x), scripts)
