@@ -125,9 +125,9 @@ class Submitter:
         wait_for: list of ID's that this job will wait for before starting
         additional_resources: keyword-value pairs of scheduler attributes, set with add_resource()
         out: the standard output (stdout) file created by the queue. Defaults
-        to [sh_file].out
+        to [job_name].out
         err: the standard error (stderr) file created by the queue. Defaults
-        to [sh_file].err
+        to [job_name].err
             
         max_running: for array tasks, the maximum number of concurrently executed sub-jobs
         """
@@ -293,7 +293,8 @@ class Submitter:
             
    
         if use_array:
-            sys.stderr.write( "running %d tasks as an array-job. " %(len(self.data['command_list'])))
+            sys.stderr.write( "running %d tasks as an array-job. " % (len(
+                self.data['command_list'])))
             for i, cmd in enumerate(self.data['command_list']):
                 sh_file.write("cmd[%d]=\"%s\"\n" %((i+1), cmd))
             sh_file.write("eval ${cmd[%s]}\n" %(array_job_identifier))
