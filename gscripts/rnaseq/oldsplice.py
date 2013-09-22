@@ -49,15 +49,17 @@ def assign_reads(gene, splicedict=None, bam_file=None,
     tx_end = splicedict["tx_end"]
     
     signstrand = None
-    if flip is not None:
-        if flip is True:
-            usestrand = strand * -1
-        else:
-            usestrand = strand
-        if usestrand == 1:
-            signstrand = "+"
-        elif usestrand == -1:
-            signstrand = "-"
+
+    if flip is True:
+        usestrand = strand * -1
+    else:
+        usestrand = strand
+
+    if usestrand == 1:
+        signstrand = "+"
+
+    elif usestrand == -1:
+        signstrand = "-"
 
 
     interval = pybedtools.Interval(chrom, tx_start, tx_end, strand=signstrand)
@@ -80,7 +82,7 @@ def assign_reads(gene, splicedict=None, bam_file=None,
             bodyLoc = splicedict['SE'][loc]["BODY"]
             upLoc = splicedict['SE'][loc]["UP"]
             downLoc = splicedict['SE'][loc]["DOWN"]
-            if signstrand == "+":
+            if strand == 1:
                 upIntronLoc = upLoc.split("-")[1] + "-" + bodyLoc.split("-")[0]
                 downIntronLoc = bodyLoc.split("-")[1] + "-" +  downLoc.split("-")[0]
             else:
@@ -98,6 +100,8 @@ def assign_reads(gene, splicedict=None, bam_file=None,
 
                 data["SE"][loc]["DOWNI_RPK"] = region_rpk(pybedtools.Interval(chrom, *map(int, downIntronLoc.split("-")), strand=signstrand), bam_fileobj)
             except:
+                #import pdb; pdb.set_trace()
+                print "uh oh %s" %(gene + loc)
                 continue
 
             for structure in splicedict["SE"][loc]["IN"]:
