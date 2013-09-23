@@ -190,9 +190,6 @@ def parseMisoSummary(line):
     isoformLabels = isoforms.split(",")
     isoformTypes = np.array([len(z.split("_")) - 2 for z in isoformLabels])
 
-    print means
-    print isoformTypes
-
     type1 = uncertainty(np.c_[
         np.array(means)[isoformTypes == 0], np.array(low)[isoformTypes == 0], \
         np.array(high)[isoformTypes == 0]])
