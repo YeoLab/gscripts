@@ -287,6 +287,8 @@ class AnalizeCLIPSeq extends QScript {
       val rmDupedMetricsFile = swapExt(rmDupedBamFile, ".bam", ".metrics")
 
       val indexedBamFile = swapExt(rmDupedBamFile, "", ".bai")
+      val bedGraphFilePos = swapExt(rmDupedBamFile, ".bam", ".pos.bg")
+      val bigWigFilePos = swapExt(bedGraphFilePos, ".bg", ".bw")
 
       val bigWigFileNeg = swapExt(bedGraphFileNeg, ".bg", ".norm.bw")
       val bedGraphFileNegInverted = swapExt(bedGraphFileNeg, "neg.bg", "neg.t.bg")
