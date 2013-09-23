@@ -6,6 +6,7 @@ import net.sf.samtools.SAMFileHeader.SortOrder
 import org.broadinstitute.sting.utils.exceptions.UserException
 import org.broadinstitute.sting.commandline.Hidden
 import org.broadinstitute.sting.queue.extensions.picard.{ ReorderSam, SortSam, AddOrReplaceReadGroups, MarkDuplicates }
+import org.broadinstitute.sting.queue.extensions.samtools._
 import org.broadinstitute.sting.queue.extensions.gatk._
 import org.broadinstitute.sting.queue.extensions.yeo._
 
@@ -122,6 +123,24 @@ class AnalizeCLIPSeq extends QScript {
        this.multimapNMax = 1
   }
 
+
+  case class samtoolsIndexFunction(input: File, output: File) extends SamtoolsIndexFunction {
+       override def shortDescription = "indexBam"
+       this.bamFile = input
+       this.bamFileIndex = output
+  }
+
+  case class singleRPKM(input: File, output: File, s: String) extends SingleRPKM {
+        this.inCount = input
+        this.outRPKM = output
+  }
+
+  case class countTags(input: File, index: File, output: File, a: String) extends CountTags {
+        this.inBam = input
+        this.outCount = output
+        this.tags_annotation = a
+  }
+
   def starGenomeLocation(genome: String) : String = {
   //Returns star genome Location for TSCC, could eventually be factored out into conf file
    
@@ -225,6 +244,19 @@ class AnalizeCLIPSeq extends QScript {
    
    retval
   }
+
+  def exonLocation(genome: String) : String = {
+  //Returns star genome Location for TSCC, could eventually be factored out into conf file
+   
+   var retval = "none"
+   if (genome == "hg19") {
+      retval = "/projects/ps-yeolab/genomes/hg19/gencode_v17/gencode.v17.annotation.exons.bed" 
+   }else if(genome == "mm9") {
+      retval = "/projects/ps-yeolab/genomes/mm9/Mus_musculus.NCBIM37.64.fixed.exons.bed" 
+   }
+   
+   retval
+  }
   
 
   def script() {
@@ -254,6 +286,8 @@ class AnalizeCLIPSeq extends QScript {
       val rmDupedBamFile = swapExt(rgSortedBamFile, ".bam", ".rmDup.bam")
       val rmDupedMetricsFile = swapExt(rmDupedBamFile, ".bam", ".metrics")
 
+      val indexedBamFile = swapExt(rmDupedBamFile, "", ".bai")
+
       val bedGraphFilePos = swapExt(rmDupedBamFile, ".bam", ".pos.bg")
       val bigWigFilePos = swapExt(bedGraphFilePos, ".bg", ".bw")
 
@@ -271,6 +305,9 @@ class AnalizeCLIPSeq extends QScript {
       val pyicoclipResults = swapExt(rmDupedBedFile, ".bed", ".pyicoclip.bed")
       val ripseekerResults = swapExt(rmDupedBamFile, ".bam", ".ripseeker.bed")
       val IDRResult = swapExt(rmDupedBamFile, "", ".IDR")
+
+      val countFile = swapExt(rmDupedBamFile, "bam", "count")
+      val RPKMFile = swapExt(countFile, "count", "RPKM")
 
       //add bw files to list for printing out later
       trackHubFiles = trackHubFiles ++ List(bedGraphFileNegInverted, bigWigFilePos)
@@ -295,6 +332,8 @@ class AnalizeCLIPSeq extends QScript {
       add(new CalculateNRF(inBam = rgSortedBamFile, genomeSize = chromSizeLocation(genome), outNRF = NRFFile))
       add(new RemoveDuplicates(rgSortedBamFile, rmDupedBamFile, rmDupedMetricsFile))
 
+      add(new samtoolsIndexFunction(rmDupedBamFile, indexedBamFile))
+
       add(new genomeCoverageBed(input = rmDupedBamFile, outBed = bedGraphFilePos, cur_strand = "+", genome = chromSizeLocation(genome)))
       add(new BedGraphToBigWig(bedGraphFilePos, chromSizeLocation(genome), bigWigFilePos))
 
@@ -318,6 +357,11 @@ class AnalizeCLIPSeq extends QScript {
       add(new Pyicoclip(inBed = rmDupedBedFile, outBed = pyicoclipResults, regions = genicRegionsLocation(genome) ))
       add(new Ripseeker(inBam=rmDupedBamFile, outBed=ripseekerResults))
       add(new IDR(inBam = rmDupedBamFile, species = genome, genome = chromSizeLocation(genome), outResult = IDRResult, premRNA = premRNA))
+
+      add(new countTags(input = rmDupedBamFile, index = indexedBamFile, output = countFile, a = exonLocation(genome)))
+
+      add(new singleRPKM(input = countFile, output = RPKMFile, s = genome))
+
 
     }
 //    add(new MakeTrackHub(trackHubFiles, location, genome))

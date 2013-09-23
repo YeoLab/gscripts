@@ -79,6 +79,7 @@ if __name__ == "__main__":
                          autoScale='on',
                          priority='1.4',
                          alwaysZero='on',
+                         visibility="full"
                          )
                        
             for track in files:
@@ -119,8 +120,9 @@ if __name__ == "__main__":
             short_label = base_track,
             long_label = base_track,
             color = color,
-            local_fn = track,
-            remote_fn = os.path.join(upload_dir, GENOME, base_track)
+            local_fn = bigBed_file,
+            remote_fn = os.path.join(upload_dir, GENOME, base_track),
+            visibility="full"
             )
         trackdb.add_tracks(track)
     result = hub.render()
