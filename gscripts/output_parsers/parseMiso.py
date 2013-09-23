@@ -171,8 +171,13 @@ def parseMisoComparison(line):
 
 
 def parseMisoSummary(line):
-    event_name, miso_posterior_mean, ci_low, ci_high, isoforms, counts, assigned_counts, \
-    chrom, strand, mRNA_starts, mRNA_ends = line.split("\t")
+    try:
+        event_name, miso_posterior_mean, ci_low, ci_high, isoforms, counts, assigned_counts, \
+            chrom, strand, mRNA_starts, mRNA_ends = line.split("\t")
+
+    except:
+        raise
+
 
     counts = tuple(
         [(tuple(map(int, i.split(":")[0].split(","))), int(i.split(":")[1])) \
@@ -184,6 +189,9 @@ def parseMisoSummary(line):
     high = map(float, ci_high.split(","))
     isoformLabels = isoforms.split(",")
     isoformTypes = np.array([len(z.split("_")) - 2 for z in isoformLabels])
+
+    print means
+    print isoformTypes
 
     type1 = uncertainty(np.c_[
         np.array(means)[isoformTypes == 0], np.array(low)[isoformTypes == 0], \
@@ -230,7 +238,7 @@ def parseMisoSummary(line):
 
 
 if __name__ == "__main__":
-    for misoFile in sys.argv[1]:
+    for misoFile in sys.argv[1:]:
         with open(misoFile) as f:
             print f.readline().strip() #header
             for line in f.readlines():
