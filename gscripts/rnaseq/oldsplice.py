@@ -49,15 +49,18 @@ def assign_reads(gene, splicedict=None, bam_file=None,
     tx_end = splicedict["tx_end"]
     
     signstrand = None
-    if flip is not None:
-        if flip is True:
-            usestrand = strand * -1
-        else:
-            usestrand = strand
-        if usestrand == 1:
-            signstrand = "+"
-        elif usestrand == -1:
-            signstrand = "-"
+
+    if flip is True:
+        usestrand = strand * -1
+    else:
+        usestrand = strand
+
+    if usestrand == 1:
+        signstrand = "+"
+
+    elif usestrand == -1:
+        signstrand = "-"
+
 
     interval = pybedtools.Interval(chrom, tx_start, tx_end, strand=signstrand)
     subset_reads = bam_fileobj.fetch(reference=chrom, start=tx_start,end=tx_end)
@@ -79,23 +82,27 @@ def assign_reads(gene, splicedict=None, bam_file=None,
             bodyLoc = splicedict['SE'][loc]["BODY"]
             upLoc = splicedict['SE'][loc]["UP"]
             downLoc = splicedict['SE'][loc]["DOWN"]
-            if signstrand == "+":
+            if strand == 1:
                 upIntronLoc = upLoc.split("-")[1] + "-" + bodyLoc.split("-")[0]
                 downIntronLoc = bodyLoc.split("-")[1] + "-" +  downLoc.split("-")[0]
             else:
-                upIntronLoc = bodyLoc.split("-")[1] + upLoc.split("-")[0]
+                upIntronLoc = bodyLoc.split("-")[1] + "-" + upLoc.split("-")[0]
                 downIntronLoc = downLoc.split("-")[1] + "-" +  bodyLoc.split("-")[0]
             
-     
-            data["SE"][loc]["BODY_RPK"] = region_rpk(pybedtools.Interval(chrom, *map(int, bodyLoc.split("-")), strand=signstrand))
+            try:
+                data["SE"][loc]["BODY_RPK"] = region_rpk(pybedtools.Interval(chrom, *map(int, bodyLoc.split("-")), strand=signstrand), bam_fileobj)
 
-            data["SE"][loc]["UP_RPK"] = region_rpk(pybedtools.Interval(chrom, *map(int, upLoc.split("-")), strand=signstrand))
+                data["SE"][loc]["UP_RPK"] = region_rpk(pybedtools.Interval(chrom, *map(int, upLoc.split("-")), strand=signstrand), bam_fileobj)
 
-            data["SE"][loc]["DOWN_RPK"] = region_rpk(pybedtools.Interval(chrom, *map(int, downLoc.split("-")), strand=signstrand))
+                data["SE"][loc]["DOWN_RPK"] = region_rpk(pybedtools.Interval(chrom, *map(int, downLoc.split("-")), strand=signstrand), bam_fileobj)
 
-            data["SE"][loc]["UPI_RPK"] = region_rpk(pybedtools.Interval(chrom, *map(int, upIntronLoc.split("-")), strand=signstrand))
+                data["SE"][loc]["UPI_RPK"] = region_rpk(pybedtools.Interval(chrom, *map(int, upIntronLoc.split("-")), strand=signstrand), bam_fileobj)
 
-            data["SE"][loc]["DOWNI_RPK"] = region_rpk(pybedtools.Interval(chrom, *map(int, downIntronLoc.split("-")), strand=signstrand))
+                data["SE"][loc]["DOWNI_RPK"] = region_rpk(pybedtools.Interval(chrom, *map(int, downIntronLoc.split("-")), strand=signstrand), bam_fileobj)
+            except:
+                #import pdb; pdb.set_trace()
+                print "uh oh %s" %(gene + loc)
+                continue
 
             for structure in splicedict["SE"][loc]["IN"]:
                 if structure.startswith("j"):
@@ -184,6 +191,7 @@ def overlap(coord, locs, ov = .95):
 
 def retrieve_splicing(species):
 
+
     host = Popen(["hostname"], stdout=PIPE).communicate()[0].strip()
     if "optiputer" in host or "compute" in host:
         basedir = "/nas/nas0/yeolab/Genome/ensembl/AS_STRUCTURE/" + species + "data4/"
@@ -198,7 +206,6 @@ def retrieve_splicing(species):
 
         
     try:
-
         info= pickle.load(open((basedir + species + ".spliceDict_simple.pickle")))
     except:
         if species == "hg19":
@@ -257,7 +264,7 @@ def retrieve_splicing(species):
                             thisExonNumber = gene + "|" +  str(exN - 1) #convert to 0-based exon numbers
 
                         except:
-			    raise	
+                            continue
                             
                         if splicingType is "OV" or splicingType is "RI":
                             continue                    # skip RI and OV... not well defined yet
@@ -312,15 +319,23 @@ def retrieve_splicing(species):
                                 info[gene][splicingType][loc]["rangestart"] = min(info[gene][splicingType][loc]["rangestart"], (int(locUp)+1))
                                 info[gene][splicingType][loc]["rangeend"] = max(info[gene][splicingType][loc]["rangeend"], (int(locDown)+1))
 
-                                info[gene][splicingType][loc]["BODY"] = locIn
+
                                 info[gene][splicingType][loc]["UP"] = upLoc
                                 info[gene][splicingType][loc]["DOWN"] = dnLoc
 
 
                                 if "IN" in inorout:
-
-
+                                    if info[gene][splicingType][loc]["BODY"]:
+                                        x = info[gene][splicingType][loc]["BODY"]
+                                        x1, x2 = x.split('-')
+                                        y1, y2 = locIn.split('-')
+                                        (x1, x2, y1, y2) = map(int, [x1, x2, y1, y2]) 
+                                        if (y2 - y1) > (x2-x1): #if this exon body is bigger than previous versions of this exon, update.
+                                            info[gene][splicingType][loc]["BODY"] = locIn                                            
+                                    else:
+                                        info[gene][splicingType][loc]["BODY"] = locIn
                                     exstart, exstop = map(str, locIn.split("-"))
+
                                     try:
                                         info[gene][splicingType][loc][inorout]["j" + locUp + ":" + str(int(exstart)+1)] += 1#upstream jxn
                                     except:

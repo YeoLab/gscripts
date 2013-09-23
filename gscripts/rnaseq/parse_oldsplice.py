@@ -83,6 +83,7 @@ def main(options):
                     writeMe = [gene, annotation[gene]["SE"][loc]['prettyName'],
                                    (chr + ":" + wholeLoc + "|" + strand), loc]
 
+
                     for sample in samples:
                         sample_label = sample[1]
                         sample_IN = spliceData["SE"][gene][loc][sample_label]["IN"]
@@ -90,9 +91,11 @@ def main(options):
                         sample_BODY = spliceData["SE"][gene][loc][sample_label]["BODY_RPK"]
                         sample_UP = spliceData["SE"][gene][loc][sample_label]["UP_RPK"]
                         sample_DOWN = spliceData["SE"][gene][loc][sample_label]["DOWN_RPK"]
-
-                        sample_UPI = spliceData["SE"][gene][loc][sample_label]["UPI_RPK"]
-                        sample_DOWNI = spliceData["SE"][gene][loc][sample_label]["DOWNI_RPK"]
+                        try:
+                            sample_UPI = spliceData["SE"][gene][loc][sample_label]["UPI_RPK"]
+                            sample_DOWNI = spliceData["SE"][gene][loc][sample_label]["DOWNI_RPK"]
+                        except:
+                            import pdb; pdb.set_trace()
                         psi = calculate_psi_SE(sample_IN, sample_EX)
 
                         writeMe.extend([sample_IN, sample_EX, psi, sample_BODY, sample_UP, sample_DOWN,  sample_UPI, sample_DOWNI])
