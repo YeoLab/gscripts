@@ -258,7 +258,7 @@ def log_final_out(glob_command, ids_function):
     pieces = []
     for num_events, percent_events in zip(number_splicing_event_names,
                                           percent_splicing_event_names):
-        pieces.append(mapping_stats.ix[num_events,
+        pieces.append(100.0*mapping_stats.ix[num_events,
                       :].values / total_splicing_events)
 
     return pd.concat((mapping_stats,
