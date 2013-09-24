@@ -23,6 +23,8 @@ def plot_pca(df, c_scale=None, x_pc=1, y_pc=2, distance='L1', \
              show_vector_labels=True):
     # gather ids and values
     """
+    Given a pandas dataframe, performs PCA and plots the results in a
+    convenient single function.
 
     @param df: Samples x genes pandas dataframe. Samples on the rows,
     genes in the columns
