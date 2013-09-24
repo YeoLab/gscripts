@@ -28,8 +28,8 @@ def plot_pca(df, c_scale=None, x_pc=1, y_pc=2, distance='L1', \
 
     @param df: Samples x genes pandas dataframe. Samples on the rows,
     genes in the columns
-    @param c_scale: Character scaling of the plot, e.g. if the text is too
-    small.
+    @param c_scale: Component scaling of the plot, e.g. for making the
+    plotted vectors larger or smaller.
     @param x_pc: Integer, which principal component to use for the x-axis
     (usually 1)
     @param y_pc: Integer, which principal component to use for the y-axis
