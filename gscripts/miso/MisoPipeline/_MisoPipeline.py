@@ -260,8 +260,8 @@ class MisoPipeline(object):
             # output_dir = '%s/miso/%s/%s' % (bam_dir, self.event_type,
             #                                 sample_id)
 
-            insert_len_commands, insert_len_arguments = self \
-                ._get_psi_insert_len_argument(sample_id, insert_len_file)
+            insert_len_commands, insert_len_arguments = \
+                self._get_psi_insert_len_argument(sample_id, insert_len_file)
 
             # Okay, now we are ready to write to the submitter script
             psi_commands.append('\n\n# --- %s --- #' % sample_id)
