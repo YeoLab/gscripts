@@ -86,7 +86,7 @@ def plot_pca(df, c_scale=None, x_pc=1, y_pc=2, distance='L1', \
         c_scale = .75 * max([norm(point) for point in zip(x_list, y_list)]) / \
                   max([norm(vector) for vector in zip(comp_x, comp_y)])
 
-    size_scale = sqrt(figsize[0] * figsize[1]) / 1.5
+    # size_scale = sqrt(figsize[0] * figsize[1]) / 1.5
 
     # sort features by magnitude/contribution to transformation
     comp_magn = []
@@ -130,9 +130,9 @@ def plot_pca(df, c_scale=None, x_pc=1, y_pc=2, distance='L1', \
                 except:
                     pass
 
-            ax.text(x, y, an_id, color=color, size=size_scale)
+            ax.text(x, y, an_id, color=color) #, size=size_scale)
 
-        ppl.scatter(ax, x, y, marker=marker, color=color, s=size_scale * 5)
+        ppl.scatter(ax, x, y, marker=marker, color=color) #, s=size_scale * 5)
 
     vectors = sorted(comp_magn, key=lambda item: item[3], reverse=True)[
               :num_vectors]
@@ -147,20 +147,22 @@ def plot_pca(df, c_scale=None, x_pc=1, y_pc=2, distance='L1', \
                 #     except:
                 #         pass
 
-                ax.text(x, y, marker, color='black', size=size_scale)
+                ax.text(x, y, marker, color='black')#, size=size_scale)
 
     var_1 = int(pca.explained_variance_ratio_[x_pc - 1] * 100)
     var_2 = int(pca.explained_variance_ratio_[y_pc - 1] * 100)
 
     ax.set_xlabel(
         'Principal Component {} (Explains {}% Of Variance)'.format(str(x_pc),
-                                                                   str(var_1)),
-        size=size_scale * 2)
+                                                                   str(
+                                                                       var_1)))#,
+        # size=size_scale * 2)
     ax.set_ylabel(
         'Principal Component {} (Explains {}% Of Variance)'.format(str(y_pc),
-                                                                   str(var_2)),
-        size=size_scale * 2)
-    ax.set_title(title, size=size_scale * 3)
+                                                                   str(
+                                                                       var_2)))#,
+        # size=size_scale * 2)
+    ax.set_title(title)#, size=size_scale * 3)
 
     if save_as:
         pca_fig.savefig(save_as, format=save_format)
