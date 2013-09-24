@@ -19,11 +19,48 @@ def plot_pca(df, c_scale=None, x_pc=1, y_pc=2, distance='L1', \
              save_as=None, save_format='png', whiten=True, num_vectors=30, \
              figsize=(10, 10), colors_dict=None, markers_dict=None, \
              title='PCA', show_vectors=True, show_point_labels=True, \
-             vector_label_replacement=None, point_label_replacement=None,
-             show_vector_labels=True, column_ids_dict=None):
+             column_ids_dict=None, index_ids_dict=None,
+             show_vector_labels=True):
     # gather ids and values
-    row_ids = df.index
-    # column_ids = df.columns
+    """
+
+    @param df: Samples x genes pandas dataframe. Samples on the rows,
+    genes in the columns
+    @param c_scale: Character scaling of the plot, e.g. if the text is too
+    small.
+    @param x_pc: Integer, which principal component to use for the x-axis
+    (usually 1)
+    @param y_pc: Integer, which principal component to use for the y-axis
+    (usually 2)
+    @param distance:
+    @param save_as: String, full name of the plot, including the file extension
+    @param save_format: String, usually 'png' or 'pdf'
+    @param whiten: Boolean, Whether or not to perform 'whitening'
+    normalization on the data, which transforms the data so that it is less
+    correlated with itself.
+    @param num_vectors: Number of vectors to show on the plot
+    @param figsize: Figure size in integers, (width, height)
+    @param colors_dict: A dictionary of index (samples) to matplotlib colors
+    @param markers_dict: A dictionary of index (samples) to matplotlib markers
+    @param title: A string, the title of the plot
+    @param show_vectors: Boolean, whether or not to show vectors
+    @param show_point_labels: Boolean, whether or not to show the index,
+    e.g. the sample name, on the plot
+    @param column_ids_dict: A dictionary of column names to another
+    value, e.g. if the columns are splicing events with a strange ID,
+    this could be a dictionary that matches the ID to a gene name.
+    @param index_ids_dict: A dictionary of index names to another
+    value, e.g. if the indexes are samples with a strange ID, this could be a
+     dictionary that matches the ID to a more readable sample name.
+    @param show_vector_labels: Boolean. Can be helpful if the vector labels
+    are gene names.
+    @return: x, y, marker, distance of each vector in the data.
+    """
+    if index_ids_dict is not None:
+        row_ids = [index_ids_dict[ind] for ind in df.index]
+    else:
+        row_ids = df.index
+        # column_ids = df.columns
 
     if column_ids_dict is not None:
         column_ids = [column_ids_dict[col] for col in df.columns]
@@ -38,7 +75,7 @@ def plot_pca(df, c_scale=None, x_pc=1, y_pc=2, distance='L1', \
     pca.fit(df_array)
     X = pca.transform(df_array)
     (comp_x, comp_y) = (
-    pca.components_[x_pc - 1, :], pca.components_[y_pc - 1, :])
+        pca.components_[x_pc - 1, :], pca.components_[y_pc - 1, :])
 
     x_list = X[:, x_pc - 1]
     y_list = X[:, y_pc - 1]
@@ -85,9 +122,9 @@ def plot_pca(df, c_scale=None, x_pc=1, y_pc=2, distance='L1', \
             marker = 'x'
 
         if show_point_labels:
-            if point_label_replacement:
+            if index_ids_dict:
                 try:
-                    an_id = point_label_replacement[an_id]
+                    an_id = index_ids_dict[an_id]
                 except:
                     pass
 
@@ -102,11 +139,11 @@ def plot_pca(df, c_scale=None, x_pc=1, y_pc=2, distance='L1', \
         if show_vectors:
             ppl.plot(ax, [0, x], [0, y], color=ppl.almost_black, linewidth=.5)
             if show_vector_labels:
-                if vector_label_replacement:
-                    try:
-                        marker = vector_label_replacement[marker]
-                    except:
-                        pass
+                # if column_ids_dict:
+                #     try:
+                #         marker = column_ids_dict[marker]
+                #     except:
+                #         pass
 
                 ax.text(x, y, marker, color='black', size=size_scale)
 
