@@ -1,6 +1,9 @@
 import itertools
 import pylab
 import pandas as pd
+import numpy as np
+import scipy.stats as stats
+
 import math
 
 __doc__="""
@@ -108,54 +111,62 @@ class TwoWayGeneComparison(object):
         print "There are", len(self.upGenes), "up-regulated genes in %s vs %s" %(self.sampleNames[1], self.sampleNames[0])
         print "There are", len(self.dnGenes), "down-regulated genes in %s vs %s" %(self.sampleNames[1], self.sampleNames[0])
         print "There are", len(self.expressedGenes), "expressed genes in both %s and %s" %self.sampleNames
-        
+
 
 class TwoWayGeneComparison_local(object):
-    def __init__(self, genes1, genes2, labels, pCut = 0.001, sampleNames = ("Sample1", "Sample2"), local_fraction = 0.1, bonferroni = True):
+    def __init__(self, genes1, genes2, pCut = 0.001, local_fraction = 0.1, bonferroni = True):
         """ Run a two-sample RPKM experiment. Give control sample first, it will go on the x-axis 
             genes1 and genes2 are pandas Series with identical indices
         """
 
-        import numpy as np
-        import scipy.stats as stats
+
         
-        assert len(genes1) == len(genes2) == len(labels)
+        sampleNames = (genes1.name, genes2.name)
         self.sampleNames = sampleNames
+        
+        genes1 = genes1.dropna()
+        genes2 = genes2.dropna()
+        
+        labels = genes1.index.intersection(genes2.index)
+        
+        genes1 = genes1.ix[labels]
+        genes2 = genes2.ix[labels]
+        
         self.genes1 = genes1
         self.genes2 = genes2
-        self.nGenes = len(genes1)
+        
+        self.nGenes = len(labels)
         if bonferroni:
             correction = self.nGenes
         else:
             correction = 1
-        localCount = self.nGenes * local_fraction
+
+        localCount = int(math.ceil(self.nGenes * local_fraction))
         self.pCut = pCut
         self.upGenes = set()
         self.dnGenes = set()
         self.expressedGenes = set([labels[i] for i, t in enumerate(np.any(np.c_[genes1, genes2] > 1, axis=1)) if t])
         self.log2Ratio = np.log2(genes2 / genes1)
-        self.average_expression = (np.log2(genes2) + np.log2(genes1))/2.
-        self.ranks = np.argsort(self.average_expression)
+        self.average_expression = (genes2 + genes1)/2.
+        self.ranks = np.argsort(np.argsort(self.average_expression))
         self.pValues = pd.Series(index = labels)
         self.localMean = pd.Series(index = labels)
         self.localStd = pd.Series(index = labels)
-        self.localZ = pd.Series(index = labels)        
-        
-
+        self.localZ = pd.Series(index = labels)
         
         for g, r in itertools.izip(self.ranks.index, self.ranks):
             if r < localCount:
                 start = 0
                 stop = localCount
-                
+            
             elif r > self.nGenes - localCount:
                 start = self.nGenes - localCount
                 stop = self.nGenes
-                
+            
             else:
                 start = r - int(math.floor(localCount/2.))
                 stop = r + int(math.ceil(localCount/2.))
-                
+            
             localGenes = self.ranks[self.ranks.between(start, stop)].index
             self.localMean.ix[g] = np.mean(self.log2Ratio.ix[localGenes])
             self.localStd.ix[g] = np.std(self.log2Ratio.ix[localGenes])
@@ -185,7 +196,6 @@ class TwoWayGeneComparison_local(object):
                     raise ValueError
                     
     def plot(self):
-        f = pylab.figure(figsize=(8,4))
         co = [] #colors container
         for label, (pVal, logratio) in self.data.get(["pValue", "log2Ratio"]).iterrows():
             if pVal < self.pCut:
@@ -207,12 +217,16 @@ class TwoWayGeneComparison_local(object):
         #pylab.xlabel("log2 Ratio %s/%s" %(self.sampleNames[1], self.sampleNames[0]))
         #pylab.ylabel("Frequency")    
         
-        ax = f.add_subplot(111, aspect='equal')
-        pylab.scatter(self.genes1, self.genes2, c=co, alpha=0.5)        
+        ax = pylab.gca()
+        ax.set_aspect('equal')
+        minVal=np.min(np.c_[self.genes1, self.genes2])
+        pylab.scatter(self.genes1, self.genes2, c=co, alpha=0.7, edgecolor='none')
         pylab.ylabel("%s RPKM" %self.sampleNames[1])
         pylab.xlabel("%s RPKM" %self.sampleNames[0])
         pylab.yscale('log')
         pylab.xscale('log')
+        pylab.xlim(xmin=minVal)
+        pylab.ylim(ymin=minVal)
         pylab.tight_layout()
         
     def gstats(self):
