@@ -1,6 +1,9 @@
 import itertools
 import pylab
 import pandas as pd
+import numpy as np
+import scipy.stats as stats
+
 import math
 
 __doc__="""
@@ -18,10 +21,44 @@ __doc__="""
 >>> pylab.show()
 """
 
+def benjamini_hochberg(pValues, FDR=0.1):
+    """ benjamini-hochberg correction for MHT
+        pValues is a list of pValues
+        FDR is the desired false-discovery rate
+        
+        from: http://udel.edu/~mcdonald/statmultcomp.html
+        "One good technique for controlling the false discovery rate was briefly
+        mentioned by Simes (1986) and developed in detail by Benjamini and Hochberg (1995). 
+        Put the individual P-values in order, from smallest to largest. The smallest 
+        P-value has a rank of i=1, the next has i=2, etc. Then compare each individual 
+        P-value to (i/m)Q, where m is the total number of tests and Q is the chosen false 
+        discovery rate. The largest P-value that has P<(i/m)Q is significant, 
+        and all P-values smaller than it are also significant."
+        
+        """
+    ranks = np.argsort(np.argsort(pValues))
+    
+    nComps = len(pValues) + 0.0
+    pSorter = np.argsort(pValues)
+    pRank = np.argsort(np.argsort(pValues))+1
+    BHcalc = (pRank / nComps) * FDR
+    sigs = np.ndarray(shape=(nComps, ), dtype='bool')
+    issig = True
+    for (p, b, r) in itertools.izip(pValues[pSorter], BHcalc[pSorter], pSorter):
+        if p > b:
+            issig = False
+        sigs[r] = issig
+    return sigs
+
+
+
+
+
+
 
 class Colors(object):
     import numpy as np
-    import matplotlib.colors as clrs    
+    import matplotlib.colors as clrs
     import matplotlib.cm as cmx
     Set1 = cm = pylab.get_cmap('Set1') 
     cNorm  = clrs.Normalize(vmin=min(range(25)), vmax=max(range(25))) #8 colors
@@ -108,58 +145,72 @@ class TwoWayGeneComparison(object):
         print "There are", len(self.upGenes), "up-regulated genes in %s vs %s" %(self.sampleNames[1], self.sampleNames[0])
         print "There are", len(self.dnGenes), "down-regulated genes in %s vs %s" %(self.sampleNames[1], self.sampleNames[0])
         print "There are", len(self.expressedGenes), "expressed genes in both %s and %s" %self.sampleNames
-        
+
 
 class TwoWayGeneComparison_local(object):
-    def __init__(self, genes1, genes2, labels, pCut = 0.001, sampleNames = ("Sample1", "Sample2"), local_fraction = 0.1, bonferroni = True):
+    def __init__(self, genes1, genes2, pCut = 0.001, local_fraction = 0.1, bonferroni = True, FDR=None):
         """ Run a two-sample RPKM experiment. Give control sample first, it will go on the x-axis 
             genes1 and genes2 are pandas Series with identical indices
+            pCut - P value cutoff
+            local_fraction - by default the closest 10% of genes are used for local z-score calculation
+            bonferroni - p-values are adjusted for MHT with bonferroni correction
+            BH - benjamini-hochberg FDR filtering
         """
 
-        import numpy as np
-        import scipy.stats as stats
+
         
-        assert len(genes1) == len(genes2) == len(labels)
+        sampleNames = (genes1.name, genes2.name)
         self.sampleNames = sampleNames
+        
+        genes1 = genes1.dropna()
+        genes2 = genes2.dropna()
+        
+        labels = genes1.index.intersection(genes2.index)
+        
+        genes1 = genes1.ix[labels]
+        genes2 = genes2.ix[labels]
+        
         self.genes1 = genes1
         self.genes2 = genes2
-        self.nGenes = len(genes1)
+        
+        self.nGenes = len(labels)
         if bonferroni:
             correction = self.nGenes
         else:
             correction = 1
-        localCount = self.nGenes * local_fraction
+
+        localCount = int(math.ceil(self.nGenes * local_fraction))
         self.pCut = pCut
         self.upGenes = set()
         self.dnGenes = set()
         self.expressedGenes = set([labels[i] for i, t in enumerate(np.any(np.c_[genes1, genes2] > 1, axis=1)) if t])
         self.log2Ratio = np.log2(genes2 / genes1)
-        self.average_expression = (np.log2(genes2) + np.log2(genes1))/2.
-        self.ranks = np.argsort(self.average_expression)
+        self.average_expression = (genes2 + genes1)/2.
+        self.ranks = np.argsort(np.argsort(self.average_expression))
         self.pValues = pd.Series(index = labels)
         self.localMean = pd.Series(index = labels)
         self.localStd = pd.Series(index = labels)
-        self.localZ = pd.Series(index = labels)        
-        
-
+        self.localZ = pd.Series(index = labels)
         
         for g, r in itertools.izip(self.ranks.index, self.ranks):
             if r < localCount:
                 start = 0
                 stop = localCount
-                
+            
             elif r > self.nGenes - localCount:
                 start = self.nGenes - localCount
                 stop = self.nGenes
-                
+            
             else:
                 start = r - int(math.floor(localCount/2.))
                 stop = r + int(math.ceil(localCount/2.))
-                
+            
             localGenes = self.ranks[self.ranks.between(start, stop)].index
             self.localMean.ix[g] = np.mean(self.log2Ratio.ix[localGenes])
             self.localStd.ix[g] = np.std(self.log2Ratio.ix[localGenes])
-            self.pValues.ix[g] = stats.norm.pdf(self.log2Ratio.ix[g], self.localMean.ix[g], self.localStd.ix[g]) * correction
+            self.pValues.ix[g] = stats.norm.pdf(self.log2Ratio.ix[g],
+                                                self.localMean.ix[g],
+                                                self.localStd.ix[g]) * correction
             self.localZ.ix[g] = (self.log2Ratio.ix[g]- self.localMean.ix[g])/self.localStd.ix[g]
             
         data = pd.DataFrame(index = labels)
@@ -168,6 +219,13 @@ class TwoWayGeneComparison_local(object):
         data["localMean"] = self.localMean
         data["localStd"] = self.localStd
         data["pValue"] = self.pValues
+                
+        if FDR == None:
+            data["isSig"] = self.pValues < pCut
+        else:
+            data["isSig"] = benjamini_hochberg(self.pValues, FDR=FDR)
+    
+                
         data["meanExpression"] = self.average_expression
         data["localZ"] = self.localZ
         data[sampleNames[0]] = genes1
@@ -175,8 +233,11 @@ class TwoWayGeneComparison_local(object):
         
         self.data = data
 
-        for label, (pVal, logratio) in data.get(["pValue", "log2Ratio"]).iterrows():
-            if pVal < pCut:
+    
+       
+            
+        for label, (pVal, logratio, isSig) in data.get(["pValue", "log2Ratio", "isSig"]).iterrows():
+            if (pVal < pCut) and isSig:
                 if logratio > 0:
                     self.upGenes.add(label)
                 elif logratio < 0:
@@ -185,10 +246,9 @@ class TwoWayGeneComparison_local(object):
                     raise ValueError
                     
     def plot(self):
-        f = pylab.figure(figsize=(8,4))
         co = [] #colors container
-        for label, (pVal, logratio) in self.data.get(["pValue", "log2Ratio"]).iterrows():
-            if pVal < self.pCut:
+        for label, (pVal, logratio, isSig) in self.data.get(["pValue", "log2Ratio", "isSig"]).iterrows():
+            if (pVal < self.pCut) and isSig:
                 if logratio > 0:
                     co.append(Colors().redColor)
                 elif logratio < 0:
@@ -207,12 +267,16 @@ class TwoWayGeneComparison_local(object):
         #pylab.xlabel("log2 Ratio %s/%s" %(self.sampleNames[1], self.sampleNames[0]))
         #pylab.ylabel("Frequency")    
         
-        ax = f.add_subplot(111, aspect='equal')
-        pylab.scatter(self.genes1, self.genes2, c=co, alpha=0.5)        
+        ax = pylab.gca()
+        ax.set_aspect('equal')
+        minVal=np.min(np.c_[self.genes1, self.genes2])
+        pylab.scatter(self.genes1, self.genes2, c=co, alpha=0.7, edgecolor='none')
         pylab.ylabel("%s RPKM" %self.sampleNames[1])
         pylab.xlabel("%s RPKM" %self.sampleNames[0])
         pylab.yscale('log')
         pylab.xscale('log')
+        pylab.xlim(xmin=minVal)
+        pylab.ylim(ymin=minVal)
         pylab.tight_layout()
         
     def gstats(self):
