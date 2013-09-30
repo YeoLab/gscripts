@@ -1,3 +1,4 @@
+from __future__ import division
 import re
 import pysam
 from clipper.src.peaks import readsToWiggle_pysam
@@ -11,19 +12,30 @@ from multiprocessing import Pool
 #from deap import dtm
 import cPickle as pickle
 import random
-
+import pybedtools
 __author__ = "Michael Lovci"
 
 basedir = ""
 
 
 
+def region_rpk(interval, bam):
+    chrom, start, stop, strand = (interval.chrom,interval.start,
+                                  interval.stop, interval.strand)
     
+    subset_reads = bam.fetch(reference=chrom, start=start,end=stop)
     
+    (wig, jxns, nrCounts, 
+     readLengths, reads) = readsToWiggle_pysam(subset_reads,
+                                              (start), (stop),
+                                              strand, "center", False)
+    R = len(reads)
+    K = len(interval)
+    return R/K
 
 
-
-def assign_reads(gene, splicedict=None, bam_file=None, alignment_slop=10, flip=True, splicetypes=None):
+def assign_reads(gene, splicedict=None, bam_file=None,
+                 alignment_slop=10, flip=True, splicetypes=None):
 
     if splicedict is None or bam_file is None:
 
@@ -35,20 +47,27 @@ def assign_reads(gene, splicedict=None, bam_file=None, alignment_slop=10, flip=T
     strand = splicedict["strand"]
     tx_start = splicedict["tx_start"]
     tx_end = splicedict["tx_end"]
-
+    
     signstrand = None
-    if flip is not None:
-        if flip is True:
-            usestrand = strand * -1
-        else:
-            usestrand = strand
-        if usestrand == 1:
-            signstrand = "+"
-        elif usestrand == -1:
-            signstrand = "-"
+
+    if flip is True:
+        usestrand = strand * -1
+    else:
+        usestrand = strand
+
+    if usestrand == 1:
+        signstrand = "+"
+
+    elif usestrand == -1:
+        signstrand = "-"
+
+
+    interval = pybedtools.Interval(chrom, tx_start, tx_end, strand=signstrand)
     subset_reads = bam_fileobj.fetch(reference=chrom, start=tx_start,end=tx_end)
     
-    wig, jxns, nrCounts, readLengths, reads = readsToWiggle_pysam(subset_reads, (tx_start-1000), (tx_end+1000), signstrand, "center", False)
+    (wig, jxns, nrCounts, readLengths, 
+     reads) = readsToWiggle_pysam(subset_reads, (tx_start-1000),
+                                  (tx_end+1000), signstrand, "center", False)
     
     data["descriptor"] = gene
     if "SE" in splicedict and "SE" in splicetypes:
@@ -60,6 +79,31 @@ def assign_reads(gene, splicedict=None, bam_file=None, alignment_slop=10, flip=T
             data["SE"][loc]["IN"] = 0
             data["SE"][loc]["EX"] = 0
 
+            bodyLoc = splicedict['SE'][loc]["BODY"]
+            upLoc = splicedict['SE'][loc]["UP"]
+            downLoc = splicedict['SE'][loc]["DOWN"]
+            if strand == 1:
+                upIntronLoc = upLoc.split("-")[1] + "-" + bodyLoc.split("-")[0]
+                downIntronLoc = bodyLoc.split("-")[1] + "-" +  downLoc.split("-")[0]
+            else:
+                upIntronLoc = bodyLoc.split("-")[1] + "-" + upLoc.split("-")[0]
+                downIntronLoc = downLoc.split("-")[1] + "-" +  bodyLoc.split("-")[0]
+            
+            try:
+                data["SE"][loc]["BODY_RPK"] = region_rpk(pybedtools.Interval(chrom, *map(int, bodyLoc.split("-")), strand=signstrand), bam_fileobj)
+
+                data["SE"][loc]["UP_RPK"] = region_rpk(pybedtools.Interval(chrom, *map(int, upLoc.split("-")), strand=signstrand), bam_fileobj)
+
+                data["SE"][loc]["DOWN_RPK"] = region_rpk(pybedtools.Interval(chrom, *map(int, downLoc.split("-")), strand=signstrand), bam_fileobj)
+
+                data["SE"][loc]["UPI_RPK"] = region_rpk(pybedtools.Interval(chrom, *map(int, upIntronLoc.split("-")), strand=signstrand), bam_fileobj)
+
+                data["SE"][loc]["DOWNI_RPK"] = region_rpk(pybedtools.Interval(chrom, *map(int, downIntronLoc.split("-")), strand=signstrand), bam_fileobj)
+            except:
+                #import pdb; pdb.set_trace()
+                print "uh oh %s" %(gene + loc)
+                continue
+
             for structure in splicedict["SE"][loc]["IN"]:
                 if structure.startswith("j"):
                     structurestrip = structure.lstrip("j")
@@ -69,21 +113,7 @@ def assign_reads(gene, splicedict=None, bam_file=None, alignment_slop=10, flip=T
                     if structurestrip in jxns:
                         data["SE"][loc]["IN"] += jxns[structurestrip]
 
-                elif structure.startswith("b"):
-                    continue #skip exon body
-                    exstart, exstop = map(int, structure.lstrip("b").split("-"))
-                    for position in range(exstart, (exstop+1)):
-                        if position in reads:
-                            for read_end in reads[position]:
-                                if read_end <= exstop:
-                                    data["SE"][loc]["IN"] += reads[position][read_end]
-                                    
-                    #for. read in reads:
-                    #    rstart, rstop = map(int, read.split("-"))
-                    #    if rstart >= (exstart-alignment_slop) and rstop <= (exstop + alignment_slop):
-                    #        data["SE"][loc]["IN"] += reads[read]
-                    #    else:
-                    #        pass
+
             for structure in splicedict["SE"][loc]["EX"]:
                 if structure.startswith("j"):
                     structurestrip = structure.lstrip("j")
@@ -161,21 +191,21 @@ def overlap(coord, locs, ov = .95):
 
 def retrieve_splicing(species):
 
+
     host = Popen(["hostname"], stdout=PIPE).communicate()[0].strip()
     if "optiputer" in host or "compute" in host:
         basedir = "/nas/nas0/yeolab/Genome/ensembl/AS_STRUCTURE/" + species + "data4/"
     elif "tcc" in host or "triton" in host:
         basedir = "/projects/yeolab/Genome/ensembl/AS_STRUCTURE/" + species + "data4/"
     elif "tscc" in host:
-        basedir = "/home/mlovci/scratch/AS_STRUCTURE/" + species + "data4/"
+        basedir = "/home/mlovci/scratch/AS_STRUCTURE/gencode/" + species + "data4/"
     else:
         print "Where am I?"
-        #raise Exception
+        raise Exception
         basedir = "~/gscripts"
 
         
     try:
-        raise Exception
         info= pickle.load(open((basedir + species + ".spliceDict_simple.pickle")))
     except:
         if species == "hg19":
@@ -196,6 +226,7 @@ def retrieve_splicing(species):
                 blank, gene, chromosome, transcripts, d2, d3, d4, strand, numex, exonloc, intronloc, exonlen, intronlen, asSplicingType, locSplicingType = annotline.strip().split("\t")
 
                 numbered = {}
+                numberedR = {}
                 exons = exonloc.rstrip("|").split("|")
                 exonNumbers = range(1, len(exons)+1)
 
@@ -204,6 +235,7 @@ def retrieve_splicing(species):
 
                 for exon, number in zip(exons, exonNumbers):
                     numbered[exon] = number
+                    numberedR[number] = exon
 
 
                 info[gene] = {}
@@ -226,12 +258,13 @@ def retrieve_splicing(species):
                         exonIndexes = overlap(chromosome + ":" + loc, map(lambda x: chromosome + ":" + x, exons))
                         if len(exonIndexes) > 1:
                             raise Exception
-
-
                         try:
-                            thisExonNumber = gene + "|" +  str(numbered[exons[exonIndexes[0]]]-1)
+
+                            exN = numbered[exons[exonIndexes[0]]]
+                            thisExonNumber = gene + "|" +  str(exN - 1) #convert to 0-based exon numbers
+
                         except:
-			    raise	
+                            continue
                             
                         if splicingType is "OV" or splicingType is "RI":
                             continue                    # skip RI and OV... not well defined yet
@@ -241,6 +274,20 @@ def retrieve_splicing(species):
 
     #I know the "pass" statements are verbose.
                         if "SE" in splicingType:
+     
+
+
+                            exNUp = exN - 1
+                            try:
+                                upLoc = numberedR[exNUp]
+                                exNDn = exN + 1
+                                dnLoc = numberedR[exNDn]
+                            except:
+                                event = gene + " Exon %d" %(exN)
+                                print "Failed to index this event: %s" %(event)
+                                continue
+
+
                             if not loc in info[gene][splicingType]:
                                 info[gene][splicingType][loc] = {}
                                 info[gene][splicingType][loc]['prettyName'] = thisExonNumber
@@ -259,6 +306,9 @@ def retrieve_splicing(species):
 
                                 info[gene][splicingType][loc]["IN"] = {}
                                 info[gene][splicingType][loc]["EX"] = {}
+                                info[gene][splicingType][loc]["BODY"] = None
+                                info[gene][splicingType][loc]["UP"] = None
+                                info[gene][splicingType][loc]["DOWN"] = None
                             seen = {}
                             versions = labels.rstrip("|").split("|")
                             for v in versions:
@@ -270,13 +320,22 @@ def retrieve_splicing(species):
                                 info[gene][splicingType][loc]["rangeend"] = max(info[gene][splicingType][loc]["rangeend"], (int(locDown)+1))
 
 
-                                if "IN" in inorout:
-                                    try:
-                                        info[gene][splicingType][loc][inorout]["b" + locIn] += 1
-                                    except:
-                                        info[gene][splicingType][loc][inorout]["b" + locIn] = 1
+                                info[gene][splicingType][loc]["UP"] = upLoc
+                                info[gene][splicingType][loc]["DOWN"] = dnLoc
 
+
+                                if "IN" in inorout:
+                                    if info[gene][splicingType][loc]["BODY"]:
+                                        x = info[gene][splicingType][loc]["BODY"]
+                                        x1, x2 = x.split('-')
+                                        y1, y2 = locIn.split('-')
+                                        (x1, x2, y1, y2) = map(int, [x1, x2, y1, y2]) 
+                                        if (y2 - y1) > (x2-x1): #if this exon body is bigger than previous versions of this exon, update.
+                                            info[gene][splicingType][loc]["BODY"] = locIn                                            
+                                    else:
+                                        info[gene][splicingType][loc]["BODY"] = locIn
                                     exstart, exstop = map(str, locIn.split("-"))
+
                                     try:
                                         info[gene][splicingType][loc][inorout]["j" + locUp + ":" + str(int(exstart)+1)] += 1#upstream jxn
                                     except:
@@ -403,18 +462,18 @@ def mapper(f, argList, np=multiprocessing.cpu_count()):
 
 
 def main(options):
+
     species = options.species
 
-
-
-    
     bamfile = options.bam
     splicetypes = options.splicetypes
     if splicetypes is None:
         print "you must specify what type of splicing to examine: SE/MXE are implemented now"
+    
 
     splicing = retrieve_splicing(species)
-
+    if options.exitOnBuild:
+        exit()
     if options.gene is not None:
         genes = options.gene
     else:
@@ -424,9 +483,6 @@ def main(options):
         if not options.maxgenes > len(genes):
             genes = random.sample(genes, options.maxgenes)
 
-            #for gene in genes:
-        #x = assign_reads(gene, splicedict=splicing, bam_file=bamfile, splicetypes=splicetypes                         )
-    #data = dtm.map(assign_reads, genes, splicedict=splicing, bam_file=bamfile, splicetypes = splicetypes)
 
     def funcStar(args):
         rtrn = assign_reads(*args)
@@ -477,13 +533,14 @@ if __name__ == "__main__":
     parser.add_option("--flip", '-f', dest="flip", default=False, action="store_true", help="flip read strand")
     parser.add_option("--prefix", dest="prefix", default=os.getcwd(), help="output location")
     parser.add_option("--processors",  dest="np", type="int", default=multiprocessing.cpu_count(), help="number of processors to use")
-    parser.add_option("--splicetypes", dest="splicetypes", default=None, action="append")
+    parser.add_option("--splice_type", dest="splicetypes", default=None, action="append")
     parser.add_option("--slop", dest="slop", default=0, help=SUPPRESS_HELP)#help="alignment slop tolerance (for overhangs)") #not implemented
 
 
     parser.add_option("--debug", dest="debug", default=False, action="store_true", help="run in debug mode")
     parser.add_option("--gene", dest="gene", default=None, action="append", type="str")
     parser.add_option("--maxgenes", dest="maxgenes", type="int", default=None)    
+    parser.add_option("--exitOnBuild", dest="exitOnBuild", default=False, action="store_true")    
 
     (options,args) = parser.parse_args()
     baiFile = options.bam + ".bai"

@@ -74,7 +74,7 @@ def main(options):
             header= ["Gene", "ExonName", "Eventloc", "Exonloc"]
             for sample in samples:
                 sample_label = sample[1]
-                header.extend([sample_label + "_IN", sample_label + "_EX", sample_label + "_psi"])
+                header.extend([sample_label + "_IN", sample_label + "_EX", sample_label + "_psi", sample_label + "_BODY_RPK", sample_label + "_UP_RPK", sample_label + "_DOWN_RPK", sample_label + "_UPINTRON_RPK", sample_label + "_DOWNINTRON_RPK"])
             out.write("\t".join(header) + "\n")
             for gene in spliceData["SE"]:
                 for loc in spliceData["SE"][gene]:
@@ -83,12 +83,22 @@ def main(options):
                     writeMe = [gene, annotation[gene]["SE"][loc]['prettyName'],
                                    (chr + ":" + wholeLoc + "|" + strand), loc]
 
+
                     for sample in samples:
                         sample_label = sample[1]
                         sample_IN = spliceData["SE"][gene][loc][sample_label]["IN"]
                         sample_EX = spliceData["SE"][gene][loc][sample_label]["EX"]
+                        sample_BODY = spliceData["SE"][gene][loc][sample_label]["BODY_RPK"]
+                        sample_UP = spliceData["SE"][gene][loc][sample_label]["UP_RPK"]
+                        sample_DOWN = spliceData["SE"][gene][loc][sample_label]["DOWN_RPK"]
+                        try:
+                            sample_UPI = spliceData["SE"][gene][loc][sample_label]["UPI_RPK"]
+                            sample_DOWNI = spliceData["SE"][gene][loc][sample_label]["DOWNI_RPK"]
+                        except:
+                            import pdb; pdb.set_trace()
                         psi = calculate_psi_SE(sample_IN, sample_EX)
-                        writeMe.extend([sample_IN, sample_EX, psi])
+
+                        writeMe.extend([sample_IN, sample_EX, psi, sample_BODY, sample_UP, sample_DOWN,  sample_UPI, sample_DOWNI])
                     out.write("\t".join(map(str, writeMe)) + "\n")
 
         for sample in samples:
@@ -99,12 +109,18 @@ def main(options):
                         chr, start, stop, name, score, strand = annotation[gene]["SE"][loc]["bedTrack"].split("\t")
                         sample_IN = spliceData["SE"][gene][loc][sample_label]["IN"]
                         sample_EX = spliceData["SE"][gene][loc][sample_label]["EX"]
+                        sample_BODY = spliceData["SE"][gene][loc][sample_label]["BODY_RPK"]
+                        sample_UP = spliceData["SE"][gene][loc][sample_label]["UP_RPK"]
+                        sample_DOWN = spliceData["SE"][gene][loc][sample_label]["DOWN_RPK"]
+
+                        sample_UPI = spliceData["SE"][gene][loc][sample_label]["UPI_RPK"]
+                        sample_DOWNI = spliceData["SE"][gene][loc][sample_label]["DOWNI_RPK"]
                         psi = calculate_psi_SE(sample_IN, sample_EX)
 
                         wholeLoc = start + "-" + stop
                         line = "\t".join(map(str, [gene, annotation[gene]["SE"][loc]['prettyName'],
                                                    (chr + ":" + wholeLoc + "|" + strand), loc,
-                                                   sample_IN, sample_EX, "%1.2f" %(psi)]))
+                                                   sample_IN, sample_EX, "%1.2f" %(psi), sample_BODY, sample_UP, sample_DOWN,  sample_UPI, sample_DOWNI]))
                         SEout.write(line + "\n")
 
     if "MXE" in spliceData:
