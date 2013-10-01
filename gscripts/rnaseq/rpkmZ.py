@@ -130,7 +130,7 @@ class TwoWayGeneComparison(object):
                       self.meanLog2Ratio+(2*self.stdLog2Ratio), color=Colors().blueColor, alpha=0.2)
         his = pylab.hist(self.log2Ratio, bins=50, color=Colors().blueColor)
         pylab.xlabel("log2 Ratio %s/%s" %(self.sampleNames[1], self.sampleNames[0]))
-        pylab.ylabel("Frequency")    
+        pylab.ylabel("Frequency")
         
         ax = f.add_subplot(122, aspect='equal')
         pylab.scatter(self.genes1, self.genes2, c=co, alpha=0.5)        
@@ -161,9 +161,9 @@ class TwoWayGeneComparison_local(object):
         
         sampleNames = (genes1.name, genes2.name)
         self.sampleNames = sampleNames
-        
-        genes1 = genes1.dropna()
-        genes2 = genes2.dropna()
+                
+        genes1 = genes1.replace(0, np.nan).dropna()
+        genes2 = genes2.replace(0, np.nan).dropna()
         
         labels = genes1.index.intersection(genes2.index)
         
@@ -245,7 +245,7 @@ class TwoWayGeneComparison_local(object):
                 else:
                     raise ValueError
                     
-    def plot(self):
+    def plot(self, ax=None):
         co = [] #colors container
         for label, (pVal, logratio, isSig) in self.data.get(["pValue", "log2Ratio", "isSig"]).iterrows():
             if (pVal < self.pCut) and isSig:
@@ -267,17 +267,20 @@ class TwoWayGeneComparison_local(object):
         #pylab.xlabel("log2 Ratio %s/%s" %(self.sampleNames[1], self.sampleNames[0]))
         #pylab.ylabel("Frequency")    
         
-        ax = pylab.gca()
+        if ax == None:
+            ax = pylab.gca()
+        
         ax.set_aspect('equal')
         minVal=np.min(np.c_[self.genes1, self.genes2])
-        pylab.scatter(self.genes1, self.genes2, c=co, alpha=0.7, edgecolor='none')
-        pylab.ylabel("%s RPKM" %self.sampleNames[1])
-        pylab.xlabel("%s RPKM" %self.sampleNames[0])
-        pylab.yscale('log')
-        pylab.xscale('log')
-        pylab.xlim(xmin=minVal)
-        pylab.ylim(ymin=minVal)
-        pylab.tight_layout()
+        ax.scatter(self.genes1+1, self.genes2+1, c=co, alpha=0.7, edgecolor='none')
+        ax.set_ylabel("%s RPKM" %self.sampleNames[1])
+        ax.set_xlabel("%s RPKM" %self.sampleNames[0])
+        ax.set_yscale('log')
+        ax.set_xscale('log')
+        ax.set_xlim(xmin=max(minVal, 0.1))
+        ax.set_ylim(ymin=max(minVal, 0.1))
+        if ax == None:
+            pylab.tight_layout()
         
     def gstats(self):
         print "I used a p-value cutoff of %e" %self.pCut
