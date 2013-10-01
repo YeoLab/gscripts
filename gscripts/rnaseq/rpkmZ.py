@@ -272,7 +272,7 @@ class TwoWayGeneComparison_local(object):
         
         ax.set_aspect('equal')
         minVal=np.min(np.c_[self.genes1, self.genes2])
-        ax.scatter(self.genes1+1, self.genes2+1, c=co, alpha=0.7, edgecolor='none')
+        ax.scatter(self.genes1, self.genes2, c=co, alpha=0.7, edgecolor='none')
         ax.set_ylabel("%s RPKM" %self.sampleNames[1])
         ax.set_xlabel("%s RPKM" %self.sampleNames[0])
         ax.set_yscale('log')
