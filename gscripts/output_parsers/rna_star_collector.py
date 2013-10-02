@@ -229,7 +229,7 @@ def log_final_out(glob_command, ids_function):
         ids = ids_function
     else:
         ids = [ids_function(filename) for filename in filenames]
-    print 'ids', ids
+    #print 'ids', ids
 
     for filename in filenames:
         s = pd.read_table(filename, header=None, index_col=0, squeeze=True)
