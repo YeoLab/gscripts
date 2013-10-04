@@ -1,4 +1,4 @@
-import pandas
+import pandas as pd
 import numpy as np
 import scipy as sp
 import pylab as pl
@@ -9,7 +9,6 @@ from sklearn import decomposition as dc
 import matplotlib.pyplot as plt
 from math import sqrt
 from numpy.linalg import norm
-from prettyplotlib import plt
 import prettyplotlib as ppl
 import matplotlib.patches as patches
 import math
@@ -245,3 +244,33 @@ def skipped_exon_figure(ax, which_axis='y'):
                                        **adjacent_exon_kwargs))
 
 #
+def x_with_ties(series, middle, sep=0.05):
+#     middle = 1.0
+    """
+    For making 'lava lamp' plots. Given a pandas series of y-axis values that
+    may have some entries with identical values, return an x-axis vector that
+    places equal valued entries 'sep' apart from each other. This is an
+    alternative to just making a np.ones() vector for the x-axis.
+
+    @param series: a pandas series of values that you are going to plot
+    @param middle: The value these multiple values should be centered on,
+    e.g. if they're centered around 1, and there's two items with the same
+    value, they'll be at 0.975 and 1.025, as this way they are separated by
+    0.05 and are centered around 1.
+    @param sep: float value indicating how much of the x-axis to put between
+    samples
+    @return: @rtype: pandas Series object of x-axis positions.
+    """
+    middle = float(middle)
+    x = pd.Series(index=series.index)
+    #seen = set([])
+    for y in series.dropna().unique():
+        same_score = series[series == y]
+        if same_score.shape[0] > 1:
+            half = same_score.shape[0] / 2
+            x[same_score.index] = np.arange(middle - sep * half,
+                                            middle + sep * half + sep,
+                                            sep)
+        else:
+            x[same_score.index] = middle
+    return x

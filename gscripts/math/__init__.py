@@ -20,7 +20,7 @@ def binify(df, bins=(0, 0.25, 0.75, 1)):
     return counts.apply(lambda x: x / float(x.sum()), axis=1).replace(0, np.nan)
 
 
-def kld_df(P, Q):
+def kld(P, Q):
     """
     Kullback-Leiber divergence of two probability distributions pandas
     dataframes, P and Q
@@ -28,7 +28,7 @@ def kld_df(P, Q):
     return (np.log(P / Q) * P).sum(axis=1)
 
 
-def jsd_df(P, Q):
+def jsd(P, Q):
     """
     Jensen-Shannon divergence of two probability distrubutions pandas
     dataframes, P and Q. These distributions are usually created by running
@@ -36,5 +36,12 @@ def jsd_df(P, Q):
     """
     weight = 0.5
     M = weight * (P + Q)
-    result = weight * kld_df(P, M) + weight * kld_df(Q, M)
+    result = weight * kld(P, M) + weight * kld(Q, M)
     return result
+
+def entropy(binned, base=2):
+    """
+    Given a binned dataframe created by 'binify', find the entropy of each
+    row (index)
+    """
+    return -((np.log(binned)/np.log(base))*binned).sum(axis=1)
