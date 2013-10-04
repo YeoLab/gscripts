@@ -31,6 +31,9 @@ class AnalizeCLIPSeq extends QScript {
   @Argument(doc = "flipped", required = false)
   var flipped: String = _
 
+  @Argument(doc = "not stranded", required = false)
+  var not_stranded: Boolean = false
+
   @Argument(doc = "location to place trackhub (must have the rest of the track hub made before starting script)")
   var location: String = "rna_seq"
 
@@ -64,15 +67,17 @@ class AnalizeCLIPSeq extends QScript {
 	this.tags_annotation = a
   }
 
-  case class star(input: File, output: File) extends STAR {
+  case class star(input: File, output: File, stranded : Boolean) extends STAR {
        this.inFastq = input
        this.outSam = output
+       //intron motif should be used if the data is not stranded
+       this.intronMotif = stranded
        this.genome = star_genome_location
   }
 
-  case class addOrReplaceReadGroups(input : File, outBam : File) extends AddOrReplaceReadGroups {
+  case class addOrReplaceReadGroups(inBam : File, outBam : File) extends AddOrReplaceReadGroups {
        override def shortDescription = "AddOrReplaceReadGroups"
-       this.INPUT = input
+       this.input = List(inBam)
        this.output = outBam
        this.RGLB = "foo" //should record library id
        this.RGPL = "illumina"
@@ -98,20 +103,20 @@ def script() {
     for (fastq_file: File <- fileList) {
 
       val noPolyAFastq = swapExt(fastq_file, ".fastq", ".polyATrim.fastq")
-      val noPolyAReport = swapExt(noPolyAFastq, ".fastq", ".report")
+      val noPolyAReport = swapExt(noPolyAFastq, ".fastq", ".metrics")
 
       val noAdapterFastq = swapExt(noPolyAFastq, ".fastq", ".adapterTrim.fastq")
-      val adapterReport = swapExt(noAdapterFastq, ".fastq", ".report")
+      val adapterReport = swapExt(noAdapterFastq, ".fastq", ".metrics")
 
       val filteredFastq = swapExt(noAdapterFastq, ".fastq", ".rmRep.fastq")
-      val filterd_results = swapExt(filteredFastq, ".fastq", ".counts")
+      val filterd_results = swapExt(filteredFastq, ".fastq", ".metrics")
 
       val samFile = swapExt(filteredFastq, ".fastq", ".sam")
       val sortedBamFile = swapExt(samFile, ".sam", ".sorted.bam")
       val rgSortedBamFile = swapExt(sortedBamFile, ".bam", ".rg.bam")
       val indexedBamFile = swapExt(rgSortedBamFile, "", ".bai")
       
-      val NRFFile = swapExt(rgSortedBamFile, ".bam", ".NRF")
+      val NRFFile = swapExt(rgSortedBamFile, ".bam", ".NRF.metrics")
 
       val bedGraphFilePos = swapExt(rgSortedBamFile, ".bam", ".pos.bg")
       val bigWigFilePos = swapExt(bedGraphFilePos, ".bg", ".bw")
@@ -136,7 +141,7 @@ def script() {
           
       add(new FilterRepetativeRegions(inFastq = noAdapterFastq, filterd_results, filteredFastq))
       add(new FastQC(filteredFastq))
-      add(new star(filteredFastq, samFile))
+      add(new star(filteredFastq, samFile, not_stranded))
       add(new sortSam(samFile, sortedBamFile, SortOrder.coordinate))
       add(addOrReplaceReadGroups(sortedBamFile, rgSortedBamFile))
       add(new samtoolsIndexFunction(rgSortedBamFile, indexedBamFile))

@@ -269,19 +269,19 @@ class AnalizeCLIPSeq extends QScript {
       var genome: String = item._2 
  
       val noPolyAFastq = swapExt(fastq_file, ".fastq", ".polyATrim.fastq")
-      val noPolyAReport = swapExt(noPolyAFastq, ".fastq", ".report")
+      val noPolyAReport = swapExt(noPolyAFastq, ".fastq", ".metrics")
 
       val noAdapterFastq = swapExt(noPolyAFastq, ".fastq", ".adapterTrim.fastq")
-      val adapterReport = swapExt(noAdapterFastq, ".fastq", ".report")
+      val adapterReport = swapExt(noAdapterFastq, ".fastq", ".metrics")
 
       val filteredFastq = swapExt(noAdapterFastq, ".fastq", ".rmRep.fastq")
-      val filterd_results = swapExt(filteredFastq, ".fastq", ".counts")
+      val filterd_results = swapExt(filteredFastq, ".fastq", ".metrics")
 
       val samFile = swapExt(filteredFastq, ".fastq", ".sam")
       val sortedBamFile = swapExt(samFile, ".sam", ".sorted.bam")
       val rgSortedBamFile = swapExt(sortedBamFile, ".sorted.bam", ".sorted.rg.bam")
 
-      val NRFFile = swapExt(rgSortedBamFile, ".bam", ".NRF")
+      val NRFFile = swapExt(rgSortedBamFile, ".bam", ".NRF.metrics")
 
       val rmDupedBamFile = swapExt(rgSortedBamFile, ".bam", ".rmDup.bam")
       val rmDupedMetricsFile = swapExt(rmDupedBamFile, ".bam", ".metrics")
@@ -312,7 +312,8 @@ class AnalizeCLIPSeq extends QScript {
       //add bw files to list for printing out later
       trackHubFiles = trackHubFiles ++ List(bedGraphFileNegInverted, bigWigFilePos)
       trackHubFiles = trackHubFiles ++ List(bigBed_output)
-//      add(new FastQC(inFastq = fastq_file))
+      
+      add(new FastQC(inFastq = fastq_file))
 
       //filters out adapter reads
       add(new Cutadapt(inFastq = fastq_file, outFastq = noAdapterFastq, 
