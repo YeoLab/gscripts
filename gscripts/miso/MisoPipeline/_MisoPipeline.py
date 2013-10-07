@@ -33,7 +33,8 @@ class MisoPipeline(object):
         self.paired_end_utils_py = '%s/pe_utils.py' % self.miso_scripts_dir
 
         # Remove the trailing slash. If it's not there, this won't do anything.
-        self.annotation_index_strfmt = cl.args['annotation_index_strfmt'].rstrip(
+        self.annotation_index_strfmt = cl.args[
+            'annotation_index_strfmt'].rstrip(
             '/')
 
         # Assuming we're using the annotation index structure described in
@@ -61,11 +62,13 @@ class MisoPipeline(object):
         self.summary_walltime = cl.args['summary_walltime']
 
         if cl.args['submit_sh_suffix'] != '':
-            self.submit_sh_suffix = '_' + cl.args['submit_sh_suffix'].lstrip('_')
+            self.submit_sh_suffix = '_' + cl.args['submit_sh_suffix'].lstrip(
+                '_')
         else:
             self.submit_sh_suffix = ''
         if cl.args['sample_id_suffix'] != '':
-            self.sample_id_suffix = '_' + cl.args['sample_id_suffix'].lstrip('_')
+            self.sample_id_suffix = '_' + cl.args['sample_id_suffix'].lstrip(
+                '_')
         else:
             self.sample_id_suffix = ''
 
@@ -212,10 +215,10 @@ class MisoPipeline(object):
             #                                insert_len_command)
             #     insert_len_commands.append(insert_len_command)
 
-                #        if self.submit_sh_suffix:
+            #        if self.submit_sh_suffix:
 
-                #        else:
-                #            insert_len_name = 'miso_insert_len'
+            #        else:
+            #            insert_len_name = 'miso_insert_len'
 
             insert_len_sh = '%s_%s.sh' % (insert_len_sh_base, sample_id)
             all_insert_len_sh.append('\n# --- %s --- #\nqsub %s\n' %
@@ -317,14 +320,18 @@ class MisoPipeline(object):
             submit_sh = '%s_%s.sh' % (submit_sh_base, sample_id)
             all_submit_sh.append('\n# --- %s --- #\nqsub %s\n' %
                                  (sample_id, submit_sh))
+            sh_out = submit_sh + '.out'
+            sh_err = submit_sh + '.err'
 
             if self.insert_len_job_id[sample_id] is not None:
                 sub = Submitter(queue_type='PBS', sh_file=submit_sh,
                                 command_list=psi_commands, job_name=job_name,
-                                wait_for=[self.insert_len_job_id[sample_id]])
+                                wait_for=[self.insert_len_job_id[sample_id]],
+                                out=sh_out, err=sh_err)
             else:
                 sub = Submitter(queue_type='PBS', sh_file=submit_sh,
-                                command_list=psi_commands, job_name=job_name)
+                                command_list=psi_commands, job_name=job_name,
+                                out=sh_out, err=sh_err)
             if self.num_cores == 1:
                 self.psi_job_is_array = False
                 self.psi_job_id[sample_id] = sub.write_sh(submit=True,
@@ -439,6 +446,9 @@ class MisoPipeline(object):
             all_submit_sh.append('\n# --- %s --- #\nqsub %s\n' %
                                  (sample_id, submit_sh))
 
+            sh_out = submit_sh + '.out'
+            sh_err = submit_sh + '.err'
+
             if self.num_cores > 1:
                 additional_resources = {'-t': '1-%d'
                                               % (self.num_processes *
@@ -459,13 +469,12 @@ class MisoPipeline(object):
                             command_list=summary_commands, job_name=job_name,
                             # Tell the queue to parallelize this job
                             # into a job array
-                            additional_resources=additional_resources)
+                            additional_resources=additional_resources,
+                            out=sh_out, err=sh_err)
 
-            self.summary_job_id[sample_id] = sub.write_sh(submit=True,
-                                                          nodes=self.num_cores,
-                                                          ppn=2,
-                                                          queue=self.queue,
-                                                          walltime=self.summary_walltime)
+            self.summary_job_id[sample_id] = sub.write_sh(
+                submit=True, nodes=self.num_cores, ppn=2, queue=self.queue,
+                walltime=self.summary_walltime)
 
             print self.summary_job_id[sample_id]
             # Save all the qsub commands in one file
