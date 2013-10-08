@@ -1,4 +1,4 @@
-import pandas
+import pandas as pd
 import numpy as np
 import scipy as sp
 import pylab as pl
@@ -9,7 +9,6 @@ from sklearn import decomposition as dc
 import matplotlib.pyplot as plt
 from math import sqrt
 from numpy.linalg import norm
-from prettyplotlib import plt
 import prettyplotlib as ppl
 import matplotlib.patches as patches
 import math
@@ -86,7 +85,9 @@ def plot_pca(df, c_scale=None, x_pc=1, y_pc=2, distance='L1', \
         c_scale = .75 * max([norm(point) for point in zip(x_list, y_list)]) / \
                   max([norm(vector) for vector in zip(comp_x, comp_y)])
 
-    # size_scale = sqrt(figsize[0] * figsize[1]) / 1.5
+
+    size_scale = sqrt(figsize[0] * figsize[1]) / 1.5
+
 
     # sort features by magnitude/contribution to transformation
     comp_magn = []
@@ -132,7 +133,9 @@ def plot_pca(df, c_scale=None, x_pc=1, y_pc=2, distance='L1', \
 
             ax.text(x, y, an_id, color=color) #, size=size_scale)
 
-        ppl.scatter(ax, x, y, marker=marker, color=color) #, s=size_scale * 5)
+
+        ppl.scatter(ax, x, y, marker=marker, color=color, s=size_scale * 5)
+
 
     vectors = sorted(comp_magn, key=lambda item: item[3], reverse=True)[
               :num_vectors]
@@ -245,3 +248,358 @@ def skipped_exon_figure(ax, which_axis='y'):
                                        **adjacent_exon_kwargs))
 
 #
+def x_with_ties(series, middle, sep=0.05):
+#     middle = 1.0
+    """
+    For making 'lava lamp' plots. Given a pandas series of y-axis values that
+    may have some entries with identical values, return an x-axis vector that
+    places equal valued entries 'sep' apart from each other. This is an
+    alternative to just making a np.ones() vector for the x-axis.
+
+    @param series: a pandas series of values that you are going to plot
+    @param middle: The value these multiple values should be centered on,
+    e.g. if they're centered around 1, and there's two items with the same
+    value, they'll be at 0.975 and 1.025, as this way they are separated by
+    0.05 and are centered around 1.
+    @param sep: float value indicating how much of the x-axis to put between
+    samples
+    @return: @rtype: pandas Series object of x-axis positions.
+    """
+    middle = float(middle)
+    x = pd.Series(index=series.index)
+    #seen = set([])
+    for y in series.dropna().unique():
+        same_score = series[series == y]
+        if same_score.shape[0] > 1:
+            half = same_score.shape[0] / 2
+            x[same_score.index] = np.arange(middle - sep * half,
+                                            middle + sep * half + sep,
+                                            sep)
+        else:
+            x[same_score.index] = middle
+    return x
+
+import brewer2mpl
+import prettyplotlib as ppl
+import matplotlib.pyplot as plt
+import string
+import numpy as np
+import brewer2mpl
+from matplotlib.colors import LogNorm
+import pandas as pd
+from collections import Counter
+import time
+
+
+def label_side_axis_as_title(ax_right, label):
+    ax = plt.subplot2grid((ax_right.numRows, ax_right.numCols), (ax_right.rowNum,0))
+    ax.set_xlim((0,1))
+    ax.set_ylim((0,1))
+    ax.axis('off')
+    ax_limits = ax.axis() ;
+    ax.text(-1, (ax_limits[3]-ax_limits[2])/2,
+            label, fontsize=12,
+            horizontalalignment='left', verticalalignment='center')
+
+    handles, labels = ax_right.get_legend_handles_labels()
+    ax.legend(handles, labels, loc=2, frameon=False, bbox_to_anchor=(-2.0,1.5))
+
+def add_side_legend(ax, **kwargs):
+    ax.legend(bbox_to_anchor=(-.3, 1), loc=2, borderaxespad=0., frameon=False, **kwargs)
+
+
+def rpkm_and_mapping_stats(rpkm, mapping_stats, img_filename, sort_by_reads=False):
+    """
+    Creates a plot of all the samples and their mapping stats
+
+    @param rpkm: pandas DataFrame of samples on columns, and rows on genes
+    for RPKM
+    @param mapping_stats: pandas DataFrame of samples on columns, and mapping
+    stats from STAR's *.Log.final.out files created by gscripts
+    .output_parsers.rna_star_collector.log_final_out
+    @param img_filename: file to save the image created to
+    @param sort_by_reads: By default
+    """
+    colors = brewer2mpl.get_map('Set2', 'qualitative', 7).mpl_colors
+    greys = brewer2mpl.get_map('Greys', 'sequential', 9).mpl_colormap
+
+    xticks = np.arange(0, mapping_stats.shape[1])
+    print 'xticks', xticks
+    if sort_by_reads:
+        sorted_col = mapping_stats.columns[mapping_stats.ix['Uniquely mapped ' \
+                                                            'reads number', :].values.astype(int).argsort()[::-1]]
+    else:
+        sorted_col = mapping_stats.columns
+
+#     print sorted_col
+
+
+
+    fig = plt.figure(figsize=(30,20))
+
+    # this took a shit ton of time to figure out these parameters... don't change
+    # unless you are highly confident.
+    ax0 = plt.subplot2grid((18,9), (0,2), colspan=7, rowspan=4)
+    ax1 = plt.subplot2grid((18,9), (0,1), colspan=1, rowspan=4)
+    ax2 = plt.subplot2grid((18,9), (4,2), colspan=7)
+    ax3 = plt.subplot2grid((18,9), (5,2), colspan=7)
+    ax4 = plt.subplot2grid((18,9), (6,2), colspan=7)
+    ax5 = plt.subplot2grid((18,9), (7,2), colspan=7)
+    ax6 = plt.subplot2grid((18,9), (8,2), colspan=7)
+    ax7 = plt.subplot2grid((18,9), (9,2), colspan=7)
+    ax8 = plt.subplot2grid((18,9), (10,2), colspan=7)
+    ax9 = plt.subplot2grid((18,9), (11,2), colspan=7)
+    ax10 = plt.subplot2grid((18,9), (12,2), colspan=7)
+    ax11 = plt.subplot2grid((18,9), (13,2), colspan=7)
+    ax12 = plt.subplot2grid((18,9), (14,2), colspan=7)
+    ax13 = plt.subplot2grid((18,9), (15,2), colspan=7)
+    ax14 = plt.subplot2grid((18,9), (16,2), colspan=7)
+    ax15 = plt.subplot2grid((18,9), (17,2), colspan=7)
+
+    axes = [ax0, ax1, ax2, ax3, ax4, ax5, ax6, ax7, ax8, ax9, ax10, ax11, ax12,
+            ax13, ax14, ax15]
+
+    # --- ax0: samples vs RPKM --- #
+    ax0.set_title('Samples, sorted by mapped read count -vs- RPKM, sorted in sample with most reads')
+    sample_with_most_reads = sorted_col[0]
+
+    # vmin CANNOT be <=0 because of the log transformation, and then
+    # this fucks up fig.savefig()
+    vmin = 0.1 #rpkm.min().min()
+    vmax = rpkm.max().max()
+
+    # print 'vmin', vmin
+    # print 'vmax', vmax
+
+    rpkm.sort_index(by=sample_with_most_reads, inplace=True)
+    pcolormesh = ax0.pcolormesh(rpkm.ix[:,sorted_col].values,
+                   norm=LogNorm(vmin=vmin, vmax=vmax),
+                   cmap=greys)
+    # plt.colorbar(pcolormesh)
+
+    # --- ax1: sorted FPKM of sample with most reads --- #
+
+    ax1.set_title('Sorted RPKM of\nSample %s'
+                  % sorted_col[0])
+    ax1.set_xscale('log')
+
+    ylim =(0, rpkm.shape[0])
+    ax1.barh(bottom=range(ylim[0], ylim[1]),
+             width=rpkm.ix[:, sample_with_most_reads].values.astype(float), linewidth=0,
+             color='grey')
+    limits = ax1.axis()
+#     ax1.set_xlim(left=limits[1], right=limits[0])
+    ax1.set_ylim(0, rpkm.shape[0])
+    ppl.remove_chartjunk(ax1, ['top', 'left'], grid='x')
+
+    # --- ax2: Input reads and uniquely mapped reads --- #
+    # print "mapping_stats.ix['Uniquely mapped reads number',sorted_col]"
+    # print mapping_stats.ix['Uniquely mapped reads number',sorted_col]
+    # Plot uniquely mapped reads
+    ax2.set_yscale('log')
+    print "mapping_stats.ix['Uniquely mapped reads number', sorted_col].values.astype(int)"
+    print mapping_stats.ix['Uniquely mapped reads number', sorted_col].values.astype(int)
+    ppl.bar(ax2, xticks, height=mapping_stats.ix['Uniquely mapped reads number', ].values.astype(int),
+           color=colors[0], label='Uniquely mapped reads')
+#     ax2.set_xlim(left=limits[1], right=limits[0])
+
+    # Plot input reads on top
+    height = mapping_stats.ix['Number of input reads', sorted_col].values.astype(int) - \
+        mapping_stats.ix['Uniquely mapped reads number', sorted_col].values.astype(int)
+
+
+    ax2.bar(xticks, height,
+           color=colors[1], linewidth=0,
+           bottom=mapping_stats.ix['Uniquely mapped reads number', sorted_col].values.astype(int),
+           label='Unmapped reads')
+
+    ppl.remove_chartjunk(ax2, ['top', 'right'], grid='y')
+    add_side_legend(ax2, title='Number of reads, log10')
+
+    # --- ax3: % uniquely mapped -- #
+    #label_side_axis_as_title(ax3, '% Uniquely mapped reads')
+
+    uniquely_mapped = mapping_stats.ix['Uniquely mapped reads %',sorted_col].values
+
+    # Multi-mapping percentages
+    multi_mapped_multiple_loci = mapping_stats.ix['% of reads mapped to multiple loci',sorted_col].values
+    multi_mapped_too_many_loci = mapping_stats.ix['% of reads mapped to too many loci',sorted_col].values
+    multi_mapped = multi_mapped_multiple_loci + multi_mapped_too_many_loci
+
+    # unmapping percentages
+    un_mapped_mismatches = mapping_stats.ix['% of reads unmapped: too many '
+                                            'mismatches',sorted_col].values
+    un_mapped_too_short = mapping_stats.ix['% of reads unmapped: too short',sorted_col].values
+    un_mapped_other = mapping_stats.ix['% of reads unmapped: other',sorted_col].values
+    un_mapped = un_mapped_mismatches + un_mapped_too_short + un_mapped_other
+
+    # Plot % uniquely mapped reads
+    ax3.bar(xticks, uniquely_mapped,
+           color=colors[0], linewidth=0, label='% Uniquely mapped reads')
+    ax3.bar(xticks, multi_mapped, bottom=uniquely_mapped,
+           color=colors[1], linewidth=0, label='% Multi-mapped reads')
+    ax3.bar(xticks, un_mapped, bottom=uniquely_mapped + multi_mapped,
+           color=colors[2], linewidth=0, label='% Unmapped reads')
+
+    ax3.set_ylim((0,100))
+    ppl.remove_chartjunk(ax3, ['top', 'right'], grid='y')
+
+    add_side_legend(ax3, title="Read mapping stats")
+    #ax3.legend(bbox_to_anchor=(-.1, 1), loc=1, borderaxespad=0., frameon=False)
+
+
+    # --- ax4: total # splices --- #
+    # Plot % uniquely mapped reads
+    splices_total = mapping_stats.ix['Number of splices: Total',sorted_col].values.astype(float)
+
+    ax4.bar(xticks, splices_total,
+           color=colors[0], edgecolor='white', log=True, label='Number of splices: Total, log10')
+    #ax4.legend(bbox_to_anchor=(-.1, 1), loc=1, borderaxespad=0., frameon=False)
+    add_side_legend(ax4, title="Splicing")
+    #ax4.set_title('Splicing stats')
+    ppl.remove_chartjunk(ax4, ['top', 'right'], grid='y')
+
+    # --- ax5: splices: GT/AG --- #
+    splices_gtag = mapping_stats.ix['Number of splices: GT/AG',sorted_col].values.astype(int)
+
+    ax5.bar(xticks, 100*splices_gtag/splices_total,
+           color=colors[1], edgecolor='white', label='% splices: GT/AG')
+    #ax5.legend(bbox_to_anchor=(-.1, 1), loc=1, borderaxespad=0., frameon=False)
+    add_side_legend(ax5)
+    ppl.remove_chartjunk(ax5, ['top', 'right'], grid='y')
+
+    # --- ax6: splices: GC/AG --- #
+    splices_gcag = mapping_stats.ix['Number of splices: GC/AG',sorted_col].values.astype(int)
+
+    ax6.bar(xticks, height=100*splices_gcag/splices_total,
+    #        bottom=star_mapping_stats.ix['Number of splices: GC/AG',sorted_col].values.astype(int),
+           color=colors[2], edgecolor='white', label='% splices: GC/AG')
+    #ax6.legend(bbox_to_anchor=(-.1, 1), loc=1, borderaxespad=0., frameon=False)
+    add_side_legend(ax6)
+    ax6.locator_params(axis='y', nbins=4)
+    ppl.remove_chartjunk(ax6, ['top', 'right'], grid='y')
+
+
+    # --- ax7: splices: AT/AC --- #
+    splices_atac = mapping_stats.ix['Number of splices: AT/AC',sorted_col].values.astype(int)
+    ax7.bar(xticks, height=100*splices_atac/splices_total,
+    #        bottom=star_mapping_stats.ix['Number of splices: GC/AG',sorted_col].values.astype(int),
+           color=colors[3], linewidth=0, label='% splices: AT/AC')
+    #ax6.legend(bbox_to_anchor=(-.1, 1), loc=1, borderaxespad=0., frameon=False)
+    add_side_legend(ax7)
+    ax7.locator_params(axis='y', nbins=4)
+    ppl.remove_chartjunk(ax7, ['top', 'right'], grid='y')
+
+
+    # --- ax8: splices: Non-canonical --- #
+    splices_noncanonical = mapping_stats.ix['Number of splices: Non-canonical',sorted_col].values.astype(int)
+    ax8.bar(xticks, height=100*splices_noncanonical/splices_total,
+    #        bottom=star_mapping_stats.ix['Number of splices: GC/AG',sorted_col].values.astype(int),
+           color=colors[4], linewidth=0, label='% splices: Non-canonical')
+    #ax6.legend(bbox_to_anchor=(-.1, 1), loc=1, borderaxespad=0., frameon=False)
+    add_side_legend(ax8)
+    ax8.locator_params(axis='y', nbins=4)
+    ppl.remove_chartjunk(ax8, ['top', 'right'], grid='y')
+
+
+    # --- ax9: mismatch rate --- #
+    mismatch_rate = mapping_stats.ix['Mismatch rate per base, %',sorted_col].values
+    deletion_rate = mapping_stats.ix['Deletion rate per base',sorted_col].values
+    insertion_rate = mapping_stats.ix['Insertion rate per base',sorted_col].values
+
+    ax9.bar(xticks, height=mismatch_rate, bottom=insertion_rate+deletion_rate,
+           color=colors[0], linewidth=0, label='Mismatch rate, % per base')
+    #ax9.set_ylim((0,1))
+    #ax9.set_yscale('log')
+    #ax9.set_ylim(0,1)
+    add_side_legend(ax9, title="Mismatch and indel rates")
+    ppl.remove_chartjunk(ax9, ['top', 'right'], grid='y')
+    ax9.locator_params(axis='y', nbins=4)
+
+
+    # -- ax10: insertion rate --- #
+    ax10.bar(xticks, height=insertion_rate,
+    #        bottom=star_mapping_stats.ix['Number of splices: GC/AG',sorted_col].values.astype(int),
+           color=colors[1], linewidth=0, label='Insertion rate, % per base')
+    add_side_legend(ax10)
+    ppl.remove_chartjunk(ax10, ['top', 'right'], grid='y')
+
+    # --- ax11: deletion rate --- #
+    ax11.bar(xticks, height=deletion_rate,
+           color=colors[2], linewidth=0, label='Deletion rate, % per base')
+    add_side_legend(ax11)
+    ppl.remove_chartjunk(ax11, ['top', 'right'], grid='y')
+    ax11.locator_params(axis='y', nbins=4)
+    #ax9.set_ylim((0,1))
+    #ax10.set_yscale('log')
+    #ax10.set_ylim(0,1)
+
+    #ax6.legend(bbox_to_anchor=(-.1, 1), loc=1, borderaxespad=0., frameon=False)
+
+
+    # --- ax12: deletion average length --- #
+    deletion_length = mapping_stats.ix['Deletion average length',sorted_col].values
+    insertion_length = mapping_stats.ix['Insertion average length',sorted_col].values
+
+    ax12.bar(xticks, height=insertion_length,
+    #        bottom=star_mapping_stats.ix['Number of splices: GC/AG',sorted_col].values.astype(int),
+           color=colors[0], linewidth=0, label='Insertion average length, bp')
+    add_side_legend(ax12, title='Indel sizes')
+    ppl.remove_chartjunk(ax12, ['top', 'right'], grid='y')
+    ax12.locator_params(axis='y', nbins=4)
+    ax12.set_ylim(0, 2)
+
+    # --- ax13: insertion average length --- #
+    ax13.bar(xticks, height=deletion_length,
+           color=colors[1],linewidth=0, label='Deletion average length, bp')
+    add_side_legend(ax13)
+    ppl.remove_chartjunk(ax13, ['top', 'right'], grid='y')
+    ax13.locator_params(axis='y', nbins=4)
+    ax13.set_ylim(0, 2)
+
+
+    # --- ax14: multimapping reads --- #
+    ax14.bar(xticks, height=100*multi_mapped_multiple_loci/multi_mapped,
+           color=colors[0],linewidth=0, label='Multiple loci')
+    ax14.bar(xticks, height=100*multi_mapped_too_many_loci/multi_mapped,
+             bottom=100*multi_mapped_multiple_loci/multi_mapped,
+           color=colors[1],linewidth=0, label='Too many loci')
+    add_side_legend(ax14, title='Multi-mapping reads (% of multimapping)')
+    ax14.locator_params(axis='y', nbins=4)
+    ppl.remove_chartjunk(ax14, ['top', 'right'], grid='y')
+    ax14.set_ylim(0,100)
+
+
+    # --- ax14: unmapped reads --- #
+    ax15.bar(xticks, height=100*un_mapped_mismatches/un_mapped,
+           color=colors[0],linewidth=0, label='Too many mismatches')
+    ax15.bar(xticks, height=100*un_mapped_too_short/un_mapped,
+             bottom=100*un_mapped_mismatches/un_mapped,
+           color=colors[1],linewidth=0, label='Too short')
+    ax15.bar(xticks, height=100*un_mapped_other/un_mapped,
+             bottom=100*un_mapped_mismatches/un_mapped+100*un_mapped_too_short/un_mapped,
+           color=colors[2],linewidth=0, label='Other')
+    add_side_legend(ax15, title='Unmapped reads (% of unmapped)')
+    ppl.remove_chartjunk(ax15, ['top', 'right'], grid='y')
+    ax15.set_ylim(0,100)
+
+    xticks_labels = np.arange(0.4, mapping_stats.shape[1]+0.4)
+
+    for ax in axes:
+        if ax == ax1:
+            ppl.remove_chartjunk(ax, ['top', 'left'], ticklabels='y')
+
+            continue
+        ax.set_xticks(xticks_labels)
+        ax.set_xticklabels([x.replace('_', '\n') for x in sorted_col],
+                           ha='center', fontsize=11)
+        ax.set_xlim((0,mapping_stats.shape[1]))
+        ppl.remove_chartjunk(ax, ['top', 'right'])
+
+    # print_current_time()
+    # print 'saving pdf....'
+    # fig.savefig('%s.pdf' % img_filename)
+    # print_current_time()
+    # print 'finished saving pdf.'
+    fig.tight_layout()
+    fig.savefig('%s.png' % img_filename, dpi=500)
