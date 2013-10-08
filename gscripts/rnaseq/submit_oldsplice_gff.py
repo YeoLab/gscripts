@@ -42,6 +42,7 @@ for row, dat in sInfo.iterrows():
     if (strand == 'flip') or (strand == 'both'):
         oldsplice_command = "oldsplice_gff.py -f -b %s -o %s --gff %s --processors 16" % (
             bam, out.replace(".splices", ".flip.splices"), gff)
+
         cmds.append(oldsplice_command)
 
 Sub.job(command_list = cmds, sh_file = "runOldsplice.sh", job_name = "oldsplice", array = True, queue = "home",
