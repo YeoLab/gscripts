@@ -60,6 +60,10 @@ def retrieve_splicing_gff(gffFile=None):
     genes = gffDatabase.features_of_type('gene')
     for geneObj in genes:
         event = geneObj.attributes['ID']
+
+        if "_" in geneObj.chrom:
+            continue
+            
         info[event]['chromosome'] = geneObj.chrom
         info[event]['strand'] = geneObj.strand
         spliceType = geneObj.source
