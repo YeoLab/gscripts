@@ -37,12 +37,35 @@ class AnalizeCLIPSeq extends QScript {
   @Argument(doc = "location to place trackhub (must have the rest of the track hub made before starting script)", required=false)
   var location: String = "clip_seq"
 
+  case class cutadapt(fastq_file: File, noAdapterFastq: File, adapterReport: File, adapter: List[String]) extends Cutadapt{
+       override def shortDescription = "cutadapt"
+
+       this.inFastq = fastq_file
+       this.outFastq = noAdapterFastq 
+       this.report = adapterReport
+       this.anywhere = adapter ++ List("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA", 
+        		  	     "TTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTT") 
+       this.overlap = 5
+       this.length = 18
+       this.quality_cutoff = 6 
+       this.isIntermediate = true
+  }
+
+  case class filterRepetitiveRegions(noAdapterFastq: File, filteredResults: File, filteredFastq: File) extends FilterRepetitiveRegions {
+       override def shortDescription = "FilterRepetitiveRegions"
+       
+       this.inFastq = noAdapterFastq
+       this.outCounts = filteredResults
+       this.outNoRep = filteredFastq
+       this.isIntermediate = true
+  }
+
   case class sortSam(inSam: File, outBam: File, sortOrderP: SortOrder) extends SortSam {
     override def shortDescription = "sortSam"
     this.input :+= inSam
     this.output = outBam
     this.sortOrder = sortOrderP
-
+    this.isIntermediate = true
   }
 
   class RemoveDuplicates(@Input inBam: File, @Output outResult: File, @Argument metrics_file: String) extends CommandLineFunction {
@@ -114,6 +137,7 @@ class AnalizeCLIPSeq extends QScript {
         this.bedGraph = outBed
         this.strand = cur_strand
         this.split = true
+	this.isIntermediate = true
   }
 
   case class star(input: File, output: File, genome_location: String) extends STAR {
@@ -121,6 +145,7 @@ class AnalizeCLIPSeq extends QScript {
        this.outSam = output
        this.genome = genome_location
        this.multimapNMax = 1
+       this.isIntermediate = true
   }
 
 
@@ -286,25 +311,28 @@ class AnalizeCLIPSeq extends QScript {
       val rmDupedBamFile = swapExt(rgSortedBamFile, ".bam", ".rmDup.bam")
       val rmDupedMetricsFile = swapExt(rmDupedBamFile, ".bam", ".metrics")
 
-      val indexedBamFile = swapExt(rmDupedBamFile, "", ".bai")
-      val bedGraphFilePos = swapExt(rmDupedBamFile, ".bam", ".pos.bg")
+      val sortedrmDupedBamFile = swapExt(rmDupedBamFile, ".bam", ".sorted.bam")
+      val indexedBamFile = swapExt(sortedrmDupedBamFile, "", ".bai")
+
+      val bedGraphFilePos = swapExt(sortedrmDupedBamFile, ".bam", ".pos.bg")
       val bigWigFilePos = swapExt(bedGraphFilePos, ".bg", ".bw")
 
+      val bedGraphFileNeg = swapExt(sortedrmDupedBamFile, ".bam", ".neg.bg")
       val bigWigFileNeg = swapExt(bedGraphFileNeg, ".bg", ".norm.bw")
       val bedGraphFileNegInverted = swapExt(bedGraphFileNeg, "neg.bg", "neg.t.bg")
       val bigWigFileNegInverted = swapExt(bedGraphFileNegInverted, ".t.bg", ".bw")
 
-      val clipper_output = swapExt(rmDupedBamFile, ".bam", ".peaks.bed")
+      val clipper_output = swapExt(sortedrmDupedBamFile, ".bam", ".peaks.bed")
       val fixed_clipper_output = swapExt(clipper_output, ".bed", ".fixed.bed")
       val bigBed_output = swapExt(fixed_clipper_output, ".bed", ".bb")
       val clipper_output_metrics = swapExt(clipper_output, ".bed", ".metrics")
       
-      val rmDupedBedFile = swapExt(rmDupedBamFile, ".bam", ".bed")
-      val pyicoclipResults = swapExt(rmDupedBedFile, ".bed", ".pyicoclip.bed")
-      val ripseekerResults = swapExt(rmDupedBamFile, ".bam", ".ripseeker.bed")
-      val IDRResult = swapExt(rmDupedBamFile, "", ".IDR")
+      val rmDupedBedFile = swapExt(sortedrmDupedBamFile, ".bam", ".bed")
+      val pyicoclipResults = swapExt(sortedrmDupedBamFile, ".bed", ".pyicoclip.bed")
+      val ripseekerResults = swapExt(sortedrmDupedBamFile, ".bam", ".ripseeker.bed")
+      val IDRResult = swapExt(sortedrmDupedBamFile, "", ".IDR")
 
-      val countFile = swapExt(rmDupedBamFile, "bam", "count")
+      val countFile = swapExt(sortedrmDupedBamFile, "bam", "count")
       val RPKMFile = swapExt(countFile, "count", "RPKM")
 
       //add bw files to list for printing out later
@@ -314,15 +342,9 @@ class AnalizeCLIPSeq extends QScript {
       add(new FastQC(inFastq = fastq_file))
 
       //filters out adapter reads
-      add(new Cutadapt(inFastq = fastq_file, outFastq = noAdapterFastq, 
-          report = adapterReport, 
-          anywhere = adapter ++ List("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA", 
-        		  	     "TTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTT"), 
-          overlap = 5, length = 18, quality_cutoff = 6))
+      add(cutadapt(fastq_file = fastq_file, noAdapterFastq = noAdapterFastq, adapterReport = adapterReport, adapter = adapter ) )
       
-      
-
-      add(new FilterRepetativeRegions(inFastq = noAdapterFastq, filterd_results, filteredFastq))
+      add(filterRepetitiveRegions(noAdapterFastq, filterd_results, filteredFastq))
       add(new FastQC(filteredFastq))
       add(star(input = filteredFastq, output = samFile, genome_location = starGenomeLocation(genome)))
       add(sortSam(samFile, sortedBamFile, SortOrder.coordinate))
@@ -330,34 +352,33 @@ class AnalizeCLIPSeq extends QScript {
 
       add(new CalculateNRF(inBam = rgSortedBamFile, genomeSize = chromSizeLocation(genome), outNRF = NRFFile))
       add(new RemoveDuplicates(rgSortedBamFile, rmDupedBamFile, rmDupedMetricsFile))
+      add(sortSam(rmDupedBamFile, sortedrmDupedBamFile, SortOrder.coordinate))
+      add(new samtoolsIndexFunction(sortedrmDupedBamFile, indexedBamFile))
 
-      add(new samtoolsIndexFunction(rmDupedBamFile, indexedBamFile))
-
-      add(new genomeCoverageBed(input = rmDupedBamFile, outBed = bedGraphFilePos, cur_strand = "+", genome = chromSizeLocation(genome)))
+      add(new genomeCoverageBed(input = sortedrmDupedBamFile, outBed = bedGraphFilePos, cur_strand = "+", genome = chromSizeLocation(genome)))
       add(new BedGraphToBigWig(bedGraphFilePos, chromSizeLocation(genome), bigWigFilePos))
 
-      add(new genomeCoverageBed(input = rmDupedBamFile, outBed = bedGraphFileNeg, cur_strand = "-", genome = chromSizeLocation(genome)))
-      add(new BedGraphToBigWig(bedGraphFileNeg, chromSizeLocation(genome), bigWigFileNeg))
+      add(new genomeCoverageBed(input = sortedrmDupedBamFile, outBed = bedGraphFileNeg, cur_strand = "-", genome = chromSizeLocation(genome)))
       add(new NegBedGraph(inBedGraph = bedGraphFileNeg, outBedGraph = bedGraphFileNegInverted))
       add(new BedGraphToBigWig(bedGraphFileNegInverted, chromSizeLocation(genome), bigWigFileNegInverted))
 
-      add(new Clipper(inBam = rmDupedBamFile, species = genome, outBed = clipper_output, premRNA = premRNA))
+      add(new Clipper(inBam = sortedrmDupedBamFile, species = genome, outBed = clipper_output, premRNA = premRNA))
             
       add(new FixScores(inBed = clipper_output, outBed = fixed_clipper_output))
       
       add(new BedToBigBed(inBed = fixed_clipper_output, genomeSize = chromSizeLocation(genome), outBigBed = bigBed_output))
 
-      add(new ClipAnalysis(rmDupedBamFile, clipper_output, genome, clipper_output_metrics, regions_location = regionsLocation(genome),
+      add(new ClipAnalysis(sortedrmDupedBamFile, clipper_output, genome, clipper_output_metrics, regions_location = regionsLocation(genome),
      	      		   AS_Structure = asStructureLocation(genome), genome_location = genomeLocation(genome), 
 			   phastcons_location = phastconsLocation(genome), gff_db = gffDbLocation(genome),
 			   bw_pos=bigWigFilePos, bw_neg=bigWigFileNeg))
 
-      add(new BamToBed(inBam=rmDupedBamFile, outBed=rmDupedBedFile))
+      add(new BamToBed(inBam=sortedrmDupedBamFile, outBed=rmDupedBedFile))
       add(new Pyicoclip(inBed = rmDupedBedFile, outBed = pyicoclipResults, regions = genicRegionsLocation(genome) ))
-      add(new Ripseeker(inBam=rmDupedBamFile, outBed=ripseekerResults))
-      add(new IDR(inBam = rmDupedBamFile, species = genome, genome = chromSizeLocation(genome), outResult = IDRResult, premRNA = premRNA))
+      //add(new Ripseeker(inBam=sortedrmDupedBamFile, outBed=ripseekerResults))
+      //add(new IDR(inBam = sortedrmDupedBamFile, species = genome, genome = chromSizeLocation(genome), outResult = IDRResult, premRNA = premRNA))
 
-      add(new countTags(input = rmDupedBamFile, index = indexedBamFile, output = countFile, a = exonLocation(genome)))
+      add(new countTags(input = sortedrmDupedBamFile, index = indexedBamFile, output = countFile, a = exonLocation(genome)))
 
       add(new singleRPKM(input = countFile, output = RPKMFile, s = genome))
 
