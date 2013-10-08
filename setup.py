@@ -39,7 +39,7 @@ setup(
                       'scipy >= 0.11.0',
                       'matplotlib >= 1.1.0',
                       'pybedtools >= 0.5',
-                      'scikit-learn >= 0.13.0'],
+                      'scikit-learn >= 0.13.0', 'gffutils'],
 
     setup_requires=["setuptools_git >= 0.3", ],
     scripts=scripts,
