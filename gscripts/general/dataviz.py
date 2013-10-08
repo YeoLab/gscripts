@@ -131,7 +131,7 @@ def plot_pca(df, c_scale=None, x_pc=1, y_pc=2, distance='L1', \
 
             ax.text(x, y, an_id, color=color) #, size=size_scale)
 
-        ppl.scatter(ax, x, y, marker=marker, color=color, s=size_scale * 5)
+        ppl.scatter(ax, x, y, marker=marker, color=color, s=size_scale * 10)
 
     vectors = sorted(comp_magn, key=lambda item: item[3], reverse=True)[
               :num_vectors]

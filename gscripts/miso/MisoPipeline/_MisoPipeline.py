@@ -69,8 +69,11 @@ class MisoPipeline(object):
         if cl.args['sample_id_suffix'] != '':
             self.sample_id_suffix = '_' + cl.args['sample_id_suffix'].lstrip(
                 '_')
+            self.sample_ids = [sample_id + self.sample_id_suffix
+                               for sample_id in self.sample_ids]
         else:
             self.sample_id_suffix = ''
+
 
         self.sh_scripts_dir = cl.args['sh_scripts_dir'].rstrip('/')
         if self.sh_scripts_dir == '':
@@ -82,9 +85,9 @@ class MisoPipeline(object):
         self.queue = cl.args['queue']
 
         # get all output dirs so we don't make a typo when redefining them
-        self.psi_output_dirs = ['%s/miso/%s/%s%s'
+        self.psi_output_dirs = ['%s/miso/%s/%s'
                                 % (os.path.dirname(bam), self.event_type,
-                                   sample_id, self.sample_id_suffix)
+                                   sample_id)
                                 for bam, sample_id in zip(self.bams,
                                                           self.sample_ids)]
         for d in self.psi_output_dirs:
@@ -95,10 +98,9 @@ class MisoPipeline(object):
                 pass
 
         if cl.args['summary_output_dir_base']:
-            self.summary_output_dirs = ['%s/miso/%s/%s%s'
+            self.summary_output_dirs = ['%s/miso/%s/%s'
                                         % (cl.args['summary_output_dir_base'],
-                                           self.event_type, sample_id,
-                                           self.sample_id_suffix)
+                                           self.event_type, sample_id)
                                         for sample_id in self.sample_ids]
 
             # Need to create the directories if they're not there already
@@ -431,7 +433,7 @@ class MisoPipeline(object):
             final_summary_file = '%s/summary/%s.miso_summary' % (
                 summary_output_dir, sample_id)
             summary_commands.append('mkdir -p %s/summary' % (
-                summary_output_dir))
+                summary_output_dir.rstrip('/')))
             summary_commands.append('cp %s %s' % (temp_summary_file,
                                                   final_summary_file))
 
