@@ -14,19 +14,31 @@ class analyze_pip_seq extends QScript {
 	var input: File = _
 
 	@Argument(doc = "species (hg19...)")
-	var species: String = _
+	var star_genome_location: String = _
 
 	@Argument(doc = "location of chr_sizes")
 	var chr_sizes: String = _
 
 	@Argument(doc = "adapter to trim")
 	var adapter: List[String] = Nil
+
+	@Argument(doc = "STAR genome location")
+	var star_genome_location: String = _
 	
   case class sortSam(inSam: File, outBam: File, sortOrderP: SortOrder) extends SortSam {
+    override def shortDescription = "sortSam"
+
     this.input :+= inSam
     this.output = outBam
     this.sortOrder = sortOrderP
 
+  }
+
+  case class star(input: File, output: File, genome_location: String) extends STAR {
+       this.inFastq = input
+       this.outSam = output
+       this.genome = genome_location
+       this.multimapNMax = 1
   }
   
   case class genomeCoverageBed(input: File, outBed : File, cur_strand : String) extends GenomeCoverageBed {
@@ -35,6 +47,12 @@ class analyze_pip_seq extends QScript {
 	this.bedGraph = outBed
 	this.strand = cur_strand
 	this.split = true
+  }
+
+  case class star(input: File, output: File) extends STAR {
+       this.inFastq = input
+       this.outSam = output
+       this.genome = star_genome_location
   }
 
   def script() {
@@ -74,7 +92,8 @@ class analyze_pip_seq extends QScript {
 	 add(new FilterRepetativeRegions(inFastq = noAdapterFastq, filterd_results, filteredFastq))
 
 	 add(new FastQC(filteredFastq))
-	 add(new STAR(filteredFastq, samFile, species))
+
+	 add(new star(filteredFastq, samFile))
 
 	 add(sortSam(samFile, sortedBamFile, SortOrder.coordinate))
 

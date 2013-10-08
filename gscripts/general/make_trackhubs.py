@@ -1,5 +1,5 @@
 '''
-Created on Mar 7, 2013
+reated on Mar 7, 2013
 
 @author: gabrielp
 
@@ -68,7 +68,7 @@ if __name__ == "__main__":
 
     key_func = lambda x: x.split(".")[:-2]
     for bw_group, files in groupby(sorted(bw_files, key=key_func), key_func):
-            long_name = os.path.basename(bw_group[0])
+            long_name = os.path.basename(".".join(bw_group[:2]))
             aggregate = AggregateTrack(
                          name="_".join(bw_group),
                          tracktype='bigWig',
@@ -79,6 +79,7 @@ if __name__ == "__main__":
                          autoScale='on',
                          priority='1.4',
                          alwaysZero='on',
+                         visibility="full"
                          )
                        
             for track in files:
@@ -108,7 +109,9 @@ if __name__ == "__main__":
             trackdb.add_tracks(aggregate)
     
     bigBed_files = [track for track in remaining_files if track.endswith(".bb") or track.endswith(".bigBed")]
+
     for bigBed_file in bigBed_files:
+        color = "0,100,0" if "pos" in bigBed_file else "100,0,0"
         base_track = os.path.basename(bigBed_file)
         track = Track(
             name = base_track,
@@ -117,10 +120,11 @@ if __name__ == "__main__":
             short_label = base_track,
             long_label = base_track,
             color = color,
-            local_fn = track,
-            remote_fn = os.path.join(upload_dir, GENOME, base_track)
+            local_fn = bigBed_file,
+            remote_fn = os.path.join(upload_dir, GENOME, base_track),
+            visibility="full"
             )
-
+        trackdb.add_tracks(track)
     result = hub.render()
     hub.remote_fn = os.path.join(upload_dir, "hub.txt") 
     for track in trackdb.tracks:

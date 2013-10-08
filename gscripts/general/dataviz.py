@@ -85,7 +85,9 @@ def plot_pca(df, c_scale=None, x_pc=1, y_pc=2, distance='L1', \
         c_scale = .75 * max([norm(point) for point in zip(x_list, y_list)]) / \
                   max([norm(vector) for vector in zip(comp_x, comp_y)])
 
+
     size_scale = sqrt(figsize[0] * figsize[1]) / 1.5
+
 
     # sort features by magnitude/contribution to transformation
     comp_magn = []
@@ -132,6 +134,7 @@ def plot_pca(df, c_scale=None, x_pc=1, y_pc=2, distance='L1', \
             ax.text(x, y, an_id, color=color) #, size=size_scale)
 
         ppl.scatter(ax, x, y, marker=marker, color=color, s=size_scale * 10)
+
 
     vectors = sorted(comp_magn, key=lambda item: item[3], reverse=True)[
               :num_vectors]

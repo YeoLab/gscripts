@@ -6,7 +6,7 @@ Created on Jun 21, 2013
 import unittest
 
 import tests
-from rnaseq import count_tags
+from gscripts.rnaseq import count_tags
 
 class Test(unittest.TestCase):
 
