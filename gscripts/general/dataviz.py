@@ -19,7 +19,7 @@ def plot_pca(df, c_scale=None, x_pc=1, y_pc=2, distance='L1', \
              figsize=(10, 10), colors_dict=None, markers_dict=None, \
              title='PCA', show_vectors=True, show_point_labels=True, \
              column_ids_dict=None, index_ids_dict=None,
-             show_vector_labels=True):
+             show_vector_labels=True, pca_fig=None, ax=None):
     # gather ids and values
     """
     Given a pandas dataframe, performs PCA and plots the results in a
@@ -102,8 +102,9 @@ def plot_pca(df, c_scale=None, x_pc=1, y_pc=2, distance='L1', \
         elif distance == 'L2':
             comp_magn.append((x, y, an_id, math.sqrt((y ** 2) + (x ** 2))))
 
-    # create figure and plot 
-    pca_fig, ax = plt.subplots(figsize=figsize)
+    # create figure and plot
+    if (pca_fig is not None) and (ax is not None):
+        pca_fig, ax = plt.subplots(figsize=figsize)
 
     for (x, y, an_id) in zip(x_list, y_list, row_ids):
 
