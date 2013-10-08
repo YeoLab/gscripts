@@ -220,7 +220,7 @@ if __name__ == "__main__":
     parser = OptionParser(usage=usage, description=description)
     parser.add_option("--bam", '-b', dest="bam", help="bam file")
     parser.add_option("--gff", dest='gff', help="GFF file of splicing events")
-    parser.add_option("--event", dest='event', help="event to test")
+    parser.add_option("--event", dest='event', help="event to test", action="append")
     parser.add_option("--outfile", '-o', dest="outfile", default=None)
     parser.add_option("--flip", '-f', dest="flip", default=False,
                       action="store_true", help="flip read strand")

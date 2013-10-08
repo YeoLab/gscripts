@@ -19,13 +19,13 @@ for row, dat in sInfo.iterrows():
             if "gff" in dat:
                 gff = dat['gff']
             else:
-                gff = "/projects/lovci/projects/ucscBED/hg19/gff-events/hg19_gff3/SE.hg19.gff3"
+                gff = "/home/obotvinnik/genomes/hg19/miso_annotations/SE.hg19.gff3"
         else:
             raise ValueError("I don't know where species %s's gff file is" % (dat['Species']))
 
 
     except:
-        gff = "/projects/lovci/projects/ucscBED/hg19/gff-events/hg19_gff3/SE.hg19.gff3"
+        gff = "/home/obotvinnik/genomes/hg19/miso_annotations/SE.hg19.gff3"
 
     try:
         strand = dat['Strand']
