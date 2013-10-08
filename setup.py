@@ -45,10 +45,7 @@ setup(
                         ],
       
     setup_requires = ["setuptools_git >= 0.3",],
-<<<<<<< HEAD
-
-=======
->>>>>>> added prototype iclip_scripts, moving to tscc for further testing
+    # added prototype iclip_scripts, moving to tscc for further testing
     scripts=scripts,
 
     #metadata for upload to PyPI
