@@ -6,7 +6,7 @@ orientation = sys.argv[1]
 species = sys.argv[2]
 try:
     name = sys.argv[3]+"_count_bam"
-except KeyError:
+except IndexError:
     name = 'count_bam'
 
 if species == 'hg19':

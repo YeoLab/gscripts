@@ -5,7 +5,7 @@ import sys
 species = sys.argv[1]
 try:
     name = sys.argv[2]+"_map_to_"+species
-except KeyError:
+except IndexError:
     name = "map_to_'+species
 
 cmd_list = []

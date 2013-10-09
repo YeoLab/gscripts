@@ -4,7 +4,7 @@ import sys
 
 try:
     name = sys.argv[1]+"_sort_bam"
-except KeyError:
+except IndexError:
     name = "sort_bam"
 
 cmd_list = []

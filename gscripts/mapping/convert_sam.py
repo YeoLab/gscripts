@@ -4,7 +4,7 @@ from gscripts.qtools._Submitter import Submitter
 
 try:
     name = sys.argv[1]+'_convert_sam'
-except KeyError:
+except IndexError:
     name = 'convert_sam'
 
 cmd_list = []
