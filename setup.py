@@ -30,7 +30,7 @@ with open("README.rst") as file:
 setup(
     name = "gscripts",
     long_description = long_description,
-    version = "0.1.1",
+    version = "0.1.4",
     packages = find_packages(),
     
     
