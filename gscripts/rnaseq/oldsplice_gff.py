@@ -63,7 +63,7 @@ def retrieve_splicing_gff(gffFile=None):
 
         if "_" in geneObj.chrom:
             continue
-            
+
         info[event]['chromosome'] = geneObj.chrom
         info[event]['strand'] = geneObj.strand
         spliceType = geneObj.source
@@ -200,6 +200,10 @@ def main(options):
 
     args = []
     for ev in events:
+        if "_" in ev:
+            #skip events on haplotype blocks and other strange chromosomes
+            sys.stderr.write("skipping event: %s" %ev)
+            continue
         args.append([splicing[ev], bamfile, options.flip])
     debug = options.debug
     dataDict = {}
