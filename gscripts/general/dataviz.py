@@ -103,7 +103,7 @@ def plot_pca(df, c_scale=None, x_pc=1, y_pc=2, distance='L1', \
             comp_magn.append((x, y, an_id, math.sqrt((y ** 2) + (x ** 2))))
 
     # create figure and plot
-    if (fig is not None) and (ax is not None):
+    if (fig is None) and (ax is None):
         fig, ax = plt.subplots(figsize=figsize)
 
     for (x, y, an_id) in zip(x_list, y_list, row_ids):
