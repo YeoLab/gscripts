@@ -202,7 +202,7 @@ def main(options):
     for ev in events:
         if "_" in ev:
             #skip events on haplotype blocks and other strange chromosomes
-            sys.stderr.write("skipping event: %s" %ev)
+            sys.stderr.write("skipping event: %s\r" %ev)
             continue
         args.append([splicing[ev], bamfile, options.flip])
     debug = options.debug
