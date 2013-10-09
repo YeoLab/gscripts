@@ -4,6 +4,10 @@ import sys
 
 orientation = sys.argv[1]
 species = sys.argv[2]
+try:
+    name = sys.argv[3]+"_count_bam"
+except KeyError:
+    name = 'count_bam'
 
 if species == 'hg19':
 	annot_file = '/home/gpratt/gencode.v17.exons.bed'
@@ -16,6 +20,6 @@ for file in glob('*sorted.bam'):
 
 	cmd_list.append('count_tags.py --annotation_file {} -f {} -b {} -o {}.count'.format(annot_file,orientation, file, file))
 
-sub = Submitter(queue_type='PBS', sh_file='count_bam.sh', command_list=cmd_list, job_name='count_bam')
+sub = Submitter(queue_type='PBS', sh_file=name+'.sh', command_list=cmd_list, job_name=name)
 sub.write_sh(submit=True, nodes=1, ppn=16, queue='home', walltime='1:00:00', array=True, max_running=20)
 

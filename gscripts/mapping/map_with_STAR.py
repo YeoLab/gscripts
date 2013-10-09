@@ -3,7 +3,10 @@ from gscripts.qtools._Submitter import Submitter
 import sys
 
 species = sys.argv[1]
-
+try:
+    name = sys.argv[2]+"_map_to_"+species
+except KeyError:
+    name = 'map_to_'+species
 cmd_list = []
 for file in glob('*fastq'):
 
@@ -39,5 +42,5 @@ for file in glob('*gz'):
 --outSAMunmapped Within \
 --outFilterMultimapNmax 10'.format(species, file, file))
 
-sub = Submitter(queue_type='PBS', sh_file='map_with_star.sh', command_list=cmd_list, job_name='map_with_star')
+sub = Submitter(queue_type='PBS', sh_file=name+'.sh', command_list=cmd_list, job_name=name)
 sub.write_sh(submit=True, nodes=1, ppn=16, walltime='2:00:00', array=True, max_running=20)
