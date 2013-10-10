@@ -4,7 +4,7 @@ import sys
 
 try:
     name = sys.argv[1]+"_rpkms_from_count"
-except KeyError:
+except IndexError:
     name = "rpkms_from_count"
 
 cmd_list = []
