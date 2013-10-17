@@ -206,20 +206,20 @@ def extract_motifs(trios_to_exons, name,
             lines = add_line(lines, motif_bed_line(chrom, start,
                                                    stop,
                                                    trio, strand,
-                                                   'second|acceptor',
+                                                   'intron|constitutive',
                                                    name))
         if upstream_alt_intron:
             start, stop = intron_motif(first_intron_start, first_intron_stop)
             lines = add_line(lines, motif_bed_line(chrom, start,
                                                    stop,
                                                    trio, strand,
-                                                   'second|acceptor',
+                                                   'intron|upstream',
                                                    name))
         if downstream_alt_intron:
             start, stop = intron_motif(second_intron_start, second_intron_stop)
             lines = add_line(lines, motif_bed_line(chrom, start,
                                                    stop,
                                                    trio, strand,
-                                                   'second|acceptor',
+                                                   'intron|downstream',
                                                    name))
     return ''.join(lines)
