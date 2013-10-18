@@ -37,6 +37,16 @@ class AnalizeCLIPSeq extends QScript {
   @Argument(doc = "location to place trackhub (must have the rest of the track hub made before starting script)", required=false)
   var location: String = "clip_seq"
 
+  case class clipper(in: File, out: File, genome: String, isPremRNA: Boolean ) extends Clipper 
+{
+
+       this.inBam = in
+       this.outBed = out
+       this.species = genome
+       this.premRNA = isPremRNA
+       this.superlocal = superlocal
+  }
+
   case class cutadapt(fastq_file: File, noAdapterFastq: File, adapterReport: File, adapter: List[String]) extends Cutadapt{
        override def shortDescription = "cutadapt"
 
@@ -174,8 +184,10 @@ class AnalizeCLIPSeq extends QScript {
       retval = "/projects/ps-yeolab/genomes/hg19/star" 
    }else if(genome == "mm9") {
       retval = "/projects/ps-yeolab/genomes/mm9/star"
+   }else if(genome == "ce10") {
+      retval = "/projects/ps-yeolab/genomes/ce10/star"
    }
-   
+
    retval
   }
 
@@ -187,6 +199,8 @@ class AnalizeCLIPSeq extends QScript {
       retval = "/projects/ps-yeolab/genomes/hg19/hg19.chrom.sizes" 
    }else if(genome == "mm9") {
       retval = "/projects/ps-yeolab/genomes/mm9/mm9.chrom.sizes"
+   }else if(genome == "ce10") {
+      retval = "/projects/ps-yeolab/genomes/ce10/ce10.chrom.sizes"
    }
    
    retval
@@ -359,10 +373,11 @@ class AnalizeCLIPSeq extends QScript {
       add(new BedGraphToBigWig(bedGraphFilePos, chromSizeLocation(genome), bigWigFilePos))
 
       add(new genomeCoverageBed(input = sortedrmDupedBamFile, outBed = bedGraphFileNeg, cur_strand = "-", genome = chromSizeLocation(genome)))
+      add(new BedGraphToBigWig(bedGraphFileNeg, chromSizeLocation(genome), bigWigFileNeg)) 
       add(new NegBedGraph(inBedGraph = bedGraphFileNeg, outBedGraph = bedGraphFileNegInverted))
       add(new BedGraphToBigWig(bedGraphFileNegInverted, chromSizeLocation(genome), bigWigFileNegInverted))
 
-      add(new Clipper(inBam = sortedrmDupedBamFile, species = genome, outBed = clipper_output, premRNA = premRNA))
+      add(new clipper(in = sortedrmDupedBamFile, genome = genome, out = clipper_output, isPremRNA = premRNA))
             
       add(new FixScores(inBed = clipper_output, outBed = fixed_clipper_output))
       
