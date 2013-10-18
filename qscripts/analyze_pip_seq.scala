@@ -92,7 +92,6 @@ class analyze_pip_seq extends QScript {
 	 add(new FilterRepetativeRegions(inFastq = noAdapterFastq, filterd_results, filteredFastq))
 
 	 add(new FastQC(filteredFastq))
-
 	 add(new star(filteredFastq, samFile))
 
 	 add(sortSam(samFile, sortedBamFile, SortOrder.coordinate))

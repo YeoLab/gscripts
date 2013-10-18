@@ -42,10 +42,9 @@ def reformat_read(file_handle, barcodes):
 barcodes = {}
 randomer_counts = {} 
 with open(options.barcodes) as barcodes_file:
-
     for line in barcodes_file:
         line = line.strip().split()
-        print line
+        print options.out_file
         split_file = options.out_file.split(".")
         split_file.insert(-1, line[1])
         barcodes[line[0]] = open(".".join(split_file), 'w')
