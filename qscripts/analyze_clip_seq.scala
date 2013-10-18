@@ -15,16 +15,6 @@ class AnalizeCLIPSeq extends QScript {
   @Input(doc = "input file")
   var input: File = _
 
-
-//  @Argument(doc = "species (hg19...)")
-//  var species: String = _
-  
-//  @Argument(doc = "STAR genome location")
-//  var star_genome_location: String = _
-
-//  @Argument(doc = "location of chr_sizes")
-//  var chr_sizes: String = _
-
   @Argument(doc = "adapter to trim")
   var adapter: List[String] = Nil
 
@@ -33,9 +23,6 @@ class AnalizeCLIPSeq extends QScript {
 
   @Argument(doc = "read ids have randomers")
   var barcoded: Boolean = false
-
-  @Argument(doc = "location to place trackhub (must have the rest of the track hub made before starting script)", required=false)
-  var location: String = "clip_seq"
 
   case class clipper(in: File, out: File, genome: String, isPremRNA: Boolean ) extends Clipper 
 {
@@ -163,6 +150,11 @@ class AnalizeCLIPSeq extends QScript {
        override def shortDescription = "indexBam"
        this.bamFile = input
        this.bamFileIndex = output
+  }
+
+  case class samtoolsMergeFunction(inBams: Seq[File], outBam: File) extends SamtoolsMergeFunction {
+       this.inputBams = inBams
+       this.outputBam = outBam
   }
 
   case class singleRPKM(input: File, output: File, s: String) extends SingleRPKM {
@@ -296,109 +288,124 @@ class AnalizeCLIPSeq extends QScript {
    
    retval
   }
-  
+
+// performs downstream analysis on a bam file of interest, peak calling, generating RPKMs and all other types of analysis  
+  def downstream_analysis(bamFile : File, bamIndex: File, genome : String) {
+
+      	     val bedGraphFilePos = swapExt(bamFile, ".bam", ".pos.bg")
+      	     val bigWigFilePos = swapExt(bedGraphFilePos, ".bg", ".bw")
+
+      	     val bedGraphFileNeg = swapExt(bamFile, ".bam", ".neg.bg")
+      	     val bigWigFileNeg = swapExt(bedGraphFileNeg, ".bg", ".norm.bw")
+      	     val bedGraphFileNegInverted = swapExt(bedGraphFileNeg, "neg.bg", "neg.t.bg")
+      	     val bigWigFileNegInverted = swapExt(bedGraphFileNegInverted, ".t.bg", ".bw")
+
+      	     val clipper_output = swapExt(bamFile, ".bam", ".peaks.bed")
+      	     val fixed_clipper_output = swapExt(clipper_output, ".bed", ".fixed.bed")
+      	     val bigBed_output = swapExt(fixed_clipper_output, ".bed", ".bb")
+      	     val clipper_output_metrics = swapExt(clipper_output, ".bed", ".metrics")
+	     
+	     val rmDupedBedFile = swapExt(bamFile, ".bam", ".bed")
+      	     val pyicoclipResults = swapExt(bamFile, ".bed", ".pyicoclip.bed")
+      	     val ripseekerResults = swapExt(bamFile, ".bam", ".ripseeker.bed")
+      	     val IDRResult = swapExt(bamFile, "", ".IDR")
+	     
+      	     val countFile = swapExt(bamFile, "bam", "count")
+      	     val RPKMFile = swapExt(countFile, "count", "RPKM")
+
+	     //add bw files to list for printing out later
+
+      	     add(new genomeCoverageBed(input = bamFile, outBed = bedGraphFilePos, cur_strand = "+", genome = chromSizeLocation(genome)))
+      	     add(new BedGraphToBigWig(bedGraphFilePos, chromSizeLocation(genome), bigWigFilePos))
+
+      	     add(new genomeCoverageBed(input = bamFile, outBed = bedGraphFileNeg, cur_strand = "-", genome = chromSizeLocation(genome)))
+      	     add(new BedGraphToBigWig(bedGraphFileNeg, chromSizeLocation(genome), bigWigFileNeg)) 
+      	     add(new NegBedGraph(inBedGraph = bedGraphFileNeg, outBedGraph = bedGraphFileNegInverted))
+      	     add(new BedGraphToBigWig(bedGraphFileNegInverted, chromSizeLocation(genome), bigWigFileNegInverted))
+
+      	     add(new clipper(in = bamFile, genome = genome, out = clipper_output, isPremRNA = premRNA))
+	     
+      	     add(new FixScores(inBed = clipper_output, outBed = fixed_clipper_output))
+
+	     add(new BedToBigBed(inBed = fixed_clipper_output, genomeSize = chromSizeLocation(genome), outBigBed = bigBed_output))
+
+      	     add(new ClipAnalysis(bamFile, clipper_output, genome, clipper_output_metrics, 
+	     	     		  regions_location = regionsLocation(genome), AS_Structure = asStructureLocation(genome), 
+				  genome_location = genomeLocation(genome), phastcons_location = phastconsLocation(genome), 
+				  gff_db = gffDbLocation(genome), bw_pos=bigWigFilePos, bw_neg=bigWigFileNeg))
+
+	     add(new BamToBed(inBam=bamFile, outBed=rmDupedBedFile))
+      	     add(new Pyicoclip(inBed = rmDupedBedFile, outBed = pyicoclipResults, regions = genicRegionsLocation(genome) ))
+      	     //add(new Ripseeker(inBam = bamFile, outBed=ripseekerResults))
+      	     //add(new IDR(inBam = bamFile, species = genome, genome = chromSizeLocation(genome), outResult = IDRResult, premRNA = premRNA))
+
+      	     add(new countTags(input = bamFile, index = bamIndex, output = countFile, a = exonLocation(genome)))
+      	     add(new singleRPKM(input = countFile, output = RPKMFile, s = genome))
+
+
+
+  }
 
   def script() {
 
     val fileList = QScriptUtils.createArgsFromFile(input)
     var trackHubFiles: List[File] = List()
+    for ((groupName, valueList) <- (fileList groupBy (_._3))) {
+    	 var combinedBams : Seq[File] = List()
+	 var genome: String = valueList(0)._2 
+	 for (item : Tuple3[File, String, String] <- valueList) {
+	     var fastq_file: File = item._1
 
-    for (item : Tuple2[File, String] <- fileList) {
-      var fastq_file: File = item._1
-      var genome: String = item._2 
- 
-      val noPolyAFastq = swapExt(fastq_file, ".fastq", ".polyATrim.fastq")
-      val noPolyAReport = swapExt(noPolyAFastq, ".fastq", ".metrics")
+      	     var replicate: String = item._3
 
-      val noAdapterFastq = swapExt(noPolyAFastq, ".fastq", ".adapterTrim.fastq")
-      val adapterReport = swapExt(noAdapterFastq, ".fastq", ".metrics")
+      	     val noPolyAFastq = swapExt(fastq_file, ".fastq", ".polyATrim.fastq")
+      	     val noPolyAReport = swapExt(noPolyAFastq, ".fastq", ".metrics")
 
-      val filteredFastq = swapExt(noAdapterFastq, ".fastq", ".rmRep.fastq")
-      val filterd_results = swapExt(filteredFastq, ".fastq", ".metrics")
+      	     val noAdapterFastq = swapExt(noPolyAFastq, ".fastq", ".adapterTrim.fastq")
+      	     val adapterReport = swapExt(noAdapterFastq, ".fastq", ".metrics")
 
-      val samFile = swapExt(filteredFastq, ".fastq", ".sam")
-      val sortedBamFile = swapExt(samFile, ".sam", ".sorted.bam")
-      val rgSortedBamFile = swapExt(sortedBamFile, ".sorted.bam", ".sorted.rg.bam")
+      	     val filteredFastq = swapExt(noAdapterFastq, ".fastq", ".rmRep.fastq")
+      	     val filterd_results = swapExt(filteredFastq, ".fastq", ".metrics")
 
-      val NRFFile = swapExt(rgSortedBamFile, ".bam", ".NRF.metrics")
+      	     val samFile = swapExt(filteredFastq, ".fastq", ".sam")
+      	     val sortedBamFile = swapExt(samFile, ".sam", ".sorted.bam")
+      	     val rgSortedBamFile = swapExt(sortedBamFile, ".sorted.bam", ".sorted.rg.bam")
 
-      val rmDupedBamFile = swapExt(rgSortedBamFile, ".bam", ".rmDup.bam")
-      val rmDupedMetricsFile = swapExt(rmDupedBamFile, ".bam", ".metrics")
+      	     val NRFFile = swapExt(rgSortedBamFile, ".bam", ".NRF.metrics")
 
-      val sortedrmDupedBamFile = swapExt(rmDupedBamFile, ".bam", ".sorted.bam")
-      val indexedBamFile = swapExt(sortedrmDupedBamFile, "", ".bai")
+      	     val rmDupedBamFile = swapExt(rgSortedBamFile, ".bam", ".rmDup.bam")
+      	     val rmDupedMetricsFile = swapExt(rmDupedBamFile, ".bam", ".metrics")
 
-      val bedGraphFilePos = swapExt(sortedrmDupedBamFile, ".bam", ".pos.bg")
-      val bigWigFilePos = swapExt(bedGraphFilePos, ".bg", ".bw")
+      	     val sortedrmDupedBamFile = swapExt(rmDupedBamFile, ".bam", ".sorted.bam")
+      	     val indexedBamFile = swapExt(sortedrmDupedBamFile, "", ".bai")
 
-      val bedGraphFileNeg = swapExt(sortedrmDupedBamFile, ".bam", ".neg.bg")
-      val bigWigFileNeg = swapExt(bedGraphFileNeg, ".bg", ".norm.bw")
-      val bedGraphFileNegInverted = swapExt(bedGraphFileNeg, "neg.bg", "neg.t.bg")
-      val bigWigFileNegInverted = swapExt(bedGraphFileNegInverted, ".t.bg", ".bw")
+      	     add(new FastQC(inFastq = fastq_file))
 
-      val clipper_output = swapExt(sortedrmDupedBamFile, ".bam", ".peaks.bed")
-      val fixed_clipper_output = swapExt(clipper_output, ".bed", ".fixed.bed")
-      val bigBed_output = swapExt(fixed_clipper_output, ".bed", ".bb")
-      val clipper_output_metrics = swapExt(clipper_output, ".bed", ".metrics")
-      
-      val rmDupedBedFile = swapExt(sortedrmDupedBamFile, ".bam", ".bed")
-      val pyicoclipResults = swapExt(sortedrmDupedBamFile, ".bed", ".pyicoclip.bed")
-      val ripseekerResults = swapExt(sortedrmDupedBamFile, ".bam", ".ripseeker.bed")
-      val IDRResult = swapExt(sortedrmDupedBamFile, "", ".IDR")
+      	     //filters out adapter reads
+      	     add(cutadapt(fastq_file = fastq_file, noAdapterFastq = noAdapterFastq, adapterReport = adapterReport, adapter = adapter ) )
+	     
+	     add(filterRepetitiveRegions(noAdapterFastq, filterd_results, filteredFastq))
+      	     add(new FastQC(filteredFastq))
+      	     add(star(input = filteredFastq, output = samFile, genome_location = starGenomeLocation(genome)))
+      	     add(sortSam(samFile, sortedBamFile, SortOrder.coordinate))
+      	     add(addOrReplaceReadGroups(sortedBamFile, rgSortedBamFile))
 
-      val countFile = swapExt(sortedrmDupedBamFile, "bam", "count")
-      val RPKMFile = swapExt(countFile, "count", "RPKM")
+      	     add(new CalculateNRF(inBam = rgSortedBamFile, genomeSize = chromSizeLocation(genome), outNRF = NRFFile))
+      	     add(new RemoveDuplicates(rgSortedBamFile, rmDupedBamFile, rmDupedMetricsFile))
+      	     add(sortSam(rmDupedBamFile, sortedrmDupedBamFile, SortOrder.coordinate))
+      	     add(new samtoolsIndexFunction(sortedrmDupedBamFile, indexedBamFile))
+	     combinedBams = combinedBams ++ List(sortedrmDupedBamFile)
+	     downstream_analysis(sortedrmDupedBamFile, indexedBamFile, genome)
+    	     }
 
-      //add bw files to list for printing out later
-      trackHubFiles = trackHubFiles ++ List(bedGraphFileNegInverted, bigWigFilePos)
-      trackHubFiles = trackHubFiles ++ List(bigBed_output)
-
-      add(new FastQC(inFastq = fastq_file))
-
-      //filters out adapter reads
-      add(cutadapt(fastq_file = fastq_file, noAdapterFastq = noAdapterFastq, adapterReport = adapterReport, adapter = adapter ) )
-      
-      add(filterRepetitiveRegions(noAdapterFastq, filterd_results, filteredFastq))
-      add(new FastQC(filteredFastq))
-      add(star(input = filteredFastq, output = samFile, genome_location = starGenomeLocation(genome)))
-      add(sortSam(samFile, sortedBamFile, SortOrder.coordinate))
-      add(addOrReplaceReadGroups(sortedBamFile, rgSortedBamFile))
-
-      add(new CalculateNRF(inBam = rgSortedBamFile, genomeSize = chromSizeLocation(genome), outNRF = NRFFile))
-      add(new RemoveDuplicates(rgSortedBamFile, rmDupedBamFile, rmDupedMetricsFile))
-      add(sortSam(rmDupedBamFile, sortedrmDupedBamFile, SortOrder.coordinate))
-      add(new samtoolsIndexFunction(sortedrmDupedBamFile, indexedBamFile))
-
-      add(new genomeCoverageBed(input = sortedrmDupedBamFile, outBed = bedGraphFilePos, cur_strand = "+", genome = chromSizeLocation(genome)))
-      add(new BedGraphToBigWig(bedGraphFilePos, chromSizeLocation(genome), bigWigFilePos))
-
-      add(new genomeCoverageBed(input = sortedrmDupedBamFile, outBed = bedGraphFileNeg, cur_strand = "-", genome = chromSizeLocation(genome)))
-      add(new BedGraphToBigWig(bedGraphFileNeg, chromSizeLocation(genome), bigWigFileNeg)) 
-      add(new NegBedGraph(inBedGraph = bedGraphFileNeg, outBedGraph = bedGraphFileNegInverted))
-      add(new BedGraphToBigWig(bedGraphFileNegInverted, chromSizeLocation(genome), bigWigFileNegInverted))
-
-      add(new clipper(in = sortedrmDupedBamFile, genome = genome, out = clipper_output, isPremRNA = premRNA))
-            
-      add(new FixScores(inBed = clipper_output, outBed = fixed_clipper_output))
-      
-      add(new BedToBigBed(inBed = fixed_clipper_output, genomeSize = chromSizeLocation(genome), outBigBed = bigBed_output))
-
-      add(new ClipAnalysis(sortedrmDupedBamFile, clipper_output, genome, clipper_output_metrics, regions_location = regionsLocation(genome),
-     	      		   AS_Structure = asStructureLocation(genome), genome_location = genomeLocation(genome), 
-			   phastcons_location = phastconsLocation(genome), gff_db = gffDbLocation(genome),
-			   bw_pos=bigWigFilePos, bw_neg=bigWigFileNeg))
-
-      add(new BamToBed(inBam=sortedrmDupedBamFile, outBed=rmDupedBedFile))
-      add(new Pyicoclip(inBed = rmDupedBedFile, outBed = pyicoclipResults, regions = genicRegionsLocation(genome) ))
-      //add(new Ripseeker(inBam=sortedrmDupedBamFile, outBed=ripseekerResults))
-      //add(new IDR(inBam = sortedrmDupedBamFile, species = genome, genome = chromSizeLocation(genome), outResult = IDRResult, premRNA = premRNA))
-
-      add(new countTags(input = sortedrmDupedBamFile, index = indexedBamFile, output = countFile, a = exonLocation(genome)))
-
-      add(new singleRPKM(input = countFile, output = RPKMFile, s = genome))
-
-
+	//Only run combination if we are combining more than one thing...
+	if(combinedBams.size > 1) {
+		var mergedBams = new File(groupName + ".bam")
+		val mergedIndex = swapExt(mergedBams, "", ".bai")
+		add(new samtoolsIndexFunction(mergedBams, mergedIndex))
+		add(samtoolsMergeFunction(combinedBams, mergedBams))
+		downstream_analysis(mergedBams, mergedIndex, genome)
+	}
+        }
     }
-//    add(new MakeTrackHub(trackHubFiles, location, genome))
-  }
 }
