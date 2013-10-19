@@ -62,7 +62,7 @@ class AnalizeCLIPSeq extends QScript {
     this.input :+= inSam
     this.output = outBam
     this.sortOrder = sortOrderP
-    this.isIntermediate = true
+    this.isIntermediate = false
   }
 
   class RemoveDuplicates(@Input inBam: File, @Output outResult: File, @Argument metrics_file: String) extends CommandLineFunction {
@@ -126,6 +126,7 @@ class AnalizeCLIPSeq extends QScript {
        this.RGSM = "baz"
        this.RGCN = "Biogem" //need to add switch between biogem and singapore
        this.RGID = "1"
+       this.isIntermediate = true
   } 
 
   case class genomeCoverageBed(input: File, outBed : File, cur_strand : String, genome : String) extends GenomeCoverageBed {
@@ -368,12 +369,12 @@ class AnalizeCLIPSeq extends QScript {
       	     val filterd_results = swapExt(filteredFastq, ".fastq", ".metrics")
 
       	     val samFile = swapExt(filteredFastq, ".fastq", ".sam")
-      	     val sortedBamFile = swapExt(samFile, ".sam", ".sorted.bam")
-      	     val rgSortedBamFile = swapExt(sortedBamFile, ".sorted.bam", ".sorted.rg.bam")
+	     val rgBamFile = swapExt(samFile, ".sam", ".rg.bam")
+      	     val sortedrgBamFile = swapExt(rgBamFile, ".bam", ".sorted.bam")
 
-      	     val NRFFile = swapExt(rgSortedBamFile, ".bam", ".NRF.metrics")
+      	     val NRFFile = swapExt(sortedrgBamFile, ".bam", ".NRF.metrics")
 
-      	     val rmDupedBamFile = swapExt(rgSortedBamFile, ".bam", ".rmDup.bam")
+      	     val rmDupedBamFile = swapExt(sortedrgBamFile, ".bam", ".rmDup.bam")
       	     val rmDupedMetricsFile = swapExt(rmDupedBamFile, ".bam", ".metrics")
 
       	     val sortedrmDupedBamFile = swapExt(rmDupedBamFile, ".bam", ".sorted.bam")
@@ -387,11 +388,11 @@ class AnalizeCLIPSeq extends QScript {
 	     add(filterRepetitiveRegions(noAdapterFastq, filterd_results, filteredFastq))
       	     add(new FastQC(filteredFastq))
       	     add(star(input = filteredFastq, output = samFile, genome_location = starGenomeLocation(genome)))
-      	     add(sortSam(samFile, sortedBamFile, SortOrder.coordinate))
-      	     add(addOrReplaceReadGroups(sortedBamFile, rgSortedBamFile))
-
-      	     add(new CalculateNRF(inBam = rgSortedBamFile, genomeSize = chromSizeLocation(genome), outNRF = NRFFile))
-      	     add(new RemoveDuplicates(rgSortedBamFile, rmDupedBamFile, rmDupedMetricsFile))
+      	     add(addOrReplaceReadGroups(samFile, rgBamFile))
+	     add(sortSam(rgBamFile, sortedrgBamFile, SortOrder.coordinate))
+      	     
+      	     add(new CalculateNRF(inBam = sortedrgBamFile, genomeSize = chromSizeLocation(genome), outNRF = NRFFile))
+      	     add(new RemoveDuplicates(sortedrgBamFile, rmDupedBamFile, rmDupedMetricsFile))
       	     add(sortSam(rmDupedBamFile, sortedrmDupedBamFile, SortOrder.coordinate))
       	     add(new samtoolsIndexFunction(sortedrmDupedBamFile, indexedBamFile))
 	     combinedBams = combinedBams ++ List(sortedrmDupedBamFile)
@@ -399,7 +400,7 @@ class AnalizeCLIPSeq extends QScript {
     	     }
 
 	//Only run combination if we are combining more than one thing...
-	if(combinedBams.size > 1) {
+	if(combinedBams.size > 1 && groupName != "null") {
 		var mergedBams = new File(groupName + ".bam")
 		val mergedIndex = swapExt(mergedBams, "", ".bai")
 		add(new samtoolsIndexFunction(mergedBams, mergedIndex))
