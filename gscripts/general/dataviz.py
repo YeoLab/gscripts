@@ -57,14 +57,34 @@ def plot_pca(df, c_scale=None, x_pc=1, y_pc=2, distance='L1', \
     are gene names.
     @return: x, y, marker, distance of each vector in the data.
     """
+
+    row_ids = []
+    column_ids = []
     if index_ids_dict is not None:
-        row_ids = [index_ids_dict[ind] for ind in df.index]
+        for ind in df.index:
+            try:
+                row_ids.append(index_ids_dict[ind])
+
+            except KeyError:
+                row_ids.append(ind)
+    
+        assert len(row_ids) == len(df.index)
+
     else:
         row_ids = df.index
         # column_ids = df.columns
 
     if column_ids_dict is not None:
-        column_ids = [column_ids_dict[col] for col in df.columns]
+
+        for col in df.columns:
+            try:
+                column_ids.append(column_ids_dict[col])
+
+            except KeyError:
+                column_ids.append(col)
+        
+        assert len(column_ids) == len(df.columns)
+
     else:
         column_ids = df.columns
 
