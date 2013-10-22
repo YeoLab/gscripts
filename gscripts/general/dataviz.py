@@ -1,10 +1,5 @@
 import pandas as pd
 import numpy as np
-import scipy as sp
-import pylab as pl
-from collections import defaultdict
-from glob import glob
-import itertools
 from sklearn import decomposition as dc
 import matplotlib.pyplot as plt
 from math import sqrt
@@ -12,6 +7,8 @@ from numpy.linalg import norm
 import prettyplotlib as ppl
 import matplotlib.patches as patches
 import math
+import brewer2mpl
+from matplotlib.colors import LogNorm
 
 
 def plot_pca(df, c_scale=None, x_pc=1, y_pc=2, distance='L1', \
@@ -298,17 +295,6 @@ def x_with_ties(series, middle, sep=0.05):
         else:
             x[same_score.index] = middle
     return x
-
-import brewer2mpl
-import prettyplotlib as ppl
-import matplotlib.pyplot as plt
-import string
-import numpy as np
-import brewer2mpl
-from matplotlib.colors import LogNorm
-import pandas as pd
-from collections import Counter
-import time
 
 
 def label_side_axis_as_title(ax_right, label):
