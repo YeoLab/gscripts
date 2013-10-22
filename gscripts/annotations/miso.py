@@ -84,7 +84,8 @@ def extract_motifs(trios_to_exons, name,
     FYI: for the MISO annotations, the exons in the trios are always in the
     order exon1,exon2,exon3 regardless of the strand.
 
-    @param trios_to_exons:
+    @param trios_to_exons: dict of a string of trios, to the individual exons
+    split on the @ sign
     @param first_donor_into_exon:
     @param first_donor_into_intron:
     @param second_acceptor_into_exon:
@@ -143,7 +144,7 @@ def extract_motifs(trios_to_exons, name,
     [ exon3 ]------------<-----------[ exon2 ]----------<--------------[ exon1 ]
     """
     lines = []
-    for trio, exons in trios_to_exons.iteritems():
+    for trio, exons in sorted(trios_to_exons.iteritems()):
         for i, exon in enumerate(exons):
         #             print i
             pieces = exon.split(':')
