@@ -15,6 +15,7 @@ def three_prime_motif(coordinate, strand, into_exon, into_intron,
     into_intron = 0 if into_intron is None else into_intron
     if debug:
         print 'into_intron', into_intron
+        print 'into_exon', into_exon
     if strand == '+':
         return coordinate - into_intron - 1, coordinate + into_exon - 1
     elif strand == '-':
