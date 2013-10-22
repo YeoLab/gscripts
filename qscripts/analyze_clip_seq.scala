@@ -154,6 +154,7 @@ class AnalizeCLIPSeq extends QScript {
   }
 
   case class samtoolsMergeFunction(inBams: Seq[File], outBam: File) extends SamtoolsMergeFunction {
+       override def shortDescription = "samtoolsMerge"
        this.inputBams = inBams
        this.outputBam = outBam
   }
