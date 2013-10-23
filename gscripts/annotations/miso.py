@@ -1,7 +1,8 @@
 __author__ = 'olga'
 
 
-def three_prime_motif(coordinate, strand, into_exon, into_intron):
+def three_prime_motif(coordinate, strand, into_exon, into_intron,
+                      debug=False):
     """
     Returns 20 bases of end of the intron, and 3 bases of the beginning of the exon
     """
@@ -12,6 +13,9 @@ def three_prime_motif(coordinate, strand, into_exon, into_intron):
     # If one is none, replace with 1
     into_exon = 0 if into_exon is None else into_exon
     into_intron = 0 if into_intron is None else into_intron
+    if debug:
+        print 'into_intron', into_intron
+        print 'into_exon', into_exon
     if strand == '+':
         return coordinate - into_intron - 1, coordinate + into_exon - 1
     elif strand == '-':
@@ -20,7 +24,7 @@ def three_prime_motif(coordinate, strand, into_exon, into_intron):
         raise TypeError('%s is not a valid strand identifier' % strand)
 
 
-def five_prime_motif(coordinate, strand, into_exon, into_intron):
+def five_prime_motif(coordinate, strand, into_exon, into_intron, debug=False):
     """
     Returns 3 bases of exon, and 6 bases of beginning of intron
     """
@@ -28,6 +32,9 @@ def five_prime_motif(coordinate, strand, into_exon, into_intron):
         return None, None
     into_exon = 0 if into_exon is None else into_exon
     into_intron = 0 if into_intron is None else into_intron
+    if debug:
+        print 'into_intron', into_intron
+        print 'into_exon', into_exon
     if strand == '+':
         return coordinate - into_exon, coordinate + into_intron
     elif strand == '-':
@@ -38,11 +45,13 @@ def five_prime_motif(coordinate, strand, into_exon, into_intron):
 
 def motif_bed_line(chrom, start, stop,
                    trio, strand, ordinal,
-                   name):
+                   name, debug=False):
     """
     @param ordinal: string, 'first', 'second', or 'third'. which exon in the trio
-    @param splice_site: descriptive string, e.g. '5prime' or '3prime'
+    @param name: descriptive string, e.g. '5prime' or '3prime'
     """
+    if debug:
+        print 'start:', start, ' stop:', stop
     if start is not None and stop is not None:
         return '%s\t%d\t%d\t%s\t.\t%s\n' % (
             chrom, start, stop,
@@ -75,7 +84,9 @@ def extract_motifs(trios_to_exons, name,
                    alt_exon=False,
                    constitutive_intron=False,
                    upstream_alt_intron=False,
-                   downstream_alt_intron=False):
+                   downstream_alt_intron=False,
+
+                   debug=False):
     """
     given a dictionary of MISO exon trios, extract the locations of things that
     are some integer away from exons, into the introns. Returns a single
@@ -149,16 +160,21 @@ def extract_motifs(trios_to_exons, name,
         #             print i
             pieces = exon.split(':')
             chrom = pieces[0]
-            start = int(pieces[1])
-            stop = int(pieces[2])
+            exon_start = int(pieces[1])
+            exon_stop = int(pieces[2])
             strand = pieces[3]
+
+            motif_start, motif_stop = None, None
+            first_intron_start, first_intron_stop = None, None
+            second_intron_start, second_intron_stop = None, None
+
             if i == 0:
-                first_intron_start = stop if strand == '+' else start
+                first_intron_start = exon_stop if strand == '+' else exon_start
 
                 motif_start, motif_stop = \
                     five_prime_motif(first_intron_start, strand,
                                      first_donor_into_exon,
-                                     first_donor_into_intron)
+                                     first_donor_into_intron, debug=debug)
 
                 lines = add_line(lines, motif_bed_line(chrom, motif_start,
                                                        motif_stop,
@@ -168,23 +184,24 @@ def extract_motifs(trios_to_exons, name,
             if i == 1:
                 if alt_exon:
                     lines.append('%s\t%s\t%s\t%s\t%s\t%s\n'
-                                 % (chrom, start, stop, trio, '.', strand))
-                first_intron_stop = start if strand == '+' else stop
+                                 % (
+                    chrom, exon_start, exon_stop, trio, '.', strand))
+                first_intron_stop = exon_start if strand == '+' else exon_stop
                 motif_start, motif_stop = \
                     three_prime_motif(first_intron_stop, strand,
                                       second_acceptor_into_exon,
-                                      second_acceptor_into_intron)
+                                      second_acceptor_into_intron, debug=debug)
                 lines = add_line(lines, motif_bed_line(chrom, motif_start,
                                                        motif_stop,
                                                        trio, strand,
                                                        'second|acceptor',
                                                        name))
 
-                second_intron_start = stop if strand == '+' else start
+                second_intron_start = exon_stop if strand == '+' else exon_start
                 motif_start, motif_stop = \
                     five_prime_motif(second_intron_start, strand,
                                      second_donor_into_exon,
-                                     second_donor_into_intron)
+                                     second_donor_into_intron, debug=debug)
                 lines = add_line(lines, motif_bed_line(chrom, motif_start,
                                                        motif_stop,
                                                        trio, strand,
@@ -192,34 +209,38 @@ def extract_motifs(trios_to_exons, name,
                                                        name))
 
             if i == 2:
-                second_intron_stop = start if strand == '+' else stop
-                motif_start, _motif_stop = \
+                second_intron_stop = exon_start if strand == '+' else exon_stop
+                motif_start, motif_stop = \
                     three_prime_motif(second_intron_stop, strand,
                                       third_acceptor_into_exon,
-                                      third_acceptor_into_intron)
+                                      third_acceptor_into_intron, debug=debug)
                 lines = add_line(lines, motif_bed_line(chrom, motif_start,
                                                        motif_stop,
                                                        trio, strand,
                                                        'third|acceptor',
-                                                       name))
+                                                       name, debug=debug))
         if constitutive_intron:
-            start, stop = intron_motif(first_intron_start, second_intron_stop)
-            lines = add_line(lines, motif_bed_line(chrom, start,
-                                                   stop,
+            exon_start, exon_stop = intron_motif(first_intron_start,
+                                                 second_intron_stop, strand)
+            lines = add_line(lines, motif_bed_line(chrom, exon_start,
+                                                   exon_stop,
                                                    trio, strand,
                                                    'intron|constitutive',
                                                    name))
         if upstream_alt_intron:
-            start, stop = intron_motif(first_intron_start, first_intron_stop)
-            lines = add_line(lines, motif_bed_line(chrom, start,
-                                                   stop,
+            exon_start, exon_stop = intron_motif(first_intron_start,
+                                                 first_intron_stop,
+                                                 strand)
+            lines = add_line(lines, motif_bed_line(chrom, exon_start,
+                                                   exon_stop,
                                                    trio, strand,
                                                    'intron|upstream',
                                                    name))
         if downstream_alt_intron:
-            start, stop = intron_motif(second_intron_start, second_intron_stop)
-            lines = add_line(lines, motif_bed_line(chrom, start,
-                                                   stop,
+            exon_start, exon_stop = intron_motif(second_intron_start,
+                                                 second_intron_stop, strand)
+            lines = add_line(lines, motif_bed_line(chrom, exon_start,
+                                                   exon_stop,
                                                    trio, strand,
                                                    'intron|downstream',
                                                    name))
