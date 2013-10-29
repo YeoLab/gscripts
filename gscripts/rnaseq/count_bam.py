@@ -10,9 +10,9 @@ except IndexError:
     name = 'count_bam'
 
 if species == 'hg19':
-	annot_file = '/home/gpratt/gencode.v17.exons.bed'
+	annot_file = '/projects/ps-yeolab/genomes/hg19/gencode_v17/gencode.v17.annotation.exons.bed'
 elif species == 'mm9':
-	annot_file = '/home/gpratt/Mus_musculus.NCBIM37.64.fixed.exons.bed'
+	annot_file = '/projects/ps-yeolab/genomes/mm9/Mus_musculus.NCBIM37.64.fixed.exons.bed'
 
 
 cmd_list = []
