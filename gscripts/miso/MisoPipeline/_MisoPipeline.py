@@ -197,7 +197,7 @@ class MisoPipeline(object):
                                                self.submit_sh_suffix)
         insert_len_sh = '%s/%s.sh' % (self.sh_scripts_dir,
                                       insert_len_name)
-        all_insert_len_sh = ['#!/bin/bash\n\n']
+        #all_insert_len_sh = ['#!/bin/bash\n\n']
 
         for bam, sample_id in zip(self.bams, self.sample_ids):
             # Command-line commands to submit to the cluster
@@ -322,7 +322,7 @@ class MisoPipeline(object):
 
         job_name = '%s' % (psi_name)
 
-        submit_sh = '%s_%s.sh' % (submit_sh_base)
+        submit_sh = '%s.sh' % (submit_sh_base)
 
         sh_out = submit_sh + '.out'
         sh_err = submit_sh + '.err'
