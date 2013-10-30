@@ -214,7 +214,7 @@ class MisoPipeline(object):
                                      ' --output-dir {0:s} ' \
                                      '>{0:s}.out 2>{1:s}' \
                     .format(self.miso_scripts_dir, bam,
-                            self.constitutive_exons_gff, bam_dir,
+                            self.constitutive_exon_gff, bam_dir,
                             insert_len_file, insert_len_file)
                 informational_commands = "date ; echo Starting ... '{0:s}'".format(
                     insert_len_command)
@@ -232,8 +232,8 @@ class MisoPipeline(object):
                             out=insert_len_sh + ".out",
                             err=insert_len_sh + ".err")
             self.insert_len_job_id = sub.write_sh(submit=True,
-                                                  nodes=self.num_cores,
-                                                  ppn=self.num_processes,
+                                                  nodes=1,
+                                                  ppn=1,
                                                   queue=self.queue,
                                                   walltime='0:30:00',
                                                   array=True,
