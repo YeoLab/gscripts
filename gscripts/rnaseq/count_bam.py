@@ -13,7 +13,8 @@ if species == 'hg19':
 	annot_file = '/projects/ps-yeolab/genomes/hg19/gencode_v17/gencode.v17.annotation.exons.bed'
 elif species == 'mm9':
 	annot_file = '/projects/ps-yeolab/genomes/mm9/Mus_musculus.NCBIM37.64.fixed.exons.bed'
-
+elif species == 'spikein':
+    annot_file = '/projects/ps-yeolab/genomes/spikein/arraycontrol_spike_sequences.bed'
 
 cmd_list = []
 for file in glob('*sorted.bam'):

@@ -233,7 +233,7 @@ class MisoPipeline(object):
                             err=insert_len_sh + ".err")
             self.insert_len_job_id = sub.write_sh(submit=True,
                                                   nodes=1,
-                                                  ppn=1,
+                                                  ppn=4,
                                                   queue=self.queue,
                                                   walltime='0:30:00',
                                                   array=True,
