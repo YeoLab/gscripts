@@ -327,7 +327,7 @@ class MisoPipeline(object):
         sh_out = submit_sh + '.out'
         sh_err = submit_sh + '.err'
 
-        if self.insert_len_job_id[sample_id] is not None:
+        if self.insert_len_job_id is not None:
             sub = Submitter(queue_type='PBS', sh_file=submit_sh,
                             command_list=psi_commands, job_name=job_name,
                             wait_for=[self.insert_len_job_id[sample_id]],

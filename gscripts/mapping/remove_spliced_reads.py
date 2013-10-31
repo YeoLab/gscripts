@@ -18,4 +18,5 @@ for file in glob('*bam'):
 sub = Submitter(queue_type='PBS', sh_file=name + '.sh', command_list=cmd_list,
                 job_name=name)
 sub.write_sh(submit=True, nodes=1, ppn=16, queue='home', array=True,
+             walltime='0:30:00',
              max_running=10)
