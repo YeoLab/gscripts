@@ -33,13 +33,15 @@ class MisoPipeline(object):
         self.paired_end_utils_py = '%s/pe_utils.py' % self.miso_scripts_dir
 
         # Remove the trailing slash. If it's not there, this won't do anything.
-        self.annotation_index_strfmt = cl.args['annotation_index_strfmt'].rstrip(
+        self.annotation_index_strfmt = cl.args[
+            'annotation_index_strfmt'].rstrip(
             '/')
 
         # Assuming we're using the annotation index structure described in
         # 'submit_miso_pipeline.py'
         # self.event_type_gff = glob(
         #     '%s/%s*.gff' % (self.base_annotation_dir, self.event_type))
+        self.constitutive_exon_gff = cl.args['constitutive_exon_gff']
         self.event_type_index = self.annotation_index_strfmt % self.event_type
         self.num_processes = cl.args['num_processes']
         self.num_cores = cl.args['num_cores']
@@ -49,23 +51,30 @@ class MisoPipeline(object):
         self.extra_miso_arguments = cl.args['extra_miso_arguments']
 
         # Initialize the IDs we're going to use
-        self.insert_len_job_id = dict((sample_id, None) for sample_id in
-                                      self.sample_ids)
-        self.psi_job_is_array = False
-        self.psi_job_id = dict((sample_id, None) for sample_id in
-                               self.sample_ids)
-        self.summary_job_id = dict((sample_id, None) for sample_id in
-                                   self.sample_ids)
+        self.insert_len_job_id = None
+        #self.insert_len_job_id = dict((sample_id, None) for sample_id in
+        #                              self.sample_ids)
+        #self.psi_job_is_array = False
+        self.psi_job_id = None
+        self.summary_job_id = None
+        #self.psi_job_id = dict((sample_id, None) for sample_id in
+        #                       self.sample_ids)
+        #self.summary_job_id = dict((sample_id, None) for sample_id in
+        #                           self.sample_ids)
 
         self.psi_walltime = cl.args['psi_walltime']
         self.summary_walltime = cl.args['summary_walltime']
 
         if cl.args['submit_sh_suffix'] != '':
-            self.submit_sh_suffix = '_' + cl.args['submit_sh_suffix'].lstrip('_')
+            self.submit_sh_suffix = '_' + cl.args['submit_sh_suffix'].lstrip(
+                '_')
         else:
             self.submit_sh_suffix = ''
         if cl.args['sample_id_suffix'] != '':
-            self.sample_id_suffix = '_' + cl.args['sample_id_suffix'].lstrip('_')
+            self.sample_id_suffix = '_' + cl.args['sample_id_suffix'].lstrip(
+                '_')
+            self.sample_ids = [sample_id + self.sample_id_suffix
+                               for sample_id in self.sample_ids]
         else:
             self.sample_id_suffix = ''
 
@@ -79,9 +88,9 @@ class MisoPipeline(object):
         self.queue = cl.args['queue']
 
         # get all output dirs so we don't make a typo when redefining them
-        self.psi_output_dirs = ['%s/miso/%s/%s%s'
+        self.psi_output_dirs = ['%s/miso/%s/%s'
                                 % (os.path.dirname(bam), self.event_type,
-                                   sample_id, self.sample_id_suffix)
+                                   sample_id)
                                 for bam, sample_id in zip(self.bams,
                                                           self.sample_ids)]
         for d in self.psi_output_dirs:
@@ -92,10 +101,9 @@ class MisoPipeline(object):
                 pass
 
         if cl.args['summary_output_dir_base']:
-            self.summary_output_dirs = ['%s/miso/%s/%s%s'
+            self.summary_output_dirs = ['%s/miso/%s/%s'
                                         % (cl.args['summary_output_dir_base'],
-                                           self.event_type, sample_id,
-                                           self.sample_id_suffix)
+                                           self.event_type, sample_id)
                                         for sample_id in self.sample_ids]
 
             # Need to create the directories if they're not there already
@@ -187,53 +195,49 @@ class MisoPipeline(object):
 
         insert_len_name = '%s_insert_len%s' % (self.job_name_prefix,
                                                self.submit_sh_suffix)
-        insert_len_sh_base = '%s/%s' % (self.sh_scripts_dir,
-                                        insert_len_name)
-        all_insert_len_sh = ['#!/bin/bash\n\n']
+        insert_len_sh = '%s/%s.sh' % (self.sh_scripts_dir,
+                                      insert_len_name)
+        #all_insert_len_sh = ['#!/bin/bash\n\n']
 
         for bam, sample_id in zip(self.bams, self.sample_ids):
             # Command-line commands to submit to the cluster
             insert_len_commands = []
             bam_dir = os.path.dirname(bam)
             insert_len_file = bam + '.insert_len'
-            # try:
-            #     open(insert_len_file)
-            # except IOError:
-            #     # There is no insert length file, so create it
-            #     insert_len_command = 'python %s/pe_utils.py ' \
-            #                          '--compute-insert-len %s %s ' \
-            #                          ' --output-dir %s ' \
-            #                          '>%s.out 2>%s' \
-            #                          % (self.miso_scripts_dir, bam,
-            #                             constitutive_exons_gff, bam_dir,
-            #                             insert_len_file, insert_len_file)
-            #     insert_len_commands.append('date')
-            #     insert_len_commands.append("echo Starting ... '%s'" %
-            #                                insert_len_command)
-            #     insert_len_commands.append(insert_len_command)
+            try:
+                with open(insert_len_file) as f:
+                    pass
+            except IOError:
+                # There is no insert length file, so create it
+                insert_len_command = 'python {0:s}/pe_utils.py ' \
+                                     '--compute-insert-len {0:s} {1:s} ' \
+                                     ' --output-dir {0:s} ' \
+                                     '>{0:s}.out 2>{1:s}' \
+                    .format(self.miso_scripts_dir, bam,
+                            self.constitutive_exon_gff, bam_dir,
+                            insert_len_file, insert_len_file)
+                informational_commands = "date ; echo Starting ... '{0:s}'".format(
+                    insert_len_command)
 
-                #        if self.submit_sh_suffix:
+                # join all the commands, then add that single line into the
+                # array job
+                command = ' ; '.join([informational_commands,
+                                      insert_len_command])
+                insert_len_commands.append(command)
 
-                #        else:
-                #            insert_len_name = 'miso_insert_len'
-
-            insert_len_sh = '%s_%s.sh' % (insert_len_sh_base, sample_id)
-            all_insert_len_sh.append('\n# --- %s --- #\nqsub %s\n' %
-                                     (sample_id, insert_len_sh))
-
+        if len(insert_len_commands) > 0:
             sub = Submitter(queue_type='PBS', sh_file=insert_len_sh,
                             command_list=insert_len_commands,
-                            job_name=insert_len_name)
-            self.insert_len_job_id[sample_id] = sub.write_sh(submit=True,
-                                                             nodes=self.num_cores,
-                                                             ppn=self.num_processes,
-                                                             queue=self.queue,
-                                                             walltime='0:30:00')
-            # # Tell the queue to parallelize this job
-            # # into a job array
-            # additional_resources=
-            # {'-t': '1-%d' % (self.num_cores*self
-            # .num_processes)})
+                            job_name=insert_len_name,
+                            out=insert_len_sh + ".out",
+                            err=insert_len_sh + ".err")
+            self.insert_len_job_id = sub.write_sh(submit=True,
+                                                  nodes=1,
+                                                  ppn=4,
+                                                  queue=self.queue,
+                                                  walltime='0:30:00',
+                                                  array=True,
+                                                  max_running=20)
 
     def psi(self):
         """
@@ -246,13 +250,14 @@ class MisoPipeline(object):
 
         all_submit_sh = ['#!/bin/bash\n\n']
 
+        psi_commands = []
 
         # Make a different submit file for each sample, because MISO doesn't
         # take THAT long on its own for one sample, and that way we won't get
         #  charged. Plus then we can track failures of individual samples
         for bam, sample_id, output_dir in zip(self.bams, self.sample_ids,
                                               self.psi_output_dirs):
-            psi_commands = []
+            commands = []
 
             # Establish which files we're working with
             insert_len_file = bam + '.insert_len'
@@ -264,26 +269,26 @@ class MisoPipeline(object):
                 self._get_psi_insert_len_argument(sample_id, insert_len_file)
 
             # Okay, now we are ready to write to the submitter script
-            psi_commands.append('\n\n# --- %s --- #' % sample_id)
+            commands.append('\n\n# --- %s --- #' % sample_id)
 
             # Need to **extend** with a list, not append.
-            psi_commands.extend(insert_len_commands)
+            commands.extend(insert_len_commands)
 
             # add a line of padding and the sample id to the output file
-            psi_commands.append('\necho\necho "--- %s ----"' % sample_id)
-            psi_commands.append('date')
+            commands.append('\necho\necho "--- %s ----"' % sample_id)
+            commands.append('date')
 
 
             # Get the read length. Gonna keep this as bash because samtools
             # and less are very fast
             read_len = '%s_READ_LEN' % sample_id
-            psi_commands.append(
+            commands.append(
                 '\n# Assuming that the first read of the bam file is '
                 'representative, such that all the reads in the '
                 '\n# file are exactly the same length, we can take the first '
                 'read from the bam file and measure its length, '
                 '\n# and use that for our algorithm')
-            psi_commands.append(
+            commands.append(
                 "%s=$(samtools view %s | head -n 1 | cut -f 10 | awk '{ print"
                 " length }')" % (read_len, bam))
 
@@ -300,10 +305,14 @@ class MisoPipeline(object):
                              insert_len_arguments, self.num_processes,
                              self.extra_miso_arguments, stdout,
                              stderr)
-            psi_commands.append('date')
-            psi_commands.append("echo Starting ...... '%s'"
-                                % psi_command)
-            psi_commands.append(psi_command)
+            commands.append('date')
+            commands.append("echo Starting ...... '%s'"
+                            % psi_command)
+
+            commands.append(psi_command)
+
+            # now add ALL those commands as a single line into the array job
+            psi_commands.append(' ; '.join(commands))
 
             # Put the submitter script wherever the command was run from
             #        if self.submit_sh_suffix:
@@ -311,35 +320,31 @@ class MisoPipeline(object):
             #        else:
             #            psi_name = 'miso_%s_psi' % (self.event_type)
 
+        job_name = '%s' % (psi_name)
 
-            job_name = '%s_%s' % (sample_id, psi_name)
+        submit_sh = '%s.sh' % (submit_sh_base)
 
-            submit_sh = '%s_%s.sh' % (submit_sh_base, sample_id)
-            all_submit_sh.append('\n# --- %s --- #\nqsub %s\n' %
-                                 (sample_id, submit_sh))
+        sh_out = submit_sh + '.out'
+        sh_err = submit_sh + '.err'
 
-            if self.insert_len_job_id[sample_id] is not None:
-                sub = Submitter(queue_type='PBS', sh_file=submit_sh,
-                                command_list=psi_commands, job_name=job_name,
-                                wait_for=[self.insert_len_job_id[sample_id]])
-            else:
-                sub = Submitter(queue_type='PBS', sh_file=submit_sh,
-                                command_list=psi_commands, job_name=job_name)
-            if self.num_cores == 1:
-                self.psi_job_is_array = False
-                self.psi_job_id[sample_id] = sub.write_sh(submit=True,
-                                                          nodes=self.num_cores,
-                                                          ppn=self.num_processes,
-                                                          queue=self.queue,
-                                                          walltime=self.psi_walltime)
-            else:
-                self.psi_job_is_array = True
-                self.psi_job_id[sample_id] = sub.write_sh(
-                    submit=True, nodes=self.num_cores, ppn=self.num_processes,
-                    queue=self.queue, walltime=self.psi_walltime,
-                    additional_resources={'-t': '1-%d' % self.num_cores})
+        if self.insert_len_job_id is not None:
+            sub = Submitter(queue_type='PBS', sh_file=submit_sh,
+                            command_list=psi_commands, job_name=job_name,
+                            wait_for=[self.insert_len_job_id[sample_id]],
+                            out=sh_out, err=sh_err)
+        else:
+            sub = Submitter(queue_type='PBS', sh_file=submit_sh,
+                            command_list=psi_commands, job_name=job_name,
+                            out=sh_out, err=sh_err, array=True, max_running=20)
 
-            print self.psi_job_id[sample_id]
+        self.psi_job_id = sub.write_sh(submit=True,
+                                       nodes=self.num_cores,
+                                       ppn=self.num_processes,
+                                       queue=self.queue,
+                                       walltime=self.psi_walltime,
+                                       array=True, max_running=20)
+
+        print self.psi_job_id
 
         # Save all the qsub commands in one file
         with open('%s.sh' % submit_sh_base, 'w') as f:
@@ -402,73 +407,78 @@ class MisoPipeline(object):
         for bam, sample_id, psi_output_dir, summary_output_dir in \
             zip(self.bams, self.sample_ids, self.psi_output_dirs,
                 self.summary_output_dirs):
-            summary_commands = []
+            commands = []
             # Okay, now we are ready to write to the submitter script
-            summary_commands.append('\n\n# --- %s --- #' % sample_id)
+            commands.append('\n\n# --- %s --- #' % sample_id)
 
             # add a line of padding and the sample id to the output file
-            summary_commands.append('\necho\necho "--- %s ----"' %
-                                    sample_id)
-            summary_commands.append('date')
+            commands.append('\necho\necho "--- %s ----"' %
+                            sample_id)
+            commands.append('date')
             summary_command = 'python %s/run_miso.py --summarize-samples %s ' \
                               '%s >%s/summary.out 2>%s/summary.err' \
                               % (self.miso_scripts_dir, psi_output_dir,
                                  psi_output_dir, psi_output_dir,
                                  psi_output_dir)
-            summary_commands.append(summary_command)
+            commands.append(summary_command)
 
-            summary_commands.append('# Copy over the summary files to prevent'
-                                    ' overloading the home directory')
+            commands.append('# Copy over the summary files to prevent'
+                            ' overloading the home directory')
             temp_summary_file = '%s/summary/%s.miso_summary' % (
                 psi_output_dir, sample_id)
             final_summary_file = '%s/summary/%s.miso_summary' % (
                 summary_output_dir, sample_id)
-            summary_commands.append('mkdir -p %s/summary' % (
-                summary_output_dir))
-            summary_commands.append('cp %s %s' % (temp_summary_file,
-                                                  final_summary_file))
+            commands.append('mkdir -p %s/summary' % (
+                summary_output_dir.rstrip('/')))
+            commands.append('cp %s %s' % (temp_summary_file,
+                                          final_summary_file))
+
+            # Join all these lines together into a single line, and add it to
+            # the array job
+            summary_commands.append(' ; '.join(commands))
 
             # Put the submitter script wherever the command was run from
             #        if self.submit_sh_suffix:
 
             #        else:
             #            job_name = 'miso_%s_summary' % self.event_type
-            job_name = '%s_%s' % (sample_id, job_name_base)
-            submit_sh = '%s_%s.sh' \
-                        % (submit_sh_base, sample_id)
-            all_submit_sh.append('\n# --- %s --- #\nqsub %s\n' %
-                                 (sample_id, submit_sh))
+        job_name = '%s' % (job_name_base)
+        submit_sh = '%s.sh' \
+                    % (submit_sh_base)
 
-            if self.num_cores > 1:
-                additional_resources = {'-t': '1-%d'
-                                              % (self.num_processes *
-                                                 self.num_cores)}
-            else:
-                additional_resources = None
+        sh_out = submit_sh + '.out'
+        sh_err = submit_sh + '.err'
 
-            # if self.psi_job_id[sample_id] is not None:
-            #     sub = Submitter(queue_type='PBS', sh_file=submit_sh,
-            #                     command_list=summary_commands,
-            #                     job_name=job_name,
-            #                     wait_for=[self.psi_job_id[sample_id]],
-            #                     # Tell the queue to parallelize this job
-            #                          # into a job array
-            #                     additional_resources=additional_resources)
-            # else:
-            sub = Submitter(queue_type='PBS', sh_file=submit_sh,
-                            command_list=summary_commands, job_name=job_name,
-                            # Tell the queue to parallelize this job
-                            # into a job array
-                            additional_resources=additional_resources)
+        #if self.num_cores > 1:
+        #    additional_resources = {'-t': '1-%d'
+        #                                  % (self.num_processes *
+        #                                     self.num_cores)}
+        #else:
+        #    additional_resources = None
 
-            self.summary_job_id[sample_id] = sub.write_sh(submit=True,
-                                                          nodes=self.num_cores,
-                                                          ppn=2,
-                                                          queue=self.queue,
-                                                          walltime=self.summary_walltime)
+        # if self.psi_job_id[sample_id] is not None:
+        #     sub = Submitter(queue_type='PBS', sh_file=submit_sh,
+        #                     command_list=summary_commands,
+        #                     job_name=job_name,
+        #                     wait_for=[self.psi_job_id[sample_id]],
+        #                     # Tell the queue to parallelize this job
+        #                          # into a job array
+        #                     additional_resources=additional_resources)
+        # else:
+        sub = Submitter(queue_type='PBS', sh_file=submit_sh,
+                        command_list=summary_commands, job_name=job_name,
+                        # Tell the queue to parallelize this job
+                        # into a job array. NOTE: changed the call of array
+                        # job into where write_sh is called.
+                        #additional_resources=additional_resources,
+                        out=sh_out, err=sh_err)
 
-            print self.summary_job_id[sample_id]
-            # Save all the qsub commands in one file
-        with open('%s.sh' % submit_sh_base, 'w') as f:
-            # f.write('#!/bin/bash\n\n')
-            f.writelines(all_submit_sh)
+        self.summary_job_id = sub.write_sh(
+            submit=True, nodes=self.num_cores, ppn=2, queue=self.queue,
+            walltime=self.summary_walltime, array=True, max_running=20)
+
+        print self.summary_job_id
+        # Save all the qsub commands in one file
+        #with open('%s.sh' % submit_sh_base, 'w') as f:
+        #    # f.write('#!/bin/bash\n\n')
+        #    f.writelines(all_submit_sh)

@@ -1,3 +1,4 @@
+
 from setuptools import setup, find_packages
 
 
@@ -10,13 +11,15 @@ scripts = ['rnaseq/count_tags.py',
            'general/negBedGraph.py',
            'clipseq/perform_idr.py',
            'clipseq/run_piranha.py',
-           'riboseq/riboseq_coverage.py',
+           #'riboseq/riboseq_coverage.py',
            'mapping/map_paired_with_STAR.py',
            'mapping/sam_to_bam_and_sort.py',
            'miso/submit_miso_pipeline.py',
            'miso/submit_index_gff.py',
            'rnaseq/oldsplice.py',
            'rnaseq/submit_oldsplice.py',
+           'rnaseq/oldsplice_gff.py',
+           'rnaseq/submit_oldsplice_gff.py',
            'rnaseq/parse_oldsplice.py',
            'rnaseq/submit_parse_oldsplice.py',
            'output_parsers/parseMiso.py']
@@ -27,21 +30,25 @@ with open("README.rst") as file:
     long_description = file.read()
 
 setup(
-    name="gscripts",
-    long_description=long_description,
-    version="0.1.3",
-    packages=find_packages(),
 
+    name = "gscripts",
+    long_description = long_description,
+    version = "0.1.4",
+    packages = find_packages(),
+    
+    
+    
+    install_requires = ['setuptools', 
+                        'pysam >= 0.6',
+                        'numpy >= 1.5.1 ',
+                        'scipy >= 0.11.0',
+                        'matplotlib >= 1.1.0',
+                        'pybedtools >= 0.5',
+                        'scikit-learn >= 0.13.0',
+                        ],
+      
+    setup_requires = ["setuptools_git >= 0.3",],
 
-    install_requires=['setuptools',
-                      'pysam >= 0.6',
-                      'numpy >= 1.5.1 ',
-                      'scipy >= 0.11.0',
-                      'matplotlib >= 1.1.0',
-                      'pybedtools >= 0.5',
-                      'scikit-learn >= 0.13.0', 'gffutils'],
-
-    setup_requires=["setuptools_git >= 0.3", ],
     scripts=scripts,
 
     #metadata for upload to PyPI

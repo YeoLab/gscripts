@@ -6,7 +6,7 @@ Created on Jun 21, 2013
 import os
 import unittest
 
-from rnaseq import single_RPKM
+from gscripts.rnaseq import single_RPKM
 
 import tests
 

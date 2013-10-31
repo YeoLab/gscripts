@@ -10,7 +10,7 @@ import unittest
 
 import pybedtools
 
-from general.pybedtools_helpers import closest_by_feature, convert_to_mRNA_position
+from gscripts.general.pybedtools_helpers import closest_by_feature, convert_to_mRNA_position
 
 class Test(unittest.TestCase):
 
