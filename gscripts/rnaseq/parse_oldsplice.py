@@ -15,6 +15,8 @@ def mergeSamples(samples, splicetypes=["SE"]):
         sampleFilename, sampleLabel = sample
         sampleData = pickle.load(open(sampleFilename))
         for i, geneItem in enumerate(sampleData):
+            import code
+            code.interact(local=locals())
             gene = geneItem["descriptor"]
 
 
