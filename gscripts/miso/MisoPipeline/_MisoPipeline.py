@@ -199,15 +199,19 @@ class MisoPipeline(object):
                                       insert_len_name)
         #all_insert_len_sh = ['#!/bin/bash\n\n']
 
+        insert_len_commands = []
+
         for bam, sample_id in zip(self.bams, self.sample_ids):
+            print sample_id
             # Command-line commands to submit to the cluster
-            insert_len_commands = []
+
             bam_dir = os.path.dirname(bam)
             insert_len_file = bam + '.insert_len'
             try:
                 with open(insert_len_file) as f:
                     pass
             except IOError:
+                print 'getting insert len for:', sample_id
                 # There is no insert length file, so create it
                 insert_len_command = 'python {0:s}/pe_utils.py ' \
                                      '--compute-insert-len {1:s} {2:s} ' \
