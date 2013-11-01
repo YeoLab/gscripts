@@ -2,7 +2,6 @@ from __future__ import division
 import re
 import pysam
 from clipper.src.peaks import readsToWiggle_pysam
-#from seqTools import readsToWiggle_pysam
 import sys
 import os
 from subprocess import Popen, call, PIPE
@@ -13,25 +12,18 @@ from multiprocessing import Pool
 import cPickle as pickle
 import random
 import pybedtools
+
 __author__ = "Michael Lovci"
 
-basedir = ""
 
 
 
 def region_rpk(interval, bam):
     chrom, start, stop, strand = (interval.chrom,interval.start,
                                   interval.stop, interval.strand)
-    
-    subset_reads = bam.fetch(reference=chrom, start=start,end=stop)
-    
-    (wig, jxns, nrCounts, 
-     readLengths, reads) = readsToWiggle_pysam(subset_reads,
-                                              (start), (stop),
-                                              strand, "center", False)
-    R = len(reads)
-    K = len(interval)
-    return R/K
+    readCount = bam.count(reference=chrom, start=start, end=stop)
+    Kb = len(interval)/1000
+    return readCount/Kb
 
 
 def assign_reads(gene, splicedict=None, bam_file=None,
@@ -185,12 +177,12 @@ def overlap(coord, locs, ov = .95):
                 ovExons.append(i)
     return ovExons
             
-        
+
+
                          
 
 
 def retrieve_splicing(species):
-
 
     host = Popen(["hostname"], stdout=PIPE).communicate()[0].strip()
     if "optiputer" in host or "compute" in host:

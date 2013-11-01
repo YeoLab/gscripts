@@ -18,6 +18,8 @@ scripts = ['rnaseq/count_tags.py',
            'miso/submit_index_gff.py',
            'rnaseq/oldsplice.py',
            'rnaseq/submit_oldsplice.py',
+           'rnaseq/oldsplice_gff.py',
+           'rnaseq/submit_oldsplice_gff.py',
            'rnaseq/parse_oldsplice.py',
            'rnaseq/submit_parse_oldsplice.py',
            'output_parsers/parseMiso.py']
@@ -28,6 +30,7 @@ with open("README.rst") as file:
     long_description = file.read()
 
 setup(
+
     name = "gscripts",
     long_description = long_description,
     version = "0.1.4",
@@ -45,6 +48,7 @@ setup(
                         ],
       
     setup_requires = ["setuptools_git >= 0.3",],
+
     scripts=scripts,
 
     #metadata for upload to PyPI
