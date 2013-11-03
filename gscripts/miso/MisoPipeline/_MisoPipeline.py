@@ -273,13 +273,13 @@ class MisoPipeline(object):
                 self._get_psi_insert_len_argument(sample_id, insert_len_file)
 
             # Okay, now we are ready to write to the submitter script
-            commands.append('\n\n# --- %s --- #' % sample_id)
+            #commands.append('\n\n# --- %s --- #' % sample_id)
 
             # Need to **extend** with a list, not append.
             commands.extend(insert_len_commands)
 
             # add a line of padding and the sample id to the output file
-            commands.append('\necho\necho "--- %s ----"' % sample_id)
+            #commands.append("\necho\necho '--- %s ----'" % sample_id)
             commands.append('date')
 
 
@@ -404,7 +404,7 @@ class MisoPipeline(object):
         summary_commands = []
 
         job_name_base = '%s_summary' % (self.job_name_prefix)
-        submit_sh_base = '%s/%s.sh' \
+        submit_sh_base = '%s/%s' \
                          % (self.sh_scripts_dir, job_name_base)
         all_submit_sh = []
 
