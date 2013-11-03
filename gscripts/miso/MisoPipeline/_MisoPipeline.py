@@ -286,12 +286,12 @@ class MisoPipeline(object):
             # Get the read length. Gonna keep this as bash because samtools
             # and less are very fast
             read_len = '%s_READ_LEN' % sample_id
-            commands.append(
-                '\n# Assuming that the first read of the bam file is '
-                'representative, such that all the reads in the '
-                '\n# file are exactly the same length, we can take the first '
-                'read from the bam file and measure its length, '
-                '\n# and use that for our algorithm')
+            #commands.append(
+            #    '\n# Assuming that the first read of the bam file is '
+            #    'representative, such that all the reads in the '
+            #    '\n# file are exactly the same length, we can take the first '
+            #    'read from the bam file and measure its length, '
+            #    '\n# and use that for our algorithm')
             commands.append(
                 "%s=$(samtools view %s | head -n 1 | cut -f 10 | awk '{ print"
                 " length }')" % (read_len, bam))
@@ -336,7 +336,7 @@ class MisoPipeline(object):
         if self.insert_len_job_id is not None:
             sub = Submitter(queue_type='PBS', sh_file=submit_sh,
                             command_list=psi_commands, job_name=job_name,
-                            wait_for=[self.insert_len_job_id[sample_id]],
+                            wait_for=[self.insert_len_job_id],
                             out=sh_out, err=sh_err)
         else:
             sub = Submitter(queue_type='PBS', sh_file=submit_sh,
@@ -352,10 +352,10 @@ class MisoPipeline(object):
 
         print self.psi_job_id
 
-        # Save all the qsub commands in one file
-        with open('%s.sh' % submit_sh_base, 'w') as f:
-            # f.write('#!/bin/bash\n\n')
-            f.writelines(all_submit_sh)
+        ## Save all the qsub commands in one file
+        #with open('%s.sh' % submit_sh_base, 'w') as f:
+        #    # f.write('#!/bin/bash\n\n')
+        #    f.writelines(all_submit_sh)
 
     def _get_psi_insert_len_argument(self, sample_id, insert_len_file):
         '''
