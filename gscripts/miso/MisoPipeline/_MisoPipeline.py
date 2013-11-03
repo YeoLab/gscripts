@@ -324,11 +324,13 @@ class MisoPipeline(object):
             #        else:
             #            psi_name = 'miso_%s_psi' % (self.event_type)
 
-        print 'psi commands:', psi_commands
+        #print 'psi commands:', psi_commands
 
         job_name = '%s' % (psi_name)
 
         submit_sh = '%s.sh' % (submit_sh_base)
+
+        print 'submit_sh', submit_sh
 
         sh_out = submit_sh + '.out'
         sh_err = submit_sh + '.err'
