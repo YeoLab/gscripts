@@ -280,7 +280,7 @@ class MisoPipeline(object):
 
             # add a line of padding and the sample id to the output file
             #commands.append("\necho\necho '--- %s ----'" % sample_id)
-            commands.append('date')
+            #commands.append('date')
 
 
             # Get the read length. Gonna keep this as bash because samtools
@@ -376,10 +376,10 @@ class MisoPipeline(object):
         # Because the insert length file has not necessarily been written
         # yet, we cannot extract the insert length mean and std dev from
         # the file using python. We must use shell scripting instead
-        insert_len_commands.append(
-            '# Get the paired-end reads insert length mean and '
-            'standard deviation from the file computed earlier for sample'
-            ' %s' % sample_id)
+        #insert_len_commands.append(
+        #    '# Get the paired-end reads insert length mean and '
+        #    'standard deviation from the file computed earlier for sample'
+        #    ' %s' % sample_id)
 
         # Assign {sample_id}_insert_len_MEAN variable
         insert_len_commands.append(
@@ -417,12 +417,12 @@ class MisoPipeline(object):
                 self.summary_output_dirs):
             commands = []
             # Okay, now we are ready to write to the submitter script
-            commands.append('\n\n# --- %s --- #' % sample_id)
+            #commands.append('\n\n# --- %s --- #' % sample_id)
 
             # add a line of padding and the sample id to the output file
-            commands.append('\necho\necho "--- %s ----"' %
-                            sample_id)
-            commands.append('date')
+            #commands.append('\necho\necho "--- %s ----"' %
+            #                sample_id)
+            #commands.append('date')
             summary_command = 'python %s/run_miso.py --summarize-samples %s ' \
                               '%s >%s/summary.out 2>%s/summary.err' \
                               % (self.miso_scripts_dir, psi_output_dir,
