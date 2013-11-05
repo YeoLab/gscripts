@@ -178,6 +178,14 @@ class CommandLine(object):
                                       'quote and the first dash of the miso '
                                       'argument. For some reason this helps..'
                                       '..')
+        self.parser.add_argument('--individual-jobs', type=bool,
+                                 action='store_true',
+                                 default='home-yeo',
+                                 help='Whether or not to put every job as an '
+                                      'individual script. If flagged, '
+                                      'yes. Otherwise, run as an array job. '
+                                      'This only applies for psi and summary '
+                                      'jobs. Insert length jobs will still be run as array jobs regardless.')
         self.parser.add_argument('--miso-scripts-dir', type=str,
                                  action='store',
                                  help='Which directory to use as the prefix for '

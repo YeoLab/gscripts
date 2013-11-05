@@ -65,6 +65,8 @@ class MisoPipeline(object):
         self.psi_walltime = cl.args['psi_walltime']
         self.summary_walltime = cl.args['summary_walltime']
 
+        self.individual_jobs = cl.args['individual_jobs']
+
         if cl.args['submit_sh_suffix'] != '':
             self.submit_sh_suffix = '_' + cl.args['submit_sh_suffix'].lstrip(
                 '_')
@@ -316,9 +318,39 @@ class MisoPipeline(object):
             commands.append(psi_command)
 
             # now add ALL those commands as a single line into the array job
-            psi_commands.append(' ; '.join(commands))
+            command = ' ; '.join(commands)
+            psi_commands.append(command)
 
-            # Put the submitter script wherever the command was run from
+            if self.individual_jobs:
+                job_name = '%s_%s' % (sample_id, psi_name)
+
+                submit_sh = '%s_%s.sh' % (submit_sh_base, sample_id)
+
+                #print 'submit_sh', submit_sh
+
+                sh_out = submit_sh + '.out'
+                sh_err = submit_sh + '.err'
+
+                if self.insert_len_job_id is not None:
+                    sub = Submitter(queue_type='PBS', sh_file=submit_sh,
+                                    command_list=psi_commands,
+                                    job_name=job_name,
+                                    wait_for=[self.insert_len_job_id],
+                                    out=sh_out, err=sh_err)
+                else:
+                    sub = Submitter(queue_type='PBS', sh_file=submit_sh,
+                                    command_list=psi_commands,
+                                    job_name=job_name,
+                                    out=sh_out, err=sh_err)
+
+                self.psi_job_id = sub.write_sh(submit=True,
+                                               nodes=self.num_cores,
+                                               ppn=self.num_processes,
+                                               queue=self.queue,
+                                               walltime=self.psi_walltime)
+
+
+                # Put the submitter script wherever the command was run from
             #        if self.submit_sh_suffix:
 
             #        else:
@@ -326,35 +358,37 @@ class MisoPipeline(object):
 
         #print 'psi commands:', psi_commands
 
-        job_name = '%s' % (psi_name)
+        if not self.individual_jobs:
+            job_name = '%s' % (psi_name)
 
-        submit_sh = '%s.sh' % (submit_sh_base)
+            submit_sh = '%s.sh' % (submit_sh_base)
 
-        print 'submit_sh', submit_sh
+            #print 'submit_sh', submit_sh
 
-        sh_out = submit_sh + '.out'
-        sh_err = submit_sh + '.err'
+            sh_out = submit_sh + '.out'
+            sh_err = submit_sh + '.err'
 
-        if self.insert_len_job_id is not None:
-            sub = Submitter(queue_type='PBS', sh_file=submit_sh,
-                            command_list=psi_commands, job_name=job_name,
-                            wait_for=[self.insert_len_job_id],
-                            out=sh_out, err=sh_err)
-        else:
-            sub = Submitter(queue_type='PBS', sh_file=submit_sh,
-                            command_list=psi_commands, job_name=job_name,
-                            out=sh_out, err=sh_err, array=True, max_running=20)
+            if self.insert_len_job_id is not None:
+                sub = Submitter(queue_type='PBS', sh_file=submit_sh,
+                                command_list=[command], job_name=job_name,
+                                wait_for=[self.insert_len_job_id],
+                                out=sh_out, err=sh_err)
+            else:
+                sub = Submitter(queue_type='PBS', sh_file=submit_sh,
+                                command_list=[command], job_name=job_name,
+                                out=sh_out, err=sh_err, array=True,
+                                max_running=20)
 
-        self.psi_job_id = sub.write_sh(submit=True,
-                                       nodes=self.num_cores,
-                                       ppn=self.num_processes,
-                                       queue=self.queue,
-                                       walltime=self.psi_walltime,
-                                       array=True, max_running=20)
+            self.psi_job_id = sub.write_sh(submit=True,
+                                           nodes=self.num_cores,
+                                           ppn=self.num_processes,
+                                           queue=self.queue,
+                                           walltime=self.psi_walltime,
+                                           array=True, max_running=20)
 
-        print self.psi_job_id
+            print self.psi_job_id
 
-        ## Save all the qsub commands in one file
+            ## Save all the qsub commands in one file
         #with open('%s.sh' % submit_sh_base, 'w') as f:
         #    # f.write('#!/bin/bash\n\n')
         #    f.writelines(all_submit_sh)
@@ -443,9 +477,48 @@ class MisoPipeline(object):
 
             # Join all these lines together into a single line, and add it to
             # the array job
-            summary_commands.append(' ; '.join(commands))
+            command = ' ; '.join(commands)
+            summary_commands.append(command)
+            if self.individual_jobs:
+                job_name = '%s' % (job_name_base)
+                submit_sh = '%s.sh' \
+                            % (submit_sh_base)
 
-            # Put the submitter script wherever the command was run from
+                sh_out = submit_sh + '.out'
+                sh_err = submit_sh + '.err'
+
+                #if self.num_cores > 1:
+                #    additional_resources = {'-t': '1-%d'
+                #                                  % (self.num_processes *
+                #                                     self.num_cores)}
+                #else:
+                #    additional_resources = None
+
+                # if self.psi_job_id[sample_id] is not None:
+                #     sub = Submitter(queue_type='PBS', sh_file=submit_sh,
+                #                     command_list=summary_commands,
+                #                     job_name=job_name,
+                #                     wait_for=[self.psi_job_id[sample_id]],
+                #                     # Tell the queue to parallelize this job
+                #                          # into a job array
+                #                     additional_resources=additional_resources)
+                # else:
+                sub = Submitter(queue_type='PBS', sh_file=submit_sh,
+                                command_list=[command],
+                                job_name=job_name,
+                                # Tell the queue to parallelize this job
+                                # into a job array. NOTE: changed the call of array
+                                # job into where write_sh is called.
+                                #additional_resources=additional_resources,
+                                out=sh_out, err=sh_err)
+
+                self.summary_job_id = sub.write_sh(
+                    submit=True, nodes=self.num_cores, ppn=2, queue=self.queue,
+                    walltime=self.summary_walltime)
+
+                print self.summary_job_id
+
+                # Put the submitter script wherever the command was run from
             #        if self.submit_sh_suffix:
 
             #        else:
