@@ -5,6 +5,7 @@ import os
 from glob import glob
 import sys
 from gscripts import which
+import pysam
 from gscripts.general import read_sample_info_file
 
 
@@ -271,14 +272,14 @@ class MisoPipeline(object):
             # output_dir = '%s/miso/%s/%s' % (bam_dir, self.event_type,
             #                                 sample_id)
 
-            insert_len_commands, insert_len_arguments = \
+            insert_len_argument = \
                 self._get_psi_insert_len_argument(sample_id, insert_len_file)
 
             # Okay, now we are ready to write to the submitter script
             #commands.append('\n\n# --- %s --- #' % sample_id)
 
             # Need to **extend** with a list, not append.
-            commands.extend(insert_len_commands)
+            #commands.extend(insert_len_commands)
 
             # add a line of padding and the sample id to the output file
             #commands.append("\necho\necho '--- %s ----'" % sample_id)
@@ -308,7 +309,7 @@ class MisoPipeline(object):
                           ' %s 2> %s' \
                           % (self.miso, self.event_type_index, bam,
                              output_dir, read_len,
-                             insert_len_arguments, self.num_processes,
+                             insert_len_argument, self.num_processes,
                              self.extra_miso_arguments, stdout,
                              stderr)
             commands.append('date')
@@ -333,13 +334,13 @@ class MisoPipeline(object):
 
                 if self.insert_len_job_id is not None:
                     sub = Submitter(queue_type='PBS', sh_file=submit_sh,
-                                    command_list=psi_commands,
+                                    command_list=[command],
                                     job_name=job_name,
                                     wait_for=[self.insert_len_job_id],
                                     out=sh_out, err=sh_err)
                 else:
                     sub = Submitter(queue_type='PBS', sh_file=submit_sh,
-                                    command_list=psi_commands,
+                                    command_list=[command],
                                     job_name=job_name,
                                     out=sh_out, err=sh_err)
 
@@ -370,12 +371,12 @@ class MisoPipeline(object):
 
             if self.insert_len_job_id is not None:
                 sub = Submitter(queue_type='PBS', sh_file=submit_sh,
-                                command_list=[command], job_name=job_name,
+                                command_list=psi_commands, job_name=job_name,
                                 wait_for=[self.insert_len_job_id],
                                 out=sh_out, err=sh_err)
             else:
                 sub = Submitter(queue_type='PBS', sh_file=submit_sh,
-                                command_list=[command], job_name=job_name,
+                                command_list=psi_commands, job_name=job_name,
                                 out=sh_out, err=sh_err, array=True,
                                 max_running=20)
 
@@ -400,12 +401,12 @@ class MisoPipeline(object):
         the insert length mean and standard deviation.
         '''
         if self.read_type == 'single_end':
-            return [], ''
+            return ''
 
-        insert_len_commands = []
+        #insert_len_commands = []
         # Extract from files all the things we need
-        insert_len_mean = '%s_insert_len_MEAN' % sample_id
-        insert_len_stddev = '%s_insert_len_STDDEV' % sample_id
+        #insert_len_mean = '%s_insert_len_MEAN' % sample_id
+        #insert_len_stddev = '%s_insert_len_STDDEV' % sample_id
 
         # Because the insert length file has not necessarily been written
         # yet, we cannot extract the insert length mean and std dev from
@@ -415,19 +416,35 @@ class MisoPipeline(object):
         #    'standard deviation from the file computed earlier for sample'
         #    ' %s' % sample_id)
 
+        insert_len_mean = None
+        insert_len_sdev = None
+
         # Assign {sample_id}_insert_len_MEAN variable
-        insert_len_commands.append(
-            "%s=$(head -n 1 %s | sed 's:#::' | cut -d',' -f1 | cut -d'=' -f2)"
-            % (insert_len_mean, insert_len_file))
-
-        # Assign {sample_id}_insert_len_STDDEV variable
-        insert_len_commands.append(
-            "%s=$(head -n 1 %s | sed 's:#::' | cut -d',' -f2 | cut -d'=' -f2)"
-            % (insert_len_stddev, insert_len_file))
-
-        insert_len_arguments = ' --paired-end $%s $%s ' % (insert_len_mean,
-                                                           insert_len_stddev)
-        return insert_len_commands, insert_len_arguments
+        with open(insert_len_file) as f:
+            n = 0
+            for line in f:
+                line = line.split(',')
+                print line[:2];
+                mean = float(line[0].split('=')[1])
+                sdev = float(line[1].split('=')[1])
+                insert_len_mean = mean
+                insert_len_sdev = sdev
+                n += 1
+                if n > 0:
+                    break
+            #insert_len_commands.append(
+        #    "%s=$(head -n 1 %s | sed 's:#::' | cut -d',' -f1 | cut -d'=' -f2)"
+        #    % (insert_len_mean, insert_len_file))
+        #
+        ## Assign {sample_id}_insert_len_STDDEV variable
+        #insert_len_commands.append(
+        #    "%s=$(head -n 1 %s | sed 's:#::' | cut -d',' -f2 | cut -d'=' -f2)"
+        #    % (insert_len_stddev, insert_len_file))
+        #
+        #insert_len_arguments = ' --paired-end $%s $%s ' % (insert_len_mean,
+        #                                                   insert_len_stddev)
+        #return insert_len_commands, insert_len_arguments
+        return '--paired-end %.1f %.1f' % insert_len_mean, insert_len_sdev
 
     def psi_and_summary(self):
         self.psi()
