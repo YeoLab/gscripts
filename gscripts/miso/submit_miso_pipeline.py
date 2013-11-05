@@ -178,9 +178,9 @@ class CommandLine(object):
                                       'quote and the first dash of the miso '
                                       'argument. For some reason this helps..'
                                       '..')
-        self.parser.add_argument('--individual-jobs', type=bool,
+        self.parser.add_argument('--individual-jobs', #type=bool,
                                  action='store_true',
-                                 default='home-yeo',
+                                 default=False,
                                  help='Whether or not to put every job as an '
                                       'individual script. If flagged, '
                                       'yes. Otherwise, run as an array job. '
