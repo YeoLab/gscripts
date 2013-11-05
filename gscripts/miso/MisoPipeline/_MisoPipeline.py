@@ -402,6 +402,7 @@ class MisoPipeline(object):
         '''
         if self.read_type == 'single_end':
             return ''
+        print sample_id
 
         #insert_len_commands = []
         # Extract from files all the things we need

@@ -38,7 +38,7 @@ def five_prime_motif(coordinate, strand, into_exon, into_intron, debug=False):
     if strand == '+':
         return coordinate - into_exon, coordinate + into_intron
     elif strand == '-':
-        return coordinate - into_intron, coordinate + into_exon
+        return coordinate - into_intron - 1, coordinate + into_exon - 1
     else:
         raise TypeError('%s is not a valid strand identifier' % strand)
 
