@@ -444,7 +444,7 @@ class MisoPipeline(object):
         #insert_len_arguments = ' --paired-end $%s $%s ' % (insert_len_mean,
         #                                                   insert_len_stddev)
         #return insert_len_commands, insert_len_arguments
-        return '--paired-end %.1f %.1f' % insert_len_mean, insert_len_sdev
+        return '--paired-end %.1f %.1f' % (insert_len_mean, insert_len_sdev)
 
     def psi_and_summary(self):
         self.psi()
