@@ -16,11 +16,12 @@ def mergeSamples(samples, splicetypes=["SE"]):
         sampleFilename, sampleLabel = sample
         sampleData = pickle.load(open(sampleFilename))
         for i, geneItem in enumerate(sampleData):
+            if geneItem is None:
+                continue
             try:
                 gene = geneItem["descriptor"]
             except:
-                import code
-                code.interact(local=locals())
+                raise
 
             for splicetype in splicetypes:
                 if not gene in data[splicetype]:
