@@ -128,7 +128,7 @@ def main(options):
                         SEout.write(line + "\n")
 
     if "MXE" in spliceData:
-        with open("oldsplice.MXE.table.txt", 'w') as out:
+        with open("%s.MXE.table.txt" % name, 'w') as out:
             header= ["Gene", "ExonName", "Eventloc", "Exonloc"]
             for sample in samples:
                 sample_label = sample[1]
@@ -313,7 +313,6 @@ def main(options):
 
 if __name__ == "__main__":
     parser = OptionParser()
-
     
     parser.add_option("--sample", nargs=2, action="append", dest="samples", help="Two values: --sample filename label")
     parser.add_option("--compare", dest="compare", default=False, action="store_true", help="run 2-way comparison (only works when 2 samples are provided)")
