@@ -62,7 +62,6 @@ def calculate_psi_MXE(A, B):
 
 def main(options):
     samples = options.samples
-    name = options.name
     spliceData = mergeSamples(samples, splicetypes=options.splicetype)
 
     pval_cutoff = options.pval
@@ -74,7 +73,7 @@ def main(options):
         annotation = retrieve_splicing(options.species)
     
     if "SE" in spliceData:
-        with open("%s.SE.table.txt" % name, 'w') as out:
+        with open("%s.SE.table.txt" % options.name, 'w') as out:
             header= ["Gene", "ExonName", "Eventloc", "Exonloc"]
             for sample in samples:
                 sample_label = sample[1]
@@ -128,7 +127,7 @@ def main(options):
                         SEout.write(line + "\n")
 
     if "MXE" in spliceData:
-        with open("%s.MXE.table.txt" % name, 'w') as out:
+        with open("%s.MXE.table.txt" % options.name, 'w') as out:
             header= ["Gene", "ExonName", "Eventloc", "Exonloc"]
             for sample in samples:
                 sample_label = sample[1]
