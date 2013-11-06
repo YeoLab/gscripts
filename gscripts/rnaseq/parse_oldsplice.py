@@ -1,3 +1,4 @@
+from __future__ import division
 import scipy.stats
 from optparse import OptionParser
 import pickle
@@ -145,7 +146,7 @@ def main(options):
                         sample_label = sample[1]
                         sample_A = spliceData["MXE"][gene][loc][sample_label]["A"]
                         sample_B = spliceData["MXE"][gene][loc][sample_label]["B"]
-                        psi = calculate_psi_MXE(sample_A, sample_A)
+                        psi = calculate_psi_MXE(sample_A, sample_B)
                         writeMe.extend([sample_A, sample_B, psi])
                     out.write("\t".join(map(str, writeMe)) + "\n")
     
