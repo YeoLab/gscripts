@@ -21,7 +21,7 @@ __author__ = "Michael Lovci"
 def region_rpk(interval, bam):
     chrom, start, stop, strand = (interval.chrom,interval.start,
                                   interval.stop, interval.strand)
-    readCount = bam.count(reference=chrom, start=start, end=stop)
+    readCount = bam.count(reference=chrom, start=start, end=stop) #this is not strand-ed
     Kb = len(interval)/1000
     return readCount/Kb
 

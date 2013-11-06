@@ -21,8 +21,6 @@ def mergeSamples(samples, splicetypes=["SE"]):
                 import code
                 code.interact(local=locals())
 
-
-
             for splicetype in splicetypes:
                 if not gene in data[splicetype]:
                     data[splicetype][gene] = {}                
@@ -64,6 +62,7 @@ def calculate_psi_MXE(A, B):
 
 def main(options):
     samples = options.samples
+    name = options.name
     spliceData = mergeSamples(samples, splicetypes=options.splicetype)
 
     pval_cutoff = options.pval
@@ -75,7 +74,7 @@ def main(options):
         annotation = retrieve_splicing(options.species)
     
     if "SE" in spliceData:
-        with open("oldsplice.SE.table.txt", 'w') as out:
+        with open("%s.SE.table.txt" % name, 'w') as out:
             header= ["Gene", "ExonName", "Eventloc", "Exonloc"]
             for sample in samples:
                 sample_label = sample[1]
@@ -321,6 +320,7 @@ if __name__ == "__main__":
     parser.add_option("--pvalue", dest="pval", default=0.05, help="p-value cutoff for chi2 or fisher exact")
     parser.add_option("--splice_type", dest="splicetype", default=["SE", "MXE"], action="append")
     parser.add_option("--species", "-s", dest="species", default=None)
+    parser.add_option("--name", "-n", dest="name", default="oldsplice")
 
     options, args = parser.parse_args() 
     options.splicetype = list(set(options.splicetype)) #remove redundant items
