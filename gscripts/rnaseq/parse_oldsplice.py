@@ -1,3 +1,4 @@
+from __future__ import division
 import scipy.stats
 from optparse import OptionParser
 import pickle
@@ -15,8 +16,12 @@ def mergeSamples(samples, splicetypes=["SE"]):
         sampleFilename, sampleLabel = sample
         sampleData = pickle.load(open(sampleFilename))
         for i, geneItem in enumerate(sampleData):
-            gene = geneItem["descriptor"]
-
+            if geneItem is None:
+                continue
+            try:
+                gene = geneItem["descriptor"]
+            except:
+                raise
 
             for splicetype in splicetypes:
                 if not gene in data[splicetype]:
@@ -70,7 +75,7 @@ def main(options):
         annotation = retrieve_splicing(options.species)
     
     if "SE" in spliceData:
-        with open("oldsplice.SE.table.txt", 'w') as out:
+        with open("%s.SE.table.txt" % options.name, 'w') as out:
             header= ["Gene", "ExonName", "Eventloc", "Exonloc"]
             for sample in samples:
                 sample_label = sample[1]
@@ -124,7 +129,7 @@ def main(options):
                         SEout.write(line + "\n")
 
     if "MXE" in spliceData:
-        with open("oldsplice.MXE.table.txt", 'w') as out:
+        with open("%s.MXE.table.txt" % options.name, 'w') as out:
             header= ["Gene", "ExonName", "Eventloc", "Exonloc"]
             for sample in samples:
                 sample_label = sample[1]
@@ -142,7 +147,7 @@ def main(options):
                         sample_label = sample[1]
                         sample_A = spliceData["MXE"][gene][loc][sample_label]["A"]
                         sample_B = spliceData["MXE"][gene][loc][sample_label]["B"]
-                        psi = calculate_psi_MXE(sample_A, sample_A)
+                        psi = calculate_psi_MXE(sample_A, sample_B)
                         writeMe.extend([sample_A, sample_B, psi])
                     out.write("\t".join(map(str, writeMe)) + "\n")
     
@@ -309,13 +314,13 @@ def main(options):
 
 if __name__ == "__main__":
     parser = OptionParser()
-
     
     parser.add_option("--sample", nargs=2, action="append", dest="samples", help="Two values: --sample filename label")
     parser.add_option("--compare", dest="compare", default=False, action="store_true", help="run 2-way comparison (only works when 2 samples are provided)")
     parser.add_option("--pvalue", dest="pval", default=0.05, help="p-value cutoff for chi2 or fisher exact")
     parser.add_option("--splice_type", dest="splicetype", default=["SE", "MXE"], action="append")
     parser.add_option("--species", "-s", dest="species", default=None)
+    parser.add_option("--name", "-n", dest="name", default="oldsplice")
 
     options, args = parser.parse_args() 
     options.splicetype = list(set(options.splicetype)) #remove redundant items
