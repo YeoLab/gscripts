@@ -212,10 +212,11 @@ def skipped_exon_figure(ax, which_axis='y'):
     >>> skipped_exon_figure(ax, 'x')
     """
     # fig.subplots_adjust(left=subplots_adjust_left)
-    limits = ax.axis()
-    delta_x = limits[1] - limits[0]
-    delta_y = limits[3] - limits[2]
-    leftmost_x = -.2 * delta_x if which_axis == 'y' else -0.05
+    xmin, xmax, ymin, ymax = ax.axis()
+    delta_x = xmax - xmin
+    delta_y = ymax - ymin
+    leftmost_x = xmin - (.2 * delta_x) if which_axis == 'y' \
+        else xmin - (0.05 * delta_x)
     width = 0.04 * delta_x
     height = 0.025 * delta_y
 
@@ -609,3 +610,113 @@ def rpkm_and_mapping_stats(rpkm, mapping_stats, img_filename, sort_by_reads=Fals
     # print 'finished saving pdf.'
     fig.tight_layout()
     fig.savefig('%s.png' % img_filename, dpi=500)
+
+
+def splicing_diagram(ax, bottom_y, highlight=None, height_multiplier=0.025):
+    which_axis = 'y'
+
+    limits = ax.axis()
+    delta_x = limits[1] - limits[0]
+    delta_y = limits[3] - limits[2]
+    leftmost_x = -.3 * delta_x if which_axis == 'y' else -0.05
+    width = 0.04 * delta_x
+    height = height_multiplier * delta_y
+
+    # bottom_y = -0.01
+    top_y = 0.975
+
+    highlight_color = ppl.set1[1]
+
+    exon_kwargs = {'fill': True, 'width': width, 'height': height,
+                   'clip_on': False, 'facecolor': 'white', #ppl.almost_black,
+                   'edgecolor': ppl.almost_black, 'alpha': 0.5}
+    intron_kwargs = {'fill': True, 'height': height * 0.5,
+                     'clip_on': False, 'facecolor': highlight_color,
+                     #ppl.almost_black,
+                     'edgecolor': 'none', 'alpha': 0.5}
+
+    ax.add_patch(patches.Rectangle((leftmost_x, bottom_y),
+                                   **exon_kwargs))
+
+    ax.add_patch(patches.Rectangle((leftmost_x + 2 * width, bottom_y),
+                                   **exon_kwargs))
+    ax.add_patch(patches.Rectangle((leftmost_x + 4 * width, bottom_y),
+                                   **exon_kwargs))
+
+    # ad alternative splicing markers
+    left_alternative = [(leftmost_x + 1 * width, bottom_y + height),
+                        (leftmost_x + 1.5 * width, bottom_y + 1.5 * height),
+                        (leftmost_x + 2 * width, bottom_y + height)]
+    ax.add_patch(patches.PathPatch(patches.Path(left_alternative),
+                                   edgecolor=ppl.almost_black, clip_on=False))
+
+    right_alternative = [(leftmost_x + 3 * width, bottom_y + height),
+                         (leftmost_x + 3.5 * width, bottom_y + 1.5 * height),
+                         (leftmost_x + 4 * width, bottom_y + height)]
+    ax.add_patch(patches.PathPatch(patches.Path(right_alternative),
+                                   edgecolor=ppl.almost_black, clip_on=False))
+
+    constitutive = [(leftmost_x + 1 * width, bottom_y),
+                    (leftmost_x + 2.5 * width, bottom_y - 1 * height),
+                    (leftmost_x + 4 * width, bottom_y)]
+    ax.add_patch(patches.PathPatch(patches.Path(constitutive),
+                                   edgecolor=ppl.almost_black, clip_on=False))
+
+    first_exon_donor = (leftmost_x + 1 * width, bottom_y + 0.5 * height)
+    second_exon_acceptor = (leftmost_x + 2 * width, bottom_y + 0.5 * height)
+    second_exon_donor = (leftmost_x + 3 * width, bottom_y + 0.5 * height)
+    third_exon_acceptor = (leftmost_x + 4 * width, bottom_y + 0.5 * height)
+    splice_site_locs = {'first_exon_donor': first_exon_donor,
+                        'second_exon_acceptor': second_exon_acceptor,
+                        'second_exon_donor': second_exon_donor,
+                        'third_exon_acceptor': third_exon_acceptor}
+
+    alt_exon = {'xy': (leftmost_x + 2 * width, bottom_y),
+                'width': width, 'height': height}
+
+    bottom_intron = bottom_y + 0.25 * height
+    first_alt_intron = {'xy': (leftmost_x + 1 * width, bottom_intron),
+                        'width': width}
+    second_alt_intron = {'xy': (leftmost_x + 3 * width, bottom_intron),
+                         'width': width}
+    constitutive_intron = {'xy': (leftmost_x + 1 * width, bottom_intron),
+                           'width': 3 * width}
+    first_exon_donor_downstream = {
+    'xy': (leftmost_x + 1 * width, bottom_intron),
+    'width': 0.5 * width}
+    second_exon_acceptor_upstream = {
+    'xy': (leftmost_x + 1.5 * width, bottom_intron),
+    'width': 0.5 * width}
+    second_exon_donor_downstream = {
+    'xy': (leftmost_x + 3 * width, bottom_intron),
+    'width': 0.5 * width}
+    third_exon_acceptor_upstream = {
+    'xy': (leftmost_x + 3.5 * width, bottom_intron),
+    'width': 0.5 * width}
+
+    intron_locs = {'first_alt_intron': first_alt_intron,
+                   'second_alt_intron': second_alt_intron,
+                   'constitutive_intron': constitutive_intron,
+                   'first_exon_donor_downstream': first_exon_donor_downstream,
+                   'second_exon_acceptor_upstream': second_exon_acceptor_upstream,
+                   'second_exon_donor_downstream': second_exon_donor_downstream,
+                   'third_exon_acceptor_upstream': third_exon_acceptor_upstream}
+
+    if highlight is not None:
+        if highlight in splice_site_locs:
+            ax.add_patch(patches.Ellipse(splice_site_locs[highlight],
+                                         width=0.4 * width, height=2 * height,
+                                         facecolor=highlight_color, alpha=0.75,
+                                         clip_on=False,
+                                         edgecolor=highlight_color))
+        elif highlight in intron_locs:
+            kwargs = intron_kwargs
+            kwargs.update(intron_locs[highlight])
+            ax.add_patch(patches.Rectangle(**kwargs))
+        elif highlight == 'alt_exon':
+            kwargs = intron_kwargs
+            kwargs.update(alt_exon)
+            ax.add_patch(patches.Rectangle(**kwargs))
+        else:
+            print highlight, 'is not a valid "highlight" argument'
+            
