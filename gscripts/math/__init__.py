@@ -25,7 +25,7 @@ def kld(P, Q):
     Kullback-Leiber divergence of two probability distributions pandas
     dataframes, P and Q
     """
-    return (np.log(P / Q) * P).sum(axis=1)
+    return (np.log2(P / Q) * P).sum(axis=1)
 
 
 def jsd(P, Q):
@@ -46,5 +46,5 @@ def entropy(binned, base=2):
     Given a binned dataframe created by 'binify', find the entropy of each
     row (index)
     """
-    return -((np.log(binned) / np.log(base)) * binned).sum(axis=1)
+    return -((np.log2(binned) / np.log2(base)) * binned).sum(axis=1)
 
