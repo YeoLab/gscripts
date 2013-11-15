@@ -265,6 +265,9 @@ def log_final_out(glob_command, ids_function):
         pieces.append(100.0 * mapping_stats.ix[num_events, :].values \
                       / total_splicing_events)
 
+    print 'pieces', pieces
+    print 'percent_splicing_event_names', percent_splicing_event_names
+    print 'mapping_stats.columns', mapping_stats.columns
     percent_splicing = pd.DataFrame(pieces, index=percent_splicing_event_names,
                                     columns=mapping_stats.columns)
     print 'percent_splicing'
