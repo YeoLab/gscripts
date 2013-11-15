@@ -264,7 +264,7 @@ def log_final_out(glob_command, ids_function):
         #print mapping_stats.ix[num_events, :]
         pieces.append(100.0 * mapping_stats.ix[num_events,
                               :].values \
-                      / total_splicing_events, len(mapping_stats.columns))
+                      / total_splicing_events)
     pieces = [np.reshape(piece, len(mapping_stats.columns)) for piece in pieces]
     #print 'pieces', len(pieces), pieces
     #print 'percent_splicing_event_names', \
