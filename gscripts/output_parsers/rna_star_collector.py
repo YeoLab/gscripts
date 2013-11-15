@@ -254,6 +254,7 @@ def log_final_out(glob_command, ids_function):
                                     for x in number_splicing_event_names]
     total_splicing_events = mapping_stats.ix['Number of splices: Total',
                             :].values.astype(float)
+    total_splicing_events.replace(0, np.nan)
 
     pieces = []
     for num_events in zip(number_splicing_event_names):
