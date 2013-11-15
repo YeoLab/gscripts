@@ -37,7 +37,7 @@ def jsd(P, Q):
     weight = 0.5
     M = weight * (P + Q)
 
-    result = weight * kld(P, M) + weight * kld(Q, M)
+    result = weight * kld(P, M) + (1 - weight) * kld(Q, M)
     return result
 
 
