@@ -256,7 +256,7 @@ def log_final_out(glob_command, ids_function):
                             :].replace(0, np.nan).values.astype(float)
     #total_splicing_events.replace(0, np.nan)
 
-    print mapping_stats.column
+    print mapping_stats.columns
 
     pieces = []
     for num_events in zip(number_splicing_event_names):
