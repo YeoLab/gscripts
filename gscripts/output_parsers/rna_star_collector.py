@@ -256,10 +256,11 @@ def log_final_out(glob_command, ids_function):
                             :].values.astype(float)
 
     pieces = []
-    for num_events, percent_events in zip(number_splicing_event_names,
-                                          percent_splicing_event_names):
-        pieces.append(100.0*mapping_stats.ix[num_events,
-                      :].values / total_splicing_events)
+    for num_events in zip(number_splicing_event_names):
+        print num_events
+        print mapping_stats.ix[num_events, :]
+        pieces.append(100.0 * mapping_stats.ix[num_events, :].values \
+                      / total_splicing_events)
 
     return pd.concat((mapping_stats,
                       pd.DataFrame(pieces, index=percent_splicing_event_names,
