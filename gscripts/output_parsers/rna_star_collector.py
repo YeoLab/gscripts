@@ -262,9 +262,10 @@ def log_final_out(glob_command, ids_function):
     for num_events in zip(number_splicing_event_names):
         #print num_events
         #print mapping_stats.ix[num_events, :]
-        pieces.append(100.0 * mapping_stats.ix[num_events, :].values \
-                      / total_splicing_events)
-
+        pieces.append(100.0 * mapping_stats.ix[num_events,
+                              :].values \
+                      / total_splicing_events, len(mapping_stats.columns))
+    pieces = [np.reshape(piece, len(mapping_stats.columns)) for piece in pieces]
     #print 'pieces', len(pieces), pieces
     #print 'percent_splicing_event_names', \
     #    len(percent_splicing_event_names), percent_splicing_event_names
