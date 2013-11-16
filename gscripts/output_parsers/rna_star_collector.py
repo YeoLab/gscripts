@@ -240,7 +240,8 @@ def log_final_out(glob_command, ids_function):
     mapping_stats = pd.concat(series, keys=make_unique(ids), axis=1)
     new_index = [str(x).strip().rstrip(' |') for x in mapping_stats.index]
     mapping_stats.index = new_index
-    mapping_stats = mapping_stats.dropna(how='all')
+    mapping_stats = mapping_stats.dropna(how='all'
+    i)
     mapping_stats = fix_duplicate_columns(mapping_stats)
 
     # Turn all the number of splicing events into percentages for statistical
