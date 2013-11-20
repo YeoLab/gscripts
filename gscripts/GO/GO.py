@@ -116,7 +116,7 @@ class mm9GO(GO):
 
 class ce10GO(GO):
     def __init__(self, *args, **kwargs):
-        super(mm9GO, self).__init__(ce10GOFile, *args, **kwargs)
+        super(ce10GO, self).__init__(ce10GOFile, *args, **kwargs)
 
 #from yan(gene symbols) -> mouse gene id
 neuro_genes_mouse = """ENSMUSG00000020932
