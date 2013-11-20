@@ -240,7 +240,7 @@ def log_final_out(glob_command, ids_function):
     mapping_stats = pd.concat(series, keys=make_unique(ids), axis=1)
     new_index = [str(x).strip().rstrip(' |') for x in mapping_stats.index]
     mapping_stats.index = new_index
-    mapping_stats = mapping_stats.dropna()
+    mapping_stats = mapping_stats.dropna(how='all')
     mapping_stats = fix_duplicate_columns(mapping_stats)
 
     # Turn all the number of splicing events into percentages for statistical
@@ -253,14 +253,26 @@ def log_final_out(glob_command, ids_function):
     percent_splicing_event_names = [x.replace('Number of', '%')
                                     for x in number_splicing_event_names]
     total_splicing_events = mapping_stats.ix['Number of splices: Total',
-                            :].values.astype(float)
+                            :].replace(0, np.nan).values.astype(float)
+    #total_splicing_events.replace(0, np.nan)
+
+    #print mapping_stats.columns
 
     pieces = []
-    for num_events, percent_events in zip(number_splicing_event_names,
-                                          percent_splicing_event_names):
-        pieces.append(100.0*mapping_stats.ix[num_events,
-                      :].values / total_splicing_events)
-
-    return pd.concat((mapping_stats,
-                      pd.DataFrame(pieces, index=percent_splicing_event_names,
-                                   columns=mapping_stats.columns)))
+    for num_events in zip(number_splicing_event_names):
+        #print num_events
+        #print mapping_stats.ix[num_events, :]
+        pieces.append(100.0 * mapping_stats.ix[num_events,
+                              :].values \
+                      / total_splicing_events)
+    pieces = [np.reshape(piece, len(mapping_stats.columns)) for piece in pieces]
+    #print 'pieces', len(pieces), pieces
+    #print 'percent_splicing_event_names', \
+    #    len(percent_splicing_event_names), percent_splicing_event_names
+    #print 'mapping_stats.columns', len(mapping_stats.columns), \
+    #    mapping_stats.columns
+    percent_splicing = pd.DataFrame(pieces, index=percent_splicing_event_names,
+                                    columns=mapping_stats.columns)
+    #print 'percent_splicing'
+    #print percent_splicing
+    return pd.concat((mapping_stats, percent_splicing))

@@ -186,7 +186,7 @@ def extract_motifs(trios_to_exons, name,
                 if alt_exon:
                     lines.append('%s\t%s\t%s\t%s\t%s\t%s\n'
                                  % (
-                    chrom, exon_start, exon_stop, trio, '.', strand))
+                        chrom, exon_start, exon_stop + 1, trio, '.', strand))
                 second_intron_stop = exon_start if strand == '+' else exon_stop
                 motif_start, motif_stop = \
                     three_prime_motif(second_intron_stop, strand,
@@ -224,7 +224,7 @@ def extract_motifs(trios_to_exons, name,
             exon_start, exon_stop = intron_motif(first_intron_stop,
                                                  third_intron_start, strand)
             lines = add_line(lines, motif_bed_line(chrom, exon_start,
-                                                   exon_stop,
+                                                   exon_stop + 1,
                                                    trio, strand,
                                                    'intron|constitutive',
                                                    name))
@@ -233,7 +233,7 @@ def extract_motifs(trios_to_exons, name,
                                                  second_intron_start,
                                                  strand)
             lines = add_line(lines, motif_bed_line(chrom, exon_start,
-                                                   exon_stop,
+                                                   exon_stop + 1,
                                                    trio, strand,
                                                    'intron|upstream',
                                                    name))
@@ -241,7 +241,7 @@ def extract_motifs(trios_to_exons, name,
             exon_start, exon_stop = intron_motif(second_intron_stop,
                                                  third_intron_start, strand)
             lines = add_line(lines, motif_bed_line(chrom, exon_start,
-                                                   exon_stop,
+                                                   exon_stop + 1,
                                                    trio, strand,
                                                    'intron|downstream',
                                                    name))
