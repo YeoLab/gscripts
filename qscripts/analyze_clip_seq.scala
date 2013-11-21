@@ -339,7 +339,7 @@ class AnalizeCLIPSeq extends QScript {
 	     add(new BamToBed(inBam=bamFile, outBed=rmDupedBedFile))
       	     add(new Pyicoclip(inBed = rmDupedBedFile, outBed = pyicoclipResults, regions = genicRegionsLocation(genome) ))
       	     //add(new Ripseeker(inBam = bamFile, outBed=ripseekerResults))
-      	     //add(new IDR(inBam = bamFile, species = genome, genome = chromSizeLocation(genome), outResult = IDRResult, premRNA = premRNA))
+      	     add(new IDR(inBam = bamFile, species = genome, genome = chromSizeLocation(genome), outResult = IDRResult, premRNA = premRNA))
 
       	     add(new countTags(input = bamFile, index = bamIndex, output = countFile, a = exonLocation(genome)))
       	     add(new singleRPKM(input = countFile, output = RPKMFile, s = genome))

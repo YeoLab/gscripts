@@ -93,7 +93,20 @@ class AnalizeCLIPSeq extends QScript {
        this.bamFile = input
        this.bamFileIndex = output
   }
-  
+
+  case class cutadapt(fastq_file: File, noAdapterFastq: File, adapterReport: File, adapter: List[String]) extends Cutadapt{
+       override def shortDescription = "cutadapt"
+
+       this.inFastq = fastq_file
+       this.outFastq = noAdapterFastq
+       this.report = adapterReport
+       this.anywhere = adapter ++ List("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+                                     "TTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTT")
+       this.overlap = 5
+       this.length = 18
+       this.quality_cutoff = 6
+       this.isIntermediate = true
+   }  
 def script() {
 
 	
@@ -133,11 +146,10 @@ def script() {
       add(new FastQC(inFastq = fastq_file))
 
       //filters out adapter reads
-      add(new Cutadapt(inFastq = fastq_file, outFastq = noAdapterFastq, 
-          report = adapterReport, 
-          anywhere = adapter ++ List("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA", 
-        		  					 "TTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTT"), 
-          overlap = 5, length = 18, quality_cutoff = 6))
+      add(cutadapt(fastq_file = fastq_file, noAdapterFastq = noAdapterFastq, 
+          adapterReport = adapterReport, 
+          adapter = adapter))
+          
           
       add(new FilterRepetativeRegions(inFastq = noAdapterFastq,
         filtered_results, filteredFastq))
