@@ -131,9 +131,11 @@ def plot_pca(df, c_scale=None, x_pc=1, y_pc=2, distance='L1', \
              save_as=None, save_format='png', whiten=True, num_vectors=30, \
              figsize=(10, 10), colors_dict=None, markers_dict=None, \
              title='PCA', show_vectors=True, show_point_labels=True, \
-             column_ids_dict=None, index_ids_dict=None,
-             show_vector_labels=True, fig=None, ax=None):
-    # gather ids and values
+             column_ids_dict=None, index_ids_dict=None, \
+             show_vector_labels=True, fig=None, ax=None, \
+             marker_size=None, vector_width=None, \
+              axis_label_size=None, title_size=None, vector_label_size=None, \
+              point_label_size=None):
     """
     Given a pandas dataframe, performs PCA and plots the results in a
     convenient single function.
@@ -171,8 +173,10 @@ def plot_pca(df, c_scale=None, x_pc=1, y_pc=2, distance='L1', \
     @return: x, y, marker, distance of each vector in the data.
     """
 
+
     row_ids = []
     column_ids = []
+
     if index_ids_dict is not None:
         for ind in df.index:
             try:
@@ -185,7 +189,6 @@ def plot_pca(df, c_scale=None, x_pc=1, y_pc=2, distance='L1', \
 
     else:
         row_ids = df.index
-        # column_ids = df.columns
 
     if column_ids_dict is not None:
 
@@ -220,7 +223,12 @@ def plot_pca(df, c_scale=None, x_pc=1, y_pc=2, distance='L1', \
 
 
     size_scale = sqrt(figsize[0] * figsize[1]) / 1.5
-
+    marker_size = size_scale*5 if not(marker_size) else marker_size
+    vector_width = .5 if not vector_width else vector_width
+    axis_label_size = size_scale*2 if not axis_label_size else axis_label_size
+    title_size = size_scale*3 if not title_size else title_size
+    vector_label_size = size_scale if not vector_label_size else vector_label_size
+    point_label_size = size_scale if not point_label_size else point_label_size
 
     # sort features by magnitude/contribution to transformation
     comp_magn = []
@@ -265,9 +273,9 @@ def plot_pca(df, c_scale=None, x_pc=1, y_pc=2, distance='L1', \
                 except:
                     pass
 
-            ax.text(x, y, an_id, color=color) #, size=size_scale)
+            ax.text(x, y, an_id, color=color, size=point_label_size)
 
-        ppl.scatter(ax, x, y, marker=marker, color=color, s=size_scale * 10)
+        ppl.scatter(ax, x, y, marker=marker, color=color, s=marker_size, edgecolor='gray')
 
 
     vectors = sorted(comp_magn, key=lambda item: item[3], reverse=True)[
@@ -275,30 +283,26 @@ def plot_pca(df, c_scale=None, x_pc=1, y_pc=2, distance='L1', \
     for x, y, marker, distance in vectors:
 
         if show_vectors:
-            ppl.plot(ax, [0, x], [0, y], color=ppl.almost_black, linewidth=.5)
+            ppl.plot(ax, [0, x], [0, y], color=ppl.almost_black, linewidth=vector_width)
             if show_vector_labels:
-                # if column_ids_dict:
-                #     try:
-                #         marker = column_ids_dict[marker]
-                #     except:
-                #         pass
+                 if column_ids_dict:
+                     try:
+                         marker = column_ids_dict[marker]
+                     except:
+                         pass
 
-                ax.text(x, y, marker, color='black')#, size=size_scale)
+                ax.text(1.1*x, 1.1*y, marker, color='black', size=vector_label_size)
 
     var_1 = int(pca.explained_variance_ratio_[x_pc - 1] * 100)
     var_2 = int(pca.explained_variance_ratio_[y_pc - 1] * 100)
 
     ax.set_xlabel(
-        'Principal Component {} (Explains {}% Of Variance)'.format(str(x_pc),
-                                                                   str(
-                                                                       var_1)))#,
-        # size=size_scale * 2)
+        'Principal Component {} (Explains {}% Of Variance)'.format(str(x_pc), \
+            str(var_1)), size=axis_label_size)
     ax.set_ylabel(
-        'Principal Component {} (Explains {}% Of Variance)'.format(str(y_pc),
-                                                                   str(
-                                                                       var_2)))#,
-        # size=size_scale * 2)
-    ax.set_title(title)#, size=size_scale * 3)
+        'Principal Component {} (Explains {}% Of Variance)'.format(str(y_pc), \
+            str(var_2)), size=axis_label_size)
+    ax.set_title(title, size=title_size)
 
     if save_as:
         fig.savefig(save_as, format=save_format)
