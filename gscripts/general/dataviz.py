@@ -331,7 +331,7 @@ def skipped_exon_figure(ax, which_axis='y'):
     xmin, xmax, ymin, ymax = ax.axis()
     delta_x = xmax - xmin
     delta_y = ymax - ymin
-    leftmost_x = xmin - (.2 * delta_x) if which_axis == 'y' \
+    leftmost_x = xmin - (.1 * delta_x) if which_axis == 'y' \
         else xmin - (0.05 * delta_x)
     width = 0.04 * delta_x
     height = 0.025 * delta_y
