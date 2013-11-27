@@ -116,7 +116,7 @@ class AnalyzeRNASeq extends QScript {
        this.isIntermediate = true
    }  
 
-def stringentJobs(fastq_file) {
+def stringentJobs(fastq_file: File) {
 
         // run if stringent
       val noPolyAFastq = swapExt(fastq_file, ".fastq", ".polyATrim.fastq")
@@ -147,7 +147,7 @@ def script() {
    for (item : Tuple3[File, String, String] <- valueList) {
       var fastq_file: File = item._1
       var fastq_pair = _
-      if (item._2 != 'null'){
+      if (item._2 != "null"){
         fastqPair = new File(item._2)
       }
       var filteredFastq = _
