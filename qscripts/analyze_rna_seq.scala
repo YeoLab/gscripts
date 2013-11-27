@@ -11,7 +11,7 @@ import org.broadinstitute.sting.queue.extensions.gatk._
 
 import org.broadinstitute.sting.queue.extensions.yeo._
 
-class AnalizeCLIPSeq extends QScript {
+class AnalyzeRNASeq extends QScript {
   // Script argunment
   @Input(doc = "input file or txt file of input files")
   var input: File = _
@@ -33,6 +33,9 @@ class AnalizeCLIPSeq extends QScript {
 
   @Argument(doc = "not stranded", required = false)
   var not_stranded: Boolean = false
+
+  @Argument(doc = "stringent run", required = false)
+  var stringent: Boolean = false
 
   @Argument(doc = "location to place trackhub (must have the rest of the track hub made before starting script)")
   var location: String = "rna_seq"
@@ -67,8 +70,13 @@ class AnalizeCLIPSeq extends QScript {
 	this.tags_annotation = a
   }
 
-  case class star(input: File, output: File, stranded : Boolean) extends STAR {
+  case class star(input: File, output: File, stranded : Boolean, paired : File = _) extends STAR {
        this.inFastq = input
+
+       if(paired) {
+        this.inFastqPair = paired
+       }
+
        this.outSam = output
        //intron motif should be used if the data is not stranded
        this.intronMotif = stranded
@@ -107,23 +115,49 @@ class AnalizeCLIPSeq extends QScript {
        this.quality_cutoff = 6
        this.isIntermediate = true
    }  
-def script() {
 
-	
-    val fileList: Seq[File] = QScriptUtils.createSeqFromFile(input)
-    var trackHubFiles: List[File] = List()
+def stringentJobs(fastq_file) {
 
-    for (fastq_file: File <- fileList) {
-
+        // run if stringent
       val noPolyAFastq = swapExt(fastq_file, ".fastq", ".polyATrim.fastq")
       val noPolyAReport = swapExt(noPolyAFastq, ".fastq", ".metrics")
-
       val noAdapterFastq = swapExt(noPolyAFastq, ".fastq", ".adapterTrim.fastq")
       val adapterReport = swapExt(noAdapterFastq, ".fastq", ".metrics")
-
       val filteredFastq = swapExt(noAdapterFastq, ".fastq", ".rmRep.fastq")
       val filtered_results = swapExt(filteredFastq, ".fastq", ".metrics")
+            //filters out adapter reads
+      add(cutadapt(fastq_file = fastq_file, noAdapterFastq = noAdapterFastq, 
+          adapterReport = adapterReport, 
+          adapter = adapter))
+          
+          
+      add(new FilterRepetativeRegions(inFastq = noAdapterFastq,
+        filtered_results, filteredFastq))
+      add(new FastQC(filteredFastq))
 
+      return filteredFastq
+}
+def script() {
+
+    val fileList = QScriptUtils.createArgsFromFile(input)
+    var trackHubFiles: List[File] = List()
+    for ((groupName, valueList) <- (fileList groupBy (_._3))) {
+       var combinedBams : Seq[File] = List()
+
+   for (item : Tuple3[File, String, String] <- valueList) {
+      var fastq_file: File = item._1
+      var fastq_pair = _
+      if (item._2 != 'null'){
+        fastqPair = new File(item._2)
+      }
+      var filteredFastq = _
+      if(stringent && item._2 == "null") { 
+        filteredFastq = stringentJobs(fastq_file)
+      } else {
+        filteredFastq = fastq_file
+      }
+
+      // run regardless of stringency
       val samFile = swapExt(filteredFastq, ".fastq", ".sam")
       val sortedBamFile = swapExt(samFile, ".sam", ".sorted.bam")
       val rgSortedBamFile = swapExt(sortedBamFile, ".bam", ".rg.bam")
@@ -139,22 +173,18 @@ def script() {
       val bigWigFileNeg = swapExt(bedGraphFileNegInverted, ".t.bg", ".bw")
 
       val countFile = swapExt(rgSortedBamFile, "bam", "count")
-      val RPKMFile = swapExt(countFile, "count", "RPKM")
+      val RPKMFile = swapExt(countFile, "count", "rpkm")
 
       //add bw files to list for printing out later
       trackHubFiles = trackHubFiles ++ List(bedGraphFileNegInverted, bigWigFilePos)
       add(new FastQC(inFastq = fastq_file))
 
-      //filters out adapter reads
-      add(cutadapt(fastq_file = fastq_file, noAdapterFastq = noAdapterFastq, 
-          adapterReport = adapterReport, 
-          adapter = adapter))
-          
-          
-      add(new FilterRepetativeRegions(inFastq = noAdapterFastq,
-        filtered_results, filteredFastq))
-      add(new FastQC(filteredFastq))
-      add(new star(filteredFastq, samFile, not_stranded))
+      if(item._2 != "null") { //if paired
+        add(new star(filteredFastq, samFile, not_stranded, fastqPair))
+      } else { //unpaired
+        add(new star(filteredFastq, samFile, not_stranded))
+      }
+      
       add(new sortSam(samFile, sortedBamFile, SortOrder.coordinate))
       add(addOrReplaceReadGroups(sortedBamFile, rgSortedBamFile))
       add(new samtoolsIndexFunction(rgSortedBamFile, indexedBamFile))
