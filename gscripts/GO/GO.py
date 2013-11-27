@@ -12,6 +12,7 @@ import numpy as np
 
 mm9GOFile = "/nas3/lovci/projects/GO/mm9.ENSG_to_GO.txt.gz"
 hg19GOFile = "/nas3/lovci/projects/GO/hg19.ENSG_to_GO.txt.gz"
+ce10GOFile = "/nas3/lovci/projects/GO/ce10.ENSG_to_GO.txt.gz"
 
 def generateOntology(df):
     from collections import defaultdict
@@ -112,6 +113,10 @@ class hg19GO(GO):
 class mm9GO(GO):
     def __init__(self, *args, **kwargs):
         super(mm9GO, self).__init__(mm9GOFile, *args, **kwargs)
+
+class ce10GO(GO):
+    def __init__(self, *args, **kwargs):
+        super(ce10GO, self).__init__(ce10GOFile, *args, **kwargs)
 
 #from yan(gene symbols) -> mouse gene id
 neuro_genes_mouse = """ENSMUSG00000020932
