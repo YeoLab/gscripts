@@ -65,6 +65,7 @@ class AnalizeCLIPSeq extends QScript {
 	this.inBam = input
 	this.outCount = output
 	this.tags_annotation = a
+	this.flip = flipped
   }
 
   case class star(input: File, output: File, stranded : Boolean) extends STAR {
