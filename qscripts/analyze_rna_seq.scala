@@ -51,6 +51,15 @@ class AnalyzeRNASeq extends QScript {
     this.createIndex = true
   }
 
+  case class filterRepetitiveRegions(noAdapterFastq: File, filteredResults: File, filteredFastq: File) extends FilterRepetitiveRegions {
+       override def shortDescription = "FilterRepetitiveRegions"
+
+       this.inFastq = noAdapterFastq
+       this.outCounts = filteredResults
+       this.outNoRep = filteredFastq
+       this.isIntermediate = true
+  }
+
   case class genomeCoverageBed(input: File, outBed : File, cur_strand: String) extends GenomeCoverageBed {
         this.inBam = input
         this.genomeSize = chr_sizes
@@ -70,10 +79,10 @@ class AnalyzeRNASeq extends QScript {
 	this.tags_annotation = a
   }
 
-  case class star(input: File, output: File, stranded : Boolean, paired : File = _) extends STAR {
+  case class star(input: File, output: File, stranded : Boolean, paired : File = null) extends STAR {
        this.inFastq = input
 
-       if(paired) {
+       if(paired != null) {
         this.inFastqPair = paired
        }
 
@@ -116,7 +125,7 @@ class AnalyzeRNASeq extends QScript {
        this.isIntermediate = true
    }  
 
-def stringentJobs(fastq_file: File) {
+def stringentJobs(fastq_file: File) : File = {
 
         // run if stringent
       val noPolyAFastq = swapExt(fastq_file, ".fastq", ".polyATrim.fastq")
@@ -131,26 +140,24 @@ def stringentJobs(fastq_file: File) {
           adapter = adapter))
           
           
-      add(new FilterRepetativeRegions(inFastq = noAdapterFastq,
-        filtered_results, filteredFastq))
+      add(filterRepetitiveRegions(noAdapterFastq, filtered_results, filteredFastq))
       add(new FastQC(filteredFastq))
 
       return filteredFastq
 }
 def script() {
 
+    var stringent = false
     val fileList = QScriptUtils.createArgsFromFile(input)
     var trackHubFiles: List[File] = List()
-    for ((groupName, valueList) <- (fileList groupBy (_._3))) {
-       var combinedBams : Seq[File] = List()
-
-   for (item : Tuple3[File, String, String] <- valueList) {
+    
+    for (item : Tuple3[File, String, String] <- fileList) {
       var fastq_file: File = item._1
-      var fastq_pair = _
+      var fastqPair: File = null
       if (item._2 != "null"){
         fastqPair = new File(item._2)
       }
-      var filteredFastq = _
+      var filteredFastq: File = null
       if(stringent && item._2 == "null") { 
         filteredFastq = stringentJobs(fastq_file)
       } else {
@@ -204,6 +211,7 @@ def script() {
     add(new MakeTrackHub(trackHubFiles, location, species))
   }
 }
+
 
 
 
