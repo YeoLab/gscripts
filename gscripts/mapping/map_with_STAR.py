@@ -19,6 +19,17 @@ for file in glob('*fastq'):
 --outSAMunmapped Within \
 --outFilterMultimapNmax 10'.format(species, file, file))
 
+for file in glob('*txt'):
+
+	cmd_list.append('/home/yeo-lab/software/STAR_2.3.0e/STAR \
+--runMode alignReads \
+--runThreadN 16 \
+--genomeDir /projects/ps-yeolab/genomes/{}/star/ \
+--genomeLoad LoadAndRemove \
+--readFilesIn {} --outFileNamePrefix {}. \
+--outSAMunmapped Within \
+--outFilterMultimapNmax 10'.format(species, file, file))
+
 for file in glob('*norep'):
 
 	cmd_list.append('/home/yeo-lab/software/STAR_2.3.0e/STAR \

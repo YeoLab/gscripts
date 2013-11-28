@@ -4,9 +4,9 @@ import sys
 
 species = sys.argv[1]
 try:
-    name = sys.argv[2] + "_map_to_" + species
+    jobname = sys.argv[2] + "_map_to_" + species
 except IndexError:
-    name = "map_to_" + species
+    jobname = "map_to_" + species
 
 cmd_list = []
 
@@ -50,7 +50,8 @@ for file in glob('*R1*gz'):
 --outSAMunmapped Within \
 --outFilterMultimapNmax 1'.format(species, file, pair, name))
 
-sub = Submitter(queue_type='PBS', sh_file=name + '.sh', command_list=cmd_list,
+sub = Submitter(queue_type='PBS', sh_file=jobname + '.sh',
+                command_list=cmd_list,
                 job_name=name)
 sub.write_sh(submit=True, nodes=1, ppn=16, walltime='3:00:00', array=True,
              max_running=15)
