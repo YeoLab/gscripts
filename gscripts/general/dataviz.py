@@ -131,9 +131,11 @@ def plot_pca(df, c_scale=None, x_pc=1, y_pc=2, distance='L1', \
              save_as=None, save_format='png', whiten=True, num_vectors=30, \
              figsize=(10, 10), colors_dict=None, markers_dict=None, \
              title='PCA', show_vectors=True, show_point_labels=True, \
-             column_ids_dict=None, index_ids_dict=None,
-             show_vector_labels=True, fig=None, ax=None):
-    # gather ids and values
+             column_ids_dict=None, index_ids_dict=None, \
+             show_vector_labels=True, fig=None, ax=None, \
+             marker_size=None, vector_width=None, \
+              axis_label_size=None, title_size=None, vector_label_size=None, \
+              point_label_size=None):
     """
     Given a pandas dataframe, performs PCA and plots the results in a
     convenient single function.
@@ -171,8 +173,10 @@ def plot_pca(df, c_scale=None, x_pc=1, y_pc=2, distance='L1', \
     @return: x, y, marker, distance of each vector in the data.
     """
 
+
     row_ids = []
     column_ids = []
+
     if index_ids_dict is not None:
         for ind in df.index:
             try:
@@ -185,7 +189,6 @@ def plot_pca(df, c_scale=None, x_pc=1, y_pc=2, distance='L1', \
 
     else:
         row_ids = df.index
-        # column_ids = df.columns
 
     if column_ids_dict is not None:
 
@@ -220,7 +223,12 @@ def plot_pca(df, c_scale=None, x_pc=1, y_pc=2, distance='L1', \
 
 
     size_scale = sqrt(figsize[0] * figsize[1]) / 1.5
-
+    marker_size = size_scale*5 if not(marker_size) else marker_size
+    vector_width = .5 if not vector_width else vector_width
+    axis_label_size = size_scale*2 if not axis_label_size else axis_label_size
+    title_size = size_scale*3 if not title_size else title_size
+    vector_label_size = size_scale if not vector_label_size else vector_label_size
+    point_label_size = size_scale if not point_label_size else point_label_size
 
     # sort features by magnitude/contribution to transformation
     comp_magn = []
@@ -265,9 +273,9 @@ def plot_pca(df, c_scale=None, x_pc=1, y_pc=2, distance='L1', \
                 except:
                     pass
 
-            ax.text(x, y, an_id, color=color) #, size=size_scale)
+            ax.text(x, y, an_id, color=color, size=point_label_size)
 
-        ppl.scatter(ax, x, y, marker=marker, color=color, s=size_scale * 10)
+        ppl.scatter(ax, x, y, marker=marker, color=color, s=marker_size, edgecolor='gray')
 
 
     vectors = sorted(comp_magn, key=lambda item: item[3], reverse=True)[
@@ -275,30 +283,26 @@ def plot_pca(df, c_scale=None, x_pc=1, y_pc=2, distance='L1', \
     for x, y, marker, distance in vectors:
 
         if show_vectors:
-            ppl.plot(ax, [0, x], [0, y], color=ppl.almost_black, linewidth=.5)
+            ppl.plot(ax, [0, x], [0, y], color=ppl.almost_black, linewidth=vector_width)
             if show_vector_labels:
-                # if column_ids_dict:
-                #     try:
-                #         marker = column_ids_dict[marker]
-                #     except:
-                #         pass
+                 if column_ids_dict:
+                     try:
+                         marker = column_ids_dict[marker]
+                     except:
+                         pass
 
-                ax.text(x, y, marker, color='black')#, size=size_scale)
+                 ax.text(1.1*x, 1.1*y, marker, color='black', size=vector_label_size)
 
     var_1 = int(pca.explained_variance_ratio_[x_pc - 1] * 100)
     var_2 = int(pca.explained_variance_ratio_[y_pc - 1] * 100)
 
     ax.set_xlabel(
-        'Principal Component {} (Explains {}% Of Variance)'.format(str(x_pc),
-                                                                   str(
-                                                                       var_1)))#,
-        # size=size_scale * 2)
+        'Principal Component {} (Explains {}% Of Variance)'.format(str(x_pc), \
+            str(var_1)), size=axis_label_size)
     ax.set_ylabel(
-        'Principal Component {} (Explains {}% Of Variance)'.format(str(y_pc),
-                                                                   str(
-                                                                       var_2)))#,
-        # size=size_scale * 2)
-    ax.set_title(title)#, size=size_scale * 3)
+        'Principal Component {} (Explains {}% Of Variance)'.format(str(y_pc), \
+            str(var_2)), size=axis_label_size)
+    ax.set_title(title, size=title_size)
 
     if save_as:
         fig.savefig(save_as, format=save_format)
@@ -331,7 +335,7 @@ def skipped_exon_figure(ax, which_axis='y'):
     xmin, xmax, ymin, ymax = ax.axis()
     delta_x = xmax - xmin
     delta_y = ymax - ymin
-    leftmost_x = xmin - (.2 * delta_x) if which_axis == 'y' \
+    leftmost_x = xmin - (.1 * delta_x) if which_axis == 'y' \
         else xmin - (0.05 * delta_x)
     width = 0.04 * delta_x
     height = 0.025 * delta_y
@@ -835,51 +839,4 @@ def splicing_diagram(ax, bottom_y, highlight=None, height_multiplier=0.025):
             ax.add_patch(patches.Rectangle(**kwargs))
         else:
             print highlight, 'is not a valid "highlight" argument'
-
-
-def cdf(data, bins=50):
-
-    data = np.ma.masked_array(data, np.isnan(data))
-    minimum = np.min(data)-.000001
-    maximum = np.max(data)+.000001
-    pos = np.linspace(minimum, maximum, bins+1)
-    xs = np.linspace(minimum, maximum, bins+1)[:-1]
-    ys = np.linspace(minimum, maximum, bins+1)[1:]
-    ecdf = np.ndarray(shape=(bins+1, 1))
-    ecdf[0] = 0
-    cumSum = 0
-    for i, (x, y) in enumerate(zip(xs, ys)):
-        region = len(data[np.where((data >= x) & (data < y))])
-        cumSum += region/float(len(data))
-        ecdf[i+1] = cumSum
-    return pos, ecdf
-
-
-def pdf(data, bins=50):
-    data = np.array(data, dtype=float)
-    minimum = np.min(data)-.000001
-    maximum = np.max(data)+.000001
-    pos = np.linspace(minimum, maximum, bins+1)
-    xs = np.linspace(minimum, maximum, bins+1)[:-1]
-    ys = np.linspace(minimum, maximum, bins+1)[1:]
-    pdf = np.ndarray(shape=(bins+1, 1))
-    pdf[0] = 0
-    for i, (x, y) in enumerate(zip(xs, ys)):
-        region = len(data[np.where((data >= x) & (data < y))])
-        prob = region/float(len(data))
-        pdf[i+1] = prob
-    return pos, pdf
-
-
-def plot_cdf(data, bins=50, ax=None):
-    if ax is None:
-        ax = plt.gca()
-    x, y = cdf(data, bins=bins)
-    ax.plot(x,y)
-
-
-def plot_pdf(data, bins=50, ax=None):
-    if ax is None:
-        ax = plt.gca()
-    x, y = pdf(data, bins=bins)
-    ax.plot(x,y)
+            
