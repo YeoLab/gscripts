@@ -835,4 +835,51 @@ def splicing_diagram(ax, bottom_y, highlight=None, height_multiplier=0.025):
             ax.add_patch(patches.Rectangle(**kwargs))
         else:
             print highlight, 'is not a valid "highlight" argument'
-            
+
+
+def cdf(data, bins=50):
+
+    data = np.ma.masked_array(data, np.isnan(data))
+    minimum = np.min(data)-.000001
+    maximum = np.max(data)+.000001
+    pos = np.linspace(minimum, maximum, bins+1)
+    xs = np.linspace(minimum, maximum, bins+1)[:-1]
+    ys = np.linspace(minimum, maximum, bins+1)[1:]
+    ecdf = np.ndarray(shape=(bins+1, 1))
+    ecdf[0] = 0
+    cumSum = 0
+    for i, (x, y) in enumerate(zip(xs, ys)):
+        region = len(data[np.where((data >= x) & (data < y))])
+        cumSum += region/float(len(data))
+        ecdf[i+1] = cumSum
+    return pos, ecdf
+
+
+def pdf(data, bins=50):
+    data = np.array(data, dtype=float)
+    minimum = np.min(data)-.000001
+    maximum = np.max(data)+.000001
+    pos = np.linspace(minimum, maximum, bins+1)
+    xs = np.linspace(minimum, maximum, bins+1)[:-1]
+    ys = np.linspace(minimum, maximum, bins+1)[1:]
+    pdf = np.ndarray(shape=(bins+1, 1))
+    pdf[0] = 0
+    for i, (x, y) in enumerate(zip(xs, ys)):
+        region = len(data[np.where((data >= x) & (data < y))])
+        prob = region/float(len(data))
+        pdf[i+1] = prob
+    return pos, pdf
+
+
+def plot_cdf(data, bins=50, ax=None):
+    if ax is None:
+        ax = plt.gca()
+    x, y = cdf(data, bins=bins)
+    ax.plot(x,y)
+
+
+def plot_pdf(data, bins=50, ax=None):
+    if ax is None:
+        ax = plt.gca()
+    x, y = pdf(data, bins=bins)
+    ax.plot(x,y)
