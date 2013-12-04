@@ -77,7 +77,11 @@ class AnalyzeRNASeq extends QScript {
 	this.inBam = input
 	this.outCount = output
 	this.tags_annotation = a
-	this.flip = flipped
+	if(not_stranded) {
+	 this.flip = "both"
+	} else {
+	 this.flip = flipped
+	}
   }
 
   case class star(input: File, output: File, stranded : Boolean, paired : File = null) extends STAR {
@@ -153,21 +157,10 @@ def script() {
     var trackHubFiles: List[File] = List()
     
     for (item : Tuple3[File, String, String] <- fileList) {
-      var fastq_file: File = item._1
-      var fastqPair: File = null
-      if (item._2 != "null"){
-        fastqPair = new File(item._2)
-      }
-      var filteredFastq: File = null
-      if(stringent && item._2 == "null") { 
-        filteredFastq = stringentJobs(fastq_file)
-      } else {
-        filteredFastq = fastq_file
-      }
+      var bamFile = item._1
 
       // run regardless of stringency
-      val samFile = swapExt(filteredFastq, ".fastq", ".sam")
-      val sortedBamFile = swapExt(samFile, ".sam", ".sorted.bam")
+      val sortedBamFile = swapExt(bamFile, ".bam", ".sorted.bam")
       val rgSortedBamFile = swapExt(sortedBamFile, ".bam", ".rg.bam")
       val indexedBamFile = swapExt(rgSortedBamFile, "", ".bai")
       
@@ -185,15 +178,8 @@ def script() {
 
       //add bw files to list for printing out later
       trackHubFiles = trackHubFiles ++ List(bedGraphFileNegInverted, bigWigFilePos)
-      add(new FastQC(inFastq = fastq_file))
-
-      if(item._2 != "null") { //if paired
-        add(new star(filteredFastq, samFile, not_stranded, fastqPair))
-      } else { //unpaired
-        add(new star(filteredFastq, samFile, not_stranded))
-      }
-      
-      add(new sortSam(samFile, sortedBamFile, SortOrder.coordinate))
+      add(new FastQC(inFastq = bamFile))
+      add(new sortSam(bamFile, sortedBamFile, SortOrder.coordinate))
       add(addOrReplaceReadGroups(sortedBamFile, rgSortedBamFile))
       add(new samtoolsIndexFunction(rgSortedBamFile, indexedBamFile))
       add(new CalculateNRF(inBam = rgSortedBamFile, genomeSize = chr_sizes, outNRF = NRFFile))
