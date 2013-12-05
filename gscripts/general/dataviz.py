@@ -204,6 +204,8 @@ def heatmap(df, title=None, colorbar_label='values',
     @param plot_df:
     @return: @rtype: @raise TypeError:
     """
+    almost_black = '#262626'
+    sch.set_link_color_palette([almost_black])
     if type(plot_df) is None:
         plot_df = df
 
