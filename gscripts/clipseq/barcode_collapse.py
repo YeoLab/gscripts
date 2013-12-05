@@ -59,7 +59,7 @@ def barcode_collapse(inBam, outBam, randomer):
     
     outTotal = open(outBam + ".total.wiggle", 'w')
     outBarcodes = open(outBam + ".barcodes.wiggle", 'w')
-    outEntropy = open(outBam + "entropy.wiggle", 'w')
+    outEntropy = open(outBam + ".entropy.wiggle", 'w')
 
     inBam = pysam.Samfile(inBam, 'rb')
     
