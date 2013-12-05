@@ -170,6 +170,8 @@ def heatmap(df, title=None, colorbar_label='values',
             figsize=None,
             label_rows=True,
             label_cols=True,
+            vmin=None,
+            vmax=None,
 
             #col_labels=None,
             #row_labels=None,
@@ -217,15 +219,19 @@ def heatmap(df, title=None, colorbar_label='values',
     divergent = df.max().max() > 0 and df.min().min() < 0
 
     if color_scale == 'log':
-        vmin = max(np.floor(df.dropna(how='all').min().dropna().min()), 1e-10)
-        vmax = np.ceil(df.dropna(how='all').max().dropna().max())
+        if vmin is None:
+            vmin = max(np.floor(df.dropna(how='all').min().dropna().min()),
+                       1e-10)
+        if vmax is None:
+            vmax = np.ceil(df.dropna(how='all').max().dropna().max())
         my_norm = mpl.colors.LogNorm(vmin, vmax)
         print 'vmax', vmax
         print 'vmin', vmin
     elif divergent:
         abs_max = abs(df.max().max())
         abs_min = abs(df.min().min())
-        vmax = max(abs_max, abs_min)
+        if vmax is None:
+            vmax = max(abs_max, abs_min)
         my_norm = mpl.colors.Normalize(vmin=-vmax, vmax=vmax)
     else:
         my_norm = None
@@ -322,11 +328,10 @@ def heatmap(df, title=None, colorbar_label='values',
     ### heatmap ####
     heatmap_ax = fig.add_subplot(heatmap_gridspec[nrows - 1, ncols - 1])
     heatmap_ax_pcolormesh = \
-        heatmap_ax.pcolormesh(plot_df.ix[row_dendrogram_distances[
-                                             'leaves'],
+        heatmap_ax.pcolormesh(plot_df.ix[row_dendrogram_distances['leaves'],
                                          column_dendrogram_distances[
                                              'leaves']].values,
-                              norm=my_norm, cmap=cmap)
+                              norm=my_norm, cmap=cmap, vmin=vmin, vmax=vmax)
     heatmap_ax.set_ylim(0, df.shape[0])
     heatmap_ax.set_xlim(0, df.shape[1])
     clean_axis(heatmap_ax)
