@@ -339,7 +339,7 @@ def heatmap(df, title=None, colorbar_label='values',
     ## row labels ##
     if isinstance(label_rows, Iterable):
         if len(label_rows) == df.shape[0]:
-            yticklabels = label_rows
+            yticklabels = label_rows[row_dendrogram_distances['leaves']]
             label_rows = True
         else:
             raise BaseException("Length of 'label_rows' must be the same as "
@@ -359,12 +359,12 @@ def heatmap(df, title=None, colorbar_label='values',
     ## col labels ##
     if isinstance(label_cols, Iterable):
         if len(label_cols) == df.shape[0]:
-            xticklabels = label_rows
+            xticklabels = label_cols[column_dendrogram_distances['leaves']]
             label_cols = True
         else:
             raise BaseException("Length of 'label_cols' must be the same as "
                                 "df.shape[1]")
-    elif label_rows:
+    elif label_cols:
         xticklabels = df.columns[column_dendrogram_distances['leaves']]
 
     if label_cols:
