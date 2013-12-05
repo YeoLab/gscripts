@@ -408,7 +408,7 @@ def heatmap(df, title=None, colorbar_label='values',
 def plot_pca(df, c_scale=None, x_pc=1, y_pc=2, distance='L1', \
              save_as=None, save_format='png', whiten=True, num_vectors=30, \
              figsize=(10, 10), colors_dict=None, markers_dict=None, \
-             title='PCA', show_vectors=True, show_point_labels=True, \
+             title=None, show_vectors=True, show_point_labels=True, \
              column_ids_dict=None, index_ids_dict=None, \
              show_vector_labels=True, fig=None, ax=None, \
              marker_size=None, vector_width=None, \
