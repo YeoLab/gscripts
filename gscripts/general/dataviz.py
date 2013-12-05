@@ -318,7 +318,7 @@ def heatmap(df, title=None, colorbar_label='values',
     ## row labels ##
     if label_rows:
         heatmap_ax.set_yticks(np.arange(df.shape[0]) + 0.5)
-        heatmap_ax.yaxis.set_ticks_position('center')
+        heatmap_ax.yaxis.set_ticks_position('left')
         heatmap_ax.set_yticklabels(df.index[row_dendrogram_distances['leaves']],
                                    fontsize=ylabel_fontsize)
 
@@ -691,11 +691,6 @@ def rpkm_and_mapping_stats(rpkm, mapping_stats, img_filename, sort_by_reads=Fals
                                                             'reads number', :].values.astype(int).argsort()[::-1]]
     else:
         sorted_col = mapping_stats.columns
-
-#     print sorted_col
-
-
-
     fig = plt.figure(figsize=(30,20))
 
     # this took a shit ton of time to figure out these parameters... don't change
@@ -1077,7 +1072,6 @@ def splicing_diagram(ax, bottom_y, highlight=None, height_multiplier=0.025):
 
 
 def cdf(data, bins=50):
-
     data = np.ma.masked_array(data, np.isnan(data))
     minimum = np.min(data)-.000001
     maximum = np.max(data)+.000001
