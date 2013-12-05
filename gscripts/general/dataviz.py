@@ -318,7 +318,7 @@ def heatmap(df, title=None, colorbar_label='values',
     ## row labels ##
     if label_rows:
         heatmap_ax.set_yticks(np.arange(df.shape[0]) + 0.5)
-        heatmap_ax.yaxis.set_ticks_position('left')
+        heatmap_ax.yaxis.set_ticks_position('right')
         heatmap_ax.set_yticklabels(df.index[row_dendrogram_distances['leaves']],
                                    fontsize=ylabel_fontsize)
 
