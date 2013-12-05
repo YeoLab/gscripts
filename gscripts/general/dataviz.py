@@ -13,6 +13,7 @@ import matplotlib.gridspec as gridspec
 import scipy.spatial.distance as distance
 import scipy.cluster.hierarchy as sch
 import matplotlib as mpl
+from collections import Iterable
 
 
 def clusterGram(dataFrame, distance_metric = 'euclidean', linkage_method = 'average',
@@ -164,13 +165,22 @@ def color_list_to_matrix_and_cmap(color_list, ind, row=True):
 def heatmap(df, title=None, colorbar_label='values',
             col_side_colors=None, row_side_colors=None,
             color_scale='linear', cmap=None,
-            figsize=None, label_rows=True, label_cols=True,
+            row_linkage_method='complete',
+            col_linkage_method='complete',
+            figsize=None,
+            label_rows=True,
+            label_cols=True,
+
+            #col_labels=None,
+            #row_labels=None,
+
             xlabel_fontsize=12,
             ylabel_fontsize=10,
             cluster_cols=True,
             cluster_rows=True,
             plot_df=None):
     """
+
     @author Olga Botvinnik olga.botvinnik@gmail.com
 
     @param df:
@@ -181,8 +191,12 @@ def heatmap(df, title=None, colorbar_label='values',
     @param color_scale:
     @param cmap:
     @param figsize:
-    @param label_rows:
-    @param label_cols:
+    @param label_rows: Can be boolean or a list of strings, with exactly the
+    length of the number of rows in df.
+    @param label_cols: Can be boolean or a list of strings, with exactly the
+    length of the number of columns in df.
+    @param col_labels:
+    @param row_labels:
     @param xlabel_fontsize:
     @param ylabel_fontsize:
     @param cluster_cols:
@@ -220,12 +234,12 @@ def heatmap(df, title=None, colorbar_label='values',
 
     # calculate pairwise distances for rows
     row_pairwise_dists = distance.squareform(distance.pdist(df))
-    row_clusters = sch.linkage(row_pairwise_dists, method='complete')
+    row_clusters = sch.linkage(row_pairwise_dists, method=row_linkage_method)
 
     # calculate pairwise distances for columns
     col_pairwise_dists = distance.squareform(distance.pdist(df.T))
     # cluster
-    col_clusters = sch.linkage(col_pairwise_dists, method='complete')
+    col_clusters = sch.linkage(col_pairwise_dists, method=col_linkage_method)
 
     # heatmap with row names
     dendrogram_height_fraction = df.shape[0] * 0.25 / df.shape[0]
@@ -316,26 +330,45 @@ def heatmap(df, title=None, colorbar_label='values',
     clean_axis(heatmap_ax)
 
     ## row labels ##
+    if isinstance(label_rows, Iterable):
+        if len(label_rows) == df.shape[0]:
+            yticklabels = label_rows
+            label_rows = True
+        else:
+            raise BaseException("Length of 'label_rows' must be the same as "
+                                "df.shape[0]")
+    elif label_rows:
+        yticklabels = df.index[row_dendrogram_distances['leaves']]
+
     if label_rows:
         heatmap_ax.set_yticks(np.arange(df.shape[0]) + 0.5)
         heatmap_ax.yaxis.set_ticks_position('right')
-        heatmap_ax.set_yticklabels(df.index[row_dendrogram_distances['leaves']],
-                                   fontsize=ylabel_fontsize)
+        heatmap_ax.set_yticklabels(yticklabels, fontsize=ylabel_fontsize)
 
     # Add title if there is one:
     if title is not None:
         heatmap_ax.set_title(title)
 
     ## col labels ##
+    if isinstance(label_cols, Iterable):
+        if len(label_cols) == df.shape[0]:
+            xticklabels = label_rows
+            label_cols = True
+        else:
+            raise BaseException("Length of 'label_cols' must be the same as "
+                                "df.shape[1]")
+    elif label_rows:
+        xticklabels = df.columns[column_dendrogram_distances['leaves']]
+
     if label_cols:
         heatmap_ax.set_xticks(np.arange(df.shape[1]) + 0.5)
-        xticklabels = heatmap_ax.set_xticklabels(
-            df.columns[column_dendrogram_distances['leaves']],
-            fontsize=xlabel_fontsize)
+        xticklabels = heatmap_ax.set_xticklabels(xticklabels,
+                                                 fontsize=xlabel_fontsize)
         # rotate labels 90 degrees
         for label in xticklabels:
             label.set_rotation(90)
-            # remove the tick lines
+
+    # remove the tick lines
     for l in heatmap_ax.get_xticklines() + heatmap_ax.get_yticklines():
         l.set_markersize(0)
 
@@ -356,7 +389,6 @@ def heatmap(df, title=None, colorbar_label='values',
     for t in yticklabels:
         t.set_fontsize(t.get_fontsize() - 3)
 
-    axes = column_dendrogram_ax
     fig.tight_layout()
     return fig, row_dendrogram_distances, column_dendrogram_distances
 
