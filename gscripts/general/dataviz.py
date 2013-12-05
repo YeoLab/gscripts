@@ -573,14 +573,16 @@ def plot_pca(df, c_scale=None, x_pc=1, y_pc=2, distance='L1', \
 
     var_1 = int(pca.explained_variance_ratio_[x_pc - 1] * 100)
     var_2 = int(pca.explained_variance_ratio_[y_pc - 1] * 100)
-
+    ax.set_xticks([])
+    ax.set_yticks([])
     ax.set_xlabel(
         'Principal Component {} (Explains {}% Of Variance)'.format(str(x_pc), \
             str(var_1)), size=axis_label_size)
     ax.set_ylabel(
         'Principal Component {} (Explains {}% Of Variance)'.format(str(y_pc), \
             str(var_2)), size=axis_label_size)
-    ax.set_title(title, size=title_size)
+    if title:
+        ax.set_title(title, size=title_size)
 
     if save_as:
         fig.savefig(save_as, format=save_format)
