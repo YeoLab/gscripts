@@ -339,15 +339,17 @@ def heatmap(df, title=None, colorbar_label='values',
     ## row labels ##
     if isinstance(label_rows, Iterable):
         if len(label_rows) == df.shape[0]:
-            yticklabels = label_rows[row_dendrogram_distances['leaves']]
+            yticklabels = label_rows
             label_rows = True
         else:
             raise BaseException("Length of 'label_rows' must be the same as "
                                 "df.shape[0]")
     elif label_rows:
-        yticklabels = df.index[row_dendrogram_distances['leaves']]
+        yticklabels = df.index
 
     if label_rows:
+        yticklabels = [yticklabels[i] for i in row_dendrogram_distances[
+            'leaves']]
         heatmap_ax.set_yticks(np.arange(df.shape[0]) + 0.5)
         heatmap_ax.yaxis.set_ticks_position('right')
         heatmap_ax.set_yticklabels(yticklabels, fontsize=ylabel_fontsize)
@@ -359,15 +361,18 @@ def heatmap(df, title=None, colorbar_label='values',
     ## col labels ##
     if isinstance(label_cols, Iterable):
         if len(label_cols) == df.shape[0]:
-            xticklabels = label_cols[column_dendrogram_distances['leaves']]
+            xticklabels = label_cols
             label_cols = True
         else:
             raise BaseException("Length of 'label_cols' must be the same as "
                                 "df.shape[1]")
     elif label_cols:
-        xticklabels = df.columns[column_dendrogram_distances['leaves']]
+        xticklabels = df.columns
 
     if label_cols:
+        xticklabels = [xticklabels[i] for i in column_dendrogram_distances[
+            'leaves']]
+
         heatmap_ax.set_xticks(np.arange(df.shape[1]) + 0.5)
         xticklabels = heatmap_ax.set_xticklabels(xticklabels,
                                                  fontsize=xlabel_fontsize)
