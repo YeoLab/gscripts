@@ -590,7 +590,7 @@ def plot_pca(df, c_scale=None, x_pc=1, y_pc=2, distance='L1', \
 
 
 def skipped_exon_figure(ax, which_axis='y', height_multiplier=0.025,
-                        width_multiplier=0.04):
+                        width_multiplier=0.04, leftmost_x=None):
     """
     Adds two annotations to an axis 'ax':
     1. A skipped exon at 'which_axis'=0, e.g. if which_axis='x', at x=0
@@ -614,8 +614,9 @@ def skipped_exon_figure(ax, which_axis='y', height_multiplier=0.025,
     xmin, xmax, ymin, ymax = ax.axis()
     delta_x = xmax - xmin
     delta_y = ymax - ymin
-    leftmost_x = xmin - (.1 * delta_x) if which_axis == 'y' \
-        else xmin - (0.05 * delta_x)
+    if leftmost_x is None:
+        leftmost_x = xmin - (.1 * delta_x) if which_axis == 'y' \
+            else xmin - (0.05 * delta_x)
     width = width_multiplier * delta_x
     height = height_multiplier * delta_y
 
