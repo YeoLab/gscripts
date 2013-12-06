@@ -589,7 +589,8 @@ def plot_pca(df, c_scale=None, x_pc=1, y_pc=2, distance='L1', \
     return vectors
 
 
-def skipped_exon_figure(ax, which_axis='y'):
+def skipped_exon_figure(ax, which_axis='y', height_multiplier=0.025,
+                        width_multiplier=0.04):
     """
     Adds two annotations to an axis 'ax':
     1. A skipped exon at 'which_axis'=0, e.g. if which_axis='x', at x=0
@@ -615,12 +616,14 @@ def skipped_exon_figure(ax, which_axis='y'):
     delta_y = ymax - ymin
     leftmost_x = xmin - (.1 * delta_x) if which_axis == 'y' \
         else xmin - (0.05 * delta_x)
-    width = 0.04 * delta_x
-    height = 0.025 * delta_y
+    width = width_multiplier * delta_x
+    height = height_multiplier * delta_y
 
     bottom_y = -0.01
     top_y = 0.975
     # y = -0.1*delta_y
+
+    artists = []
 
     adjacent_exon_kwargs = {'fill': True, 'width': width, 'height': height,
                             'clip_on': False, 'facecolor': 'white',
@@ -631,37 +634,46 @@ def skipped_exon_figure(ax, which_axis='y'):
 
     if which_axis == 'y':
         # Spliced-out exon at bottom (psi_ci_halves_max_filtered_drop_na = 0)
-        ax.add_patch(patches.Rectangle((leftmost_x + width, bottom_y),
-                                       **adjacent_exon_kwargs))
-        ax.add_patch(patches.Rectangle((leftmost_x + 2 * width, bottom_y),
-                                       **adjacent_exon_kwargs))
+        artists.append(
+            ax.add_patch(patches.Rectangle((leftmost_x + width, bottom_y),
+                                           **adjacent_exon_kwargs)))
+        artists.append(
+            ax.add_patch(patches.Rectangle((leftmost_x + 2 * width, bottom_y),
+                                           **adjacent_exon_kwargs)))
 
         # spliced-in exon at top (psi_ci_halves_max_filtered_drop_na = 1)
-        ax.add_patch(patches.Rectangle((leftmost_x, top_y),
-                                       **adjacent_exon_kwargs))
-        ax.add_patch(patches.Rectangle((leftmost_x + width, top_y),
-                                       **skipped_exon_kwargs))
-        ax.add_patch(patches.Rectangle((leftmost_x + 2 * width, top_y),
-                                       **adjacent_exon_kwargs))
+        artists.append(ax.add_patch(patches.Rectangle((leftmost_x, top_y),
+                                                      **adjacent_exon_kwargs)))
+        artists.append(
+            ax.add_patch(patches.Rectangle((leftmost_x + width, top_y),
+                                           **skipped_exon_kwargs)))
+        artists.append(
+            ax.add_patch(patches.Rectangle((leftmost_x + 2 * width, top_y),
+                                           **adjacent_exon_kwargs)))
 
     if which_axis == 'x':
         # Spliced-out exon on left (x=0)
         y = -0.1 * delta_y
-        ax.add_patch(
+        artists.append(ax.add_patch(
             patches.Rectangle((leftmost_x + width, y),
-                              **adjacent_exon_kwargs))
-        ax.add_patch(patches.Rectangle((leftmost_x + 2 * width, y),
-                                       **adjacent_exon_kwargs))
+                              **adjacent_exon_kwargs)))
+        artists.append(
+            ax.add_patch(patches.Rectangle((leftmost_x + 2 * width, y),
+                                           **adjacent_exon_kwargs)))
 
         # spliced-in exon at right (psi_ci_halves_max_filtered_drop_na = 1)
         right_x = 1.0 * delta_x
-        ax.add_patch(
+        artists.append(ax.add_patch(
             patches.Rectangle((leftmost_x + right_x, y),
-                              **adjacent_exon_kwargs))
-        ax.add_patch(patches.Rectangle((leftmost_x + width + right_x, y),
-                                       **skipped_exon_kwargs))
-        ax.add_patch(patches.Rectangle((leftmost_x + 2 * width + right_x, y),
-                                       **adjacent_exon_kwargs))
+                              **adjacent_exon_kwargs)))
+        artists.append(
+            ax.add_patch(patches.Rectangle((leftmost_x + width + right_x, y),
+                                           **skipped_exon_kwargs)))
+        artists.append(ax.add_patch(
+            patches.Rectangle((leftmost_x + 2 * width + right_x, y),
+                              **adjacent_exon_kwargs)))
+    return artists
+
 
 #
 def x_with_ties(series, middle, sep=0.05):
