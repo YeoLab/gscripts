@@ -14,6 +14,7 @@ import scipy.spatial.distance as distance
 import scipy.cluster.hierarchy as sch
 import matplotlib as mpl
 from collections import Iterable
+from scipy.stats import gaussian_kde
 
 
 def clusterGram(dataFrame, distance_metric = 'euclidean', linkage_method = 'average',
@@ -1173,3 +1174,87 @@ def plot_pdf(data, bins=50, ax=None):
         ax = plt.gca()
     x, y = pdf(data, bins=bins)
     ax.plot(x,y)
+
+
+def violinplot(ax, data, pos, bp=False, cut=False, facecolor=ppl.set2[0],
+               edgecolor=ppl.almost_black,
+               alpha=0.3, bw_method=0.05, width=None):
+    """Make a violin plot of each dataset in the `data` sequence.
+    # Original Author: Teemu Ikonen <tpikonen@gmail.com>
+    # Based on code by Flavio Codeco Coelho,
+    # http://pyinsci.blogspot.com/2009/09/violin-plot-with-matplotlib.html
+
+
+    """
+    dist = np.max(pos) - np.min(pos)
+    if width is None:
+        width = min(0.15 * max(dist, 1.0), 0.4)
+    for i, (d, p) in enumerate(zip(data, pos)):
+        k = gaussian_kde(d, bw_method=bw_method) #calculates the kernel density
+        #         k.covariance_factor = 0.1
+        s = 0.0
+        if not cut:
+            s = 1 * np.std(d) #FIXME: magic constant 1.5
+        m = k.dataset.min() - s #lower bound of violin
+        M = k.dataset.max() + s #upper bound of violin
+        x = np.linspace(m, M, 100) # support for violin
+        v = k.evaluate(x) #violin profile (density curve)
+        v = width * v / v.max() #scaling the violin to the available space
+        if isinstance(facecolor, list):
+        #             for x0, v0, p0
+            ax.fill_betweenx(x, -v + p,
+                             v + p,
+                             facecolor=facecolor[i],
+                             alpha=alpha, edgecolor=edgecolor)
+        else:
+            ax.fill_betweenx(x, -v + p,
+                             v + p,
+                             facecolor=facecolor,
+                             alpha=alpha, edgecolor=edgecolor)
+    if bp:
+        ax.boxplot(data, notch=1, positions=pos, vert=1)
+    ppl.remove_chartjunk(ax, ['top', 'right'])
+    return ax
+
+
+def stripchart(ax, data, pos, mean=False, median=False, width=None):
+    """Plot samples given in `data` as horizontal lines.
+
+    # Author: Teemu Ikonen <tpikonen@gmail.com>
+    # Based on code by Flavio Codeco Coelho,
+    # http://pyinsci.blogspot.com/2009/09/violin-plot-with-matplotlib.html
+
+    Keyword arguments:
+        mean: plot mean of each dataset as a thicker line if True
+        median: plot median of each dataset as a dot if True.
+        width: Horizontal width of a single dataset plot.
+    """
+    if width:
+        w = width
+    else:
+        dist = np.max(pos) - np.min(pos)
+        w = min(0.15 * max(dist, 1.0), 0.5)
+    for d, p in zip(data, pos):
+        hw = w / 2.0
+        ax.hlines(d, p - hw, p + hw, lw=0.5, color=ppl.almost_black)
+        if mean:
+            ax.hlines(np.mean(d), p - w, p + w, lw=1.0, color=ppl.set2[1])
+        if median:
+            ax.plot(p, np.median(d), 'o', color=ppl.set2[2])
+
+
+def beanplot(ax, data, pos, mean=True, median=True, cut=False):
+    """Make a bean plot of each dataset in the `data` sequence.
+
+    # Author: Teemu Ikonen <tpikonen@gmail.com>
+    # Based on code by Flavio Codeco Coelho,
+    # http://pyinsci.blogspot.com/2009/09/violin-plot-with-matplotlib.html
+
+    Reference: http://www.jstatsoft.org/v28/c01/paper
+    """
+    #FIXME: Implement also the asymmetric beanplot
+    dist = np.max(pos) - np.min(pos)
+    w = min(0.15 * max(dist, 1.0), 0.5)
+    stripchart(ax, data, pos, mean, median, 0.8 * w)
+    violinplot(ax, data, pos, False, cut)
+    ppl.remove_chartjunk(ax, ['top', 'right'])
