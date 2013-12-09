@@ -1220,7 +1220,7 @@ def violinplot(ax, data, pos, bp=False, cut=False, facecolor=ppl.set2[0],
 def stripchart(ax, data, pos, mean=False, median=False, width=None):
     """Plot samples given in `data` as horizontal lines.
 
-    # Author: Teemu Ikonen <tpikonen@gmail.com>
+    # Original Author: Teemu Ikonen <tpikonen@gmail.com>
     # Based on code by Flavio Codeco Coelho,
     # http://pyinsci.blogspot.com/2009/09/violin-plot-with-matplotlib.html
 
@@ -1246,7 +1246,7 @@ def stripchart(ax, data, pos, mean=False, median=False, width=None):
 def beanplot(ax, data, pos, mean=True, median=True, cut=False):
     """Make a bean plot of each dataset in the `data` sequence.
 
-    # Author: Teemu Ikonen <tpikonen@gmail.com>
+    # Original Author: Teemu Ikonen <tpikonen@gmail.com>
     # Based on code by Flavio Codeco Coelho,
     # http://pyinsci.blogspot.com/2009/09/violin-plot-with-matplotlib.html
 

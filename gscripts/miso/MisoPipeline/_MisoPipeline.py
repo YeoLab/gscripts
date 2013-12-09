@@ -402,7 +402,7 @@ class MisoPipeline(object):
         '''
         if self.read_type == 'single_end':
             return ''
-        print sample_id
+            #print sample_id
 
         #insert_len_commands = []
         # Extract from files all the things we need
@@ -425,7 +425,7 @@ class MisoPipeline(object):
             n = 0
             for line in f:
                 line = line.split(',')
-                print line[:2];
+                #print line[:2];
                 mean = float(line[0].split('=')[1])
                 sdev = float(line[1].split('=')[1])
                 insert_len_mean = mean
