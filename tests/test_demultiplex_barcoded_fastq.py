@@ -6,7 +6,7 @@ Created on Jun 21, 2013
 import unittest
 
 import tests
-from gscripts.clipseq.rewrite_barcoded_fastq import reformat_read
+from gscripts.clipseq.demultiplex_barcoded_fastq import reformat_read
 
 class Test(unittest.TestCase):
     def test_reformat_read(self):

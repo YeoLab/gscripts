@@ -57,9 +57,9 @@ def barcode_collapse(inBam, outBam, randomer):
                                        {barcode : count} 
     """
     
-    outTotal = open(outBam + ".total.wiggle", 'w')
-    outBarcodes = open(outBam + ".barcodes.wiggle", 'w')
-    outEntropy = open(outBam + ".entropy.wiggle", 'w')
+    out_total = open(outBam + ".total.wiggle", 'w')
+    out_barcodes = open(outBam + ".barcodes.wiggle", 'w')
+    out_entropy = open(outBam + ".entropy.wiggle", 'w')
 
     inBam = pysam.Samfile(inBam, 'rb')
     
@@ -98,8 +98,8 @@ def barcode_collapse(inBam, outBam, randomer):
 
             if prev_chrom != cur_chrom:
                 var_step = "variableStep chrom=%s\n" % (inBam.getrname(cur_chrom))
-                outTotal.write(var_step)
-                outBarcodes.write(var_step)
+                out_total.write(var_step)
+                out_barcodes.write(var_step)
                 
                 for x in neg_dict.keys():
                     
@@ -116,9 +116,9 @@ def barcode_collapse(inBam, outBam, randomer):
             entropy = -1 * sum(barcode_probablity * np.log2(barcode_probablity))
             
             out_pos = prev_pos
-            outEntropy.write("\t".join(map(str, [out_pos, entropy])) + "\n")
-            outTotal.write("\t".join(map(str, [out_pos, cur_count])) + "\n")
-            outBarcodes.write("\t".join(map(str, [out_pos, len(barcode_set)])) + "\n")
+            out_entropy.write("\t".join(map(str, [out_pos, entropy])) + "\n")
+            out_total.write("\t".join(map(str, [out_pos, cur_count])) + "\n")
+            out_barcodes.write("\t".join(map(str, [out_pos, len(barcode_set)])) + "\n")
             
             pos_list = []
             cur_count = 0 
@@ -141,13 +141,13 @@ def barcode_collapse(inBam, outBam, randomer):
     collapse_base(pos_list, outBam, randomer, total_count, removed_count)
     
     out_pos = prev_pos
-    outTotal.write("\t".join(map(str, [out_pos, cur_count])) + "\n")
-    outBarcodes.write("\t".join(map(str, [out_pos, len(barcode_set)])) + "\n")
+    out_total.write("\t".join(map(str, [out_pos, cur_count])) + "\n")
+    out_barcodes.write("\t".join(map(str, [out_pos, len(barcode_set)])) + "\n")
 
     inBam.close()
     outBam.close()
-    outTotal.close()
-    outBarcodes.close()
+    out_total.close()
+    out_barcodes.close()
     return total_count, removed_count
 
 if __name__ == "__main__":

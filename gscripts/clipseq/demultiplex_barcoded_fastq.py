@@ -46,7 +46,8 @@ def reformat_read(name, seq, plus, quality, barcodes):
     return barcode, randomer, result
 
 if __name__ == "__main__":
-    parser = OptionParser()
+    usage = """ takes raw fastq files and demultiplex inline randomer + adapter sequences  """
+    parser = OptionParser(usage)
     parser.add_option("-f", "--fastq", dest="fastq", help="fastq file to barcode seperate")
     parser.add_option("-b", "--barcodes", dest="barcodes", help="file of barcode / barcode id")
     parser.add_option("-o", "--out_file", dest="out_file")
