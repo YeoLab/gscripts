@@ -184,13 +184,13 @@ def extract_motifs(trios_to_exons, name,
                                                        name))
             if i == 1:
                 if alt_exon:
-                    if exon_start == exon_stop:
-                        continue
-                    stop = exon_stop + 1 if strand == '+' else exon_stop
-                    start = exon_start - 1 if strand == '+' else exon_start + 1
-                    lines.append('%s\t%s\t%s\t%s\t%s\t%s\n'
-                                 % (
-                        chrom, start, stop, trio, '.', strand))
+                    if exon_start != exon_stop:
+                        #continue
+                        stop = exon_stop + 1 if strand == '+' else exon_stop
+                        start = exon_start - 1 if strand == '+' else exon_start + 1
+                        lines.append('%s\t%s\t%s\t%s\t%s\t%s\n'
+                                     % (
+                            chrom, start, stop, trio, '.', strand))
 
                 second_intron_stop = exon_start if strand == '+' else exon_stop
                 motif_start, motif_stop = \
