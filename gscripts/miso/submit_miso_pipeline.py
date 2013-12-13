@@ -30,11 +30,13 @@ submit_miso_pipeline.py --psi-only --paired-end --event-type SE \
 --sh-scripts-dir ~/projects/singlecell/scripts/ \
 --summary-output-dir-base ~/projects/singlecell/singlecell/analysis/ \
 --psi-walltime '0:50:00' --annotation-index-strfmt \
-'/home/obotvinnik/genomes/hg19/miso_annotations/%s_index' \
+'/home/yeo-lab/genomes/hg19/miso_annotations/%s_index' \
 --sample-id-suffix min10reads \
---extra-miso-arguments ' --settings-filename ~/MISO/misopy/settings/miso_settings_min_event_reads10.txt'
+--extra-miso-arguments ' --settings-filename \
+~/MISO/misopy/settings/miso_settings_min_event_reads10.txt'\
+--individual-jobs
 
-submit_miso_pipeline.py --psi-only --paired-end --event-type SE --sample-info-file ~/projects/singlecell/singlecell/sample_info_round2and3.txt --sh-scripts-dir ~/projects/singlecell/scripts/ --summary-output-dir-base ~/projects/singlecell/singlecell/analysis/ --psi-walltime '1:50:00' --annotation-index-strfmt '/home/obotvinnik/genomes/hg19/miso_annotations/%s_index' --sample-id-suffix min10reads --extra-miso-arguments ' --settings-filename ~/MISO/misopy/settings/miso_settings_min_event_reads10.txt' --individual-jobs
+submit_miso_pipeline.py --psi-only --paired-end --event-type SE --sample-info-file ~/projects/singlecell/singlecell/sample_info_round2and3.txt --sh-scripts-dir ~/projects/singlecell/scripts/ --summary-output-dir-base ~/projects/singlecell/singlecell/analysis/ --psi-walltime '1:50:00' --annotation-index-strfmt '/home/yeo-lab/genomes/hg19/miso_annotations/%s_index' --sample-id-suffix min10reads --extra-miso-arguments ' --settings-filename ~/MISO/misopy/settings/miso_settings_min_event_reads10.txt' --individual-jobs
 
 submit_miso_pipeline.py --psi-only --single-end --event-type SE \
 --sample-info-file ~/projects/singlecell/singlecell/sample_info.txt \
