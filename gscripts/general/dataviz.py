@@ -561,8 +561,11 @@ def plot_pca(df, c_scale=None, x_pc=1, y_pc=2, distance='L1', \
               :num_vectors]
     for x, y, marker, distance in vectors:
 
-        if marker in vector_colors_dict.keys():
-            color = vector_colors_dict[marker]
+        if vector_colors_dict:
+            if marker in vector_colors_dict.keys():
+                color = vector_colors_dict[marker]
+            else:
+                color = 'black'
 
         else:
             color = 'black'
