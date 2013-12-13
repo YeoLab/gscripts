@@ -184,6 +184,8 @@ def extract_motifs(trios_to_exons, name,
                                                        name))
             if i == 1:
                 if alt_exon:
+                    if exon_start == exon_stop:
+                        continue
                     stop = exon_stop + 1 if strand == '+' else exon_stop
                     start = exon_start - 1 if strand == '+' else exon_start + 1
                     lines.append('%s\t%s\t%s\t%s\t%s\t%s\n'
