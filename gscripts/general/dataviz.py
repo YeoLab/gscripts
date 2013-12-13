@@ -577,7 +577,7 @@ def plot_pca(df, c_scale=None, x_pc=1, y_pc=2, distance='L1', \
                      except:
                          pass
 
-                 ax.text(1.1*x, 1.1*y, marker, color=color', size=vector_label_size)
+                 ax.text(1.1*x, 1.1*y, marker, color=color, size=vector_label_size)
 
     var_1 = int(pca.explained_variance_ratio_[x_pc - 1] * 100)
     var_2 = int(pca.explained_variance_ratio_[y_pc - 1] * 100)
