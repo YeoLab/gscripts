@@ -1176,25 +1176,25 @@ def plot_pdf(data, bins=50, ax=None):
     ax.plot(x,y)
 
 
-def violinplot(ax, data, pos, bp=False, cut=False, facecolor=ppl.set2[0],
+def violinplot(ax, x, ys, bp=False, cut=False, facecolor=ppl.set2[0],
                edgecolor=ppl.almost_black,
                alpha=0.3, bw_method=0.05, width=None):
-    """Make a violin plot of each dataset in the `data` sequence.
+    """Make a violin plot of each dataset in the `ys` sequence. `ys` is a
+    list of numpy arrays.
+    Adapted by: Olga Botvinnik
     # Original Author: Teemu Ikonen <tpikonen@gmail.com>
     # Based on code by Flavio Codeco Coelho,
     # http://pyinsci.blogspot.com/2009/09/violin-plot-with-matplotlib.html
-
-
     """
-    dist = np.max(pos) - np.min(pos)
+    dist = np.max(x) - np.min(x)
     if width is None:
         width = min(0.15 * max(dist, 1.0), 0.4)
-    for i, (d, p) in enumerate(zip(data, pos)):
+    for i, (d, p) in enumerate(zip(ys, x)):
         k = gaussian_kde(d, bw_method=bw_method) #calculates the kernel density
         #         k.covariance_factor = 0.1
         s = 0.0
         if not cut:
-            s = 1 * np.std(d) #FIXME: magic constant 1.5
+            s = 1 * np.std(d) #FIXME: magic constant 1
         m = k.dataset.min() - s #lower bound of violin
         M = k.dataset.max() + s #upper bound of violin
         x = np.linspace(m, M, 100) # support for violin
@@ -1212,7 +1212,7 @@ def violinplot(ax, data, pos, bp=False, cut=False, facecolor=ppl.set2[0],
                              facecolor=facecolor,
                              alpha=alpha, edgecolor=edgecolor)
     if bp:
-        ax.boxplot(data, notch=1, positions=pos, vert=1)
+        ax.boxplot(ys, notch=1, positions=x, vert=1)
     ppl.remove_chartjunk(ax, ['top', 'right'])
     return ax
 
