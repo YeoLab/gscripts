@@ -12,7 +12,8 @@ except IndexError:
 
 cmd_list = []
 for file in glob('*bam'):
-    cmd_list.append("samtools view -h {0} | awk '$6 ~ /M/ || $1 ~ /@/' | "
+    cmd_list.append("samtools view -h -F 4 {0} | awk '$6 !~ /N/ || $1 ~ /@/' "
+                    "| "
                     "samtools view -bS - > {0}.unspliced.bam".format(file))
 
 sub = Submitter(queue_type='PBS', sh_file=name + '.sh', command_list=cmd_list,
