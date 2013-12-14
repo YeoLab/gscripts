@@ -1,3 +1,4 @@
+
 import pandas as pd
 import numpy as np
 from sklearn import decomposition as dc
@@ -1268,3 +1269,22 @@ def beanplot(ax, data, pos, mean=True, median=True, cut=False):
     stripchart(ax, data, pos, mean, median, 0.8 * w)
     violinplot(ax, data, pos, False, cut)
     ppl.remove_chartjunk(ax, ['top', 'right'])
+
+class Figure(object):
+    def __init__(self, saveas, **kwargs):
+        self.kwargs = kwargs
+        self.saveas = saveas
+
+    def __enter__(self):
+        self.figure = plt.figure(**self.kwargs)
+        return self.figure
+
+    def __exit__(self, type, value, traceback):
+        for ax in self.figure.get_axes():
+            [tick.set_fontsize(14) for tick in ax.get_xticklabels()]
+            [tick.set_fontsize(14) for tick in ax.get_yticklabels()]
+            ax.set_xlabel(ax.get_xlabel(), fontsize=18)
+            ax.set_ylabel(ax.get_ylabel(), fontsize=18)
+            ax.set_title(ax.get_title(), fontsize=20)
+        self.figure.tight_layout()
+        self.figure.savefig(self.saveas)
