@@ -1,3 +1,4 @@
+
 import pandas as pd
 import numpy as np
 from sklearn import decomposition as dc
@@ -413,8 +414,8 @@ def plot_pca(df, c_scale=None, x_pc=1, y_pc=2, distance='L1', \
              column_ids_dict=None, index_ids_dict=None, \
              show_vector_labels=True, fig=None, ax=None, \
              marker_size=None, vector_width=None, \
-              axis_label_size=None, title_size=None, vector_label_size=None, \
-              point_label_size=None):
+             axis_label_size=None, title_size=None, vector_label_size=None, \
+             point_label_size=None, vector_colors_dict=None):
     """
     Given a pandas dataframe, performs PCA and plots the results in a
     convenient single function.
@@ -561,8 +562,18 @@ def plot_pca(df, c_scale=None, x_pc=1, y_pc=2, distance='L1', \
               :num_vectors]
     for x, y, marker, distance in vectors:
 
+        if vector_colors_dict:
+            if marker in vector_colors_dict.keys():
+                color = vector_colors_dict[marker]
+            else:
+                color = 'black'
+
+        else:
+            color = 'black'
+
         if show_vectors:
-            ppl.plot(ax, [0, x], [0, y], color=ppl.almost_black, linewidth=vector_width)
+            ppl.plot(ax, [0, x], [0, y], color=color, linewidth=vector_width)
+
             if show_vector_labels:
                  if column_ids_dict:
                      try:
@@ -570,7 +581,7 @@ def plot_pca(df, c_scale=None, x_pc=1, y_pc=2, distance='L1', \
                      except:
                          pass
 
-                 ax.text(1.1*x, 1.1*y, marker, color='black', size=vector_label_size)
+                 ax.text(1.1*x, 1.1*y, marker, color=color, size=vector_label_size)
 
     var_1 = int(pca.explained_variance_ratio_[x_pc - 1] * 100)
     var_2 = int(pca.explained_variance_ratio_[y_pc - 1] * 100)
@@ -1258,3 +1269,22 @@ def beanplot(ax, data, pos, mean=True, median=True, cut=False):
     stripchart(ax, data, pos, mean, median, 0.8 * w)
     violinplot(ax, data, pos, False, cut)
     ppl.remove_chartjunk(ax, ['top', 'right'])
+
+class Figure(object):
+    def __init__(self, saveas, **kwargs):
+        self.kwargs = kwargs
+        self.saveas = saveas
+
+    def __enter__(self):
+        self.figure = plt.figure(**self.kwargs)
+        return self.figure
+
+    def __exit__(self, type, value, traceback):
+        for ax in self.figure.get_axes():
+            [tick.set_fontsize(14) for tick in ax.get_xticklabels()]
+            [tick.set_fontsize(14) for tick in ax.get_yticklabels()]
+            ax.set_xlabel(ax.get_xlabel(), fontsize=18)
+            ax.set_ylabel(ax.get_ylabel(), fontsize=18)
+            ax.set_title(ax.get_title(), fontsize=20)
+        self.figure.tight_layout()
+        self.figure.savefig(self.saveas)

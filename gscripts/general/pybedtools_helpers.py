@@ -233,3 +233,6 @@ def convert_to_mRNA_position(interval, gene_model):
         running_length += region.length
     interval.chrom = "none"
     return interval
+
+def to_bed(x):
+    return x.chrom, x.start, x.stop, x.attributes['gene_id'], "0", x.strand

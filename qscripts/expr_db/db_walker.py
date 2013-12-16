@@ -23,7 +23,7 @@ class TableWalker(object):
 
     def __init__(self, table_walker_ID):
         self.table_walker_ID = table_walker_ID
-
+        self.drop_lock = True
         self.engine = create_engine('mysql+pymysql://ppliu:some_pass@sauron.ucsd.edu/{}'\
                 .format(self.table_walker_ID))
         self.table_objects = {}
@@ -43,11 +43,26 @@ class TableWalker(object):
             Column('exp_id', String(50), primary_key=True),
             Column('file_path', String(100), primary_key=True),
             Column('file_path2', String(100)), 
-            Column('format', String(50)),
-            Column('descriptor', String(100))
             )
 
         self.table_objects['file_locations'] = file_locations
+        return 
+
+    def addExpr(self, exp_id=None, species=None, adapter=None, compressed=False, paired=False, \
+        file_path=None, file_path2=None):
+        assert exp_id, "Specify experiment ID, keyword exp_id"
+        assert species, "Specify species, keyword species"
+        assert file_path, "Specify path to input, keyword file_path"
+
+        file_ins =  self.table_objects['file_locations'].insert().values(file_path=file_path, \
+            file_path2=file_path2, exp_id=exp_id)
+
+        param_ins = self.table_objects['rnaseq'].insert().values(exp_id=exp_id, species=species, \
+            adapter=adapter, compressed=compressed, paired=paired)
+
+        conn = self.engine.connect()
+        conn.execute(file_ins)
+        conn.execute(param_ins)
         return 
 
     def unlock(self):
@@ -74,7 +89,7 @@ class TableWalker(object):
         """
         self.drop_lock = True
 
-    def dropTable(self):
+    def dropTables(self):
         """
         Drop this class' table from the database. Drop lock must be remove
         first with unlock() function.
@@ -85,6 +100,7 @@ class TableWalker(object):
         Returns:
             None
         """
+        assert not self.drop_lock, "Cannot drop tables. Use unlock() first."
         if not self.drop_lock:
             for key in self.table_objects:
                 self.table_objects[key].drop(self.engine)
@@ -127,7 +143,6 @@ class TableWalker(object):
 
         files_dict['exp_id'] = exp_id
         return files_dict
-
     
     def createTables(self):
 
