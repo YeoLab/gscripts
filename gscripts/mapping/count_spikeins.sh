@@ -1,4 +1,4 @@
-!#/bin/sh
+#!/bin/sh
 
 SPIKEIN='RNA_Spike_1 RNA_Spike_4 RNA_Spike_7'
 
