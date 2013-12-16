@@ -1,6 +1,6 @@
 #!/bin/sh
 
-SPIKEIN='RNA_Spike_1 RNA_Spike_4 RNA_Spike_7'
+SPIKES='RNA_Spike_1 RNA_Spike_4 RNA_Spike_7'
 
 for BAM in $(ls *.sorted.bam) ; do
     ID=$(echo $BAM | cut -f 1 -d.)
