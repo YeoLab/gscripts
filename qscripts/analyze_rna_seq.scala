@@ -124,7 +124,10 @@ class AnalyzeRNASeq extends QScript {
        this.length = 18
        this.quality_cutoff = 6
        this.isIntermediate = true
-   }  
+   }
+
+
+
 
 def stringentJobs(fastq_file: File) : File = {
 

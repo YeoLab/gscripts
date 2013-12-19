@@ -51,15 +51,11 @@ def calculate_psi_SE(IN, EX):
 
 def calculate_psi_MXE(A, B):
 
-    if A == 0 and B == 0:
+    if A == 0:
         psi = 0.0
     else:
         psi = (A / (A + B)) #percent of reads representing isoform A
-        
-        if A == 0:
-            psi = 0.0
-        elif B == 0:
-            psi = 1.0
+
     return psi
 
 def main(options):
