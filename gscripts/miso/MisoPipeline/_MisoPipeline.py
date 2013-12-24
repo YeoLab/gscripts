@@ -291,7 +291,7 @@ class MisoPipeline(object):
 
             # Get the read length. Gonna keep this as bash because samtools
             # and less are very fast
-            read_len = '%s_READ_LEN' % sample_id
+            read_len = 'sample_%s_READ_LEN' % sample_id
             #commands.append(
             #    '\n# Assuming that the first read of the bam file is '
             #    'representative, such that all the reads in the '
