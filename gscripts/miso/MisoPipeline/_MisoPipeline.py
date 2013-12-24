@@ -232,21 +232,22 @@ class MisoPipeline(object):
                                       insert_len_command])
                 insert_len_commands.append(command)
 
-            insert_len_sh = '{}_{}.sh'.format(insert_len_sh_base, sample_id)
-            job_name = '{}_{}'.format(insert_len_name, sample_id)
-            #if len(insert_len_commands) > 0:
-            sub = Submitter(queue_type='PBS', sh_file=insert_len_sh,
-                            command_list=insert_len_commands,
-                            job_name=job_name,
-                            out=insert_len_sh + ".out",
-                            err=insert_len_sh + ".err")
-            sub.write_sh(submit=True,
-                         nodes=1,
-                                                  ppn=4,
-                                                  queue=self.queue,
-                                                  walltime='0:30:00',
-                                                  array=True,
-                                                  max_running=20)
+            if len(insert_len_commands) > 0:
+                insert_len_sh = '{}_{}.sh'.format(insert_len_sh_base, sample_id)
+                job_name = '{}_{}'.format(insert_len_name, sample_id)
+                #if len(insert_len_commands) > 0:
+                sub = Submitter(queue_type='PBS', sh_file=insert_len_sh,
+                                command_list=insert_len_commands,
+                                job_name=job_name,
+                                out=insert_len_sh + ".out",
+                                err=insert_len_sh + ".err")
+                sub.write_sh(submit=True,
+                             nodes=1,
+                             ppn=4,
+                             queue=self.queue,
+                             walltime='0:30:00',
+                             array=True,
+                             max_running=20)
 
     def psi(self):
         """
