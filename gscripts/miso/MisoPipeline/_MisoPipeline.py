@@ -218,7 +218,7 @@ class MisoPipeline(object):
                 # There is no insert length file, so create it
                 insert_len_command = 'python {0:s}/pe_utils.py ' \
                                      '--compute-insert-len {1:s} {2:s} ' \
-                                     ' --output-dir {3:s} ' \
+                                     ' --output-dir {3:s} --no-bam-filter' \
                                      '>{4:s}.out 2>{4:s}' \
                     .format(self.miso_scripts_dir, bam,
                             self.constitutive_exon_gff, bam_dir,
