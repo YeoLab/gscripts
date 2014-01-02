@@ -198,14 +198,14 @@ class MisoPipeline(object):
 
         insert_len_name = '%s_insert_len%s' % (self.job_name_prefix,
                                                self.submit_sh_suffix)
-        insert_len_sh = '%s/%s.sh' % (self.sh_scripts_dir,
-                                      insert_len_name)
+        insert_len_sh_base = '%s/%s' % (self.sh_scripts_dir,
+                                        insert_len_name)
         #all_insert_len_sh = ['#!/bin/bash\n\n']
 
-        insert_len_commands = []
+
 
         for bam, sample_id in zip(self.bams, self.sample_ids):
-            print sample_id
+            insert_len_commands = []
             # Command-line commands to submit to the cluster
 
             bam_dir = os.path.dirname(bam)
@@ -214,11 +214,11 @@ class MisoPipeline(object):
                 with open(insert_len_file) as f:
                     pass
             except IOError:
-                print 'getting insert len for:', sample_id
+                #print 'getting insert len for:', sample_id
                 # There is no insert length file, so create it
                 insert_len_command = 'python {0:s}/pe_utils.py ' \
                                      '--compute-insert-len {1:s} {2:s} ' \
-                                     ' --output-dir {3:s} ' \
+                                     ' --output-dir {3:s} --no-bam-filter' \
                                      '>{4:s}.out 2>{4:s}' \
                     .format(self.miso_scripts_dir, bam,
                             self.constitutive_exon_gff, bam_dir,
@@ -232,19 +232,22 @@ class MisoPipeline(object):
                                       insert_len_command])
                 insert_len_commands.append(command)
 
-        if len(insert_len_commands) > 0:
-            sub = Submitter(queue_type='PBS', sh_file=insert_len_sh,
-                            command_list=insert_len_commands,
-                            job_name=insert_len_name,
-                            out=insert_len_sh + ".out",
-                            err=insert_len_sh + ".err")
-            self.insert_len_job_id = sub.write_sh(submit=True,
-                                                  nodes=1,
-                                                  ppn=4,
-                                                  queue=self.queue,
-                                                  walltime='0:30:00',
-                                                  array=True,
-                                                  max_running=20)
+            if len(insert_len_commands) > 0:
+                insert_len_sh = '{}_{}.sh'.format(insert_len_sh_base, sample_id)
+                job_name = '{}_{}'.format(insert_len_name, sample_id)
+                #if len(insert_len_commands) > 0:
+                sub = Submitter(queue_type='PBS', sh_file=insert_len_sh,
+                                command_list=insert_len_commands,
+                                job_name=job_name,
+                                out=insert_len_sh + ".out",
+                                err=insert_len_sh + ".err")
+                sub.write_sh(submit=True,
+                             nodes=1,
+                             ppn=4,
+                             queue=self.queue,
+                             walltime='0:30:00',
+                             array=True,
+                             max_running=20)
 
     def psi(self):
         """
@@ -288,7 +291,7 @@ class MisoPipeline(object):
 
             # Get the read length. Gonna keep this as bash because samtools
             # and less are very fast
-            read_len = '%s_READ_LEN' % sample_id
+            read_len = 'sample_%s_READ_LEN' % sample_id
             #commands.append(
             #    '\n# Assuming that the first read of the bam file is '
             #    'representative, such that all the reads in the '
