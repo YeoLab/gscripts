@@ -11,7 +11,7 @@ import pysam
 
 
 ##Need to write up testing code for this
-def correlation(bam_1, bam_2):
+def correlation(bam_1, bam_2, outbam):
     
     """
     
@@ -27,6 +27,7 @@ def correlation(bam_1, bam_2):
     matched_count = 0
 
     with pysam.Samfile(bam_1) as bam_1, pysam.Samfile(bam_2) as bam_2:
+        outbam = pysam.Samfile(outbam, 'wh', bam_1)
         
         for read in bam_1:
             total_count += 1
@@ -41,7 +42,9 @@ def correlation(bam_1, bam_2):
 
                 if read.qname.split(":")[0] == fetched_read.qname.split(":")[0] and read_start == fetched_start:
                     matched_count += 1
+                    outbam.write(read)
                     break
+    outbam.close()
     return matched_count, total_count
 
 
@@ -57,9 +60,9 @@ if __name__ == '__main__':
     parser.add_option("-o", "--out_file", dest="out_file")
 
     (options, args) = parser.parse_args()
-    
-    matched_count, total_count = correlation(options.bam_1, options.bam_2)
-    
+    outbam = pysam.Samfile(os.path.splitext(options.out_file)[0] + ".sam", "wh", pysam.Samfile(options.bam_1))
+    matched_count, total_count = correlation(options.bam_1, options.bam_2, outbam)
+    outbam.close()
     name1 = os.path.basename(".".join(options.bam_1.split(".")[:2]))
     name2 = os.path.basename(".".join(options.bam_2.split(".")[:2]))
     with open(os.path.join(options.out_file), 'w') as outfile:
