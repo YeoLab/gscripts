@@ -104,12 +104,19 @@ def q_setup(expr_list, working_dir='~/scratch/', session_name=None, queue='home'
        
         fl = open(filelist_name, 'w') 
         for item in list(v):
-            print item[1].file_location
-            fl.write(item[1].file_location)
-            if item[1].pair_location:
-                fl.write('\t')
-                fl.write(item[1].pair_location)
-            fl.write('\n')
+
+            if item[1].__tablename__ == 'rnaseq':
+                fl.write(item[1].file_location)
+                if item[1].pair_location:
+                    fl.write('\t')
+                    fl.write(item[1].pair_location)
+                fl.write('\n')
+
+            elif item[1].__tablename__ == 'clipseq':
+                fl.write(item[1].file_location)
+                
+                if item[1].pair_location:
+                    
             
         fl.close()
         
