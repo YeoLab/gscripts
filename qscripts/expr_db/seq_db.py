@@ -20,7 +20,21 @@ class SeqExpr(Base):
     species = Column(String(50))
     type = Column(String(50))
     collab = Column(String(50))
-    output_directory = ''
+    collab_institute = Column(String(50))
+
+    tube_label = Column(String(50))
+    target = Column(String(50))
+    cell_source = Column(String(50))
+    experiment_date = Column(String(50))
+    seq_kit = Column(String(50))
+    size_selection_min = Column(Integer())
+    size_selection_max = Column(Integer())
+    library_prep_generator = Column(String(50))
+    library_prep_date = Column(String(50))
+    read_length = Column(Integer())
+    sequence_location = Column(String(50))
+    sequence_platform = Column(String(50))
+
     compressed = False
 
     __mapper_args__ = {
@@ -31,7 +45,6 @@ class SeqExpr(Base):
 
 class RNASeq(SeqExpr):
     
-    # sqlalchemy specific
     __tablename__ = 'rnaseq'  
     id = Column(Integer, ForeignKey('seqexpr.id'), primary_key=True)
     strand = Column(String(50))
@@ -50,8 +63,33 @@ class CLIPSeq(SeqExpr):
     __tablename__ = 'clipseq'
     id = Column(Integer, ForeignKey('seqexpr.id'), primary_key=True)
 
+    __mapper_args__ = {
+        'polymorphic_identity':'clipseq'
+    }
+    
     def get_params(self):
         return (self.__tablename__, self.species)
+
+
+    
+def manifest_setup(expr_list, working_dir='~/scratch/', filename='manifest.txt'):
+
+    f = open(working_dir+filename, 'w')
+
+    for expr in expr_list:
+    
+        if expr.__tablename__ == 'clipseq':
+        
+            f.write(expr.file_location)
+            f.write('\t')
+            f.write(expr.species)
+            f.write('\n')
+
+    f.close()
+
+    pass
+        
+
 
 def q_setup(expr_list, working_dir='~/scratch/', session_name=None, queue='home', group='yeo'):
 
@@ -115,7 +153,6 @@ def q_setup(expr_list, working_dir='~/scratch/', session_name=None, queue='home'
             elif item[1].__tablename__ == 'clipseq':
                 fl.write(item[1].file_location)
                 
-                if item[1].pair_location:
                     
             
         fl.close()
