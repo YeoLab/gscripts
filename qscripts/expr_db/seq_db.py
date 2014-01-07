@@ -72,7 +72,7 @@ class CLIPSeq(SeqExpr):
 
 
     
-def manifest_setup(expr_list, working_dir='~/scratch/', filename='manifest.txt'):
+def manifest_setup(expr_list, working_dir='/home/ppliu/scratch/', filename='manifest.txt'):
 
     f = open(working_dir+filename, 'w')
 
@@ -172,7 +172,7 @@ def q_setup(expr_list, working_dir='~/scratch/', session_name=None, queue='home'
             command += ' -run '
             command += ' -qsub '
 
-        elif expr.__tablename__ == 'clipseq'
+        elif expr.__tablename__ == 'clipseq':
             
             command = 'java -Xms512m -Xmx512m -jar ~/dash/gatk/dist/Queue.jar'
             command += ' -S '+ scala_script[expr.__tablename__]
@@ -185,7 +185,7 @@ def q_setup(expr_list, working_dir='~/scratch/', session_name=None, queue='home'
             command += ' --adapter ' + 'CAAGCAGAAGACGGCATACGAGATCGGTCTCGGCATTCCTGCTGAACCGCTCTTCCGATCT'
             command += ' --adapter ' + 'ATCTCGTATGCCGTCTTCTGCTTG'
             command += ' --adapter ' + 'CGACAGGTTCAGAGTTCTACAGTCCGACGATC'
-            command += ' --adapter ' + GATCGGAAGAGCACACGTCTGAACTCCAGTCAC'
+            command += ' --adapter ' + 'GATCGGAAGAGCACACGTCTGAACTCCAGTCAC'
             command += ' -jobQueue ' + queue
             command += ' -jobNative ' + '\"group_list={}-group\"'.format(group)
             command += ' --compressed '
