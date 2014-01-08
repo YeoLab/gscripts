@@ -34,8 +34,9 @@ class SeqExpr(Base):
     library_prep_generator = Column(String(50))
     library_prep_date = Column(String(50))
     read_length = Column(Integer())
-    sequence_location = Column(String(50))
-    sequence_platform = Column(String(50))
+    sequencing_location = Column(String(50))
+    sequencing_platform = Column(String(50))
+    sequencing_submission_date = Column(String(50))
 
     type = Column(String(50))
 
