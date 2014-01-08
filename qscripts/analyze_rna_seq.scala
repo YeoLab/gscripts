@@ -34,8 +34,8 @@ class AnalyzeRNASeq extends QScript {
   @Argument(doc = "not stranded", required = false)
   var not_stranded: Boolean = false
 
-  @Argument(doc = "stringent run", required = false)
-  var stringent: Boolean = false
+  @Argument(doc = "strict triming run")
+  var strict: Boolean = false
 
   @Argument(doc = "location to place trackhub (must have the rest of the track hub made before starting script)")
   var location: String = "rna_seq"
@@ -150,8 +150,8 @@ def stringentJobs(fastq_file: File) : File = {
       return filteredFastq
 }
 def script() {
+    println(strict)
 
-    var stringent = false
     val fileList = QScriptUtils.createArgsFromFile(input)
     var trackHubFiles: List[File] = List()
     
@@ -160,13 +160,18 @@ def script() {
       var fastqPair: File = null
       if (item._2 != "null"){
         fastqPair = new File(item._2)
+	add(new FastQC(inFastq = fastqPair))
       }
+      
+      add(new FastQC(inFastq = fastq_file))
+
       var filteredFastq: File = null
-      if(stringent && item._2 == "null") { 
+      if(strict && item._2 == "null") {
         filteredFastq = stringentJobs(fastq_file)
       } else {
         filteredFastq = fastq_file
       }
+
 
       // run regardless of stringency
       val samFile = swapExt(filteredFastq, ".fastq", ".sam")
@@ -188,9 +193,8 @@ def script() {
 
       //add bw files to list for printing out later
       trackHubFiles = trackHubFiles ++ List(bedGraphFileNegInverted, bigWigFilePos)
-      add(new FastQC(inFastq = fastq_file))
-
-      if(item._2 != "null") { //if paired
+            
+      if(item._2 != "null") { //if paired	
         add(new star(filteredFastq, samFile, not_stranded, fastqPair))
       } else { //unpaired
         add(new star(filteredFastq, samFile, not_stranded))

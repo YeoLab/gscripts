@@ -180,8 +180,9 @@ class AnalizeCLIPSeq extends QScript {
       retval = "/projects/ps-yeolab/genomes/mm9/star"
    }else if(genome == "ce10") {
       retval = "/projects/ps-yeolab/genomes/ce10/star"
+   }else if(genome == "dm3") { 
+      retval = "/projects/ps-yeolab/genomes/dm3/star"
    }
-
    retval
   }
 
@@ -195,6 +196,8 @@ class AnalizeCLIPSeq extends QScript {
       retval = "/projects/ps-yeolab/genomes/mm9/mm9.chrom.sizes"
    }else if(genome == "ce10") {
       retval = "/projects/ps-yeolab/genomes/ce10/ce10.chrom.sizes"
+   }else if(genome == "dm3") {
+      retval = "/projects/ps-yeolab/genomes/dm3/dm3.chrom.sizes"
    }
    
    retval
@@ -234,8 +237,9 @@ class AnalizeCLIPSeq extends QScript {
       retval = "/projects/ps-yeolab/genomes/hg19/chromosomes/all.fa" 
    }else if(genome == "mm9") {
       retval = "/projects/ps-yeolab/genomes/mm9/chromosomes/all.fa" 
+   }else if(genome == "dm3") {
+      retval = "/projects/ps-yeolab/genomes/dm3/chromosomes/all.fa"
    }
-   
    retval
   }
 
