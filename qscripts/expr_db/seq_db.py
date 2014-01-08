@@ -15,11 +15,12 @@ class SeqExpr(Base):
     __tablename__ = 'seqexpr'
     id = Column(Integer, primary_key = True)
     sample_name = Column(String(100))
+    tech_rep = Column(Integer())
+    bio_rep = Column(String(5))
     project_name = Column(String(100))
-    file_location = Column(String(200), primary_key=True)
+    file_location = Column(String(200), unique=True)
     pair_location = Column(String(200))
     species = Column(String(50))
-    type = Column(String(50))
     collab = Column(String(50))
     collab_institute = Column(String(50))
 
@@ -36,11 +37,9 @@ class SeqExpr(Base):
     sequence_location = Column(String(50))
     sequence_platform = Column(String(50))
 
-    p = re.compile('gz$')
-    if p.match(file_location):
-        compressed = True
-    else:
-        compressed = False
+    type = Column(String(50))
+
+    compressed = True
 
     __mapper_args__ = {
         'polymorphic_identity':'seqexpr',
@@ -70,6 +69,7 @@ class CLIPSeq(SeqExpr):
     
     __tablename__ = 'clipseq'
     id = Column(Integer, ForeignKey('seqexpr.id'), primary_key=True)
+    clip_type = Column(String(50))    
 
     __mapper_args__ = {
         'polymorphic_identity':'clipseq'
