@@ -2,6 +2,7 @@ from sqlalchemy import create_engine
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy import Column, String, Boolean, Integer, ForeignKey
 from collections import defaultdict
+import os.path
 import itertools
 import string
 import random
@@ -23,6 +24,8 @@ class SeqExpr(Base):
     species = Column(String(50))
     collab = Column(String(50))
     collab_institute = Column(String(50))
+
+    notes = Column(String(100))
 
     tube_label = Column(String(50))
     target = Column(String(50))
@@ -51,6 +54,18 @@ class SeqExpr(Base):
     def __repr__(self):
         return 'type: {}\project: {}\n: sample: {}'.format([self.__tablename__, self.sample_name, self.project_name])
 
+
+    def check_file(self):
+        
+        if os.path.isfile(self.file_location) == False:
+            return False
+
+        if self.pair_location:
+            if os.path.isfile(self.pair_location) == False:
+                return False
+
+        return True
+
 class RNASeq(SeqExpr):
     
     __tablename__ = 'rnaseq'  
@@ -71,6 +86,7 @@ class CLIPSeq(SeqExpr):
     __tablename__ = 'clipseq'
     id = Column(Integer, ForeignKey('seqexpr.id'), primary_key=True)
     clip_type = Column(String(50))    
+    barcode = Column(String(50))
 
     __mapper_args__ = {
         'polymorphic_identity':'clipseq'
