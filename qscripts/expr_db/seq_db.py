@@ -5,6 +5,7 @@ from collections import defaultdict
 import itertools
 import string
 import random
+import re
 
 engine = create_engine('mysql+pymysql://ppliu:some_pass@sauron.ucsd.edu/test')
 Base = declarative_base()
@@ -14,8 +15,8 @@ class SeqExpr(Base):
     __tablename__ = 'seqexpr'
     id = Column(Integer, primary_key = True)
     sample_name = Column(String(100))
-    expr_name = Column(String(100))
-    file_location = Column(String(200))
+    project_name = Column(String(100))
+    file_location = Column(String(200), primary_key=True)
     pair_location = Column(String(200))
     species = Column(String(50))
     type = Column(String(50))
@@ -35,13 +36,20 @@ class SeqExpr(Base):
     sequence_location = Column(String(50))
     sequence_platform = Column(String(50))
 
-    compressed = False
+    p = re.compile('gz$')
+    if p.match(file_location):
+        compressed = True
+    else:
+        compressed = False
 
     __mapper_args__ = {
         'polymorphic_identity':'seqexpr',
         'polymorphic_on':type
     }
-        
+
+
+    def __repr__(self):
+        return 'type: {}\project: {}\n: sample: {}'.format([self.__tablename__, self.sample_name, self.project_name])
 
 class RNASeq(SeqExpr):
     
@@ -72,7 +80,7 @@ class CLIPSeq(SeqExpr):
 
 
     
-def manifest_setup(expr_list, working_dir='/home/ppliu/scratch/', filename='manifest.txt'):
+def manifest_setup(expr_list, working_dir='/oasis/tscc/scratch/yeo-lab', filename='manifest.txt'):
 
     f = open(working_dir+filename, 'w')
 
@@ -91,7 +99,7 @@ def manifest_setup(expr_list, working_dir='/home/ppliu/scratch/', filename='mani
         
 
 
-def q_setup(expr_list, working_dir='~/scratch/', session_name=None, queue='home', group='yeo'):
+def q_setup(expr_list, working_dir='/oasis/tscc/scratch/yeo-lab', session_name=None, queue='home', group='yeo'):
 
     star_genome = {
         'hg19': '/projects/ps-yeolab/genomes/hg19/star/',
