@@ -1173,12 +1173,15 @@ def pdf(data, bins=50):
     return pos, pdf
 
 
-def plot_cdf(data, bins=50, ax=None):
-    if ax is None:
-        ax = plt.gca()
-    x, y = cdf(data, bins=bins)
-    ax.plot(x,y)
-
+def plot_cdf(cdf_list, **kwargs):
+        cdf = sm.distributions.ECDF(cdf_list)
+        cdf_linspace = np.linspace(min(cdf_list), max(cdf_list))
+        if kwargs['ax'] is not None:
+            ax = kwargs['ax']
+            del kwargs['ax']
+            ax.plot(cdf_linspace, cdf(cdf_linspace), **kwargs)
+        else:
+            plot(cdf_linspace, cdf(cdf_linspace), **kwargs)
 
 def plot_pdf(data, bins=50, ax=None):
     if ax is None:

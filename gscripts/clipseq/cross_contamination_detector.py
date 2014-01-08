@@ -11,7 +11,7 @@ import pysam
 
 
 ##Need to write up testing code for this
-def correlation(bam_1, bam_2, outbam):
+def correlation(bam_1, bam_2, outbam_name):
     
     """
     
@@ -25,9 +25,11 @@ def correlation(bam_1, bam_2, outbam):
 
     total_count = 0
     matched_count = 0
-
+    name1 = os.path.basename(".".join(bam_1.split(".")[:2]))
+    name2 = os.path.basename(".".join(bam_2.split(".")[:2]))
+    
     with pysam.Samfile(bam_1) as bam_1, pysam.Samfile(bam_2) as bam_2:
-        outbam = pysam.Samfile(outbam, 'wh', bam_1)
+        outbam = pysam.Samfile(outbam_name, 'wh', bam_1)
         
         for read in bam_1:
             total_count += 1
@@ -45,7 +47,7 @@ def correlation(bam_1, bam_2, outbam):
                     outbam.write(read)
                     break
     outbam.close()
-    return matched_count, total_count
+    return name1, name2, matched_count, total_count, outbam_name
 
 
 
