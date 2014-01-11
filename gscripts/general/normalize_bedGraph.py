@@ -18,7 +18,7 @@ parser.add_argument("--bam", help="bam file to normalize on", required=True)
 args = parser.parse_args()
 
 samfile = pysam.Samfile(args.bam)
-mapped_reads = float(samfile.mapped / 1000000)
+mapped_reads = float(samfile.mapped) / 1000000
 with open(args.bg) as bg:
     for line in bg:
         line = line.strip().split()

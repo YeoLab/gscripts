@@ -4,10 +4,9 @@ Given a sam file counts chromosome frequencies
 
 """
 
+import sys
 import argparse
 from collections import Counter
-import sys
-
 
 def count_chroms(handle):
     """

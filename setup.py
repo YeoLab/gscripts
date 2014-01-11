@@ -5,7 +5,7 @@ from setuptools import setup, find_packages
 scripts = ['rnaseq/count_tags.py',
            'rnaseq/single_RPKM.py',
            'general/calculate_NRF.py',
-           'general/calculate_NRF.py',
+           'general/normalize_bedGraph.py',
            'general/make_trackhubs.py',
            'general/count_aligned_from_sam.py',
            'general/negBedGraph.py',
