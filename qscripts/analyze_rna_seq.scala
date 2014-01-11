@@ -68,6 +68,14 @@ class AnalyzeRNASeq extends QScript {
         this.split = true
   }
 
+  
+  case class oldSplice(input: File, out : File) extends OldSplice {
+        this.inBam = input
+        this.out_file = out
+        this.species = species
+        this.splice_type = List("MXE", "SE")
+        this.flip = (flip == "flip")
+  }
   case class singleRPKM(input: File, output: File, s: String) extends SingleRPKM {
 	this.inCount = input
 	this.outRPKM = output
@@ -106,6 +114,12 @@ class AnalyzeRNASeq extends QScript {
 
   }
 
+  case class parseOldSplice(inSplice : List[File]) extends ParseOldSplice {
+       override def shortDescription = "ParseOldSplice"
+       this.inBam = inSplice
+       this.species = species
+  }
+ 
   case class samtoolsIndexFunction(input: File, output: File) extends SamtoolsIndexFunction {
        override def shortDescription = "indexBam"
        this.bamFile = input
@@ -154,6 +168,7 @@ def script() {
 
     val fileList = QScriptUtils.createArgsFromFile(input)
     var trackHubFiles: List[File] = List()
+    var splicesFiles: List[File] = List()
     
     for (item : Tuple3[File, String, String] <- fileList) {
       var fastq_file: File = item._1
@@ -193,9 +208,13 @@ def script() {
       val countFile = swapExt(rgSortedBamFile, "bam", "count")
       val RPKMFile = swapExt(countFile, "count", "rpkm")
 
+      val oldSpliceOut = swapExt(rgSortedBamFile, "bam", "splices")
+      
       //add bw files to list for printing out later
+
       trackHubFiles = trackHubFiles ++ List(bigWigFileNeg, bigWigFilePos)
-            
+      splicesFiles = splicesFiles ++ List(oldSpliceOut)      
+      
       if(item._2 != "null") { //if paired	
         add(new star(filteredFastq, samFile, not_stranded, fastqPair))
       } else { //unpaired
@@ -219,8 +238,10 @@ def script() {
       add(new countTags(input = rgSortedBamFile, index = indexedBamFile, output = countFile, a = tags_annotation))	
       add(new singleRPKM(input = countFile, output = RPKMFile, s = species))
 
+      add(oldSplice(input = rgSortedBamFile, out = oldSpliceOut))
     }
     add(new MakeTrackHub(trackHubFiles, location, species))
+    add(parseOldSplice(splicesFiles))
   }
 }
 
