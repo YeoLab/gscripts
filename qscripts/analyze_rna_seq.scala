@@ -72,9 +72,9 @@ class AnalyzeRNASeq extends QScript {
   case class oldSplice(input: File, out : File) extends OldSplice {
         this.inBam = input
         this.out_file = out
-        this.species = species
+        this.in_species = species
         this.splice_type = List("MXE", "SE")
-        this.flip = (flip == "flip")
+        this.flip = (flipped == "flip")
   }
   case class singleRPKM(input: File, output: File, s: String) extends SingleRPKM {
 	this.inCount = input
@@ -164,7 +164,6 @@ def stringentJobs(fastq_file: File) : File = {
       return filteredFastq
 }
 def script() {
-    println(strict)
 
     val fileList = QScriptUtils.createArgsFromFile(input)
     var trackHubFiles: List[File] = List()
