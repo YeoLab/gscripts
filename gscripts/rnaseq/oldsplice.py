@@ -516,7 +516,7 @@ def main(options):
 
     
 if __name__ == "__main__":
-    usage = "oldsplice.py --bam file.bam --species <species> --splice_type SE --splice_type MXE --outfile "
+    usage = "oldsplice.py --bam file.bam --species <species> --splice_type SE --splice_type MXE --outfile file.pickle [-f]"
     description = "Given a bam file, count reads to isoforms. comparisons come later"
     parser = OptionParser(usage=usage, description=description)
     parser.add_option("--bam", '-b', dest="bam", help = "bam file")
