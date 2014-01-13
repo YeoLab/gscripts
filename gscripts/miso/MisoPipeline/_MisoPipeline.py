@@ -20,6 +20,8 @@ class MisoPipeline(object):
         self.event_type = cl.args['event_type'].upper()
         self.sample_info_file = cl.args['sample_info_file']
 
+        self.debug = cl.args['debug']
+
         try:
             self.miso = (which('miso')[0])
             self.miso_scripts_dir = os.path.dirname(self.miso)
@@ -46,8 +48,13 @@ class MisoPipeline(object):
         self.event_type_index = self.annotation_index_strfmt % self.event_type
         self.num_processes = cl.args['num_processes']
         self.num_cores = cl.args['num_cores']
-        self.sample_ids, self.bams, self.notes = read_sample_info_file(
-            self.sample_info_file)
+        if self.sample_info_file:
+            self.sample_ids, self.bams, self.notes = read_sample_info_file(
+                self.sample_info_file)
+        else:
+            bam, sample_id = cl.args['single_bam_and_id'].split(' ')
+            sample_ids = [sample_id]
+            bams = [bam]
 
         self.extra_miso_arguments = cl.args['extra_miso_arguments']
 
@@ -458,6 +465,69 @@ class MisoPipeline(object):
         self.insert_len()
         self.psi()
         self.summary()
+
+    def run_all_single_sample(self):
+
+        bam = self.bams[0]
+        sample_id = self.sample_ids[0]
+
+        commands = []
+
+        insert_len_commands = []
+        insert_len_arguments = ''
+
+        event_types = ['SE', 'MXE', 'AFE', 'ALE', 'A3SS', 'A5SS', 'TANDEMUTR']
+
+        # Get the read length. Gonna keep this as bash because samtools
+        # and less are very fast
+        read_length = 'sample_%s_READ_LEN' % sample_id
+        #commands.append(
+        #    '\n# Assuming that the first read of the bam file is '
+        #    'representative, such that all the reads in the '
+        #    '\n# file are exactly the same length, we can take the first '
+        #    'read from the bam file and measure its length, '
+        #    '\n# and use that for our algorithm')
+        commands.append(
+            "%s=$(samtools view %s | head -n 1 | cut -f 10 | awk '{ print"
+            " length }')" % (read_length, bam))
+
+        if self.read_type == 'paired_end':
+            'python /home/yeo-lab/software/bin/pe_utils.py \
+--compute-insert-len /home/yeo-lab/genomes/hg19/miso_annotations/SE_constitutive \
+{} \
+--no-bam-filter '.format(bam)
+
+            insert_len_stddev = ''
+            insert_len_mean = ''
+            insert_len_file = bam + '.insert_len'
+            commands.append(
+                "%s=$(head -n 1 %s | sed 's:#::' | cut -d',' -f1 | cut -d'=' -f2)"
+                % (insert_len_mean, insert_len_file))
+
+            # Assign {sample_id}_insert_len_STDDEV variable
+            commands.append(
+                "%s=$(head -n 1 %s | sed 's:#::' | cut -d',' -f2 | cut -d'=' -f2)"
+                % (insert_len_stddev, insert_len_file))
+
+            insert_len_arguments = ' --paired-end $%s $%s ' % (insert_len_mean,
+                                                               insert_len_stddev)
+
+        for event_type in event_types:
+            out_dir = '{}/miso/{}/{}'.format(os.path.dirname(bam), event_type)
+
+            commands.append('python /home/yeo-lab/software/bin/miso \
+--run /home/yeo-lab/genomes/hg19/miso_annotations/{0}_index \
+{1} --output-dir {2} \
+--read-len {3} \
+{4} \
+-p {5} \
+ > {2}/psi.err \
+2> {2}/psi.out'.format(self.event_type, bam, out_dir, read_length,
+                       insert_len_arguments, self.num_processes))
+
+            psi_out = '{}.psi.out'.format(out_dir)
+            psi_err = '{}.psi.err'.format(out_dir)
+            commands.append()
 
     def summary(self):
         summary_commands = []
