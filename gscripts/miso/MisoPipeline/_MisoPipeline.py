@@ -559,7 +559,8 @@ fi\n'.format(event_type))
             commands.append("""if [ -s {0}/summary.err ] ; then
     echo 'MISO psi failed on event type: {0}'
     exit 1
-fi""".format(out_dir))
+fi
+""".format(out_dir))
         sh_file = '{}/{}_miso.sh'.format(os.path.dirname(bam), sample_id)
         with open(sh_file, 'w') as f:
             f.write('\n'.join(commands))
