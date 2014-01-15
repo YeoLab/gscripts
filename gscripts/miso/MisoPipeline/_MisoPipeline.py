@@ -549,7 +549,7 @@ fi\n'.format(event_type))
             commands.append('# Summarize psi scores for all events')
             commands.append('python /home/yeo-lab/software/bin/run_miso.py '
                             '--summarize-samples {0} ' \
-                            '{0} >{0}/summary.out 2>{0]/summary.err'.format(
+                            '{0} >{0}/summary.out 2>{0}/summary.err'.format(
                 out_dir))
             commands.append("# Check that the summary didn't fail")
             commands.append("# '-s' returns true if file size is nonzero, "
