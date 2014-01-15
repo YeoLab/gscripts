@@ -55,8 +55,8 @@ class MisoPipeline(object):
         else:
             bam = cl.args['bam']
             sample_id = cl.args['sample_id']
-            sample_ids = [sample_id]
-            bams = [bam]
+            self.sample_ids = [sample_id]
+            self.bams = [bam]
 
         self.extra_miso_arguments = cl.args['extra_miso_arguments']
 
