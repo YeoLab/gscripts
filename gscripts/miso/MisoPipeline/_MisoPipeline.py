@@ -522,6 +522,7 @@ class MisoPipeline(object):
 {1} --output-dir {2} \
 --read-len {3} \
 {4} \
+--no-filter-events \
 -p {5} \
  > {2}/psi.err \
 2> {2}/psi.out'.format(self.event_type, bam, out_dir, read_length,
