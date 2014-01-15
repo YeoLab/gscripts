@@ -169,7 +169,7 @@ class CommandLine(object):
                                  help="Don't make any files, just print "
                                       "everything that would have been made")
         self.parser.add_argument('--event-type', '-e',
-                                 action='store', type=str, required=True,
+                                 action='store', type=str, required=False,
                                  help="Which event you'd like to index. One "
                                       "of:" +
                                       ('\n'
