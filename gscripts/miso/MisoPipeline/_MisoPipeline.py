@@ -17,8 +17,10 @@ class MisoPipeline(object):
          so we can check if they're there or not in the future.
         """
         self.read_type = cl.args['read_type']
-        self.event_type = cl.args['event_type'].upper()
+        #self.event_type = cl.args['event_type'].upper()
         self.sample_info_file = cl.args['sample_info_file']
+
+        self.debug = cl.args['debug']
 
         try:
             self.miso = (which('miso')[0])
@@ -43,11 +45,18 @@ class MisoPipeline(object):
         # self.event_type_gff = glob(
         #     '%s/%s*.gff' % (self.base_annotation_dir, self.event_type))
         self.constitutive_exon_gff = cl.args['constitutive_exon_gff']
-        self.event_type_index = self.annotation_index_strfmt % self.event_type
+        #self.event_type_index = self.annotation_index_strfmt % self.event_type
+
         self.num_processes = cl.args['num_processes']
         self.num_cores = cl.args['num_cores']
-        self.sample_ids, self.bams, self.notes = read_sample_info_file(
-            self.sample_info_file)
+        if self.sample_info_file:
+            self.sample_ids, self.bams, self.notes = read_sample_info_file(
+                self.sample_info_file)
+        else:
+            bam = cl.args['bam']
+            sample_id = cl.args['sample_id']
+            self.sample_ids = [sample_id]
+            self.bams = [bam]
 
         self.extra_miso_arguments = cl.args['extra_miso_arguments']
 
@@ -85,44 +94,45 @@ class MisoPipeline(object):
         if self.sh_scripts_dir == '':
             self.sh_scripts_dir = os.curdir
 
-        self.job_name_prefix = 'miso%s_%s' % (self.submit_sh_suffix,
-                                              self.event_type)
+        #self.job_name_prefix = 'miso%s_%s' % (self.submit_sh_suffix,
+        #                                      self.event_type)
 
         self.queue = cl.args['queue']
+        self.genome = cl.args['genome']
 
         # get all output dirs so we don't make a typo when redefining them
-        self.psi_output_dirs = ['%s/miso/%s/%s'
-                                % (os.path.dirname(bam), self.event_type,
-                                   sample_id)
-                                for bam, sample_id in zip(self.bams,
-                                                          self.sample_ids)]
-        for d in self.psi_output_dirs:
-            try:
-                os.makedirs(d)
-            except OSError:
-                # If the directory is already there, don't do anything
-                pass
-
-        if cl.args['summary_output_dir_base']:
-            self.summary_output_dirs = ['%s/miso/%s/%s'
-                                        % (cl.args['summary_output_dir_base'],
-                                           self.event_type, sample_id)
-                                        for sample_id in self.sample_ids]
-
-            # Need to create the directories if they're not there already
-            # Using 'os.makedirs' instead of 'os.mkdir' because 'os.makedirs'
-            # is recursive and will make the leaf directory and all other
-            # parent directories. 'os.mkdir' will only make the leaf
-            # directory and whines when the parent directories aren't there
-            for d in self.summary_output_dirs:
-                try:
-                    os.makedirs(d)
-                except OSError:
-                    # If the directory is already there, don't do anything
-                    pass
-
-        else:
-            self.summary_output_dirs = self.psi_output_dirs
+        #self.psi_output_dirs = ['%s/miso/%s/%s'
+        #                        % (os.path.dirname(bam), self.event_type,
+        #                           sample_id)
+        #                        for bam, sample_id in zip(self.bams,
+        #                                                  self.sample_ids)]
+        #for d in self.psi_output_dirs:
+        #    try:
+        #        os.makedirs(d)
+        #    except OSError:
+        #        # If the directory is already there, don't do anything
+        #        pass
+        #
+        #if cl.args['summary_output_dir_base']:
+        #    self.summary_output_dirs = ['%s/miso/%s/%s'
+        #                                % (cl.args['summary_output_dir_base'],
+        #                                   self.event_type, sample_id)
+        #                                for sample_id in self.sample_ids]
+        #
+        #    # Need to create the directories if they're not there already
+        #    # Using 'os.makedirs' instead of 'os.mkdir' because 'os.makedirs'
+        #    # is recursive and will make the leaf directory and all other
+        #    # parent directories. 'os.mkdir' will only make the leaf
+        #    # directory and whines when the parent directories aren't there
+        #    for d in self.summary_output_dirs:
+        #        try:
+        #            os.makedirs(d)
+        #        except OSError:
+        #            # If the directory is already there, don't do anything
+        #            pass
+        #
+        #else:
+        #    self.summary_output_dirs = self.psi_output_dirs
 
     def comparisons(self):
         return 'comparisons are not implemented'
@@ -458,6 +468,107 @@ class MisoPipeline(object):
         self.insert_len()
         self.psi()
         self.summary()
+
+    def run_all_single_sample(self):
+
+        bam = self.bams[0]
+        sample_id = self.sample_ids[0]
+
+        commands = []
+
+        insert_len_arguments = ''
+
+        event_types = ['SE', 'MXE', 'AFE', 'ALE', 'A3SS', 'A5SS', 'TANDEMUTR']
+
+        # Get the read length. Gonna keep this as bash because samtools
+        # and less are very fast
+        read_length = 'sample_%s_READ_LEN' % sample_id
+        #commands.append(
+        #    '\n# Assuming that the first read of the bam file is '
+        #    'representative, such that all the reads in the '
+        #    '\n# file are exactly the same length, we can take the first '
+        #    'read from the bam file and measure its length, '
+        #    '\n# and use that for our algorithm')
+        commands.append(
+            "%s=$(samtools view %s | head -n 1 | cut -f 10 | awk '{ print"
+            " length }')" % (read_length, bam))
+
+        print 'self.read_type', self.read_type
+        if self.read_type == 'paired_end':
+            commands.append('\n# Calculate insert size')
+            commands.append('''python
+/home/yeo-lab/software/bin/pe_utils.py
+--compute-insert-len
+/home/yeo-lab/genomes/{}/miso_annotations/SE_constitutive {}
+--no-bam-filter '''.format(bam, self.genome))
+
+            insert_len_stddev = 'INSERT_LEN_STDDEV'
+            insert_len_mean = 'INSERT_LEN_MEAN'
+            insert_len_file = bam + '.insert_len'
+            commands.append(
+                "%s=$(head -n 1 %s | sed 's:#::' | cut -d',' -f1 | cut -d'=' -f2)"
+                % (insert_len_mean, insert_len_file))
+
+            # Assign {sample_id}_insert_len_STDDEV variable
+            commands.append(
+                "%s=$(head -n 1 %s | sed 's:#::' | cut -d',' -f2 | cut -d'=' -f2)"
+                % (insert_len_stddev, insert_len_file))
+
+            insert_len_arguments = ' --paired-end $%s $%s ' % (insert_len_mean,
+                                                               insert_len_stddev)
+
+        for event_type in event_types:
+            out_dir = '{}/miso/{}/{}'.format(os.path.dirname(bam),
+                                             sample_id, event_type)
+
+            commands.append('\n\n# calculate Psi scores for all {} events'
+            .format(event_type))
+            commands.append('python /home/yeo-lab/software/bin/miso \
+--run /home/yeo-lab/genomes/{0}/miso_annotations/{0}_index \
+{1} --output-dir {2} \
+--read-len {3} \
+{4} \
+--no-filter-events \
+-p {5} \
+ > {2}/psi.err \
+2> {2}/psi.out'.format(self.genome, event_type, bam, out_dir, read_length,
+                       insert_len_arguments, self.num_processes))
+
+            psi_out = '{}/psi.out'.format(out_dir)
+            psi_err = '{}/psi.err'.format(out_dir)
+            commands.append("\n# Check that these jobs didn't fail.\n#'-z' "
+                            "returns "
+                         "true when a string is empty, so this is checking "
+                         "that grepping these files for the words 'failed' "
+                         "and 'shutdown' didn't find anything.")
+            commands.append('iffailed=$(grep failed {})'.format(psi_out))
+            commands.append('ifshutdown=$(grep shutdown {})'.format(psi_err))
+            commands.append('if [ ! -z "$iffailed" -o ! -z "$ifshutdown" ] ; '
+                            'then\n\
+    echo "MISO psi failed on event type: {}\n"\
+    exit 1\n\
+fi\n'.format(event_type))
+
+            commands.append('# Summarize psi scores for all {} events'
+            .format(event_type))
+            commands.append('python /home/yeo-lab/software/bin/run_miso.py '
+                            '--summarize-samples {0} ' \
+                            '{0} >{0}/summary.out 2>{0}/summary.err'.format(
+                out_dir))
+            commands.append("# Check that the summary didn't fail")
+            commands.append("# '-s' returns true if file size is nonzero, "
+                            "and the error file should be empty.")
+            commands.append("""if [ -s {0}/summary.err ] ; then
+    echo 'MISO psi failed on event type: {0}'
+    exit 1
+fi
+""".format(out_dir))
+        sh_file = '{}/{}_miso.sh'.format(os.path.dirname(bam), sample_id)
+        with open(sh_file, 'w') as f:
+            f.write('\n'.join(commands))
+        sys.stdout.write('Wrote miso script for sample "{}": {}\n'.format(
+            sample_id, sh_file))
+
 
     def summary(self):
         summary_commands = []

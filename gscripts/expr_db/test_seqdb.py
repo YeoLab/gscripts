@@ -1,6 +1,7 @@
 import seq_db
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
+
 engine = create_engine('mysql+pymysql://ppliu:some_pass@sauron.ucsd.edu/test')
 
 seq_db.Base.metadata.create_all(engine)
@@ -28,7 +29,7 @@ except Exception as e:
 
 """
 try:
-    
+
     for expr in session.query(seq_db.SeqExpr).all():
         print expr.sample_name,
         print expr.project_name,

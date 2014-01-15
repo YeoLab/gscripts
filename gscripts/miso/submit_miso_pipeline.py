@@ -44,6 +44,12 @@ submit_miso_pipeline.py --psi-only --single-end --event-type SE \
 --summary-output-dir-base ~/projects/singlecell/singlecell/analysis/ \
 --psi-walltime '0:50:00' \
 --annotation-index-strfmt '/home/obotvinnik/genomes/hg19/miso_annotations/%s_index'
+
+
+submit_miso_pipeline.py --run-all --single-bam $BAM $SAMPLE_ID\
+--num-processes 16
+
+TODO: deprecate the non-queue way of running
 '''
 
 # Class: CommandLine
@@ -56,55 +62,55 @@ class CommandLine(object):
             add_help=True, prefix_chars='-')
 
         # Which part of the pipeline do you want to run?
-        pipeline_part = self.parser.add_mutually_exclusive_group(required=True)
-        pipeline_part.add_argument('--insert-len-only',
-                                   action='store_true', default=False,
-                                   required=False,
-                                   help='Only compute the insert lengths of the'
-                                        ' bam files provided in the sample info'
-                                        ' file. Need the event type for this '
-                                        'because we will build the library of '
-                                        'insert sizes from these events. A '
-                                        'single job to the cluster will be '
-                                        'submitted.')
-        pipeline_part.add_argument('--psi-only',
-                                   action='store_true', default=False,
-                                   required=False,
-                                   help='Only compute "psi" (percent-spliced-'
-                                        'in) values for the provided samples.'
-                                        ' Do not compute the insert lengths ('
-                                        'assumes the insert length files are '
-                                        'already there), '
-                                        'and do not summarize. A single job '
-                                        'to the cluster will be submitted.')
-        pipeline_part.add_argument('--summary-only',
-                                   action='store_true', default=False,
-                                   help='Only compute the summary of all '
-                                        '"psi" (percent-spliced-in) values '
-                                        'for the provided samples, '
-                                        'creating a tab-delimited file of '
-                                        'every splicing event. Do not '
-                                        'compute the insert lengths or the '
-                                        'psi values themselves (assumes the '
-                                        'psi values are already there). A '
-                                        'single job to the cluster will be '
-                                        'submitted.')
-        pipeline_part.add_argument('--psi-and-summary',
-                                   action='store_true', default=False,
-                                   help='Compute the "psi" ('
-                                        'percent-spliced-in) values for the '
-                                        'provided samples, and summarize the '
-                                        'output, which creates a '
-                                        'tab-delimited file of every splicing'
-                                        ' event. This is handy if you have '
-                                        'already computed the insert lengths '
-                                        'separately')
-        pipeline_part.add_argument('--run-all', action='store_true',
-                                   help='Compute the insert length mean and '
-                                        'standard deviation, '
-                                        'the "psi" (percent spliced-in) '
-                                        'scores of all splicing events, '
-                                        'and summarize the relevant events')
+        #pipeline_part = self.parser.add_mutually_exclusive_group(required=True)
+        #pipeline_part.add_argument('--insert-len-only',
+        #                           action='store_true', default=False,
+        #                           required=False,
+        #                           help='Only compute the insert lengths of the'
+        #                                ' bam files provided in the sample info'
+        #                                ' file. Need the event type for this '
+        #                                'because we will build the library of '
+        #                                'insert sizes from these events. A '
+        #                                'single job to the cluster will be '
+        #                                'submitted.')
+        #pipeline_part.add_argument('--psi-only',
+        #                           action='store_true', default=False,
+        #                           required=False,
+        #                           help='Only compute "psi" (percent-spliced-'
+        #                                'in) values for the provided samples.'
+        #                                ' Do not compute the insert lengths ('
+        #                                'assumes the insert length files are '
+        #                                'already there), '
+        #                                'and do not summarize. A single job '
+        #                                'to the cluster will be submitted.')
+        #pipeline_part.add_argument('--summary-only',
+        #                           action='store_true', default=False,
+        #                           help='Only compute the summary of all '
+        #                                '"psi" (percent-spliced-in) values '
+        #                                'for the provided samples, '
+        #                                'creating a tab-delimited file of '
+        #                                'every splicing event. Do not '
+        #                                'compute the insert lengths or the '
+        #                                'psi values themselves (assumes the '
+        #                                'psi values are already there). A '
+        #                                'single job to the cluster will be '
+        #                                'submitted.')
+        #pipeline_part.add_argument('--psi-and-summary',
+        #                           action='store_true', default=False,
+        #                           help='Compute the "psi" ('
+        #                                'percent-spliced-in) values for the '
+        #                                'provided samples, and summarize the '
+        #                                'output, which creates a '
+        #                                'tab-delimited file of every splicing'
+        #                                ' event. This is handy if you have '
+        #                                'already computed the insert lengths '
+        #                                'separately')
+        #pipeline_part.add_argument('--run-all', action='store_true',
+        #                           help='Compute the insert length mean and '
+        #                                'standard deviation, '
+        #                                'the "psi" (percent spliced-in) '
+        #                                'scores of all splicing events, '
+        #                                'and summarize the relevant events')
 
         read_type = self.parser.add_mutually_exclusive_group()
         read_type.add_argument('--paired-end', action='store_const',
@@ -118,6 +124,20 @@ class CommandLine(object):
                                help='Indicates that these reads are '
                                     'single-ended, and treats them as such. '
                                     'Does not compute insert size.')
+
+        samples = self.parser.add_mutually_exclusive_group(required=True)
+        samples.add_argument('--sample-info-file',
+                             type=str,
+                             default='',
+                             action='store',
+                             help='A tab-delimited sample info file with '
+                                  'the header:\n'
+                                  'Sample ID\tBam File\t Notes.\n This is'
+                                  ' the same format file as required by '
+                                  'RNA-SeQC.')
+        samples.add_argument('--bam', type=str,
+                             action='store', default='',
+                             help='A single BAM file')
 
         # self.parser.add_argument('--index-base-dir',
         #                          action='store',
@@ -146,8 +166,13 @@ class CommandLine(object):
                                  help='Location of the gff file of '
                                       'constitutive exons, generated by '
                                       'pe_utils.py of MISO')
+        self.parser.add_argument('--debug', action='store_true',
+                                 default=False,
+                                 help="Don't make any files, just print "
+                                      "everything that would have been made")
         self.parser.add_argument('--event-type', '-e',
-                                 action='store', type=str, required=True,
+                                 default='',
+                                 action='store', type=str, required=False,
                                  help="Which event you'd like to index. One "
                                       "of:" +
                                       ('\n'
@@ -182,6 +207,8 @@ class CommandLine(object):
                                       'quote and the first dash of the miso '
                                       'argument. For some reason this helps..'
                                       '..')
+        self.parser.add_argument('--genome', type=str, action='store',
+                                 required=True, help='Which genome to use')
         self.parser.add_argument('--individual-jobs', #type=bool,
                                  action='store_true',
                                  default=False,
@@ -223,6 +250,10 @@ class CommandLine(object):
                                  default='home-yeo',
                                  help='The cluster computing queue you would '
                                       'like to use.')
+        self.parser.add_argument('--sample-id', type=str,
+                                 action='store',
+                                 help='sample ID. required if using --bam',
+                                 required=False)
         self.parser.add_argument('--sample-id-suffix', type=str,
                                  action='store', default='',
                                  help='Extra identification to add to these '
@@ -231,14 +262,6 @@ class CommandLine(object):
                                       'minimum of 10 reads instead of 20, '
                                       'you could say "_min_event_reads10" as '
                                       'a suffix')
-        self.parser.add_argument('--sample-info-file', required=True,
-                                 type=str,
-                                 action='store',
-                                 help='A tab-delimited sample info file with '
-                                      'the header:\n'
-                                      'Sample ID\tBam File\t Notes.\n This is'
-                                      ' the same format file as required by '
-                                      'RNA-SeQC.')
         self.parser.add_argument('--sh-scripts-dir', type=str,
                                  action='store', default='',
                                  help='Where to put the cluster (PBS/SGE) '
@@ -336,16 +359,19 @@ def main():
         miso_pipeline = MisoPipeline(cl)
 
         # Read the arguments to see which piece of the MISO pipeline to run
-        if cl.args['run_all']:
-            miso_pipeline.run_all()
-        elif cl.args['insert_len_only']:
-            miso_pipeline.insert_len()
-        elif cl.args['psi_only']:
-            miso_pipeline.psi()
-        elif cl.args['summary_only']:
-            miso_pipeline.summary()
-        elif cl.args['psi_and_summary']:
-            miso_pipeline.psi_and_summary()
+        #if cl.args['run_all']:
+        #    if cl.args['single_sample']:
+        miso_pipeline.run_all_single_sample()
+        #else:
+        #    miso_pipeline.run_all()
+        #elif cl.args['insert_len_only']:
+        #    miso_pipeline.insert_len()
+        #elif cl.args['psi_only']:
+        #    miso_pipeline.psi()
+        #elif cl.args['summary_only']:
+        #    miso_pipeline.summary()
+        #elif cl.args['psi_and_summary']:
+        #    miso_pipeline.psi_and_summary()
 
     # If not all the correct arguments are given, break the program and
     # show the usage information
