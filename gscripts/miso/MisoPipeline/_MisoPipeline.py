@@ -105,33 +105,33 @@ class MisoPipeline(object):
         #                           sample_id)
         #                        for bam, sample_id in zip(self.bams,
         #                                                  self.sample_ids)]
-        for d in self.psi_output_dirs:
-            try:
-                os.makedirs(d)
-            except OSError:
-                # If the directory is already there, don't do anything
-                pass
-
-        if cl.args['summary_output_dir_base']:
-            self.summary_output_dirs = ['%s/miso/%s/%s'
-                                        % (cl.args['summary_output_dir_base'],
-                                           self.event_type, sample_id)
-                                        for sample_id in self.sample_ids]
-
-            # Need to create the directories if they're not there already
-            # Using 'os.makedirs' instead of 'os.mkdir' because 'os.makedirs'
-            # is recursive and will make the leaf directory and all other
-            # parent directories. 'os.mkdir' will only make the leaf
-            # directory and whines when the parent directories aren't there
-            for d in self.summary_output_dirs:
-                try:
-                    os.makedirs(d)
-                except OSError:
-                    # If the directory is already there, don't do anything
-                    pass
-
-        else:
-            self.summary_output_dirs = self.psi_output_dirs
+        #for d in self.psi_output_dirs:
+        #    try:
+        #        os.makedirs(d)
+        #    except OSError:
+        #        # If the directory is already there, don't do anything
+        #        pass
+        #
+        #if cl.args['summary_output_dir_base']:
+        #    self.summary_output_dirs = ['%s/miso/%s/%s'
+        #                                % (cl.args['summary_output_dir_base'],
+        #                                   self.event_type, sample_id)
+        #                                for sample_id in self.sample_ids]
+        #
+        #    # Need to create the directories if they're not there already
+        #    # Using 'os.makedirs' instead of 'os.mkdir' because 'os.makedirs'
+        #    # is recursive and will make the leaf directory and all other
+        #    # parent directories. 'os.mkdir' will only make the leaf
+        #    # directory and whines when the parent directories aren't there
+        #    for d in self.summary_output_dirs:
+        #        try:
+        #            os.makedirs(d)
+        #        except OSError:
+        #            # If the directory is already there, don't do anything
+        #            pass
+        #
+        #else:
+        #    self.summary_output_dirs = self.psi_output_dirs
 
     def comparisons(self):
         return 'comparisons are not implemented'
