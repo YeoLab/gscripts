@@ -6,6 +6,7 @@ Converts randomer + barcoded fastq files into something that can be barcode coll
 
 from collections import Counter
 import gzip
+import os
 from optparse import OptionParser
 
 RANDOMER_FRONT_LENGTH = 3
@@ -54,8 +55,14 @@ if __name__ == "__main__":
     parser.add_option("-m", "--metrics_file", dest="metrics_file")
     
     (options,args) = parser.parse_args()
-    #creates different barcode files to assign reads to
     
+    #if a gziped file then we reassign open to be the gzip open and continue using that for the rest of the
+    #program
+    open = gzip.open if os.path.splitext(options.fastq)[1] == ".gz" else open
+    #creates different barcode files to assign reads to
+
+
+
     barcodes = {}
     randomer_counts = {} 
     with open(options.barcodes) as barcodes_file:
@@ -77,7 +84,8 @@ if __name__ == "__main__":
             try:
                 name = fastq_file.next()
                 seq = fastq_file.next()
-                plus = fastq_file.next()
+                fastq_file.next() #got to consume the read
+                plus = "+\n" #sometimes the descriptor is here, don't want it
                 quality = fastq_file.next()
                 
                 barcode, randomer, result = reformat_read(name, seq, plus, quality, barcodes)

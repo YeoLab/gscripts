@@ -180,8 +180,9 @@ class AnalizeCLIPSeq extends QScript {
       retval = "/projects/ps-yeolab/genomes/mm9/star"
    }else if(genome == "ce10") {
       retval = "/projects/ps-yeolab/genomes/ce10/star"
+   }else if(genome == "dm3") { 
+      retval = "/projects/ps-yeolab/genomes/dm3/star"
    }
-
    retval
   }
 
@@ -195,6 +196,8 @@ class AnalizeCLIPSeq extends QScript {
       retval = "/projects/ps-yeolab/genomes/mm9/mm9.chrom.sizes"
    }else if(genome == "ce10") {
       retval = "/projects/ps-yeolab/genomes/ce10/ce10.chrom.sizes"
+   }else if(genome == "dm3") {
+      retval = "/projects/ps-yeolab/genomes/dm3/dm3.chrom.sizes"
    }
    
    retval
@@ -234,8 +237,9 @@ class AnalizeCLIPSeq extends QScript {
       retval = "/projects/ps-yeolab/genomes/hg19/chromosomes/all.fa" 
    }else if(genome == "mm9") {
       retval = "/projects/ps-yeolab/genomes/mm9/chromosomes/all.fa" 
+   }else if(genome == "dm3") {
+      retval = "/projects/ps-yeolab/genomes/dm3/chromosomes/all.fa"
    }
-   
    retval
   }
 
@@ -295,11 +299,13 @@ class AnalizeCLIPSeq extends QScript {
   def downstream_analysis(bamFile : File, bamIndex: File, genome : String) {
 
       	     val bedGraphFilePos = swapExt(bamFile, ".bam", ".pos.bg")
-      	     val bigWigFilePos = swapExt(bedGraphFilePos, ".bg", ".bw")
+	     val bedGraphFilePosNorm = swapExt(bedGraphFilePos, ".pos.bg", ".norm.pos.bg")
+      	     val bigWigFilePos = swapExt(bedGraphFilePosNorm, ".bg", ".bw")
 
       	     val bedGraphFileNeg = swapExt(bamFile, ".bam", ".neg.bg")
-      	     val bigWigFileNeg = swapExt(bedGraphFileNeg, ".bg", ".norm.bw")
-      	     val bedGraphFileNegInverted = swapExt(bedGraphFileNeg, "neg.bg", "neg.t.bg")
+	     val bedGraphFileNegNorm = swapExt(bedGraphFileNeg, ".neg.bg", ".norm.neg.bg")
+      	     val bigWigFileNeg = swapExt(bedGraphFileNeg, ".bg", ".normal.bw")
+      	     val bedGraphFileNegInverted = swapExt(bedGraphFileNegNorm, "neg.bg", "neg.t.bg")
       	     val bigWigFileNegInverted = swapExt(bedGraphFileNegInverted, ".t.bg", ".bw")
 
       	     val clipper_output = swapExt(bamFile, ".bam", ".peaks.bed")
@@ -318,11 +324,13 @@ class AnalizeCLIPSeq extends QScript {
 	     //add bw files to list for printing out later
 
       	     add(new genomeCoverageBed(input = bamFile, outBed = bedGraphFilePos, cur_strand = "+", genome = chromSizeLocation(genome)))
-      	     add(new BedGraphToBigWig(bedGraphFilePos, chromSizeLocation(genome), bigWigFilePos))
+	     add(new NormalizeBedGraph(inBedGraph = bedGraphFilePos, inBam = rgSortedBamFile, outBedGraph = bedGraphFilePosNorm))
+      	     add(new BedGraphToBigWig(bedGraphFilePosNorm, chromSizeLocation(genome), bigWigFilePos))
 
       	     add(new genomeCoverageBed(input = bamFile, outBed = bedGraphFileNeg, cur_strand = "-", genome = chromSizeLocation(genome)))
-      	     add(new BedGraphToBigWig(bedGraphFileNeg, chromSizeLocation(genome), bigWigFileNeg)) 
-      	     add(new NegBedGraph(inBedGraph = bedGraphFileNeg, outBedGraph = bedGraphFileNegInverted))
+      	     add(new NormalizeBedGraph(inBedGraph = bedGraphFileNeg, inBam = bamFile, outBedGraph = bedGraphFileNegNorm))
+	     add(new BedGraphToBigWig(bedGraphFileNegNorm, chromSizeLocation(genome), bigWigFileNeg)) 
+      	     add(new NegBedGraph(inBedGraph = bedGraphFileNegNorm, outBedGraph = bedGraphFileNegInverted))
       	     add(new BedGraphToBigWig(bedGraphFileNegInverted, chromSizeLocation(genome), bigWigFileNegInverted))
 
       	     add(new clipper(in = bamFile, genome = genome, out = clipper_output, isPremRNA = premRNA))

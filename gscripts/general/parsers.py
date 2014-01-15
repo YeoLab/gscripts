@@ -6,7 +6,66 @@ all useful information
 Currently this isn't standard
 
 """
+import glob
+import os
 
+import pandas as pd
+import pybedtools
+
+def rnaseq_metrics(analysis_dir, num_seps=1, sep="."):
+    """
+
+    Generates RNA-seq metrics
+
+    analysis dir, directory to pull information from
+    num_seps number of seperators to join back to get the name of the item
+    sep: sperator to split / join on to get full name
+
+    """
+    
+    nrf_files = glob.glob(os.path.join(analysis_dir, "*.NRF.metrics"))
+    cutadapt_files = glob.glob(os.path.join(analysis_dir, "*.adapterTrim.metrics"))
+    star_files = glob.glob(os.path.join(analysis_dir, "*.final.out"))
+    
+
+    
+    nrf_names = {sep.join(os.path.basename(nrf_file).split(sep)[0 : num_seps]) : nrf_file for nrf_file in nrf_files}
+    cutadapt_names = {sep.join(os.path.basename(cutadapt_file).split(sep)[0 : num_seps]) : cutadapt_file for cutadapt_file in cutadapt_files}
+    star_names = {sep.join(os.path.basename(star_file).split(sep)[0 : num_seps]) : star_file for star_file in star_files}
+    
+    nrf_df = pd.DataFrame({name : parse_nrf_file(nrf_file) for name, nrf_file in nrf_names.items()}).transpose()
+    cutadapt_df = pd.DataFrame({name : parse_cutadapt_file(cutadapt_file) for name, cutadapt_file in cutadapt_names.items()}).transpose()
+    star_df = pd.DataFrame({name : parse_star_file(star_file) for name, star_file in star_names.items()}).transpose()
+    
+    combined_df = pd.merge(cutadapt_df, star_df, left_index=True, right_index=True, how="outer")
+    combined_df = pd.merge(combined_df, nrf_df, left_index=True, right_index=True, how="outer")
+
+    return combined_df 
+def clipseq_metrics(analysis_dir, iclip=False, sep="."):
+
+    """
+    
+    Reports all clip-seq metrics in a given analysis directory (this is fragile for now, outputs must follow gabes naming clipseq pipeline /
+    naming convetions
+
+    """
+
+    num_seps = 2 if iclip else 1
+    
+    rm_duped_files = glob.glob(os.path.join(analysis_dir, "*.rmDup.metrics"))
+    peaks_files = glob.glob(os.path.join(analysis_dir, "*.rmDup.sorted.peaks.bed"))
+    spot_files = glob.glob(os.path.join(analysis_dir, "*peaks.metrics"))
+
+    rm_duped_names = {sep.join(os.path.basename(rm_duped_file).split(sep)[0 : num_seps]) : rm_duped_file for rm_duped_file in rm_duped_files}
+    peaks_names = {sep.join(os.path.basename(peaks_file).split(sep)[0 : num_seps]) : peaks_file for peaks_file in peaks_files}
+
+    rm_duped_df = pd.DataFrame({name : parse_rm_duped_metrics_file(rm_duped_file) for name, rm_duped_file in rm_duped_names.items()}).transpose()
+    spot_df = pd.DataFrame({name : parse_peak_metrics(spot_file) for name, spot_file in spot_names.items()}).transpose()
+    peaks_df = pd.DataFrame({name : {"Num Peaks" : len(pybedtools.BedTool(peaks_file))} for name, peaks_file in peaks_names.items()}).transpose()
+    combined_df = rnaseq_metrics(analysis_dir, num_seps, sep)
+    combined_df = pd.merge(combined_df, rm_duped_df, left_index=True, right_index=True, how="outer")
+    combined_df = pd.merge(combined_df, spot_df, left_index=True, right_index=True, how="outer")
+    combined_df = pd.merge(combined_df, peaks_df, left_index=True, right_index=True, how="outer")
 def parse_star_file(star_file_name):
     with open(star_file_name) as star_file:
         star_dict = {}
@@ -16,18 +75,18 @@ def parse_star_file(star_file_name):
         star_dict["Finished on"] = star_file.next().strip().split("|")[1].strip()
         star_dict["Mapping speed, Million of reads per hour"] = star_file.next().strip().split("|")[1].strip()
         star_file.next()
-        star_dict["Number of input reads"] = star_file.next().strip().split("|")[1].strip()
-        star_dict["Average input read length"] = star_file.next().strip().split("|")[1].strip()
+        star_dict["Number of input reads"] = int(star_file.next().strip().split("|")[1].strip())
+        star_dict["Average input read length"] = float(star_file.next().strip().split("|")[1].strip())
         star_file.next()
-        star_dict["Uniquely mapped reads number"] = star_file.next().strip().split("|")[1].strip()
+        star_dict["Uniquely mapped reads number"] = int(star_file.next().strip().split("|")[1].strip())
         star_dict["Uniquely mapped reads %"] = star_file.next().strip().split("|")[1].strip()
-        star_dict["Average mapped length"] = star_file.next().strip().split("|")[1].strip()
-        star_dict["Number of splices: Total"] = star_file.next().strip().split("|")[1].strip()
-        star_dict["Number of splices: Annotated (sjdb)"] = star_file.next().strip().split("|")[1].strip()
-        star_dict["Number of splices: GT/AG"] = star_file.next().strip().split("|")[1].strip()
-        star_dict["Number of splices: GC/AG"] = star_file.next().strip().split("|")[1].strip()
-        star_dict["Number of splices: AT/AC"] = star_file.next().strip().split("|")[1].strip()
-        star_dict["Number of splices: Non-canonical"] = star_file.next().strip().split("|")[1].strip()
+        star_dict["Average mapped length"] = float(star_file.next().strip().split("|")[1].strip())
+        star_dict["Number of splices: Total"] = int(star_file.next().strip().split("|")[1].strip())
+        star_dict["Number of splices: Annotated (sjdb)"] = int(star_file.next().strip().split("|")[1].strip())
+        star_dict["Number of splices: GT/AG"] = int(star_file.next().strip().split("|")[1].strip())
+        star_dict["Number of splices: GC/AG"] = int(star_file.next().strip().split("|")[1].strip())
+        star_dict["Number of splices: AT/AC"] = int(star_file.next().strip().split("|")[1].strip())
+        star_dict["Number of splices: Non-canonical"] = int(star_file.next().strip().split("|")[1].strip())
         star_dict["Mismatch rate per base, percent"] = star_file.next().strip().split("|")[1].strip()
         star_dict["Deletion rate per base"] = star_file.next().strip().split("|")[1].strip()
         star_dict["Deletion average length"] = star_file.next().strip().split("|")[1].strip()
@@ -63,12 +122,12 @@ def parse_rm_duped_metrics_file(rmDup_file):
         total_count = 0
         removed_count = 0 
         df = pd.read_csv(rmDup_file, sep="\t")
-        sum(df.total_count) - sum(df.removed_count)
-            
+        
         return {"total_count" : sum(df.total_count), 
                     "removed_count" : sum(df.removed_count), 
                     "Usable Reads" : sum(df.total_count) - sum(df.removed_count)}
-    except:
+    except Exception as e:
+        print e
         return {"total_count" : None, 
                     "removed_count" : None, 
                     "Usable Reads" : None}

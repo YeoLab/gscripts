@@ -34,8 +34,8 @@ class AnalyzeRNASeq extends QScript {
   @Argument(doc = "not stranded", required = false)
   var not_stranded: Boolean = false
 
-  @Argument(doc = "stringent run", required = false)
-  var stringent: Boolean = false
+  @Argument(doc = "strict triming run")
+  var strict: Boolean = false
 
   @Argument(doc = "location to place trackhub (must have the rest of the track hub made before starting script)")
   var location: String = "rna_seq"
@@ -68,6 +68,14 @@ class AnalyzeRNASeq extends QScript {
         this.split = true
   }
 
+  
+  case class oldSplice(input: File, out : File) extends OldSplice {
+        this.inBam = input
+        this.out_file = out
+        this.in_species = species
+        this.splice_type = List("MXE", "SE")
+        this.flip = (flipped == "flip")
+  }
   case class singleRPKM(input: File, output: File, s: String) extends SingleRPKM {
 	this.inCount = input
 	this.outRPKM = output
@@ -106,6 +114,12 @@ class AnalyzeRNASeq extends QScript {
 
   }
 
+  case class parseOldSplice(inSplice : List[File]) extends ParseOldSplice {
+       override def shortDescription = "ParseOldSplice"
+       this.inBam = inSplice
+       this.species = species
+  }
+ 
   case class samtoolsIndexFunction(input: File, output: File) extends SamtoolsIndexFunction {
        override def shortDescription = "indexBam"
        this.bamFile = input
@@ -124,7 +138,10 @@ class AnalyzeRNASeq extends QScript {
        this.length = 18
        this.quality_cutoff = 6
        this.isIntermediate = true
-   }  
+   }
+
+
+
 
 def stringentJobs(fastq_file: File) : File = {
 
@@ -148,22 +165,27 @@ def stringentJobs(fastq_file: File) : File = {
 }
 def script() {
 
-    var stringent = false
     val fileList = QScriptUtils.createArgsFromFile(input)
     var trackHubFiles: List[File] = List()
+    var splicesFiles: List[File] = List()
     
     for (item : Tuple3[File, String, String] <- fileList) {
       var fastq_file: File = item._1
       var fastqPair: File = null
       if (item._2 != "null"){
         fastqPair = new File(item._2)
+	add(new FastQC(inFastq = fastqPair))
       }
+      
+      add(new FastQC(inFastq = fastq_file))
+
       var filteredFastq: File = null
-      if(stringent && item._2 == "null") { 
+      if(strict && item._2 == "null") {
         filteredFastq = stringentJobs(fastq_file)
       } else {
         filteredFastq = fastq_file
       }
+
 
       // run regardless of stringency
       val samFile = swapExt(filteredFastq, ".fastq", ".sam")
@@ -174,20 +196,25 @@ def script() {
       val NRFFile = swapExt(rgSortedBamFile, ".bam", ".NRF.metrics")
 
       val bedGraphFilePos = swapExt(rgSortedBamFile, ".bam", ".pos.bg")
-      val bigWigFilePos = swapExt(bedGraphFilePos, ".bg", ".bw")
+      val bedGraphFilePosNorm = swapExt(bedGraphFilePos, "pos.bg", ".norm.pos.bg")
+      val bigWigFilePos = swapExt(bedGraphFilePosNorm, ".bg", ".bw")
 
       val bedGraphFileNeg = swapExt(rgSortedBamFile, ".bam", ".neg.bg")
-      val bedGraphFileNegInverted = swapExt(bedGraphFileNeg, "neg.bg", "neg.t.bg")
+      val bedGraphFileNegNorm = swapExt(bedGraphFileNeg, "neg.bg", ".norm.neg.bg")
+      val bedGraphFileNegInverted = swapExt(bedGraphFileNegNorm, ".bg", ".t.bg")
       val bigWigFileNeg = swapExt(bedGraphFileNegInverted, ".t.bg", ".bw")
 
       val countFile = swapExt(rgSortedBamFile, "bam", "count")
       val RPKMFile = swapExt(countFile, "count", "rpkm")
 
+      val oldSpliceOut = swapExt(rgSortedBamFile, "bam", "splices")
+      
       //add bw files to list for printing out later
-      trackHubFiles = trackHubFiles ++ List(bedGraphFileNegInverted, bigWigFilePos)
-      add(new FastQC(inFastq = fastq_file))
 
-      if(item._2 != "null") { //if paired
+      trackHubFiles = trackHubFiles ++ List(bigWigFileNeg, bigWigFilePos)
+      splicesFiles = splicesFiles ++ List(oldSpliceOut)      
+      
+      if(item._2 != "null") { //if paired	
         add(new star(filteredFastq, samFile, not_stranded, fastqPair))
       } else { //unpaired
         add(new star(filteredFastq, samFile, not_stranded))
@@ -199,17 +226,21 @@ def script() {
       add(new CalculateNRF(inBam = rgSortedBamFile, genomeSize = chr_sizes, outNRF = NRFFile))
       
       add(new genomeCoverageBed(input = rgSortedBamFile, outBed = bedGraphFilePos, cur_strand = "+"))
-      add(new BedGraphToBigWig(bedGraphFilePos, chr_sizes, bigWigFilePos))
+      add(new NormalizeBedGraph(inBedGraph = bedGraphFilePos, inBam = rgSortedBamFile, outBedGraph = bedGraphFilePosNorm))
+      add(new BedGraphToBigWig(bedGraphFilePosNorm, chr_sizes, bigWigFilePos))
 
       add(new genomeCoverageBed(input = rgSortedBamFile, outBed = bedGraphFileNeg, cur_strand = "-"))
-      add(new NegBedGraph(inBedGraph = bedGraphFileNeg, outBedGraph = bedGraphFileNegInverted))
+      add(new NormalizeBedGraph(inBedGraph = bedGraphFileNeg, inBam = rgSortedBamFile, outBedGraph = bedGraphFileNegNorm))
+      add(new NegBedGraph(inBedGraph = bedGraphFileNegNorm, outBedGraph = bedGraphFileNegInverted))
       add(new BedGraphToBigWig(bedGraphFileNegInverted, chr_sizes, bigWigFileNeg))
 	
       add(new countTags(input = rgSortedBamFile, index = indexedBamFile, output = countFile, a = tags_annotation))	
       add(new singleRPKM(input = countFile, output = RPKMFile, s = species))
 
+      add(oldSplice(input = rgSortedBamFile, out = oldSpliceOut))
     }
     add(new MakeTrackHub(trackHubFiles, location, species))
+    add(parseOldSplice(splicesFiles))
   }
 }
 

@@ -190,7 +190,7 @@ def retrieve_splicing(species):
     elif "tcc" in host or "triton" in host:
         basedir = "/projects/yeolab/Genome/ensembl/AS_STRUCTURE/" + species + "data4/"
     elif "tscc" in host:
-        basedir = "/home/mlovci/scratch/AS_STRUCTURE/gencode/" + species + "data4/"
+        basedir = "/projects/ps-yeolab/lovci/AS_STRUCTURE/gencode/" + species + "data4/"
     else:
         print "Where am I?"
         raise Exception
@@ -499,8 +499,8 @@ def main(options):
         outfile = options.outfile
 
 
-
-    pickle.dump(data, file=open(outfile, 'w'))
+    with open(outfile, 'w') as o_f:
+        pickle.dump(data, file=o_f)
 
 
 
@@ -516,7 +516,7 @@ def main(options):
 
     
 if __name__ == "__main__":
-    usage = "python splicing.py --bam <bamfile> --species <species>"
+    usage = "oldsplice.py --bam file.bam --species <species> --splice_type SE --splice_type MXE --outfile file.pickle [-f]"
     description = "Given a bam file, count reads to isoforms. comparisons come later"
     parser = OptionParser(usage=usage, description=description)
     parser.add_option("--bam", '-b', dest="bam", help = "bam file")
