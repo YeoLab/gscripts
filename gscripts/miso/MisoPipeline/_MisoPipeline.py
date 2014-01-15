@@ -520,7 +520,7 @@ class MisoPipeline(object):
             out_dir = '{}/miso/{}/{}'.format(os.path.dirname(bam),
                                              sample_id, event_type)
 
-            commands.append('# calculate Psi scores for all {} events'
+            commands.append('\n\n# calculate Psi scores for all {} events'
             .format(event_type))
             commands.append('python /home/yeo-lab/software/bin/miso \
 --run /home/yeo-lab/genomes/{0}/miso_annotations/{0}_index \
