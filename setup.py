@@ -1,4 +1,3 @@
-
 from setuptools import setup, find_packages
 
 
@@ -33,23 +32,22 @@ with open("README.rst") as file:
 
 setup(
 
-    name = "gscripts",
-    long_description = long_description,
+    name="gscripts",
+    long_description=long_description,
     version="0.1.5",
-    packages = find_packages(),
-    
-    
-    
-    install_requires = ['setuptools', 
-                        'pysam >= 0.6',
-                        'numpy >= 1.5.1 ',
-                        'scipy >= 0.11.0',
-                        'matplotlib >= 1.1.0',
-                        'pybedtools >= 0.5',
-                        'scikit-learn >= 0.13.0',
-                        ],
-      
-    setup_requires = ["setuptools_git >= 0.3",],
+    packages=find_packages(),
+
+
+    install_requires=['setuptools',
+                      'pysam >= 0.6',
+                      'numpy >= 1.5.1 ',
+                      'scipy >= 0.11.0',
+                      'matplotlib >= 1.1.0',
+                      'pybedtools >= 0.5',
+                      'scikit-learn >= 0.13.0',
+    ],
+
+    setup_requires=["setuptools_git >= 0.3", ],
 
     scripts=scripts,
 

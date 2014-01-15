@@ -20,9 +20,9 @@ from scipy.stats import gaussian_kde
 
 def clusterGram(dataFrame, distance_metric = 'euclidean', linkage_method = 'average',
             outfile = None, clusterRows=True, clusterCols=True, timeSeries=False, doCovar=False,
-            figsize=(8, 10), row_label_color_fun=lambda x: ppl.colors.almost_black,
-            col_label_color_fun=lambda x: ppl.colors.almost_black,
-            link_color_func = lambda x: ppl.colors.almost_black):
+            figsize=(8, 10), row_label_color_fun=lambda x: ppl.almost_black,
+            col_label_color_fun=lambda x: ppl.almost_black,
+            link_color_func = lambda x: ppl.almost_black):
     import scipy
     import pylab
     import matplotlib.gridspec as gridspec
@@ -283,7 +283,7 @@ def heatmap(df, title=None, colorbar_label='values',
         column_dendrogram_distances = sch.dendrogram(col_clusters,
                                                      color_threshold=np.inf,
                                                      color_list=[
-                                                         ppl.colors.almost_black])
+                                                         ppl.almost_black])
     else:
         column_dendrogram_distances = {'leaves': range(df.shape[1])}
     clean_axis(column_dendrogram_ax)
@@ -308,7 +308,7 @@ def heatmap(df, title=None, colorbar_label='values',
             sch.dendrogram(row_clusters,
                            color_threshold=np.inf,
                            orientation='right',
-                           color_list=[ppl.colors.almost_black])
+                           color_list=[ppl.almost_black])
     else:
         row_dendrogram_distances = {'leaves': range(df.shape[0])}
     clean_axis(row_dendrogram_ax)
@@ -640,10 +640,10 @@ def skipped_exon_figure(ax, which_axis='y', height_multiplier=0.025,
 
     adjacent_exon_kwargs = {'fill': True, 'width': width, 'height': height,
                             'clip_on': False, 'facecolor': 'white',
-                            'edgecolor': ppl.colors.almost_black}
+                            'edgecolor': ppl.almost_black}
     skipped_exon_kwargs = {'fill': True, 'width': width, 'height': height,
-                           'clip_on': False, 'facecolor': ppl.colors.almost_black,
-                           'edgecolor': ppl.colors.almost_black}
+                           'clip_on': False, 'facecolor': ppl.almost_black,
+                           'edgecolor': ppl.almost_black}
 
     if which_axis == 'y':
         # Spliced-out exon at bottom (psi_ci_halves_max_filtered_drop_na = 0)
@@ -1043,14 +1043,14 @@ def splicing_diagram(ax, bottom_y, highlight=None, height_multiplier=0.025):
     # bottom_y = -0.01
     top_y = 0.975
 
-    highlight_color = ppl.colors.set1[1]
+    highlight_color = ppl.set1[1]
 
     exon_kwargs = {'fill': True, 'width': width, 'height': height,
-                   'clip_on': False, 'facecolor': 'white', #ppl.colors.almost_black,
-                   'edgecolor': ppl.colors.almost_black, 'alpha': 0.5}
+                   'clip_on': False, 'facecolor': 'white', #ppl.almost_black,
+                   'edgecolor': ppl.almost_black, 'alpha': 0.5}
     intron_kwargs = {'fill': True, 'height': height * 0.5,
                      'clip_on': False, 'facecolor': highlight_color,
-                     #ppl.colors.almost_black,
+                     #ppl.almost_black,
                      'edgecolor': 'none', 'alpha': 0.5}
 
     ax.add_patch(patches.Rectangle((leftmost_x, bottom_y),
@@ -1066,19 +1066,19 @@ def splicing_diagram(ax, bottom_y, highlight=None, height_multiplier=0.025):
                         (leftmost_x + 1.5 * width, bottom_y + 1.5 * height),
                         (leftmost_x + 2 * width, bottom_y + height)]
     ax.add_patch(patches.PathPatch(patches.Path(left_alternative),
-                                   edgecolor=ppl.colors.almost_black, clip_on=False))
+                                   edgecolor=ppl.almost_black, clip_on=False))
 
     right_alternative = [(leftmost_x + 3 * width, bottom_y + height),
                          (leftmost_x + 3.5 * width, bottom_y + 1.5 * height),
                          (leftmost_x + 4 * width, bottom_y + height)]
     ax.add_patch(patches.PathPatch(patches.Path(right_alternative),
-                                   edgecolor=ppl.colors.almost_black, clip_on=False))
+                                   edgecolor=ppl.almost_black, clip_on=False))
 
     constitutive = [(leftmost_x + 1 * width, bottom_y),
                     (leftmost_x + 2.5 * width, bottom_y - 1 * height),
                     (leftmost_x + 4 * width, bottom_y)]
     ax.add_patch(patches.PathPatch(patches.Path(constitutive),
-                                   edgecolor=ppl.colors.almost_black, clip_on=False))
+                                   edgecolor=ppl.almost_black, clip_on=False))
 
     first_exon_donor = (leftmost_x + 1 * width, bottom_y + 0.5 * height)
     second_exon_acceptor = (leftmost_x + 2 * width, bottom_y + 0.5 * height)
@@ -1173,15 +1173,12 @@ def pdf(data, bins=50):
     return pos, pdf
 
 
-def plot_cdf(cdf_list, **kwargs):
-        cdf = sm.distributions.ECDF(cdf_list)
-        cdf_linspace = np.linspace(min(cdf_list), max(cdf_list))
-        if kwargs['ax'] is not None:
-            ax = kwargs['ax']
-            del kwargs['ax']
-            ax.plot(cdf_linspace, cdf(cdf_linspace), **kwargs)
-        else:
-            plot(cdf_linspace, cdf(cdf_linspace), **kwargs)
+def plot_cdf(data, bins=50, ax=None):
+    if ax is None:
+        ax = plt.gca()
+    x, y = cdf(data, bins=bins)
+    ax.plot(x,y)
+
 
 def plot_pdf(data, bins=50, ax=None):
     if ax is None:
@@ -1190,88 +1187,88 @@ def plot_pdf(data, bins=50, ax=None):
     ax.plot(x,y)
 
 
-def violinplot(ax, x, ys, bp=False, cut=False, facecolor=ppl.colors.set2[0],
-               edgecolor=ppl.colors.almost_black,
-               alpha=0.3, bw_method=0.05, width=None):
-    """Make a violin plot of each dataset in the `ys` sequence. `ys` is a
-    list of numpy arrays.
-    Adapted by: Olga Botvinnik
-    # Original Author: Teemu Ikonen <tpikonen@gmail.com>
-    # Based on code by Flavio Codeco Coelho,
-    # http://pyinsci.blogspot.com/2009/09/violin-plot-with-matplotlib.html
-    """
-    dist = np.max(x) - np.min(x)
-    if width is None:
-        width = min(0.15 * max(dist, 1.0), 0.4)
-    for i, (d, p) in enumerate(zip(ys, x)):
-        k = gaussian_kde(d, bw_method=bw_method) #calculates the kernel density
-        #         k.covariance_factor = 0.1
-        s = 0.0
-        if not cut:
-            s = 1 * np.std(d) #FIXME: magic constant 1
-        m = k.dataset.min() - s #lower bound of violin
-        M = k.dataset.max() + s #upper bound of violin
-        x = np.linspace(m, M, 100) # support for violin
-        v = k.evaluate(x) #violin profile (density curve)
-        v = width * v / v.max() #scaling the violin to the available space
-        if isinstance(facecolor, list):
-        #             for x0, v0, p0
-            ax.fill_betweenx(x, -v + p,
-                             v + p,
-                             facecolor=facecolor[i],
-                             alpha=alpha, edgecolor=edgecolor)
-        else:
-            ax.fill_betweenx(x, -v + p,
-                             v + p,
-                             facecolor=facecolor,
-                             alpha=alpha, edgecolor=edgecolor)
-    if bp:
-        ax.boxplot(ys, notch=1, positions=x, vert=1)
-    ppl.remove_chartjunk(ax, ['top', 'right'])
-    return ax
-
-
-def stripchart(ax, data, pos, mean=False, median=False, width=None):
-    """Plot samples given in `data` as horizontal lines.
-
-    # Original Author: Teemu Ikonen <tpikonen@gmail.com>
-    # Based on code by Flavio Codeco Coelho,
-    # http://pyinsci.blogspot.com/2009/09/violin-plot-with-matplotlib.html
-
-    Keyword arguments:
-        mean: plot mean of each dataset as a thicker line if True
-        median: plot median of each dataset as a dot if True.
-        width: Horizontal width of a single dataset plot.
-    """
-    if width:
-        w = width
-    else:
-        dist = np.max(pos) - np.min(pos)
-        w = min(0.15 * max(dist, 1.0), 0.5)
-    for d, p in zip(data, pos):
-        hw = w / 2.0
-        ax.hlines(d, p - hw, p + hw, lw=0.5, color=ppl.colors.almost_black)
-        if mean:
-            ax.hlines(np.mean(d), p - w, p + w, lw=1.0, color=ppl.colors.set2[1])
-        if median:
-            ax.plot(p, np.median(d), 'o', color=ppl.colors.set2[2])
-
-
-def beanplot(ax, data, pos, mean=True, median=True, cut=False):
-    """Make a bean plot of each dataset in the `data` sequence.
-
-    # Original Author: Teemu Ikonen <tpikonen@gmail.com>
-    # Based on code by Flavio Codeco Coelho,
-    # http://pyinsci.blogspot.com/2009/09/violin-plot-with-matplotlib.html
-
-    Reference: http://www.jstatsoft.org/v28/c01/paper
-    """
-    #FIXME: Implement also the asymmetric beanplot
-    dist = np.max(pos) - np.min(pos)
-    w = min(0.15 * max(dist, 1.0), 0.5)
-    stripchart(ax, data, pos, mean, median, 0.8 * w)
-    violinplot(ax, data, pos, False, cut)
-    ppl.remove_chartjunk(ax, ['top', 'right'])
+#def violinplot(ax, x, ys, bp=False, cut=False, facecolor=ppl.set2[0],
+#               edgecolor=ppl.almost_black,
+#               alpha=0.3, bw_method=0.05, width=None):
+#    """Make a violin plot of each dataset in the `ys` sequence. `ys` is a
+#    list of numpy arrays.
+#    Adapted by: Olga Botvinnik
+#    # Original Author: Teemu Ikonen <tpikonen@gmail.com>
+#    # Based on code by Flavio Codeco Coelho,
+#    # http://pyinsci.blogspot.com/2009/09/violin-plot-with-matplotlib.html
+#    """
+#    dist = np.max(x) - np.min(x)
+#    if width is None:
+#        width = min(0.15 * max(dist, 1.0), 0.4)
+#    for i, (d, p) in enumerate(zip(ys, x)):
+#        k = gaussian_kde(d, bw_method=bw_method) #calculates the kernel density
+#        #         k.covariance_factor = 0.1
+#        s = 0.0
+#        if not cut:
+#            s = 1 * np.std(d) #FIXME: magic constant 1
+#        m = k.dataset.min() - s #lower bound of violin
+#        M = k.dataset.max() + s #upper bound of violin
+#        x = np.linspace(m, M, 100) # support for violin
+#        v = k.evaluate(x) #violin profile (density curve)
+#        v = width * v / v.max() #scaling the violin to the available space
+#        if isinstance(facecolor, list):
+#        #             for x0, v0, p0
+#            ax.fill_betweenx(x, -v + p,
+#                             v + p,
+#                             facecolor=facecolor[i],
+#                             alpha=alpha, edgecolor=edgecolor)
+#        else:
+#            ax.fill_betweenx(x, -v + p,
+#                             v + p,
+#                             facecolor=facecolor,
+#                             alpha=alpha, edgecolor=edgecolor)
+#    if bp:
+#        ax.boxplot(ys, notch=1, positions=x, vert=1)
+#    ppl.remove_chartjunk(ax, ['top', 'right'])
+#    return ax
+#
+#
+#def stripchart(ax, data, pos, mean=False, median=False, width=None):
+#    """Plot samples given in `data` as horizontal lines.
+#
+#    # Original Author: Teemu Ikonen <tpikonen@gmail.com>
+#    # Based on code by Flavio Codeco Coelho,
+#    # http://pyinsci.blogspot.com/2009/09/violin-plot-with-matplotlib.html
+#
+#    Keyword arguments:
+#        mean: plot mean of each dataset as a thicker line if True
+#        median: plot median of each dataset as a dot if True.
+#        width: Horizontal width of a single dataset plot.
+#    """
+#    if width:
+#        w = width
+#    else:
+#        dist = np.max(pos) - np.min(pos)
+#        w = min(0.15 * max(dist, 1.0), 0.5)
+#    for d, p in zip(data, pos):
+#        hw = w / 2.0
+#        ax.hlines(d, p - hw, p + hw, lw=0.5, color=ppl.almost_black)
+#        if mean:
+#            ax.hlines(np.mean(d), p - w, p + w, lw=1.0, color=ppl.set2[1])
+#        if median:
+#            ax.plot(p, np.median(d), 'o', color=ppl.set2[2])
+#
+#
+#def beanplot(ax, data, pos, mean=True, median=True, cut=False):
+#    """Make a bean plot of each dataset in the `data` sequence.
+#
+#    # Original Author: Teemu Ikonen <tpikonen@gmail.com>
+#    # Based on code by Flavio Codeco Coelho,
+#    # http://pyinsci.blogspot.com/2009/09/violin-plot-with-matplotlib.html
+#
+#    Reference: http://www.jstatsoft.org/v28/c01/paper
+#    """
+#    #FIXME: Implement also the asymmetric beanplot
+#    dist = np.max(pos) - np.min(pos)
+#    w = min(0.15 * max(dist, 1.0), 0.5)
+#    stripchart(ax, data, pos, mean, median, 0.8 * w)
+#    violinplot(ax, data, pos, False, cut)
+#    ppl.remove_chartjunk(ax, ['top', 'right'])
 
 class Figure(object):
     def __init__(self, saveas, **kwargs):

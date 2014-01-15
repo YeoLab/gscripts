@@ -1,8 +1,8 @@
 import seq_db
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
-engine = create_engine('mysql+pymysql://ppliu:some_pass@sauron.ucsd.edu/test')
 
+engine = create_engine('mysql+pymysql://ppliu:some_pass@sauron.ucsd.edu/test')
 
 Session = sessionmaker(bind=engine)
 session = Session()
@@ -27,7 +27,7 @@ try:
     s1.sequencing_location = 'singapore'
     s1.sequencing_platform = 'gaii'
     s1.sequencing_submission_date = '07/12/2013'
-    s1.clip_type = 'clip'    
+    s1.clip_type = 'clip'
 
     session.add(s1)
 
@@ -51,7 +51,7 @@ try:
     s2.sequencing_platform = 'gaii'
     s2.sequencing_submission_date = '07/12/2013'
     s2.clip_type = 'clip'
-    
+
     session.add(s2)
 
     s3 = seq_db.CLIPSeq()
@@ -73,13 +73,13 @@ try:
     s3.sequencing_location = 'singapore'
     s3.sequencing_platform = 'gaii'
     s3.sequencing_submission_date = '07/12/2013'
-    s3.clip_type = 'clip'    
+    s3.clip_type = 'clip'
 
     session.add(s3)
     session.commit()
 
-except Exception as e: 
-    
+except Exception as e:
+
     print e
     session.rollback()
     session.commit()

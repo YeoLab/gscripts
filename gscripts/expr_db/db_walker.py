@@ -8,12 +8,13 @@ ucsd 2013
 
 from sqlalchemy import create_engine
 from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy import Table, Column, Integer, String, MetaData, ForeignKey,\
+from sqlalchemy import Table, Column, Integer, String, MetaData, ForeignKey, \
     Boolean
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.sql import select, and_, or_, not_
 import pymysql
 import argparse
+
 
 class TableWalker(object):
     """
@@ -23,47 +24,54 @@ class TableWalker(object):
     def __init__(self, table_walker_ID):
         self.table_walker_ID = table_walker_ID
         self.drop_lock = True
-        self.engine = create_engine('mysql+pymysql://ppliu:some_pass@sauron.ucsd.edu/{}'\
+        self.engine = create_engine(
+            'mysql+pymysql://ppliu:some_pass@sauron.ucsd.edu/{}' \
                 .format(self.table_walker_ID))
         self.table_objects = {}
         self.metadata = MetaData()
 
         # Initialize Tables for SQLAlchemy here
         rnaseq = Table('rnaseq', self.metadata,
-            Column('exp_id', String(50), primary_key=True),
-            Column('species', String(50)),
-            Column('adapter', String(50)),
-            Column('compressed', Boolean()), 
-            Column('paired', Boolean())
-            )
+                       Column('exp_id', String(50), primary_key=True),
+                       Column('species', String(50)),
+                       Column('adapter', String(50)),
+                       Column('compressed', Boolean()),
+                       Column('paired', Boolean())
+        )
 
         self.table_objects['rnaseq'] = rnaseq
 
         file_locations = Table('file_locations', self.metadata,
-            Column('exp_id', String(50), primary_key=True),
-            Column('file_path', String(100), primary_key=True),
-            Column('file_path2', String(100)), 
-            )
+                               Column('exp_id', String(50), primary_key=True),
+                               Column('file_path', String(100),
+                                      primary_key=True),
+                               Column('file_path2', String(100)),
+        )
 
         self.table_objects['file_locations'] = file_locations
-        return 
+        return
 
-    def addExpr(self, exp_id=None, species=None, adapter=None, compressed=False, paired=False, \
-        file_path=None, file_path2=None):
+    def addExpr(self, exp_id=None, species=None, adapter=None, compressed=False,
+                paired=False, \
+                file_path=None, file_path2=None):
         assert exp_id, "Specify experiment ID, keyword exp_id"
         assert species, "Specify species, keyword species"
         assert file_path, "Specify path to input, keyword file_path"
 
-        file_ins =  self.table_objects['file_locations'].insert().values(file_path=file_path, \
+        file_ins = self.table_objects['file_locations'].insert().values(
+            file_path=file_path, \
             file_path2=file_path2, exp_id=exp_id)
 
-        param_ins = self.table_objects['rnaseq'].insert().values(exp_id=exp_id, species=species, \
-            adapter=adapter, compressed=compressed, paired=paired)
+        param_ins = self.table_objects['rnaseq'].insert().values(exp_id=exp_id,
+                                                                 species=species, \
+                                                                 adapter=adapter,
+                                                                 compressed=compressed,
+                                                                 paired=paired)
 
         conn = self.engine.connect()
         conn.execute(file_ins)
         conn.execute(param_ins)
-        return 
+        return
 
     def unlock(self):
         """
@@ -116,7 +124,7 @@ class TableWalker(object):
 
         # select from parameters table
         s = select([parameters.c.parameter, \
-            parameters.c.value]).\
+                    parameters.c.value]). \
             where(parameters.c.exp_id == exp_id)
 
         for parameter, value in list(conn.execute(s)):
@@ -134,7 +142,7 @@ class TableWalker(object):
 
         files = self.table_objects['file_locations']
 
-        s = select([files.c.file_path, files.c.file_path2]).\
+        s = select([files.c.file_path, files.c.file_path2]). \
             where(files.c.exp_id == exp_id)
 
         for file1, file2 in list(conn.execute(s)):
@@ -143,12 +151,12 @@ class TableWalker(object):
 
         files_dict['exp_id'] = exp_id
         return files_dict
-    
+
     def createTables(self):
 
         try:
 
-            self.metadata.create_all(self.engine) 
+            self.metadata.create_all(self.engine)
 
         except Exception as e:
             print e
