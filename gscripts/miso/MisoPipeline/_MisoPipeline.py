@@ -542,9 +542,10 @@ class MisoPipeline(object):
                          "and 'shutdown' didn't find anything.")
             commands.append('iffailed=$(grep failed {})'.format(psi_out))
             commands.append('ifshutdown=$(grep shutdown {})'.format(psi_err))
-            commands.append('if [ ! -z "$iffailed" -o ! -z "$ifshutdown" ] ; then\
-    echo "MISO psi failed on event type: {}"\
-    exit 1\
+            commands.append('if [ ! -z "$iffailed" -o ! -z "$ifshutdown" ] ; '
+                            'then\n\
+    echo "MISO psi failed on event type: {}\n"\
+    exit 1\n\
 fi\n'.format(event_type))
 
             commands.append('# Summarize psi scores for all {} events'
