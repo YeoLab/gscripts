@@ -207,6 +207,8 @@ class CommandLine(object):
                                       'quote and the first dash of the miso '
                                       'argument. For some reason this helps..'
                                       '..')
+        self.parser.add_argument('--genome', type=str, action='store',
+                                 required=True, help='Which genome to use')
         self.parser.add_argument('--individual-jobs', #type=bool,
                                  action='store_true',
                                  default=False,

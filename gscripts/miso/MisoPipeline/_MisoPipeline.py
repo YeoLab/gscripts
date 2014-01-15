@@ -17,7 +17,7 @@ class MisoPipeline(object):
          so we can check if they're there or not in the future.
         """
         self.read_type = cl.args['read_type']
-        self.event_type = cl.args['event_type'].upper()
+        #self.event_type = cl.args['event_type'].upper()
         self.sample_info_file = cl.args['sample_info_file']
 
         self.debug = cl.args['debug']
@@ -494,9 +494,10 @@ class MisoPipeline(object):
 
         if self.read_type == 'paired_end':
             'python /home/yeo-lab/software/bin/pe_utils.py \
---compute-insert-len /home/yeo-lab/genomes/hg19/miso_annotations/SE_constitutive \
+--compute-insert-len /home/yeo-lab/genomes/{' \
+            '}/miso_annotations/SE_constitutive \
 {} \
---no-bam-filter '.format(bam)
+--no-bam-filter '.format(bam, self.genome)
 
             insert_len_stddev = ''
             insert_len_mean = ''
@@ -519,14 +520,14 @@ class MisoPipeline(object):
 
             commands.append('# calculate Psi scores for all events')
             commands.append('python /home/yeo-lab/software/bin/miso \
---run /home/yeo-lab/genomes/hg19/miso_annotations/{0}_index \
+--run /home/yeo-lab/genomes/{0}/miso_annotations/{0}_index \
 {1} --output-dir {2} \
 --read-len {3} \
 {4} \
 --no-filter-events \
 -p {5} \
  > {2}/psi.err \
-2> {2}/psi.out'.format(self.event_type, bam, out_dir, read_length,
+2> {2}/psi.out'.format(self.genome, self.event_type, bam, out_dir, read_length,
                        insert_len_arguments, self.num_processes))
 
             psi_out = '{}/psi.out'.format(out_dir)
