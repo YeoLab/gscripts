@@ -554,8 +554,8 @@ fi\n'.format(event_type))
             commands.append("# Check that the summary didn't fail")
             commands.append("# '-s' returns true if file size is nonzero, "
                             "and the error file should be empty.")
-            commands.append("""if [ -s {}/summary.err ] ; then
-    echo 'MISO psi failed on event type: {}'
+            commands.append("""if [ -s {0}/summary.err ] ; then
+    echo 'MISO psi failed on event type: {0}'
     exit 1
 fi""".format(out_dir))
         sh_file = '{}/{}_miso.sh'.format(os.path.dirname(bam), sample_id)
