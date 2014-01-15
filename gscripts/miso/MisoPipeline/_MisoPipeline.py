@@ -52,7 +52,8 @@ class MisoPipeline(object):
             self.sample_ids, self.bams, self.notes = read_sample_info_file(
                 self.sample_info_file)
         else:
-            bam, sample_id = cl.args['single_bam_and_id'].split(' ')
+            bam = cl.args['single_bam_and_id']
+            sample_id = cl.args['sample_id']
             sample_ids = [sample_id]
             bams = [bam]
 
