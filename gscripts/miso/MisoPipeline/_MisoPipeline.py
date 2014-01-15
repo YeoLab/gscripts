@@ -46,6 +46,7 @@ class MisoPipeline(object):
         #     '%s/%s*.gff' % (self.base_annotation_dir, self.event_type))
         self.constitutive_exon_gff = cl.args['constitutive_exon_gff']
         #self.event_type_index = self.annotation_index_strfmt % self.event_type
+
         self.num_processes = cl.args['num_processes']
         self.num_cores = cl.args['num_cores']
         if self.sample_info_file:
