@@ -495,11 +495,11 @@ class MisoPipeline(object):
             " length }')" % (read_length, bam))
 
         if self.read_type == 'paired_end':
-            'python /home/yeo-lab/software/bin/pe_utils.py \
+            commands.append('python /home/yeo-lab/software/bin/pe_utils.py \
 --compute-insert-len /home/yeo-lab/genomes/{' \
             '}/miso_annotations/SE_constitutive \
 {} \
---no-bam-filter '.format(bam, self.genome)
+--no-bam-filter '.format(bam, self.genome))
 
             insert_len_stddev = 'INSERT_LEN_STDDEV'
             insert_len_mean = 'INSERT_LEN_MEAN'
