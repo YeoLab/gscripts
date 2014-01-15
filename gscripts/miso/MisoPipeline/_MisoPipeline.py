@@ -529,7 +529,7 @@ class MisoPipeline(object):
 --no-filter-events \
 -p {5} \
  > {2}/psi.err \
-2> {2}/psi.out'.format(self.genome, self.event_type, bam, out_dir, read_length,
+2> {2}/psi.out'.format(self.genome, event_type, bam, out_dir, read_length,
                        insert_len_arguments, self.num_processes))
 
             psi_out = '{}/psi.out'.format(out_dir)
