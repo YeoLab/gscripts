@@ -513,8 +513,10 @@ class MisoPipeline(object):
                                                                insert_len_stddev)
 
         for event_type in event_types:
-            out_dir = '{}/miso/{}/{}'.format(os.path.dirname(bam), event_type)
+            out_dir = '{}/miso/{}/{}'.format(os.path.dirname(bam),
+                                             sample_id, event_type)
 
+            commands.append('# calculate Psi scores for all events')
             commands.append('python /home/yeo-lab/software/bin/miso \
 --run /home/yeo-lab/genomes/hg19/miso_annotations/{0}_index \
 {1} --output-dir {2} \
@@ -525,9 +527,38 @@ class MisoPipeline(object):
 2> {2}/psi.out'.format(self.event_type, bam, out_dir, read_length,
                        insert_len_arguments, self.num_processes))
 
-            psi_out = '{}.psi.out'.format(out_dir)
-            psi_err = '{}.psi.err'.format(out_dir)
-            commands.append()
+            psi_out = '{}/psi.out'.format(out_dir)
+            psi_err = '{}/psi.err'.format(out_dir)
+            commands.add("\n# Check that these jobs didn't fail.\n#'-z' "
+                         "returns "
+                         "true when a string is empty, so this is checking "
+                         "that grepping these files for the words 'failed' "
+                         "and 'shutdown' didn't find anything.")
+            commands.add('iffailed=$(grep failed {})'.format(psi_out))
+            commands.add('ifshutdown=$(grep shutdown {})'.format(psi_err))
+            commands.add('if [ ! -z "$iffailed" -o ! -z "$ifshutdown" ] ; then\
+    echo "MISO psi failed on event type: {}"\
+    exit 1\
+fi\n'.format(event_type))
+
+            commands.append('# Summarize psi scores for all events')
+            commands.append('python /home/yeo-lab/software/bin/run_miso.py '
+                            '--summarize-samples {0} ' \
+                            '{0} >{0}/summary.out 2>{0]/summary.err'.format(
+                out_dir))
+            commands.append("# Check that the summary didn't fail")
+            commands.append("# '-s' returns true if file size is nonzero, "
+                            "and the error file should be empty.")
+            commands.append("""if [ -s {}/summary.err ] ; then
+    echo 'MISO psi failed on event type: {}'
+    exit 1
+fi""".format(out_dir))
+        sh_file = '{}/{}_miso.sh'.format(os.path.dirname(bam), sample_id)
+        with open(sh_file, 'w') as f:
+            f.write('\n'.join(commands))
+        sys.stdout.write('Wrote miso script for sample "{}": {}'.format(
+            sample_id, sh_file))
+
 
     def summary(self):
         summary_commands = []
