@@ -534,14 +534,14 @@ class MisoPipeline(object):
 
             psi_out = '{}/psi.out'.format(out_dir)
             psi_err = '{}/psi.err'.format(out_dir)
-            commands.add("\n# Check that these jobs didn't fail.\n#'-z' "
-                         "returns "
+            commands.append("\n# Check that these jobs didn't fail.\n#'-z' "
+                            "returns "
                          "true when a string is empty, so this is checking "
                          "that grepping these files for the words 'failed' "
                          "and 'shutdown' didn't find anything.")
-            commands.add('iffailed=$(grep failed {})'.format(psi_out))
-            commands.add('ifshutdown=$(grep shutdown {})'.format(psi_err))
-            commands.add('if [ ! -z "$iffailed" -o ! -z "$ifshutdown" ] ; then\
+            commands.append('iffailed=$(grep failed {})'.format(psi_out))
+            commands.append('ifshutdown=$(grep shutdown {})'.format(psi_err))
+            commands.append('if [ ! -z "$iffailed" -o ! -z "$ifshutdown" ] ; then\
     echo "MISO psi failed on event type: {}"\
     exit 1\
 fi\n'.format(event_type))
