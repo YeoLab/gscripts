@@ -134,7 +134,7 @@ class CommandLine(object):
                                   ' the same format file as required by '
                                   'RNA-SeQC.')
         samples.add_argument('--single-bam-and-id', type=str,
-                             action='store_true', default='',
+                             action='store', default='',
                              help='A single BAM file and a sample ID')
 
         # self.parser.add_argument('--index-base-dir',
