@@ -98,6 +98,7 @@ class MisoPipeline(object):
         #                                      self.event_type)
 
         self.queue = cl.args['queue']
+        self.genome = cl.args['genome']
 
         # get all output dirs so we don't make a typo when redefining them
         #self.psi_output_dirs = ['%s/miso/%s/%s'
