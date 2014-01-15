@@ -33,11 +33,7 @@ class AnalyzeRNASeq extends QScript {
 
   @Argument(doc = "location to place trackhub (must have the rest of the track hub made before starting script)")
   var location: String = "rna_seq"
-  
-  val star_genome_location = starGenomeLocation(species) 
-  var chr_sizes = chromSizeLocation(species)
-  var tags_annotation = exonLocation(species)
-  
+    
   case class sortSam(inSam: File, outBam: File, sortOrderP: SortOrder) extends SortSam {
     override def shortDescription = "sortSam"
     this.input :+= inSam
@@ -57,7 +53,7 @@ class AnalyzeRNASeq extends QScript {
 
   case class genomeCoverageBed(input: File, outBed : File, cur_strand: String) extends GenomeCoverageBed {
         this.inBam = input
-        this.genomeSize = chr_sizes
+        this.genomeSize = chromSizeLocation(species)
         this.bedGraph = outBed
         this.strand = cur_strand
         this.split = true
@@ -76,10 +72,10 @@ class AnalyzeRNASeq extends QScript {
 	this.outRPKM = output
   }
 
-  case class countTags(input: File, index: File, output: File, a: String) extends CountTags {
+  case class countTags(input: File, index: File, output: File) extends CountTags {
 	this.inBam = input
 	this.outCount = output
-	this.tags_annotation = a
+	this.tags_annotation = exonLocation(species)
 	this.flip = flipped
   }
 
@@ -93,7 +89,7 @@ class AnalyzeRNASeq extends QScript {
        this.outSam = output
        //intron motif should be used if the data is not stranded
        this.intronMotif = stranded
-       this.genome = star_genome_location
+       this.genome = starGenomeLocation(species) 
   }
 
   case class addOrReplaceReadGroups(inBam : File, outBam : File) extends AddOrReplaceReadGroups {
@@ -240,18 +236,18 @@ def script() {
       add(new sortSam(samFile, sortedBamFile, SortOrder.coordinate))
       add(addOrReplaceReadGroups(sortedBamFile, rgSortedBamFile))
       add(new samtoolsIndexFunction(rgSortedBamFile, indexedBamFile))
-      add(new CalculateNRF(inBam = rgSortedBamFile, genomeSize = chr_sizes, outNRF = NRFFile))
+      add(new CalculateNRF(inBam = rgSortedBamFile, genomeSize = chromSizeLocation(species), outNRF = NRFFile))
       
       add(new genomeCoverageBed(input = rgSortedBamFile, outBed = bedGraphFilePos, cur_strand = "+"))
       add(new NormalizeBedGraph(inBedGraph = bedGraphFilePos, inBam = rgSortedBamFile, outBedGraph = bedGraphFilePosNorm))
-      add(new BedGraphToBigWig(bedGraphFilePosNorm, chr_sizes, bigWigFilePos))
+      add(new BedGraphToBigWig(bedGraphFilePosNorm, chromSizeLocation(species), bigWigFilePos))
 
       add(new genomeCoverageBed(input = rgSortedBamFile, outBed = bedGraphFileNeg, cur_strand = "-"))
       add(new NormalizeBedGraph(inBedGraph = bedGraphFileNeg, inBam = rgSortedBamFile, outBedGraph = bedGraphFileNegNorm))
       add(new NegBedGraph(inBedGraph = bedGraphFileNegNorm, outBedGraph = bedGraphFileNegInverted))
-      add(new BedGraphToBigWig(bedGraphFileNegInverted, chr_sizes, bigWigFileNeg))
+      add(new BedGraphToBigWig(bedGraphFileNegInverted, chromSizeLocation(species), bigWigFileNeg))
 	
-      add(new countTags(input = rgSortedBamFile, index = indexedBamFile, output = countFile, a = tags_annotation))	
+      add(new countTags(input = rgSortedBamFile, index = indexedBamFile, output = countFile))	
       add(new singleRPKM(input = countFile, output = RPKMFile, s = species))
 
       add(oldSplice(input = rgSortedBamFile, out = oldSpliceOut))
