@@ -8,9 +8,9 @@ import org.broadinstitute.sting.commandline.Hidden
 import org.broadinstitute.sting.queue.extensions.picard.{ ReorderSam, SortSam, AddOrReplaceReadGroups, MarkDuplicates }
 import org.broadinstitute.sting.queue.extensions.samtools._
 import org.broadinstitute.sting.queue.extensions.gatk._
-import org.broadinstitute.sting.queue.util.TsccUtils._
-import org.broadinstitute.sting.queue.extensions.yeo._
 
+import org.broadinstitute.sting.queue.extensions.yeo._
+import org.broadinstitute.sting.queue.util.TsccUtils._
 class AnalyzeRNASeq extends QScript {
   // Script argunment
   @Input(doc = "input file or txt file of input files")
@@ -33,11 +33,13 @@ class AnalyzeRNASeq extends QScript {
 
   @Argument(doc = "location to place trackhub (must have the rest of the track hub made before starting script)")
   var location: String = "rna_seq"
-  
-  val star_genome_location = starGenomeLocation(species) 
+
+
+
+  val star_genome_location = starGenomeLocation(species)
   var chr_sizes = chromSizeLocation(species)
   var tags_annotation = exonLocation(species)
-  
+
   case class sortSam(inSam: File, outBam: File, sortOrderP: SortOrder) extends SortSam {
     override def shortDescription = "sortSam"
     this.input :+= inSam
@@ -56,14 +58,13 @@ class AnalyzeRNASeq extends QScript {
   }
 
   case class genomeCoverageBed(input: File, outBed : File, cur_strand: String) extends GenomeCoverageBed {
-        this.inBam = input
+        this.inBed = input
         this.genomeSize = chr_sizes
         this.bedGraph = outBed
         this.strand = cur_strand
         this.split = true
   }
 
-  
   case class oldSplice(input: File, out : File) extends OldSplice {
         this.inBam = input
         this.out_file = out
@@ -141,7 +142,7 @@ class AnalyzeRNASeq extends QScript {
        this.out = output
 
 }
-  case class runRNASeQC(in : File, out : String, single_end : Boolean) extends RunRNASeQC { 
+  case class runRNASeQC(in : File, out : String, single_end : Boolean) extends RunRNASeQC {
        this.input = in
        this.gc = gcLocation(species)
        this.output = out
@@ -149,10 +150,7 @@ class AnalyzeRNASeq extends QScript {
        this.gtf = gffLocation(species)
        this.singleEnd = single_end
 }
-  
 
- @Argument(doc="reads are single ended", shortName = "single_end", fullName = "single_end", required = false)
- var singleEnd: Boolean = true
 
 def stringentJobs(fastq_file: File) : File = {
 
@@ -176,17 +174,14 @@ def stringentJobs(fastq_file: File) : File = {
 }
 def script() {
 
-    
-    
     val fileList = QScriptUtils.createArgsFromFile(input)
     var trackHubFiles: List[File] = List()
     var splicesFiles: List[File] = List()
     var bamFiles: List[File] = List()
-    
+    var singleEnd = true
     for (item : Tuple3[File, String, String] <- fileList) {
       var fastq_file: File = item._1
       var fastqPair: File = null
-      var singleEnd = true
       if (item._2 != "null"){
         singleEnd = false
         fastqPair = new File(item._2)
@@ -208,7 +203,7 @@ def script() {
       val sortedBamFile = swapExt(samFile, ".sam", ".sorted.bam")
       val rgSortedBamFile = swapExt(sortedBamFile, ".bam", ".rg.bam")
       val indexedBamFile = swapExt(rgSortedBamFile, "", ".bai")
-      
+      val bedFileAdjusted = swapExt(rgSortedBamFile, ".bam", ".adj.bed")
       val NRFFile = swapExt(rgSortedBamFile, ".bam", ".NRF.metrics")
 
       val bedGraphFilePos = swapExt(rgSortedBamFile, ".bam", ".pos.bg")
@@ -242,11 +237,12 @@ def script() {
       add(new samtoolsIndexFunction(rgSortedBamFile, indexedBamFile))
       add(new CalculateNRF(inBam = rgSortedBamFile, genomeSize = chr_sizes, outNRF = NRFFile))
       
-      add(new genomeCoverageBed(input = rgSortedBamFile, outBed = bedGraphFilePos, cur_strand = "+"))
+      add(new RiboSeqCoverage(inBam = rgSortedBamFile, outBed = bedFileAdjusted))
+      add(new genomeCoverageBed(input = bedFileAdjusted, outBed = bedGraphFilePos, cur_strand = "+"))
       add(new NormalizeBedGraph(inBedGraph = bedGraphFilePos, inBam = rgSortedBamFile, outBedGraph = bedGraphFilePosNorm))
       add(new BedGraphToBigWig(bedGraphFilePosNorm, chr_sizes, bigWigFilePos))
 
-      add(new genomeCoverageBed(input = rgSortedBamFile, outBed = bedGraphFileNeg, cur_strand = "-"))
+      add(new genomeCoverageBed(input = bedFileAdjusted, outBed = bedGraphFileNeg, cur_strand = "-"))
       add(new NormalizeBedGraph(inBedGraph = bedGraphFileNeg, inBam = rgSortedBamFile, outBedGraph = bedGraphFileNegNorm))
       add(new NegBedGraph(inBedGraph = bedGraphFileNegNorm, outBedGraph = bedGraphFileNegInverted))
       add(new BedGraphToBigWig(bedGraphFileNegInverted, chr_sizes, bigWigFileNeg))
@@ -261,6 +257,7 @@ def script() {
     var rnaseqc = new File("rnaseqc.txt")
     add(new makeRNASeQC(input = bamFiles, output = rnaseqc))
     add(new runRNASeQC(in = rnaseqc, out = "rnaseqc", single_end = singleEnd))
+
   }
 }
 

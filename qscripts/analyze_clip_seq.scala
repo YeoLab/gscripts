@@ -9,7 +9,7 @@ import org.broadinstitute.sting.queue.extensions.picard.{ ReorderSam, SortSam, A
 import org.broadinstitute.sting.queue.extensions.samtools._
 import org.broadinstitute.sting.queue.extensions.gatk._
 import org.broadinstitute.sting.queue.extensions.yeo._
-
+import org.broadinstitute.sting.queue.util.TsccUtils._
 class AnalizeCLIPSeq extends QScript {
   // Script argunment
   @Input(doc = "input file")
@@ -146,7 +146,6 @@ class AnalizeCLIPSeq extends QScript {
        this.isIntermediate = true
   }
 
-
   case class samtoolsIndexFunction(input: File, output: File) extends SamtoolsIndexFunction {
        override def shortDescription = "indexBam"
        this.bamFile = input
@@ -168,131 +167,6 @@ class AnalizeCLIPSeq extends QScript {
         this.inBam = input
         this.outCount = output
         this.tags_annotation = a
-  }
-
-  def starGenomeLocation(genome: String) : String = {
-  //Returns star genome Location for TSCC, could eventually be factored out into conf file
-   
-   var retval = "none"
-   if (genome == "hg19") {
-      retval = "/projects/ps-yeolab/genomes/hg19/star" 
-   }else if(genome == "mm9") {
-      retval = "/projects/ps-yeolab/genomes/mm9/star"
-   }else if(genome == "ce10") {
-      retval = "/projects/ps-yeolab/genomes/ce10/star"
-   }else if(genome == "dm3") { 
-      retval = "/projects/ps-yeolab/genomes/dm3/star"
-   }
-   retval
-  }
-
-  def chromSizeLocation(genome: String) : String = {
-  //Returns star genome Location for TSCC, could eventually be factored out into conf file
-   
-   var retval = "none"
-   if (genome == "hg19") {
-      retval = "/projects/ps-yeolab/genomes/hg19/hg19.chrom.sizes" 
-   }else if(genome == "mm9") {
-      retval = "/projects/ps-yeolab/genomes/mm9/mm9.chrom.sizes"
-   }else if(genome == "ce10") {
-      retval = "/projects/ps-yeolab/genomes/ce10/ce10.chrom.sizes"
-   }else if(genome == "dm3") {
-      retval = "/projects/ps-yeolab/genomes/dm3/dm3.chrom.sizes"
-   }
-   
-   retval
-  }
-
-  def regionsLocation(genome: String) : String = {
-  //Returns star genome Location for TSCC, could eventually be factored out into conf file
-   
-   var retval = "none"
-   if (genome == "hg19") {
-      retval = "/projects/ps-yeolab/genomes/hg19/hg19data4" 
-   }else if(genome == "mm9") {
-      retval = "/projects/ps-yeolab/genomes/mm9/mm9data4"
-   }
-   
-   retval
-  }
-
-  def asStructureLocation(genome: String) : String = {
-  //Returns star genome Location for TSCC, could eventually be factored out into conf file
-   
-   var retval = "none"
-   if (genome == "hg19") {
-      retval = "/projects/ps-yeolab/genomes/hg19/hg19data4" 
-   }else if(genome == "mm9") {
-      retval = "/projects/ps-yeolab/genomes/mm9/mm9data4"
-   }
-   
-   retval
-  }
-
-  def genomeLocation(genome: String) : String = {
-  //Returns star genome Location for TSCC, could eventually be factored out into conf file
-   
-   var retval = "none"
-   if (genome == "hg19") {
-      retval = "/projects/ps-yeolab/genomes/hg19/chromosomes/all.fa" 
-   }else if(genome == "mm9") {
-      retval = "/projects/ps-yeolab/genomes/mm9/chromosomes/all.fa" 
-   }else if(genome == "dm3") {
-      retval = "/projects/ps-yeolab/genomes/dm3/chromosomes/all.fa"
-   }
-   retval
-  }
-
-  def phastconsLocation(genome: String) : String = {
-  //Returns star genome Location for TSCC, could eventually be factored out into conf file
-   
-   var retval = "none"
-   if (genome == "hg19") {
-      retval = "/projects/ps-yeolab/genomes/hg19/hg19_phastcons.bw" 
-   }else if(genome == "mm9") {
-      retval = "/projects/ps-yeolab/genomes/mm9/mm9_phastcons.bw" 
-   }
-   
-   retval
-  }
-
-  def genicRegionsLocation(genome: String) : String = {
-  //Returns star genome Location for TSCC, could eventually be factored out into conf file
-   
-   var retval = "none"
-   if (genome == "hg19") {
-      retval = "/home/gpratt/clipper/clipper/data/hg19.AS.STRUCTURE.COMPILED.bed" 
-   }else if(genome == "mm9") {
-      retval = "/home/gpratt/clipper/clipper/data/mm9.AS.STRUCTURE.COMPILED.bed" 
-   }
-   
-   retval
-  }
-
-  def gffDbLocation(genome: String) : String = {
-  //Returns star genome Location for TSCC, could eventually be factored out into conf file
-   
-   var retval = "none"
-   if (genome == "hg19") {
-      retval = "/projects/ps-yeolab/genomes/hg19/gencode.v17.annotation.gtf.db" 
-   }else if(genome == "mm9") {
-      retval = "/projects/ps-yeolab/genomes/mm9/Mus_musculus.NCBIM37.64.fixed.gtf.db" 
-   }
-   
-   retval
-  }
-
-  def exonLocation(genome: String) : String = {
-  //Returns star genome Location for TSCC, could eventually be factored out into conf file
-   
-   var retval = "none"
-   if (genome == "hg19") {
-      retval = "/projects/ps-yeolab/genomes/hg19/gencode_v17/gencode.v17.annotation.exons.bed" 
-   }else if(genome == "mm9") {
-      retval = "/projects/ps-yeolab/genomes/mm9/Mus_musculus.NCBIM37.64.fixed.exons.bed" 
-   }
-   
-   retval
   }
 
 // performs downstream analysis on a bam file of interest, peak calling, generating RPKMs and all other types of analysis  
@@ -324,7 +198,7 @@ class AnalizeCLIPSeq extends QScript {
 	     //add bw files to list for printing out later
 
       	     add(new genomeCoverageBed(input = bamFile, outBed = bedGraphFilePos, cur_strand = "+", genome = chromSizeLocation(genome)))
-	     add(new NormalizeBedGraph(inBedGraph = bedGraphFilePos, inBam = rgSortedBamFile, outBedGraph = bedGraphFilePosNorm))
+	     add(new NormalizeBedGraph(inBedGraph = bedGraphFilePos, inBam = bamFile, outBedGraph = bedGraphFilePosNorm))
       	     add(new BedGraphToBigWig(bedGraphFilePosNorm, chromSizeLocation(genome), bigWigFilePos))
 
       	     add(new genomeCoverageBed(input = bamFile, outBed = bedGraphFileNeg, cur_strand = "-", genome = chromSizeLocation(genome)))
