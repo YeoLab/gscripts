@@ -493,6 +493,7 @@ class MisoPipeline(object):
             "%s=$(samtools view %s | head -n 1 | cut -f 10 | awk '{ print"
             " length }')" % (read_length, bam))
 
+        print 'self.read_type', self.read_type
         if self.read_type == 'paired_end':
             commands.append('\n# Calculate insert size')
             commands.append('''python
