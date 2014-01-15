@@ -501,8 +501,8 @@ class MisoPipeline(object):
 {} \
 --no-bam-filter '.format(bam, self.genome)
 
-            insert_len_stddev = ''
-            insert_len_mean = ''
+            insert_len_stddev = 'INSERT_LEN_STDDEV'
+            insert_len_mean = 'INSERT_LEN_MEAN'
             insert_len_file = bam + '.insert_len'
             commands.append(
                 "%s=$(head -n 1 %s | sed 's:#::' | cut -d',' -f1 | cut -d'=' -f2)"
@@ -520,7 +520,8 @@ class MisoPipeline(object):
             out_dir = '{}/miso/{}/{}'.format(os.path.dirname(bam),
                                              sample_id, event_type)
 
-            commands.append('# calculate Psi scores for all events')
+            commands.append('# calculate Psi scores for all {} events'
+            .format(event_type))
             commands.append('python /home/yeo-lab/software/bin/miso \
 --run /home/yeo-lab/genomes/{0}/miso_annotations/{0}_index \
 {1} --output-dir {2} \
@@ -546,7 +547,8 @@ class MisoPipeline(object):
     exit 1\
 fi\n'.format(event_type))
 
-            commands.append('# Summarize psi scores for all events')
+            commands.append('# Summarize psi scores for all {} events'
+            .format(event_type))
             commands.append('python /home/yeo-lab/software/bin/run_miso.py '
                             '--summarize-samples {0} ' \
                             '{0} >{0}/summary.out 2>{0}/summary.err'.format(
@@ -561,7 +563,7 @@ fi""".format(out_dir))
         sh_file = '{}/{}_miso.sh'.format(os.path.dirname(bam), sample_id)
         with open(sh_file, 'w') as f:
             f.write('\n'.join(commands))
-        sys.stdout.write('Wrote miso script for sample "{}": {}'.format(
+        sys.stdout.write('Wrote miso script for sample "{}": {}\n'.format(
             sample_id, sh_file))
 
 
