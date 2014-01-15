@@ -40,7 +40,7 @@ def calculate_psi_SE(IN, EX):
     if IN == 0 and EX == 0:
         psi = 0.0
     else:
-        psi = ((IN +2.) / 2) / (((IN +2.) / 2) + (EX+1))
+        psi = ((IN + 2.) / 2) / (((IN +2.) / 2) + (EX+1))
         
         if IN == 0:
             psi = 0.0
