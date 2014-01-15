@@ -94,8 +94,8 @@ class MisoPipeline(object):
         if self.sh_scripts_dir == '':
             self.sh_scripts_dir = os.curdir
 
-        self.job_name_prefix = 'miso%s_%s' % (self.submit_sh_suffix,
-                                              self.event_type)
+        #self.job_name_prefix = 'miso%s_%s' % (self.submit_sh_suffix,
+        #                                      self.event_type)
 
         self.queue = cl.args['queue']
 
