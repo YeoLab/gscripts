@@ -212,7 +212,7 @@ def script() {
       val NRFFile = swapExt(rgSortedBamFile, ".bam", ".NRF.metrics")
 
       val bedGraphFilePos = swapExt(rgSortedBamFile, ".bam", ".pos.bg")
-      val bedGraphFilePosNorm = swapExt(bedGraphFilePos, "pos.bg", ".norm.pos.bg")
+      val bedGraphFilePosNorm = swapExt(bedGraphFilePos, ".pos.bg", ".norm.pos.bg")
       val bigWigFilePos = swapExt(bedGraphFilePosNorm, ".bg", ".bw")
 
       val bedGraphFileNeg = swapExt(rgSortedBamFile, ".bam", ".neg.bg")

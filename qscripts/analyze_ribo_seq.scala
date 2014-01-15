@@ -35,10 +35,8 @@ class AnalyzeRNASeq extends QScript {
   var location: String = "rna_seq"
 
 
+  
 
-  val star_genome_location = starGenomeLocation(species)
-  var chr_sizes = chromSizeLocation(species)
-  var tags_annotation = exonLocation(species)
 
   case class sortSam(inSam: File, outBam: File, sortOrderP: SortOrder) extends SortSam {
     override def shortDescription = "sortSam"
@@ -59,7 +57,7 @@ class AnalyzeRNASeq extends QScript {
 
   case class genomeCoverageBed(input: File, outBed : File, cur_strand: String) extends GenomeCoverageBed {
         this.inBed = input
-        this.genomeSize = chr_sizes
+        this.genomeSize = chromSizeLocation(species)
         this.bedGraph = outBed
         this.strand = cur_strand
         this.split = true
@@ -77,10 +75,10 @@ class AnalyzeRNASeq extends QScript {
 	this.outRPKM = output
   }
 
-  case class countTags(input: File, index: File, output: File, a: String) extends CountTags {
+  case class countTags(input: File, index: File, output: File) extends CountTags {
 	this.inBam = input
 	this.outCount = output
-	this.tags_annotation = a
+	this.tags_annotation =  exonLocation(species)
 	this.flip = flipped
   }
 
@@ -94,7 +92,7 @@ class AnalyzeRNASeq extends QScript {
        this.outSam = output
        //intron motif should be used if the data is not stranded
        this.intronMotif = stranded
-       this.genome = star_genome_location
+       this.genome = starGenomeLocation(species)
   }
 
   case class addOrReplaceReadGroups(inBam : File, outBam : File) extends AddOrReplaceReadGroups {
@@ -173,7 +171,8 @@ def stringentJobs(fastq_file: File) : File = {
       return filteredFastq
 }
 def script() {
-
+    var chr_sizes = chromSizeLocation(species)
+    
     val fileList = QScriptUtils.createArgsFromFile(input)
     var trackHubFiles: List[File] = List()
     var splicesFiles: List[File] = List()
@@ -207,7 +206,7 @@ def script() {
       val NRFFile = swapExt(rgSortedBamFile, ".bam", ".NRF.metrics")
 
       val bedGraphFilePos = swapExt(rgSortedBamFile, ".bam", ".pos.bg")
-      val bedGraphFilePosNorm = swapExt(bedGraphFilePos, "pos.bg", ".norm.pos.bg")
+      val bedGraphFilePosNorm = swapExt(bedGraphFilePos, ".pos.bg", ".norm.pos.bg")
       val bigWigFilePos = swapExt(bedGraphFilePosNorm, ".bg", ".bw")
 
       val bedGraphFileNeg = swapExt(rgSortedBamFile, ".bam", ".neg.bg")
@@ -247,7 +246,7 @@ def script() {
       add(new NegBedGraph(inBedGraph = bedGraphFileNegNorm, outBedGraph = bedGraphFileNegInverted))
       add(new BedGraphToBigWig(bedGraphFileNegInverted, chr_sizes, bigWigFileNeg))
 	
-      add(new countTags(input = rgSortedBamFile, index = indexedBamFile, output = countFile, a = tags_annotation))	
+      add(new countTags(input = rgSortedBamFile, index = indexedBamFile, output = countFile))	
       add(new singleRPKM(input = countFile, output = RPKMFile, s = species))
 
       add(oldSplice(input = rgSortedBamFile, out = oldSpliceOut))

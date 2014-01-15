@@ -1,3 +1,4 @@
+#!/usr/bin/python
 '''
 reated on Mar 7, 2013
 
@@ -70,10 +71,10 @@ if __name__ == "__main__":
     for bw_group, files in groupby(sorted(bw_files, key=key_func), key_func):
             long_name = os.path.basename(".".join(bw_group[:2]))
             aggregate = AggregateTrack(
-                         name="_".join(long_name),
+                         name=long_name,
                          tracktype='bigWig',
-                         short_label="_".join(long_name),
-                         long_label="_".join(long_name),
+                         short_label=long_name,
+                         long_label=long_name,
                          aggregate='transparentOverlay',
                          showSubtrackColorOnUi='on',
                          autoScale='on',
