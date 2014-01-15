@@ -100,11 +100,11 @@ class MisoPipeline(object):
         self.queue = cl.args['queue']
 
         # get all output dirs so we don't make a typo when redefining them
-        self.psi_output_dirs = ['%s/miso/%s/%s'
-                                % (os.path.dirname(bam), self.event_type,
-                                   sample_id)
-                                for bam, sample_id in zip(self.bams,
-                                                          self.sample_ids)]
+        #self.psi_output_dirs = ['%s/miso/%s/%s'
+        #                        % (os.path.dirname(bam), self.event_type,
+        #                           sample_id)
+        #                        for bam, sample_id in zip(self.bams,
+        #                                                  self.sample_ids)]
         for d in self.psi_output_dirs:
             try:
                 os.makedirs(d)
