@@ -503,11 +503,12 @@ class MisoPipeline(object):
             commands.append('\n# Calculate insert size')
             commands.append('python /home/yeo-lab/software/bin/pe_utils.py '
                             '--compute-insert-len '
-                            '/home/yeo-lab/genomes/{'
-                            '}/miso_annotations/SE_constitutive {} '
+                            '/home/yeo-lab/genomes/{0'
+                            '}/miso_annotations/SE_constitutive/SE.{0}.min_20'
+                            '.const_exons.gff {1} '
                             '--no-bam-filter '
-                            '--output-dir {} '.format(self.genome, bam,
-                                                      os.path.dirname(bam)))
+                            '--output-dir {2} '.format(self.genome, bam,
+                                                       os.path.dirname(bam)))
 
             insert_len_stddev = 'INSERT_LEN_STDDEV'
             insert_len_mean = 'INSERT_LEN_MEAN'
