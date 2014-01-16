@@ -365,10 +365,10 @@ class MisoPipeline(object):
 
 
                 # Put the submitter script wherever the command was run from
-            #        if self.submit_sh_suffix:
+                #        if self.submit_sh_suffix:
 
-            #        else:
-            #            psi_name = 'miso_%s_psi' % (self.event_type)
+                #        else:
+                #            psi_name = 'miso_%s_psi' % (self.event_type)
 
         #print 'psi commands:', psi_commands
 
@@ -403,9 +403,9 @@ class MisoPipeline(object):
             print self.psi_job_id
 
             ## Save all the qsub commands in one file
-        #with open('%s.sh' % submit_sh_base, 'w') as f:
-        #    # f.write('#!/bin/bash\n\n')
-        #    f.writelines(all_submit_sh)
+            #with open('%s.sh' % submit_sh_base, 'w') as f:
+            #    # f.write('#!/bin/bash\n\n')
+            #    f.writelines(all_submit_sh)
 
     def _get_psi_insert_len_argument(self, sample_id, insert_len_file):
         '''
@@ -446,8 +446,8 @@ class MisoPipeline(object):
                 n += 1
                 if n > 0:
                     break
-            #insert_len_commands.append(
-        #    "%s=$(head -n 1 %s | sed 's:#::' | cut -d',' -f1 | cut -d'=' -f2)"
+                    #insert_len_commands.append(
+            #    "%s=$(head -n 1 %s | sed 's:#::' | cut -d',' -f1 | cut -d'=' -f2)"
         #    % (insert_len_mean, insert_len_file))
         #
         ## Assign {sample_id}_insert_len_STDDEV variable
@@ -524,7 +524,6 @@ class MisoPipeline(object):
         for event_type in event_types:
             out_dir = '{}/miso/{}/{}'.format(os.path.dirname(bam),
                                              sample_id, event_type)
-
             psi_out = '{}/psi.out'.format(out_dir)
             psi_err = '{}/psi.err'.format(out_dir)
 
@@ -545,9 +544,9 @@ class MisoPipeline(object):
 
             commands.append("\n# Check that these jobs didn't fail.\n#'-z' "
                             "returns "
-                         "true when a string is empty, so this is checking "
-                         "that grepping these files for the words 'failed' "
-                         "and 'shutdown' didn't find anything.")
+                            "true when a string is empty, so this is checking "
+                            "that grepping these files for the words 'failed' "
+                            "and 'shutdown' didn't find anything.")
             commands.append('iffailed=$(grep failed {})'.format(psi_out))
             commands.append('ifshutdown=$(grep shutdown {})'.format(psi_err))
             commands.append('if [ ! -z "$iffailed" -o ! -z "$ifshutdown" ] ; '
@@ -658,10 +657,10 @@ fi
                 print self.summary_job_id
 
                 # Put the submitter script wherever the command was run from
-            #        if self.submit_sh_suffix:
+                #        if self.submit_sh_suffix:
 
-            #        else:
-            #            job_name = 'miso_%s_summary' % self.event_type
+                #        else:
+                #            job_name = 'miso_%s_summary' % self.event_type
         job_name = '%s' % (job_name_base)
         submit_sh = '%s.sh' \
                     % (submit_sh_base)
