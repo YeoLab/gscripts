@@ -502,7 +502,7 @@ class MisoPipeline(object):
         if self.read_type == 'paired_end':
             commands.append('\n# Calculate insert size')
             commands.append('python /home/yeo-lab/software/bin/pe_utils.py '
-                            '--compute-insert-len {0}'
+                            '--compute-insert-len {0} '
                             '/home/yeo-lab/genomes/{1'
                             '}/miso_annotations/SE_constitutive/SE.{1}.min_20'
                             '.const_exons.gff '
