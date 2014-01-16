@@ -493,10 +493,12 @@ class MisoPipeline(object):
         #    'read from the bam file and measure its length, '
         #    '\n# and use that for our algorithm')
         commands.append(
-            "%s=$(samtools view %s | head -n 1 | cut -f 10 | awk '{ print"
-            " length }')" % (read_length, bam))
+            "READ_LEN=$(samtools view %s | head -n 1 | cut -f 10 | awk '{ "
+            "print"
+            " length }')" % (bam))
 
         print 'self.read_type', self.read_type
+
         if self.read_type == 'paired_end':
             commands.append('\n# Calculate insert size')
             commands.append('''python
@@ -533,7 +535,7 @@ class MisoPipeline(object):
             commands.append('python /home/yeo-lab/software/bin/miso \
 --run /home/yeo-lab/genomes/{0}/miso_annotations/{1}_index \
 {2} --output-dir {3} \
---read-len {4} \
+--read-len $READ_LEN \
 {5} \
 --no-filter-events \
 -p {6} \

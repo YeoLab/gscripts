@@ -112,7 +112,7 @@ class CommandLine(object):
         #                                'scores of all splicing events, '
         #                                'and summarize the relevant events')
 
-        read_type = self.parser.add_mutually_exclusive_group()
+        read_type = self.parser.add_mutually_exclusive_group(required=True)
         read_type.add_argument('--paired-end', action='store_const',
                                dest='read_type', const='paired_end',
                                help='Indicates that these are paired-end '
