@@ -505,7 +505,9 @@ class MisoPipeline(object):
                             '--compute-insert-len '
                             '/home/yeo-lab/genomes/{'
                             '}/miso_annotations/SE_constitutive {} '
-                            '--no-bam-filter'.format(bam, self.genome))
+                            '--no-bam-filter '
+                            '--output-dir {} '.format(self.genome, bam,
+                                                      os.path.dirname(bam)))
 
             insert_len_stddev = 'INSERT_LEN_STDDEV'
             insert_len_mean = 'INSERT_LEN_MEAN'
