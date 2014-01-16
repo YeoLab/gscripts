@@ -530,14 +530,14 @@ class MisoPipeline(object):
             commands.append('\n\n# calculate Psi scores for all {} events'
             .format(event_type))
             commands.append('python /home/yeo-lab/software/bin/miso \
---run /home/yeo-lab/genomes/{0}/miso_annotations/{0}_index \
-{1} --output-dir {2} \
---read-len {3} \
-{4} \
+--run /home/yeo-lab/genomes/{0}/miso_annotations/{1}_index \
+{2} --output-dir {3} \
+--read-len {4} \
+{5} \
 --no-filter-events \
--p {5} \
- > {6}\
-2> {7}'.format(self.genome, event_type, bam, out_dir, read_length,
+-p {6} \
+ > {7}\
+2> {8}'.format(self.genome, event_type, bam, out_dir, read_length,
                insert_len_arguments, self.num_processes, psi_out,
                psi_err))
 
