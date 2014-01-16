@@ -1,3 +1,4 @@
+#!/usr/bin/python
 '''
 reated on Mar 7, 2013
 
@@ -74,48 +75,47 @@ if __name__ == "__main__":
 
     key_func = lambda x: x.split(".")[:-2]
     for bw_group, files in groupby(sorted(bw_files, key=key_func), key_func):
-        long_name = os.path.basename(".".join(bw_group[:2]))
-        aggregate = AggregateTrack(
-            name="_".join(long_name),
-            tracktype='bigWig',
-            short_label="_".join(long_name),
-            long_label="_".join(long_name),
-            aggregate='transparentOverlay',
-            showSubtrackColorOnUi='on',
-            autoScale='on',
-            priority='1.4',
-            alwaysZero='on',
-            visibility="full"
-        )
+            long_name = os.path.basename(".".join(bw_group[:2]))
+            aggregate = AggregateTrack(
+                         name=long_name,
+                         tracktype='bigWig',
+                         short_label=long_name,
+                         long_label=long_name,
+                         aggregate='transparentOverlay',
+                         showSubtrackColorOnUi='on',
+                         autoScale='on',
+                         priority='1.4',
+                         alwaysZero='on',
+                         visibility="full"
+                         )
+                       
+            for track in files:
+                    base_track = os.path.basename(track)
+                    color = "0,100,0" if "pos" in track else "100,0,0"
+                    
+                    if track.endswith(".bw") or track.endswith('.bigWig'):
+                        tracktype = "bigWig"
+                    if track.endswith(".bb") or track.endswith('.bigBed'):
+                        tracktype = "bigBed"
+                    if track.endswith(".bam"):
+                        tracktype = "bam"
 
-        for track in files:
-            base_track = os.path.basename(track)
-            color = "0,100,0" if "pos" in track else "100,0,0"
-
-            if track.endswith(".bw") or track.endswith('.bigWig'):
-                tracktype = "bigWig"
-            if track.endswith(".bb") or track.endswith('.bigBed'):
-                tracktype = "bigBed"
-            if track.endswith(".bam"):
-                tracktype = "bam"
-
-            print base_track
-            track = Track(
-                name=base_track,
-                url=os.path.join(URLBASE, GENOME, base_track),
-                tracktype=tracktype,
-                short_label=base_track,
-                long_label=base_track,
-                color=color,
-                local_fn=track,
-                remote_fn=os.path.join(upload_dir, GENOME, base_track)
-            )
-
-            aggregate.add_subtrack(track)
-        trackdb.add_tracks(aggregate)
-
-    bigBed_files = [track for track in remaining_files if
-                    track.endswith(".bb") or track.endswith(".bigBed")]
+                    print base_track
+                    track = Track(
+                          name= base_track,
+                          url = os.path.join(URLBASE, GENOME, base_track),
+                          tracktype = tracktype,
+                          short_label=base_track,
+                          long_label=base_track,
+                          color = color,
+                          local_fn = track,
+                          remote_fn = os.path.join(upload_dir, GENOME, base_track)
+                          )
+           
+                    aggregate.add_subtrack(track)
+            trackdb.add_tracks(aggregate)
+    
+    bigBed_files = [track for track in remaining_files if track.endswith(".bb") or track.endswith(".bigBed")]
 
     for bigBed_file in bigBed_files:
         color = "0,100,0" if "pos" in bigBed_file else "100,0,0"
