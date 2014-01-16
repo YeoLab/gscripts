@@ -475,6 +475,7 @@ class MisoPipeline(object):
         sample_id = self.sample_ids[0]
 
         commands = []
+        commands.append('#!/bin/sh')
         commands.append('# Finding all MISO splicing scores for sample: {}. '
                         'Yay!\n'
         .format(sample_id))
@@ -542,7 +543,8 @@ class MisoPipeline(object):
                insert_len_arguments, self.num_processes, psi_out,
                psi_err))
 
-            commands.append("\n# Check that these jobs didn't fail.\n#'-z' "
+            commands.append("\n# Check that the psi calculation jobs didn't "
+                            "fail.\n#'-z' "
                             "returns "
                             "true when a string is empty, so this is checking "
                             "that grepping these files for the words 'failed' "
@@ -561,7 +563,7 @@ fi\n'.format(event_type))
                             '--summarize-samples {0} ' \
                             '{0} >{0}/summary.out 2>{0}/summary.err'.format(
                 out_dir))
-            commands.append("# Check that the summary didn't fail")
+            commands.append("\n# Check that the summary jobs didn't fail")
             commands.append("# '-s' returns true if file size is nonzero, "
                             "and the error file should be empty.")
             commands.append("""if [ -s {0}/summary.err ] ; then
