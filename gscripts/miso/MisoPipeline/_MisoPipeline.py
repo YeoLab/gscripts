@@ -535,11 +535,11 @@ class MisoPipeline(object):
 --run /home/yeo-lab/genomes/{0}/miso_annotations/{1}_index \
 {2} --output-dir {3} \
 --read-len $READ_LEN \
-{5} \
+{4} \
 --no-filter-events \
--p {6} \
- > {7}\
-2> {8}'.format(self.genome, event_type, bam, out_dir, read_length,
+-p {5} \
+ > {6}\
+2> {7}'.format(self.genome, event_type, bam, out_dir,
                insert_len_arguments, self.num_processes, psi_out,
                psi_err))
 
