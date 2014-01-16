@@ -523,6 +523,7 @@ class MisoPipeline(object):
         for event_type in event_types:
             out_dir = '{}/miso/{}/{}'.format(os.path.dirname(bam),
                                              sample_id, event_type)
+            commands.append('mkdir -p {}'.format(out_dir))
 
             psi_out = '{}/psi.out'.format(out_dir)
             psi_err = '{}/psi.err'.format(out_dir)
