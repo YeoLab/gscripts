@@ -502,12 +502,12 @@ class MisoPipeline(object):
         if self.read_type == 'paired_end':
             commands.append('\n# Calculate insert size')
             commands.append('python /home/yeo-lab/software/bin/pe_utils.py '
-                            '--compute-insert-len '
-                            '/home/yeo-lab/genomes/{0'
-                            '}/miso_annotations/SE_constitutive/SE.{0}.min_20'
-                            '.const_exons.gff {1} '
+                            '--compute-insert-len {0}'
+                            '/home/yeo-lab/genomes/{1'
+                            '}/miso_annotations/SE_constitutive/SE.{1}.min_20'
+                            '.const_exons.gff '
                             '--no-bam-filter '
-                            '--output-dir {2} '.format(self.genome, bam,
+                            '--output-dir {2} '.format(bam, self.genome,
                                                        os.path.dirname(bam)))
 
             insert_len_stddev = 'INSERT_LEN_STDDEV'
