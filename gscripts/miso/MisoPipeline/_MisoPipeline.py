@@ -475,6 +475,9 @@ class MisoPipeline(object):
         sample_id = self.sample_ids[0]
 
         commands = []
+        commands.append('# Finding all MISO splicing scores for sample: {}. '
+                        'Yay!\n'
+        .format(sample_id))
 
         insert_len_arguments = ''
 
@@ -521,6 +524,9 @@ class MisoPipeline(object):
             out_dir = '{}/miso/{}/{}'.format(os.path.dirname(bam),
                                              sample_id, event_type)
 
+            psi_out = '{}/psi.out'.format(out_dir)
+            psi_err = '{}/psi.err'.format(out_dir)
+
             commands.append('\n\n# calculate Psi scores for all {} events'
             .format(event_type))
             commands.append('python /home/yeo-lab/software/bin/miso \
@@ -530,12 +536,11 @@ class MisoPipeline(object):
 {4} \
 --no-filter-events \
 -p {5} \
- > {2}/psi.err \
-2> {2}/psi.out'.format(self.genome, event_type, bam, out_dir, read_length,
-                       insert_len_arguments, self.num_processes))
+ > {6}\
+2> {7]'.format(self.genome, event_type, bam, out_dir, read_length,
+               insert_len_arguments, self.num_processes, psi_out,
+               psi_err))
 
-            psi_out = '{}/psi.out'.format(out_dir)
-            psi_err = '{}/psi.err'.format(out_dir)
             commands.append("\n# Check that these jobs didn't fail.\n#'-z' "
                             "returns "
                          "true when a string is empty, so this is checking "
@@ -545,7 +550,7 @@ class MisoPipeline(object):
             commands.append('ifshutdown=$(grep shutdown {})'.format(psi_err))
             commands.append('if [ ! -z "$iffailed" -o ! -z "$ifshutdown" ] ; '
                             'then\n\
-    echo "MISO psi failed on event type: {}\n"\
+    echo "MISO psi failed on event type: {}"\n\
     exit 1\n\
 fi\n'.format(event_type))
 
