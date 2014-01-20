@@ -12,7 +12,7 @@ import os
 import pybedtools 
 
 
-from gscripts.general.pybedtools_helpers import get_single_gene_name, rename_to_gene_from_dict
+from gscripts.general.pybedtools_helpers import get_single_gene_name, rename_to_gene_from_dict, get_five_prime_end, get_three_prime_end
 
 def trim_names(interval):
 
@@ -21,7 +21,7 @@ def trim_names(interval):
     interval.name = interval.name.split(":")[0]
     return interval
 
-from general.pybedtools_helpers import get_five_prime_end, get_three_prime_end
+
 def get_regions():
     """
     
