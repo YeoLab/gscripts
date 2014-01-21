@@ -24,6 +24,9 @@ class AnalizeCLIPSeq extends QScript {
   @Argument(doc = "read ids have randomers")
   var barcoded: Boolean = false
 
+  @Argument(doc = "use alpha version of STAR")
+  var alpha: Boolean = false
+
   case class clipper(in: File, out: File, genome: String, isPremRNA: Boolean ) extends Clipper 
 {
 
@@ -144,6 +147,7 @@ class AnalizeCLIPSeq extends QScript {
        this.genome = genome_location
        this.multimapNMax = 1
        this.isIntermediate = true
+       this.alpha = alpha
   }
 
   case class samtoolsIndexFunction(input: File, output: File) extends SamtoolsIndexFunction {
