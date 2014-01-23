@@ -58,6 +58,8 @@ class MisoPipeline(object):
             self.sample_ids = [sample_id]
             self.bams = [bam]
 
+        self.output_sh = cl.args['output_sh']
+
         self.extra_miso_arguments = cl.args['extra_miso_arguments']
 
         # Initialize the IDs we're going to use
@@ -574,7 +576,7 @@ fi\n'.format(event_type))
     exit 1
 fi
 """.format(out_dir))
-        sh_file = '{}/{}_miso.sh'.format(os.path.dirname(bam), sample_id)
+        sh_file = self.output_sh
         with open(sh_file, 'w') as f:
             f.write('\n'.join(commands))
         sys.stdout.write('Wrote miso script for sample "{}": {}\n'.format(
