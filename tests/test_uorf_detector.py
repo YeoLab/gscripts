@@ -35,7 +35,7 @@ class Test(unittest.TestCase):
 
                               """, from_string=True)
         detector = UORF_detector()
-        test_dict = detector.get_five_prime_utr_sequences(gff_file, fa_file)
+        test_dict = detector._get_five_prime_utr_sequences(gff_file, fa_file)
         test_dict = {name : [(interval, str(seq.seq)) for interval, seq in tuple] 
                      for name, tuple in test_dict.items()}
         true_dict = {
@@ -69,7 +69,7 @@ class Test(unittest.TestCase):
                        }
         
         detector = UORF_detector()
-        test_result = detector.get_uorf_start_stop(test_dict, uorf_length=0)
+        test_result = detector._get_uorf_start_stop(test_dict, uorf_length=0)
         
         true_result = pybedtools.BedTool(
             [
@@ -127,7 +127,7 @@ class Test(unittest.TestCase):
                        "ENSG3" : [(intervals[2], SeqRecord(Seq("AAATGGGGTAG", IUPAC.unambiguous_dna)))],
                        }
         detector = UORF_detector()
-        test_result = detector.get_uorf_start_stop(test_dict, uorf_length=0)
+        test_result = detector._get_uorf_start_stop(test_dict, uorf_length=0)
         
         true_result = pybedtools.BedTool(
             [
@@ -194,7 +194,7 @@ class Test(unittest.TestCase):
                        }
         
         detector = UORF_detector()
-        test_result = detector.get_uorf_start_stop(test_dict, uorf_length=0)
+        test_result = detector._get_uorf_start_stop(test_dict, uorf_length=0)
         
         true_result = pybedtools.BedTool(
             [
@@ -260,7 +260,7 @@ class Test(unittest.TestCase):
                        }
         
         detector = UORF_detector()
-        test_result = detector.get_uorf_start_stop(test_dict, uorf_length=0)
+        test_result = detector._get_uorf_start_stop(test_dict, uorf_length=0)
         
         true_result = pybedtools.BedTool(
             [
@@ -301,7 +301,4 @@ if __name__ == "__main__":
     #import sys;sys.argv = ['', 'Test.testName']
     unittest.main()
     
-    
-    for five_prime_utr, sequence in zip(filtered_UTR5, sequences):
-        five_prime_utr_dict[five_prime_utr.name].append((five_prime_utr, sequence))
     
