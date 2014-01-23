@@ -170,6 +170,34 @@ def stringentJobs(fastq_file: File) : File = {
 
       return filteredFastq
 }
+
+def makeBigWig(inBam: File): (File, File) = {
+
+      val bedGraphFilePos = swapExt(inBam, ".bam", ".pos.bg")
+      val bedGraphFilePosNorm = swapExt(bedGraphFilePos, ".bg", ".norm.bg")
+      val bigWigFilePosNorm = swapExt(bedGraphFilePosNorm, ".bg", ".bw")
+      val bigWigFilePos = swapExt(bedGraphFilePos, ".bg", ".bw")
+
+      val bedGraphFileNeg = swapExt(inBam, ".bam", ".neg.bg")
+      val bedGraphFileNegInverted = swapExt(bedGraphFileNeg, ".bg", ".t.bg")
+      val bedGraphFileNegInvertedNorm = swapExt(bedGraphFileNegInverted, ".bg", ".norm.bg")
+      val bigWigFileNegNorm = swapExt(bedGraphFileNegInvertedNorm, ".bg", ".bw")
+      val bigWigFileNeg = swapExt(bedGraphFileNegInverted, ".bg", ".bw")
+
+      add(new genomeCoverageBed(input = inBam, outBed = bedGraphFilePos, cur_strand = "+"))
+      add(new NormalizeBedGraph(inBedGraph = bedGraphFilePos, inBam = inBam, outBedGraph = bedGraphFilePosNorm))
+      add(new BedGraphToBigWig(bedGraphFilePosNorm, chromSizeLocation(species), bigWigFilePosNorm))
+      add(new BedGraphToBigWig(bedGraphFilePos, chromSizeLocation(species), bigWigFilePos))
+
+      add(new genomeCoverageBed(input = inBam, outBed = bedGraphFileNeg, cur_strand = "-"))
+      add(new NegBedGraph(inBedGraph = bedGraphFileNeg, outBedGraph = bedGraphFileNegInverted))
+      add(new NormalizeBedGraph(inBedGraph = bedGraphFileNegInverted, inBam = inBam, outBedGraph = bedGraphFileNegInvertedNorm))
+      add(new BedGraphToBigWig(bedGraphFileNegInvertedNorm, chromSizeLocation(species), bigWigFileNegNorm))
+      add(new BedGraphToBigWig(bedGraphFileNegInverted, chromSizeLocation(species), bigWigFileNeg))
+      return (bigWigFileNegNorm, bigWigFilePosNorm)
+
+}
+
 def script() {
 
     
@@ -206,16 +234,7 @@ def script() {
       val indexedBamFile = swapExt(rgSortedBamFile, "", ".bai")
       
       val NRFFile = swapExt(rgSortedBamFile, ".bam", ".NRF.metrics")
-
-      val bedGraphFilePos = swapExt(rgSortedBamFile, ".bam", ".pos.bg")
-      val bedGraphFilePosNorm = swapExt(bedGraphFilePos, ".pos.bg", ".norm.pos.bg")
-      val bigWigFilePos = swapExt(bedGraphFilePosNorm, ".bg", ".bw")
-
-      val bedGraphFileNeg = swapExt(rgSortedBamFile, ".bam", ".neg.bg")
-      val bedGraphFileNegNorm = swapExt(bedGraphFileNeg, "neg.bg", ".norm.neg.bg")
-      val bedGraphFileNegInverted = swapExt(bedGraphFileNegNorm, ".bg", ".t.bg")
-      val bigWigFileNeg = swapExt(bedGraphFileNegInverted, ".t.bg", ".bw")
-
+      
       val countFile = swapExt(rgSortedBamFile, "bam", "count")
       val RPKMFile = swapExt(countFile, "count", "rpkm")
 
@@ -223,7 +242,6 @@ def script() {
       
       //add bw files to list for printing out later
 
-      trackHubFiles = trackHubFiles ++ List(bigWigFileNeg, bigWigFilePos)
       splicesFiles = splicesFiles ++ List(oldSpliceOut)      
       bamFiles = bamFiles ++ List(rgSortedBamFile)
 
@@ -237,16 +255,10 @@ def script() {
       add(addOrReplaceReadGroups(sortedBamFile, rgSortedBamFile))
       add(new samtoolsIndexFunction(rgSortedBamFile, indexedBamFile))
       add(new CalculateNRF(inBam = rgSortedBamFile, genomeSize = chromSizeLocation(species), outNRF = NRFFile))
+            
+      val (bigWigFilePos: File, bigWigFileNeg: File) = makeBigWig(rgSortedBamFile)
+      trackHubFiles = trackHubFiles ++ List(bigWigFilePos, bigWigFileNeg)      
       
-      add(new genomeCoverageBed(input = rgSortedBamFile, outBed = bedGraphFilePos, cur_strand = "+"))
-      add(new NormalizeBedGraph(inBedGraph = bedGraphFilePos, inBam = rgSortedBamFile, outBedGraph = bedGraphFilePosNorm))
-      add(new BedGraphToBigWig(bedGraphFilePosNorm, chromSizeLocation(species), bigWigFilePos))
-
-      add(new genomeCoverageBed(input = rgSortedBamFile, outBed = bedGraphFileNeg, cur_strand = "-"))
-      add(new NormalizeBedGraph(inBedGraph = bedGraphFileNeg, inBam = rgSortedBamFile, outBedGraph = bedGraphFileNegNorm))
-      add(new NegBedGraph(inBedGraph = bedGraphFileNegNorm, outBedGraph = bedGraphFileNegInverted))
-      add(new BedGraphToBigWig(bedGraphFileNegInverted, chromSizeLocation(species), bigWigFileNeg))
-	
       add(new countTags(input = rgSortedBamFile, index = indexedBamFile, output = countFile))	
       add(new singleRPKM(input = countFile, output = RPKMFile, s = species))
 
