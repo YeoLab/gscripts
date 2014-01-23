@@ -59,6 +59,9 @@ class AnalyzeRNASeq extends QScript {
         this.split = true
   }
 
+ case class  extends Miso {
+       spe 
+}
   
   case class oldSplice(input: File, out : File) extends OldSplice {
         this.inBam = input
@@ -239,6 +242,7 @@ def script() {
       val RPKMFile = swapExt(countFile, "count", "rpkm")
 
       val oldSpliceOut = swapExt(rgSortedBamFile, "bam", "splices")
+      val misoOut = swapExt(rgSortedBamFile, "bam", "miso")
       
       //add bw files to list for printing out later
 
@@ -263,6 +267,8 @@ def script() {
       add(new singleRPKM(input = countFile, output = RPKMFile, s = species))
 
       add(oldSplice(input = rgSortedBamFile, out = oldSpliceOut))
+      add(new Miso(inBam = rgSortedBamFile, species = species, pairedEnd = !singleEnd, output = misoOut))
+
     }
     add(new MakeTrackHub(trackHubFiles, location, species))
     add(parseOldSplice(splicesFiles))
