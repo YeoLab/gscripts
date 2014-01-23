@@ -241,6 +241,9 @@ class CommandLine(object):
                                       'the number of cores is greater than 1,'
                                       ' then make the psi and summary jobs a '
                                       'job array.')
+        self.parser.add_argument('--output-sh', type=str, required=True,
+                                 action='store',
+                                 help="The name of the .sh script created for one-touch action")
         self.parser.add_argument('--psi-walltime', type=str, action='store',
                                  default='00:50:00',
                                  help='How much time to tell the cluster to '

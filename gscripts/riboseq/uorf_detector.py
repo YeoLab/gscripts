@@ -5,19 +5,13 @@ Created on Jan 21, 2014
 @author: gpratt
 
 
-def get_total_uorf(uorf_annotations):
-    uorfs = []
-    for start, end in izip(uorf_annotations[:2], uorf_annotations[1::2]):
-        start_loc = start.start if start.strand == "+" else end.start
-        end_loc = end.end if end.strand == "+" else start.start
-        uorfs.append(pybedtools.create_interval_from_list([start.chrom, str(start_loc), str(end_loc), end.name, str(end.score), end.strand]))
-    
-    real_uorfs = pybedtools.BedTool(uorfs)
+
 
 '''
 
 from collections import defaultdict
 from itertools import izip
+import os
 
 from Bio import SeqIO
 import gffutils
@@ -27,8 +21,17 @@ import clipper
 import clipper.src.CLIP_analysis as CLIP_analysis
 
 class UORF_detector:
+
+    def _get_total_uorf(self, uorf_annotations):
+        uorfs = []
+        for start, end in izip(uorf_annotations[::2], uorf_annotations[1::2]):
+            start_loc = start.start if start.strand == "+" else end.start
+            end_loc = end.end if end.strand == "+" else start.start
+            uorfs.append(pybedtools.create_interval_from_list([start.chrom, str(start_loc), str(end_loc), end.name, str(end.score), end.strand]))
+    
+        return pybedtools.BedTool(uorfs)
         
-    def get_uorf_start_stop(self, five_prime_utr_dict, uorf_length=30):
+    def _get_uorf_start_stop(self, five_prime_utr_dict, uorf_length=30):
         """
         
         five_prime_utr_dict: transcript id : (pybedtools.interval, bio.SeqRecord)
@@ -51,13 +54,13 @@ class UORF_detector:
                         exon = sequence.seq[reading_frame:]
                     else:
                         exon = sequence.seq
-                    print (offset + exon).translate(), "frame", reading_frame
+                    
                     for interval_codons, amino_acid in enumerate((offset + exon).translate()):
                         
                         total_codons += 1
                         #Reading frame only matters in the first exon, after that everything is inframe
                         if interval.strand == "+":
-                            start_of_codon = (interval.start + (interval_codons * 3)) - offset_size
+                            start_of_codon = (interval.start + (interval_codons * 3) + 1) - offset_size
                         else:
                             start_of_codon = (interval.end - ((interval_codons + 1) * 3) + 1) + offset_size
                             reading_frame = reading_frame * -1
@@ -105,11 +108,11 @@ class UORF_detector:
         return uorf_annotations
     
     #create transcript, gene mapping dict
-    def create_transcript_map(self, db):
+    def _create_transcript_map(self, db):
         return { transcript.attributes['transcript_id'] : transcript.attributes['gene_id'] 
                             for transcript in db.features_of_type('transcript')}
      
-    def get_five_prime_utr_sequences(self, UTR5, fa_file):
+    def _get_five_prime_utr_sequences(self, UTR5, fa_file):
         """
         
         UTR5 - bedtool of gff 5' UTR features, 
@@ -139,7 +142,8 @@ class UORF_detector:
                 five_prime_utr.reverse()
                 
         return five_prime_utr_dict
-    def get_uORF_gff(self):
+
+    def get_uORF_start_stop_gff(self):
         
         """
         
@@ -149,7 +153,7 @@ class UORF_detector:
         
         db = gffutils.FeatureDB("/nas3/yeolab/Genome/ensembl/gtf/gencode.v17.annotation.gtf.db.old")
         
-        transcript_gene_dict = create_transcript_map(db)
+        transcript_gene_dict = self._create_transcript_map(db)
         
         #get all 5' UTRs
         (UTR3, UTR5, 
@@ -158,12 +162,12 @@ class UORF_detector:
                                                             "hg19", 
                                                             db).values()
         
-        five_prime_utr_dict = get_five_prime_utr_sequences(UTR5, "/nas3/yeolab/Genome/ucsc/hg19/chromosomes/all.fa")      
+        five_prime_utr_dict = self._get_five_prime_utr_sequences(UTR5, "/nas3/yeolab/Genome/ucsc/hg19/chromosomes/all.fa")      
                                                       
-        return get_uorf_start_stop(five_prime_utr_dict)
+        return self._get_uorf_start_stop(five_prime_utr_dict)
         
        
-    def get_uORF_start_stop_gff(self):
+    def get_uORF_gff(self):
         
         """
         
@@ -171,5 +175,5 @@ class UORF_detector:
         
         """
         
-        get_total_uorf(get_uORF_gff())
+        return self._get_total_uorf(self.get_uORF_start_stop_gff())
         
