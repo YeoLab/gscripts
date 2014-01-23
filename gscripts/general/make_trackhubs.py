@@ -31,7 +31,7 @@ if __name__ == "__main__":
     parser.add_argument('--short_label', default=None,
                         help="short label for hub")
     parser.add_argument('--long_label', default=None, help="long label for hub")
-    parser.add_argument('--num_sep', default=2, help="Number of seperators deep to group on")
+    parser.add_argument('--num_sep', default=2, type=int, help="Number of seperators deep to group on")
     parser.add_argument('--sep', default=".", help="Seperator")
     parser.add_argument('--email', default='gpratt@ucsd.edu',
                         help="email for hub")
