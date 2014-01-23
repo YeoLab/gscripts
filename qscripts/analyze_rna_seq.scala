@@ -59,10 +59,6 @@ class AnalyzeRNASeq extends QScript {
         this.split = true
   }
 
- case class  extends Miso {
-       spe 
-}
-  
   case class oldSplice(input: File, out : File) extends OldSplice {
         this.inBam = input
         this.out_file = out
