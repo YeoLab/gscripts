@@ -31,6 +31,8 @@ if __name__ == "__main__":
     parser.add_argument('--short_label', default=None,
                         help="short label for hub")
     parser.add_argument('--long_label', default=None, help="long label for hub")
+    parser.add_argument('--num_sep', default=2, type=int, help="Number of seperators deep to group on")
+    parser.add_argument('--sep', default=".", help="Seperator")
     parser.add_argument('--email', default='gpratt@ucsd.edu',
                         help="email for hub")
     parser.add_argument('--server', default="sauron.ucsd.edu",
@@ -73,12 +75,12 @@ if __name__ == "__main__":
     remaining_files = [track for track in files if
                        not (track.endswith(".bw") or track.endswith(".bigWig"))]
 
-    key_func = lambda x: x.split(".")[:2]
+    key_func = lambda x: x.split(args.sep)[:args.num_sep]
     for bw_group, files in groupby(sorted(bw_files, key=key_func), key_func):
         files = list(files)
         
         print bw_group, files
-        long_name = os.path.basename(".".join(bw_group[:2]))
+        long_name = os.path.basename(args.sep.join(bw_group[:args.num_sep]))
         aggregate = AggregateTrack(
             name=long_name,
             tracktype='bigWig',
