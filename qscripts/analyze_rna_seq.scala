@@ -23,7 +23,7 @@ class AnalyzeRNASeq extends QScript {
   var adapter: List[String] = Nil
 
   @Argument(doc = "flipped", required = false)
-  var flipped: String = _
+  var flipped: String = "none"
 
   @Argument(doc = "not stranded", required = false)
   var not_stranded: Boolean = false
@@ -239,6 +239,7 @@ def script() {
 
       val oldSpliceOut = swapExt(rgSortedBamFile, "bam", "splices")
       val misoOut = swapExt(rgSortedBamFile, "bam", "miso")
+      val rnaEditingOut = swapExt(rgSortedBamFile, "bam", "editing")
       
       //add bw files to list for printing out later
 
@@ -264,6 +265,7 @@ def script() {
 
       add(oldSplice(input = rgSortedBamFile, out = oldSpliceOut))
       add(new Miso(inBam = rgSortedBamFile, species = species, pairedEnd = !singleEnd, output = misoOut))
+      add(new RnaEditing(inBam = rgSortedBamFile, snpEffDb = species, snpDb = snpDbLocation(species), genome = genomeLocation(species), flipped=flipped, output = rnaEditingOut))
 
     }
     add(new MakeTrackHub(trackHubFiles, location, species))
