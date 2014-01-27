@@ -1,22 +1,23 @@
 
-import pandas as pd
-import numpy as np
-from sklearn import decomposition as dc
-import matplotlib.pyplot as plt
-from math import sqrt
-from numpy.linalg import norm
-import prettyplotlib as ppl
-import matplotlib.patches as patches
+from collections import Iterable
 import math
+from math import sqrt
+import os
+
 import brewer2mpl
+import matplotlib as mpl
 from matplotlib.colors import LogNorm
 import matplotlib.gridspec as gridspec
-import scipy.spatial.distance as distance
+import matplotlib.patches as patches
+import matplotlib.pyplot as plt
+import numpy as np
+from numpy.linalg import norm
+import pandas as pd
+import prettyplotlib as ppl
 import scipy.cluster.hierarchy as sch
-import matplotlib as mpl
-from collections import Iterable
+import scipy.spatial.distance as distance
 from scipy.stats import gaussian_kde
-
+from sklearn import decomposition as dc
 
 def clusterGram(dataFrame, distance_metric = 'euclidean', linkage_method = 'average',
             outfile = None, clusterRows=True, clusterCols=True, timeSeries=False, doCovar=False,
@@ -1288,3 +1289,4 @@ class Figure(object):
             ax.set_title(ax.get_title(), fontsize=20)
         self.figure.tight_layout()
         self.figure.savefig(self.saveas)
+        self.figure.savefig(os.path.splitext(self.saveas)[0] + ".pdf")
