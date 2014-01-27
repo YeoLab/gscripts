@@ -4,6 +4,7 @@ from optparse import OptionParser
 import pickle
 import numpy as np
 from oldsplice import retrieve_splicing
+import pandas as pd
 
 __author__ = "Michael Lovci"
 
@@ -307,6 +308,19 @@ def main(options):
 
                     MXEout.write(line + "\n")                    
             MXEout.close()
+
+def get_smaller_table(table_file):
+    """ reduce bloat and load time for table by removing rpk columns"""
+    use_cols = None
+    with open(table_file, 'r') as f:
+        header = f.readline()
+        columns = header.strip().split("\t")
+        use_cols = [c for c in columns if not "RPK" in c]
+    return pd.read_csv(table_file, usecols=use_cols, sep="\t").set_index(["Gene", "ExonName", "Eventloc", "Exonloc"])
+
+def get_table(table_file):
+    "load tsv file"
+    return pd.read_csv(table_file, sep="\t").set_index(["Gene", "ExonName", "Eventloc", "Exonloc"])
 
 if __name__ == "__main__":
     parser = OptionParser()
