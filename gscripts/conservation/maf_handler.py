@@ -1,7 +1,7 @@
 __author__ = 'lovci'
 
 
-"""a tool to extract ranges from indexed .maf file"""
+"""a tool to extract ranges from indexed .maf file, adapted from bx-python / scripts / maf_tile.py"""
 
 import bx
 import bx.align.maf
