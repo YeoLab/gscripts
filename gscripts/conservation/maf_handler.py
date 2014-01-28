@@ -63,7 +63,6 @@ class MafRangeGetter(object):
                 fetch_start = (start+ss-1)
                 fetch_stop = (start +ee-1)
                 x = self.fasta[chrom][fetch_start:fetch_stop]
-                print x
                 tiled[0].append(x)
                 for row in tiled[1:]: #unaligned other species
                     row.append( "-" * ( ee - ss ) )
@@ -172,7 +171,7 @@ class hg19MafRangeGetter(MafRangeGetter):
 
 def revcom(s):
     import string
-    complements = string.maketrans('acgtrymkbdhvACGTRYMKBDHV', 'tgcayrkmvhdbTGCAYRKMVHDB')
+    complements = string.maketrans('acgtrymkbdhvACGTRYMKBDHV-', 'tgcayrkmvhdbTGCAYRKMVHDB-')
     s = s.translate(complements)[::-1]
 
     return s
