@@ -176,6 +176,7 @@ def revcom(s):
 
     return s
 
+
 def chop_maf(maf, maxSize=2500, overlap=6, id = "none", verbose=False):
     """make smaller bits (<=maxSize) from a big maf range with little bits overlapping by $overlap nt"""
     i = 0
