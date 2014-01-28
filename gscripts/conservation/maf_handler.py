@@ -88,7 +88,7 @@ class MafRangeGetter(object):
         for i, name in enumerate( self.sources ):
             for n, s in enumerate(tiled[i]):
                 tiled[i][n] = s.strip().replace("\s", "")
-            text = "".join( tiled[i])
+            text = str("".join( tiled[i]))
             size = len( text ) - text.count( "-" )
             if i == 0:
                 if ref_src_size is None: ref_src_size = len(self.fasta[chrom])
