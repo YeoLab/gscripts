@@ -46,15 +46,16 @@ class MafRangeGetter(object):
         # print len( blocks )
         # print blocks[0]
         ref_src_size = None
-        for i, block in enumerate( blocks ):
-            ref = block.get_component_by_src_start( ref_src )
-            ref_src_size = ref.src_size
-            assert ref.strand == "+"
-            slice_start = max( start, ref.start )
-            slice_end = min( end, ref.end )
-            for j in range( slice_start, slice_end ):
-                mask[j-start] = i
-        #return mask
+        if blocks[0] is not None:
+            for i, block in enumerate( blocks ):
+                ref = block.get_component_by_src_start( ref_src )
+                ref_src_size = ref.src_size
+                assert ref.strand == "+"
+                slice_start = max( start, ref.start )
+                slice_end = min( end, ref.end )
+                for j in range( slice_start, slice_end ):
+                    mask[j-start] = i
+            #return mask
 
         tiled = []
         for i in range( len( self.sources ) ): tiled.append( [] )
@@ -80,7 +81,6 @@ class MafRangeGetter(object):
                         tiled[i].append( comp.text )
                     else:
                         tiled[i].append( "-" * sliced.text_size )
-
         aln = bx.align.Alignment()
         s = list()
 
