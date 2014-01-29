@@ -19,7 +19,7 @@ SUFFIXES = sorted.bam sorted.bam.bai bcf var vcf eff5 eff5-10 eff10 noSNP conf c
 all_stages: stage1 stage2 stage3 
 stage3: $(foreach SUFF, $(SUFFIXES), $(addsuffix .$(SUFF), $(SAMPLE)_stage3 )) # $(SAMPLE)_stage3.allCov.txt
 stage2: $(foreach SUFF, $(SUFFIXES), $(addsuffix .$(SUFF), $(SAMPLE)_stage2 )) $(SAMPLE)_stage2.bam $(SAMPLE)_stage2.rmdup.bam 
-stage1: $(foreach SUFF, $(SUFFIXES), $(addsuffix .$(SUFF), $(SAMPLE)_stage1 ))
+stage1: $(foreach SUFF, $(SUFFIXES), $(addsuffix .$(SUFF), $(SAMPLE)_stage1 )) $(SAMPLE).bam 
 
 .PHONY: stage1 stage2 stage3 all_stages -b
 
@@ -53,11 +53,12 @@ snpEff.config:
 	samtools view $@ | wc
 	echo >> $(SAMPLE).make.out
 
-#%_stage1.sorted.bam: %.bam
-#	echo "link stage1 to $<" >> $(SAMPLE).make.out
+%_stage1.sorted.bam: %.bam
+	echo "filter out unmapped reads from $<" >> $(SAMPLE).make.out
+	samtools view -F 4 $< > $@ 
 #	rm $@
 #	ln -s $^ $@
-#	samtools sort -m 10000000000 $< accepted_hits.sorted
+#	samtools sort -m 10000000000 $< > $@
 
 %.sorted.bam.bai: %.sorted.bam
 	echo "Indexing $<" >> $(SAMPLE).make.out
@@ -102,14 +103,14 @@ snpEff.config:
 
 $(SAMPLE)_stage2.noSNP: $(SAMPLE)_stage2.eff5 $(SAMPLE)_stage2.noSNP
 	echo "Filtering out SNPs from and joining $^" >> $(SAMPLE).make.out
-	grep "^#CHROM" $< > $@
+#	grep "^#CHROM" $< > $@
 	zcat $(SNP_DB) | perl -lane 'print "$$F[1]\t",$$F[2]-0' | $(HashJoin) -r -k 0,1 -v 0 -j 0,1 -o 0-9 - $< - | $(HashJoin) -k 0,1 -v 2-L1 -j 0,1 -o 0,1,v - $(SAMPLE)_stage2.noSNP - >> $@
 	wc $@ >> $(SAMPLE).make.out
 	echo >> $(SAMPLE).make.out
 
 %.noSNP: %.eff5
 	echo "Filtering out SNPs from $<" >> $(SAMPLE).make.out
-	grep "^#CHROM" $< > $@
+#	grep "^#CHROM" $< > $@
 	zcat $(SNP_DB) | perl -lane 'print "$$F[1]\t",$$F[2]-0' | $(HashJoin) -r -k 0,1 -v 0 -j 0,1 -o 0-9 - $< - >> $@
 	wc $@ >> $(SAMPLE).make.out
 	echo >> $(SAMPLE).make.out

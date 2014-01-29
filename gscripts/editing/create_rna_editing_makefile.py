@@ -12,7 +12,7 @@ from string import Template
 parser = argparse.ArgumentParser(description="""Takes a bedgraph and an indexed bam file and normalized bedgraph by number of reads in bam file (RPM)
 outputs new normalized bedgraph file """)
 parser.add_argument("--make_file", help="Make file template to create make file from", 
-                    default=os.path.join(os.path.dirname(__file__), "editing.template"), required=False)
+                    default=os.path.join(os.path.dirname(__file__), "template.mk"), required=False)
 parser.add_argument("--bam", help="bam file to create make file from", required=True)
 parser.add_argument("--snpEffDb", help="species to create snpEffDb from (hg19 mm9 ect...)", required=True)
 parser.add_argument("--snpDb", help="Actual SNP database (from DB SNP)", required=True)
