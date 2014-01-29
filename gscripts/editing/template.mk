@@ -1,5 +1,5 @@
 # ALWAYS set SAMPLE
-SAMPLE=&SAMPLE # NPC_2_ACTTGA_L002_R1.fastq.gz.polyATrim.adapterTrim.rmRep.sorted.rg
+SAMPLE = &SAMPLE
 
 # SOMETIMES change SPECIES 
 snpEffDB = &snpEffDB # hg19
@@ -7,9 +7,9 @@ SNP_DB = &SNP_DB # /projects/ps-yeolab/genomes/hg19/snp137.txt.gz
 FA = &FA # /projects/ps-yeolab/genomes/hg19/chromosomes/all.fa
 
 # RARELY change OPTIONS
-S=&S # s # for TruSeq, S for Balaji's library prep
+S = &S # s # for TruSeq, S for Balaji's library prep
 MinCoverage = &MinCoverage # 5
-MinConfidence = &MinConfidence # 0.995
+MinConfidence = &MinConfidence
 MinEditFrac = &MinEditFrac # 0.1
 pseudoG = &pseudoG # 5
 pseudoA = &pseudoA # 5
@@ -105,12 +105,12 @@ snpEff.config:
 	wc $@ >> $(SAMPLE).make.out
 	echo >> $(SAMPLE).make.out
 
-$(SAMPLE)_stage2.noSNP: $(SAMPLE)_stage2.eff5 $(SAMPLE)_stage2.noSNP
-	echo "Filtering out SNPs from and joining $^" >> $(SAMPLE).make.out
+#$(SAMPLE)_stage2.noSNP: $(SAMPLE)_stage2.eff5 $(SAMPLE)_stage2.noSNP
+#	echo "Filtering out SNPs from and joining $^" >> $(SAMPLE).make.out
 #	grep "^#CHROM" $< > $@
-	zcat $(SNP_DB) | perl -lane 'print "$$F[1]\t",$$F[2]-0' | $(HashJoin) -r -k 0,1 -v 0 -j 0,1 -o 0-9 - $< - | $(HashJoin) -k 0,1 -v 2-L1 -j 0,1 -o 0,1,v - $(SAMPLE)_stage2.noSNP - >> $@
-	wc $@ >> $(SAMPLE).make.out
-	echo >> $(SAMPLE).make.out
+#	zcat $(SNP_DB) | perl -lane 'print "$$F[1]\t",$$F[2]-0' | $(HashJoin) -r -k 0,1 -v 0 -j 0,1 -o 0-9 - $< - | $(HashJoin) -k 0,1 -v 2-L1 -j 0,1 -o 0,1,v - $(SAMPLE)_stage2.noSNP - >> $@
+#	wc $@ >> $(SAMPLE).make.out
+#	echo >> $(SAMPLE).make.out
 
 %.noSNP: %.eff5
 	echo "Filtering out SNPs from $<" >> $(SAMPLE).make.out
@@ -140,7 +140,7 @@ $(SAMPLE)_stage2.noSNP: $(SAMPLE)_stage2.eff5 $(SAMPLE)_stage2.noSNP
 %.conf$(MinConfidence).bed: %.conf$(MinConfidence).no100
 	echo '$(date +"%Y%m%d%H%M")  Converting $< to BED format' >> $(SAMPLE).make.out
 	perl -le 'print "#CHROM\tPOS-1\tPOS\t%EDIT\tCOVER\tSTRAND" ' > $@
-	perl -lane 'next if m/^\#/; $$strand = "." ; $$strand = "+" if $$F[3] eq "A" ; $$strand = "-" if $$F[3] eq "T" ; print join("\t",($$F[0],$$F[1]-1,$$F[1],int($$F[7]*100),$$F[2],$$strand))' $< >> $@
+	perl -lane 'next if m/^\#/; $$strand = "." ; $$strand = "+" if $$F[3] eq "A" ; $$strand = "-" if $$F[3] eq "T" ; print join("\t",($$F[0],$$F[1]-1,$$F[1],int($$F[7]*100),int($$F[2]/10),$$strand))' $< >> $@
 	wc $@ >> $(SAMPLE).make.out
 	echo >> $(SAMPLE).make.out
 

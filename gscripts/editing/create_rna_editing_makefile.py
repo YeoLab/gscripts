@@ -41,7 +41,7 @@ with open(args.make_file) as input:
 trimmed_name = os.path.splitext(args.bam)[0]
 flipped = "S" if args.flipped == "flipped" else "s"
 
-result = template.substitute(SAMPLE=trimmed_name, 
+result = template.substitute(SAMPLE=os.path.basename(trimmed_name), 
                              snpEffDB=args.snpEffDb, 
                              SNP_DB=args.snpDb, 
                              S=flipped, 
