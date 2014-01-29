@@ -11,7 +11,6 @@ Utilities for dealing with processes.
 
 import os
 
-
 def which(name, flags=os.X_OK):
     """
     Copied from Twisted 8.2 implementation (http://twistedmatrix
