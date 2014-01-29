@@ -43,8 +43,7 @@ class MafRangeGetter(object):
         blocks.sort( lambda a, b: cmp( a.score, b.score ) )
 
         mask = [ -1 ] * base_len
-        # print len( blocks )
-        # print blocks[0]
+
         ref_src_size = None
         if len(blocks) == 0 or blocks[0] is not None:
             for i, block in enumerate( blocks ):
@@ -55,7 +54,6 @@ class MafRangeGetter(object):
                 slice_end = min( end, ref.end )
                 for j in range( slice_start, slice_end ):
                     mask[j-start] = i
-            #return mask
 
         tiled = []
         for i in range( len( self.sources ) ): tiled.append( [] )
