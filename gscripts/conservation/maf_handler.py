@@ -46,7 +46,7 @@ class MafRangeGetter(object):
         # print len( blocks )
         # print blocks[0]
         ref_src_size = None
-        if blocks[0] is not None:
+        if len(blocks) == 0 or blocks[0] is not None:
             for i, block in enumerate( blocks ):
                 ref = block.get_component_by_src_start( ref_src )
                 ref_src_size = ref.src_size
