@@ -1,19 +1,23 @@
-SAMPLE= &sample #NPC_2_ACTTGA_L002_R1.fastq.gz.polyATrim.adapterTrim.rmRep.sorted.rg
+# ALWAYS set SAMPLE
+SAMPLE=&SAMPLE # NPC_2_ACTTGA_L002_R1.fastq.gz.polyATrim.adapterTrim.rmRep.sorted.rg
 
-S= &flipped # use s for TruSeq, use S for Balaji's library prep
-MinCoverage = 5
-MinConfidence = 0.995
-MinEditFrac = 0.1
-pseudoG = 5
-pseudoA = 5
+# SOMETIMES change SPECIES 
+snpEffDB = &snpEffDB # hg19
+SNP_DB = &SNP_DB # /projects/ps-yeolab/genomes/hg19/snp137.txt.gz
+FA = &FA # /projects/ps-yeolab/genomes/hg19/chromosomes/all.fa
 
+# RARELY change OPTIONS
+S=&S # s # for TruSeq, S for Balaji's library prep
+MinCoverage = &MinCoverage # 5
+MinConfidence = &MinConfidence # 0.995
+MinEditFrac = &MinEditFrac # 0.1
+pseudoG = &pseudoG # 5
+pseudoA = &pseudoA # 5
+
+# NEVER change DEPENDENCIES
 RNA_edit_bin = /home/yeo-lab/software/RNA_editing
 HashJoin = /home/yeo-lab/software/bin/hashjoin.pl
 snpEFF = /home/yeo-lab/software/snpEff_2_0_5d/
-snpEffDB = &snpEffDb #hg19
-SNP_DB = &snpDb #/projects/ps-yeolab/genomes/hg19/snp137.txt.gz
-FA= &FA #/projects/ps-yeolab/genomes/hg19/chromosomes/all.fa
-
 SUFFIXES = sorted.bam sorted.bam.bai bcf var vcf eff5 eff5-10 eff10 noSNP conf conf$(MinConfidence).regions conf$(MinConfidence).no100 conf$(MinConfidence) conf$(MinConfidence).csv conf$(MinConfidence).bed conf$(MinConfidence).bb 
 
 all_stages: stage1 stage2 stage3 
@@ -75,7 +79,7 @@ snpEff.config:
 	wc $@ >> $(SAMPLE).make.out
 	echo >> $(SAMPLE).make.out
 
-%.vcf: %.bcf $(RNA_edit_bin)/vcf2eff.pl
+%.vcf: %.bcf $(RNA_edit_bin)/vcf2eff.pl snpEff.config
 	echo "De-compressing $< , selecting AtoG variants only and annotating with snpEff" >> $(SAMPLE).make.out
 	bcftools view $< | perl $(RNA_edit_bin)/vcf2eff.pl - 1 | java -classpath $(snpEFF) -jar $(snpEFF)/snpEff.jar -o vcf -chr 'chr' $(snpEffDB) | perl $(RNA_edit_bin)/vcf2eff.pl - 1 > $@
 	wc $@ >> $(SAMPLE).make.out
