@@ -23,12 +23,12 @@ SUFFIXES = sorted.bam sorted.bam.bai bcf var vcf eff5 eff5-10 eff10 noSNP conf c
 all_stages: stage1 stage2 stage3 
 stage3: $(foreach SUFF, $(SUFFIXES), $(addsuffix .$(SUFF), $(SAMPLE)_stage3 )) # $(SAMPLE)_stage3.allCov.txt
 stage2: $(foreach SUFF, $(SUFFIXES), $(addsuffix .$(SUFF), $(SAMPLE)_stage2 )) $(SAMPLE)_stage2.bam $(SAMPLE)_stage2.rmdup.bam 
-stage1: $(foreach SUFF, $(SUFFIXES), $(addsuffix .$(SUFF), $(SAMPLE)_stage1 )) $(SAMPLE).bam 
+stage1: $(foreach SUFF, $(SUFFIXES), $(addsuffix .$(SUFF), $(SAMPLE)_stage1 ))
 
 .PHONY: stage1 stage2 stage3 all_stages -b
 
-#clean:
-#	rm -f *
+clean:
+	rm -f *stage*
 
 snpEff.config:
 	ln -s $(snpEFF)/snpEff.config ./
