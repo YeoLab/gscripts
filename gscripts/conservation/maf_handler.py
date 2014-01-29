@@ -1,7 +1,8 @@
 __author__ = 'lovci'
 
 
-"""a tool to extract ranges from indexed .maf file"""
+"""a tool to extract ranges from indexed .maf file, adapted from bx-python / scripts / maf_tile.py and \
+http://biopython.org/wiki/Phylo_cookbook"""
 
 import bx
 import bx.align.maf
@@ -45,15 +46,16 @@ class MafRangeGetter(object):
         # print len( blocks )
         # print blocks[0]
         ref_src_size = None
-        for i, block in enumerate( blocks ):
-            ref = block.get_component_by_src_start( ref_src )
-            ref_src_size = ref.src_size
-            assert ref.strand == "+"
-            slice_start = max( start, ref.start )
-            slice_end = min( end, ref.end )
-            for j in range( slice_start, slice_end ):
-                mask[j-start] = i
-        #return mask
+        if blocks[0] is not None:
+            for i, block in enumerate( blocks ):
+                ref = block.get_component_by_src_start( ref_src )
+                ref_src_size = ref.src_size
+                assert ref.strand == "+"
+                slice_start = max( start, ref.start )
+                slice_end = min( end, ref.end )
+                for j in range( slice_start, slice_end ):
+                    mask[j-start] = i
+            #return mask
 
         tiled = []
         for i in range( len( self.sources ) ): tiled.append( [] )
@@ -62,7 +64,6 @@ class MafRangeGetter(object):
                 fetch_start = (start+ss-1)
                 fetch_stop = (start +ee-1)
                 x = self.fasta[chrom][fetch_start:fetch_stop]
-                print x
                 tiled[0].append(x)
                 for row in tiled[1:]: #unaligned other species
                     row.append( "-" * ( ee - ss ) )
@@ -80,7 +81,6 @@ class MafRangeGetter(object):
                         tiled[i].append( comp.text )
                     else:
                         tiled[i].append( "-" * sliced.text_size )
-
         aln = bx.align.Alignment()
         s = list()
 
@@ -88,7 +88,7 @@ class MafRangeGetter(object):
         for i, name in enumerate( self.sources ):
             for n, s in enumerate(tiled[i]):
                 tiled[i][n] = s.strip().replace("\s", "")
-            text = "".join( tiled[i])
+            text = str("".join( tiled[i]))
             size = len( text ) - text.count( "-" )
             if i == 0:
                 if ref_src_size is None: ref_src_size = len(self.fasta[chrom])
@@ -171,10 +171,11 @@ class hg19MafRangeGetter(MafRangeGetter):
 
 def revcom(s):
     import string
-    complements = string.maketrans('acgtrymkbdhvACGTRYMKBDHV', 'tgcayrkmvhdbTGCAYRKMVHDB')
+    complements = string.maketrans('acgtrymkbdhvACGTRYMKBDHV-', 'tgcayrkmvhdbTGCAYRKMVHDB-')
     s = s.translate(complements)[::-1]
 
     return s
+
 
 def chop_maf(maf, maxSize=2500, overlap=6, id = "none", verbose=False):
     """make smaller bits (<=maxSize) from a big maf range with little bits overlapping by $overlap nt"""
