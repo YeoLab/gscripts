@@ -138,8 +138,8 @@ class ce10MafRangeGetter(MafRangeGetter):
         chrs = ["I", "II", "III", "IV", "V", "X", "M"]
         maf_files = [(os.path.join(conservation_basedir, "ce10_7way/", "multiz7way/", "chr" + c + ".maf.bz2"))\
                      for c in chrs]
-        self.index = bx.align.maf.MultiIndexed( maf_files, keep_open=True, parse_e_rows=True, use_cache=True)
-        self.fasta = pyfasta.Fasta(os.path.join(genome_basedir, "/ce10/chromosomes/all.fa"), flatten_inplace=True)
+        self.index = bx.align.maf.MultiIndexed(maf_files, keep_open=True, parse_e_rows=True, use_cache=True)
+        self.fasta = pyfasta.Fasta(os.path.join(genome_basedir, "ce10/chromosomes/all.fa"), flatten_inplace=True)
         treeFile = os.path.join(conservation_basedir, "ce10_7way/", "multiz7way/", "ce10.7way.nh")
         self.tree = Phylo.read(treeFile, 'newick')
         self.sources = [i.name for i in self.tree.get_terminals()]
