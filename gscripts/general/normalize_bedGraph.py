@@ -22,5 +22,5 @@ mapped_reads = float(samfile.mapped) / 1000000
 with open(args.bg) as bg:
     for line in bg:
         line = line.strip().split()
-        line[3] = str(int(float(line[3]) / mapped_reads))
+        line[3] = str(float(line[3]) / mapped_reads)
         print "\t".join(line)

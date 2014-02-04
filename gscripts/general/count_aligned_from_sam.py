@@ -17,9 +17,12 @@ def count_chroms(handle):
     """
     for line in handle:
         line = line.strip().split()
-
+        
         if line[0].startswith("@") or line[2] == "*":
             continue
+        
+        if len(line) < 10:
+            raise TypeError("Not sam format")
 
         counts[line[2]] += 1
 

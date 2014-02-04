@@ -73,10 +73,10 @@ def barcode_collapse(inBam, outBam, randomer):
     #dictionary for handeling reads coming from negative strand
     neg_dict = OrderedDict()
     pos_list = [] #positive we iterate one base at a time, so no need for a dict, a list will do.  
-    
+    barcode_set = ([])
     removed_count = Counter()
     total_count = Counter()
-    
+
     for i, read in enumerate(inBam.fetch()):
         cur_chrom = read.rname
         cur_count += 1
