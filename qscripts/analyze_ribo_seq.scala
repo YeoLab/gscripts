@@ -16,9 +16,6 @@ class AnalyzeRNASeq extends QScript {
   @Input(doc = "input file or txt file of input files")
   var input: File = _
 
-  @Argument(doc = "species (hg19...)")
-  var species: String = _
-
   @Argument(doc = "adapter to trim")
   var adapter: List[String] = Nil
 
@@ -51,7 +48,7 @@ class AnalyzeRNASeq extends QScript {
        this.isIntermediate = true
   }
 
-  case class genomeCoverageBed(input: File, outBed : File, cur_strand: String) extends GenomeCoverageBed {
+  case class genomeCoverageBed(input: File, outBed : File, cur_strand: String, species: String) extends GenomeCoverageBed {
         this.inBed = input
         this.genomeSize = chromSizeLocation(species)
         this.bedGraph = outBed
@@ -59,7 +56,7 @@ class AnalyzeRNASeq extends QScript {
         this.split = true
   }
 
-  case class oldSplice(input: File, out : File) extends OldSplice {
+  case class oldSplice(input: File, out : File, species: String) extends OldSplice {
         this.inBam = input
         this.out_file = out
         this.in_species = species
@@ -71,14 +68,14 @@ class AnalyzeRNASeq extends QScript {
 	this.outRPKM = output
   }
 
-  case class countTags(input: File, index: File, output: File) extends CountTags {
+  case class countTags(input: File, index: File, output: File, species: String) extends CountTags {
 	this.inBam = input
 	this.outCount = output
 	this.tags_annotation =  exonLocation(species)
 	this.flip = flipped
   }
 
-  case class star(input: File, output: File, stranded : Boolean, paired : File = null) extends STAR {
+  case class star(input: File, output: File, stranded : Boolean, paired : File = null, species: String) extends STAR {
        this.inFastq = input
 
        if(paired != null) {
@@ -104,7 +101,7 @@ class AnalyzeRNASeq extends QScript {
 
   }
 
-  case class parseOldSplice(inSplice : List[File]) extends ParseOldSplice {
+  case class parseOldSplice(inSplice : List[File], species: String) extends ParseOldSplice {
        override def shortDescription = "ParseOldSplice"
        this.inBam = inSplice
        this.in_species = species
@@ -136,7 +133,7 @@ class AnalyzeRNASeq extends QScript {
        this.out = output
 
 }
-  case class runRNASeQC(in : File, out : String, single_end : Boolean) extends RunRNASeQC {
+  case class runRNASeQC(in : File, out : String, single_end : Boolean, species: String) extends RunRNASeQC {
        this.input = in
        this.gc = gcLocation(species)
        this.output = out
@@ -167,7 +164,7 @@ def stringentJobs(fastq_file: File) : File = {
       return filteredFastq
 }
 
-def makeBigWig(inBed: File, inBam: File): (File, File) = {
+def makeBigWig(inBed: File, inBam: File, species: String): (File, File) = {
 
       val bedGraphFilePos = swapExt(inBed, ".bed", ".pos.bg")
       val bedGraphFilePosNorm = swapExt(bedGraphFilePos, ".bg", ".norm.bg")
@@ -180,12 +177,12 @@ def makeBigWig(inBed: File, inBam: File): (File, File) = {
       val bigWigFileNegNorm = swapExt(bedGraphFileNegInvertedNorm, ".bg", ".bw")
       val bigWigFileNeg = swapExt(bedGraphFileNegInverted, ".bg", ".bw")
 
-      add(new genomeCoverageBed(input = inBed, outBed = bedGraphFilePos, cur_strand = "+"))
+      add(new genomeCoverageBed(input = inBed, outBed = bedGraphFilePos, cur_strand = "+", species = species))
       add(new NormalizeBedGraph(inBedGraph = bedGraphFilePos, inBam = inBam, outBedGraph = bedGraphFilePosNorm))
       add(new BedGraphToBigWig(bedGraphFilePosNorm, chromSizeLocation(species), bigWigFilePosNorm))
       add(new BedGraphToBigWig(bedGraphFilePos, chromSizeLocation(species), bigWigFilePos))
 
-      add(new genomeCoverageBed(input = inBed, outBed = bedGraphFileNeg, cur_strand = "-"))
+      add(new genomeCoverageBed(input = inBed, outBed = bedGraphFileNeg, cur_strand = "-", species = species))
       add(new NegBedGraph(inBedGraph = bedGraphFileNeg, outBedGraph = bedGraphFileNegInverted))
       add(new NormalizeBedGraph(inBedGraph = bedGraphFileNegInverted, inBam = inBam, outBedGraph = bedGraphFileNegInvertedNorm))
       add(new BedGraphToBigWig(bedGraphFileNegInvertedNorm, chromSizeLocation(species), bigWigFileNegNorm))
@@ -195,26 +192,34 @@ def makeBigWig(inBed: File, inBam: File): (File, File) = {
 }
 
 def script() {
-    var chr_sizes = chromSizeLocation(species)
+    
     
     val fileList = QScriptUtils.createArgsFromFile(input)
     var trackHubFiles: List[File] = List()
     var splicesFiles: List[File] = List()
     var bamFiles: List[File] = List()
     var singleEnd = true
+
     for (item : Tuple3[File, String, String] <- fileList) {
-      var fastq_file: File = item._1
+    	
+      var fastq_files = item._1.toString().split(""";""")
+      var species = item._2
+      var chr_sizes = chromSizeLocation(species)
+
+      var fastq_file: File = new File(fastq_files(0))
       var fastqPair: File = null
-      if (item._2 != "null"){
+      var singleEnd = true
+
+      if (fastq_files.length == 2){
         singleEnd = false
-        fastqPair = new File(item._2)
-	add(new FastQC(inFastq = fastqPair))
+        fastqPair = new File(fastq_files(1))
+        add(new FastQC(inFastq = fastqPair))
       }
       
       add(new FastQC(inFastq = fastq_file))
 
       var filteredFastq: File = null
-      if(strict && item._2 == "null") {
+      if(strict && fastqPair == null) {
         filteredFastq = stringentJobs(fastq_file)
       } else {
         filteredFastq = fastq_file
@@ -241,9 +246,9 @@ def script() {
       bamFiles = bamFiles ++ List(rgSortedBamFile)
 
       if(item._2 != "null") { //if paired	
-        add(new star(filteredFastq, samFile, not_stranded, fastqPair))
+        add(new star(filteredFastq, samFile, not_stranded, fastqPair, species = species))
       } else { //unpaired
-        add(new star(filteredFastq, samFile, not_stranded))
+        add(new star(filteredFastq, samFile, not_stranded, species = species))
       }
       
       add(new sortSam(samFile, sortedBamFile, SortOrder.coordinate))
@@ -252,21 +257,21 @@ def script() {
       add(new CalculateNRF(inBam = rgSortedBamFile, genomeSize = chr_sizes, outNRF = NRFFile))
       
       add(new RiboSeqCoverage(inBam = rgSortedBamFile, outBed = bedFileAdjusted))
-      val (bigWigFilePos: File, bigWigFileNeg: File) = makeBigWig(bedFileAdjusted, rgSortedBamFile)
+      val (bigWigFilePos: File, bigWigFileNeg: File) = makeBigWig(bedFileAdjusted, rgSortedBamFile, species = species)
       trackHubFiles = trackHubFiles ++ List(bigWigFilePos, bigWigFileNeg)
       	
-      add(new countTags(input = rgSortedBamFile, index = indexedBamFile, output = countFile))	
+      add(new countTags(input = rgSortedBamFile, index = indexedBamFile, output = countFile, species = species))
       add(new singleRPKM(input = countFile, output = RPKMFile, s = species))
 
-      add(oldSplice(input = rgSortedBamFile, out = oldSpliceOut))
+      add(oldSplice(input = rgSortedBamFile, out = oldSpliceOut, species = species))
       add(new Miso(inBam = rgSortedBamFile, species = species, pairedEnd = !singleEnd, output = misoOut))
     
     }
-    add(new MakeTrackHub(trackHubFiles, location, species))
-    add(parseOldSplice(splicesFiles))
-    var rnaseqc = new File("rnaseqc.txt")
-    add(new makeRNASeQC(input = bamFiles, output = rnaseqc))
-    add(new runRNASeQC(in = rnaseqc, out = "rnaseqc", single_end = singleEnd))
+    //add(new MakeTrackHub(trackHubFiles, location, species))
+    //add(parseOldSplice(splicesFiles, species = species))
+    //var rnaseqc = new File("rnaseqc.txt")
+    //add(new makeRNASeQC(input = bamFiles, output = rnaseqc))
+    //add(new runRNASeQC(in = rnaseqc, out = "rnaseqc", single_end = singleEnd))
 
   }
 }
