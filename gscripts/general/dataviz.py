@@ -18,6 +18,7 @@ import scipy.cluster.hierarchy as sch
 import scipy.spatial.distance as distance
 from scipy.stats import gaussian_kde
 from sklearn import decomposition as dc
+import statsmodels.api as sm
 
 def clusterGram(dataFrame, distance_metric = 'euclidean', linkage_method = 'average',
             outfile = None, clusterRows=True, clusterCols=True, timeSeries=False, doCovar=False,
@@ -1174,11 +1175,22 @@ def pdf(data, bins=50):
     return pos, pdf
 
 
-def plot_cdf(data, bins=50, ax=None):
-    if ax is None:
-        ax = plt.gca()
-    x, y = cdf(data, bins=bins)
-    ax.plot(x,y)
+def plot_cdf(cdf_list, **kwargs):
+        cdf = sm.distributions.ECDF(cdf_list)
+        cdf_linspace = np.linspace(min(cdf_list), max(cdf_list))
+        if kwargs['ax'] is not None:
+            ax = kwargs['ax']
+            del kwargs['ax']
+            ax.plot(cdf_linspace, cdf(cdf_linspace), **kwargs)
+            ax.set_ylim((0,1))
+        else:
+            plot(cdf_linspace, cdf(cdf_linspace), **kwargs)
+
+#def plot_cdf(data, bins=50, ax=None):
+#    if ax is None:
+#        ax = plt.gca()
+#    x, y = cdf(data, bins=bins)
+#    ax.plot(x,y)
 
 
 def plot_pdf(data, bins=50, ax=None):
