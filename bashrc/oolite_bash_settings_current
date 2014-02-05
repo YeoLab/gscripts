@@ -2,62 +2,99 @@
 
 SERVER=/nas3
 
-export PATH=$SERVER/yeolab/Software/MongoDB/bin:$PATH
-
-export LD_LIBRARY_PATH=${SERVER}/yeolab/Software/hdf5/lib:${SERVER}/yeolab/Software/lib:${SERVER}/gpratt/tools/gtextutils/lib:${SERVER}/yeolab/Software/sqlite3/lib:${SERVER}/yeolab/Software/ghc/lib:$LD_LIBRARY_PATH
-export LD_LIBRARY_PATH=${SERVER}/yeolab/Software/Python_dependencies/lib:$LD_LIBRARY_PATH
-
+#FONTS
 export GDFONTPATH=${SERVER}/yeolab/Software/liberation-fonts-ttf-1.06.0.20100721
 export GNUPLOT_DEFAULT_GDFONT=LiberationSans-Regular
+export GTEXTUTILS_LIBS=$SERVER/gpratt/tools/gtextutils/lib
+export GTEXTUTILS_CFLAGS=$SERVER/gpratt/tools/gtextutils/include
 
+#BOWTIE
 export BOWTIE_INDEXES=${SERVER}/yeolab/Software/bowtie/indexes/
 export BOWTIE2_INDEXES=${SERVER}/yeolab/Software/bowtie2/indexes/
+
+#PERL
 export PERL5LIB=$SERVER/yeolab/Conservation/scripts/:$SERVER/yeolab/Software/EXTRA_perlmodules:$SERVER/yeolab/Software/perl16/lib:$SERVER/yeolab/Software/perl16/:/opt/rocks/lib/perl5/site_perl/5.10.1/
 
-#making it so I can switch between different version of python quickly
-
-#Python 2.6
-#export PYTHONPATH=$SERVER/lovci/gscripts:$SERVER/yeolab/Software/Python_dependencies
-#export PATH=${SERVER}/yeolab/Software/Python_dependencies/bin:${SERVER}/yeolab/Software/Python-2.5.5/bin:${SERVER}/yeolab/Software/Python-Triton/Python-2.6/bin:${SERVER}/yeolab/Software/segway/bin:$PATH
-
-#Python 2.7
-#export PATH=${SERVER}/yeolab/Software/Python-2.7.3/bin:${SERVER}/yeolab/Software/Python_dependencies-2.7/bin:$PATH
-#export PYTHONPATH=$SERVER/yeolab/Software/Python_dependencies-2.7/lib:$SERVER/yeolab/Software/Python_dependencies-2.7:$SERVER/lovci/gscripts:$PYTHONPATH
-
-#Python 2.7.4
-#export PATH=/nas3/yeolab/Software/Python-2.7.4/bin:$PATH
-#export PYTHONPATH=/nas3/yeolab/Software/Python-2.7.4/lib/python2.7/site-packages:/nas3/yeolab/Software/workflow_manager:$PYTHONPATH
+export PATH=${SERVER}/yeolab/Software/perl16/bin:$PATH
 
 #Python 2.7.5
 export PATH=/nas3/yeolab/Software/Python-2.7.5/bin:$PATH
 export PYTHONPATH=/nas3/yeolab/Software/lib:/nas3/yeolab/Software/Python-2.7.5/lib/python2.7/site-packages:/nas3/yeolab/Software/workflow_manager:$PYTHONPATH
 
-#R 2.11.1
-#export PATH=${SERVER}/yeolab/Software/R-2.11.1/bin:$PATH
-
 #R 3.0.0
 export PATH=${SERVER}/yeolab/Software/R-3.0.0/bin:$PATH
 
-export PATH=$SERVER/$SERVER/yeolab/Software/MongoDB/bin:$SERVER/yeolab/Software/perl16/bin:${SERVER}/yeolab/Software/git/bin:${SERVER}/yeolab/Software/primer3-2.2.3/src:${SERVER}/yeolab/Software/gnuplot/bin:${SERVER}/yeolab/Software/Homer2/bin:${SERVER}/yeolab/Software/blatexe:${SERVER}/yeolab/Software/weblogo:${SERVER}/yeolab/Software/bin:${SERVER}/yeolab/Software/mysqlc/bin:${SERVER}/yeolab/Software/boost:${SERVER}/yeolab/Software/boost/lib:${SERVER}/yeolab/Software/fastx/bin:${SERVER}/yeolab/Software/ghostscript-8.71/bin:${SERVER}/yeolab/Software/generalscripts:${SERVER}/yeolab/Software/ViennaPackage/bin:${SERVER}/yeolab/Software/bedtools-2.17.0/bin:${SERVER}/yeolab/Software/GSNAP/bin:/home/thumper3-10g/yeolab/Software/MatrixREDUCE/bin:${SERVER}/yeolab/Software/seqan/projects/library/apps/razers:${SERVER}/yeolab/Software/bowtie-0.12.7:${SERVER}/yeolab/Software/tophat/bin:/home/install/usr/apps/screen-4.0.3/bin:/export/apps/matlab_R2007a/bin:${SERVER}/yeolab/Software/EMBOSS-2.10.0/emboss:${SERVER}/yeolab/Software/cufflinks/bin::${SERVER}/yeolab/Software/FastQC/FastQC/:${SERVER}/yeolab/Software/sra_sdk-2.1.10/bin64/:${SERVER}/yeolab/Software/hdf5/:${SERVER}/yeolab/Software/IGVDistribution_2.1.17/:$SERVER/yeolab/Software/samtools/samtools-0.1.19:${SERVER}/yeolab/Software/MEME/meme_4.5.0/bin:${SERVER}/yeolab/Software/gmtk-20091016/tksrc:${SERVER}/yeolab/Software/eclipse:${SERVER}/yeolab/Software/piranha-1.1.1/bin:${SERVER}/yeolab/Software/ucsc_tools:${SERVER}/yeolab/Software/sqlite3/bin:${SERVER}/yeolab/Software/tabix/tabix-0.2.6:$PATH
-export PATH=$SERVER/yeolab/Software/Python_dependencies/bin/cutadapt:$SERVER}/yeolab/Software/ghc/bin:$PATH
-export PATH=$SERVER/yeolab/Software/STAR/STAR_2.3.0e/:$PATH
+#Mongo
+export PATH=${SERVER}/yeolab/Software/MongoDB/bin:$PATH
+
+#OTHER PROGRAMS
+export PATH=${SERVER}/yeolab/Software/boost:$PATH
+export PATH=${SERVER}/yeolab/Software/boost/lib:$PATH
+export PATH=${SERVER}/yeolab/Software/bedtools-2.17.0/bin:$PATH
+export PATH=${SERVER}/yeolab/Software/bin:$PATH
+export PATH=${SERVER}/yeolab/Software/blatexe:$PATH
+export PATH=${SERVER}/yeolab/Software/bowtie-0.12.7:$PATH
+export PATH=${SERVER}/yeolab/Software/cufflinks/bin:$PATH
+export PATH=${SERVER}/yeolab/Software/eclipse:$PATH
+export PATH=${SERVER}/yeolab/Software/EMBOSS-2.10.0/emboss:$PATH
+export PATH=${SERVER}/yeolab/Software/FastQC/FastQC/:$PATH
+export PATH=${SERVER}/yeolab/Software/fastx/bin:$PATH
+export PATH=${SERVER}/yeolab/Software/ghc/bin:$PATH
+export PATH=${SERVER}/yeolab/Software/ghostscript-8.71/bin:$PATH
+export PATH=${SERVER}/yeolab/Software/git/bin:$PATH
+export PATH=${SERVER}/yeolab/Software/gmtk-20091016/tksrc:$PATH
+export PATH=${SERVER}/yeolab/Software/gnuplot/bin:$PATH
+export PATH=${SERVER}/yeolab/Software/GSNAP/bin:$PATH
+export PATH=${SERVER}/yeolab/Software/generalscripts:$PATH
+export PATH=${SERVER}/yeolab/Software/hdf5/:$PATH
+export PATH=${SERVER}/yeolab/Software/Homer2/bin:$PATH
+export PATH=${SERVER}/yeolab/Software/IGVDistribution_2.1.17/:$PATH
+export PATH=${SERVER}/yeolab/Software/MEME/meme_4.5.0/bin:$PATH
+export PATH=${SERVER}/yeolab/Software/mysqlc/bin:$PATH
+export PATH=${SERVER}/yeolab/Software/piranha-1.1.1/bin:$PATH
+export PATH=${SERVER}/yeolab/Software/primer3-2.2.3/src:$PATH
+export PATH=${SERVER}/yeolab/Software/Python_dependencies/bin/cutadapt:$PATH
+export PATH=$SERVER/yeolab/Software/samtools/samtools-0.1.19:$PATH
+export PATH=${SERVER}/yeolab/Software/sqlite3/bin:$PATH
+export PATH=${SERVER}/yeolab/Software/sra_sdk-2.1.10/bin64/:$PATH
+export PATH=$SERVER/yeolab/Software/STAR/STAR_2.3.0e:$PATH
+export PATH=${SERVER}/yeolab/Software/tabix/tabix-0.2.6:$PATH
+export PATH=${SERVER}/yeolab/Software/tophat/bin:$PATH
+export PATH=${SERVER}/yeolab/Software/ucsc_tools:$PATH
+export PATH=${SERVER}/yeolab/Software/ViennaPackage/bin:$PATH
+export PATH=${SERVER}/yeolab/Software/weblogo:$PATH
+export PATH=${SERVER}/yeolab/Software/seqan/projects/library/apps/razers:$PATH
+export PATH=/home/thumper3-10g/yeolab/Software/MatrixREDUCE/bin:$PATH
+export PATH=/home/install/usr/apps/screen-4.0.3/bin:$PATH
+export PATH=/export/apps/matlab_R2007a/bin:$PATH
+
+
+#BLAS STUFF
 export MATRIXREDUCE=/home/thumper3-10g/yeolab/Software/MatrixREDUCE
 export MACHTYPE=unixLike
 export LAPACK=$SERVER/yeolab/Software/Python-Triton/LAPACK/liblapack.a
-
 export BLAS=$SERVER/yeolab/Software/Python-Triton/BLAS/libfblas.a
 
+#DRMAA LIB STUFF
 export DRMAA_LIBRARY_PATH=/opt/gridengine/lib/lx26-amd64/libdrmaa.so
 
 ### Below added by install script ###
 export ARCHHOME=$SERVER/yeolab/Software/segway
 export HDF5_DIR=$SERVER/yeolab/Software/hdf5
 export C_INCLUDE_PATH=$SERVER/yeolab/Software/hdf5/include:$SERVER/yeolab/Software/lib:$C_INCLUDE_PATH
-export LIBRARY_PATH=$SERVER/yeolab/Software/hdf5/lib:$SERVER/yeolab/Software/lib:$SERVER/yeolab/Software/R-3.0.0/lib:/nas3/yeolab/Software/sqlite3/lib:$LIBRARY_PATH
-export LD_LIBRARY_PATH=$SERVER/yeolab/Software/hdf5/lib:$SERVER/gpratt/gsl/lib:$SERVER/yeolab/Software/R-3.0.0/lib:$LD_LIBRARY_PATH
 
-export GTEXTUTILS_LIBS=$SERVER/gpratt/tools/gtextutils/lib
-export GTEXTUTILS_CFLAGS=$SERVER/gpratt/tools/gtextutils/include
-export LD_RUN_PATH=$SERVER/yeolab/Software/lib64:$SERVER/yeolab/Software/lib:$SERVER/gpratt/gsl/lib:$LD_RUN_PATH
-export LD_LIBRARY_PATH=$SERVER/yeolab/Software/lib64:$SERVER/yeolab/Software/lib:$LD_LIBRARY_PATH
-export LIBRARY_PATH=$SERVER/yeolab/Software/lib64:$SERVER/yeolab/Software/lib:$LIBRARY_PATH
+#LIBRARY PATHS
+#export LD_LIBRARY_PATH=$SERVER/yeolab/Software/hdf5/lib:$LD_LIBRARY_PATH
+#export LD_LIBRARY_PATH=$SERVER/gpratt/gsl/lib:$LD_LIBRARY_PATH
+#export LD_LIBRARY_PATH=$SERVER/yeolab/Software/R-3.0.0/lib:$LD_LIBRARY_PATH
+#export LD_LIBRARY_PATH=$SERVER/yeolab/Software/lib64:$LD_LIBRARY_PATH
+#export LD_LIBRARY_PATH=${SERVER}/gpratt/tools/gtextutils/lib:$LD_LIBRARY_PATH
+#export LD_LIBRARY_PATH=${SERVER}/yeolab/Software/ghc/lib:$LD_LIBRARY_PATH
+#export LD_LIBRARY_PATH=${SERVER}/yeolab/Software/Python_dependencies/lib:$LD_LIBRARY_PATH
+
+#export LD_RUN_PATH=$SERVER/yeolab/Software/lib64:$LD_RUN_PATH
+#export LD_RUN_PATH=$SERVER/yeolab/Software/lib:$LD_RUN_PATH
+#export LD_RUN_PATH=$SERVER/gpratt/gsl/lib:$LD_RUN_PATH
+
+#export LIBRARY_PATH=$SERVER/yeolab/Software/lib64:$SERVER/yeolab/Software/lib:$LIBRARY_PATH
+#export LIBRARY_PATH=${SERVER}/yeolab/Software/lib:$SERVER/yeolab/Software/R-3.0.0/lib:$LIBRARY_PATH
