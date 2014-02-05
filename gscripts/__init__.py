@@ -1,5 +1,5 @@
 __all__ = ["GO", "riboseq", "rnaseq", "general", 'which', 'qtools',
-           'mapping', 'annotations', 'expr_db']
+           'mapping', 'annotations', 'expr_db', 'conservation']
 
 
 # Copyright (c) 2001-2004 Twisted Matrix Laboratories.
@@ -10,7 +10,6 @@ Utilities for dealing with processes.
 """
 
 import os
-
 
 def which(name, flags=os.X_OK):
     """

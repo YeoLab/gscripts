@@ -1,0 +1,20 @@
+These are methods to extract conservation
+
+download_conservation.sh
+a script to simplify downloading conservation from ucsc
+
+index_conservation.sh
+converts .gz files to .bz2 (because they're block-accessible)
+then uses bzip-table utility from (https://bitbucket.org/james_taylor/seek-bzip2) to index
+then generates a .index file with a bx script
+
+this basically makes indexes according to these instructions:
+
+https://bitbucket.org/james_taylor/bx-python/wiki/Examples/Bzip2WithIndexedMAFs
+
+
+maf_handler.py
+uses indexed maf files to extract ranges, built from the Bio.Phylo and bx packages
+
+maf_scorer.py
+score .maf ranges somehow

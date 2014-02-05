@@ -1,19 +1,23 @@
-SAMPLE= &sample #NPC_2_ACTTGA_L002_R1.fastq.gz.polyATrim.adapterTrim.rmRep.sorted.rg
+# ALWAYS set SAMPLE
+SAMPLE = &SAMPLE
 
-S= &flipped # use s for TruSeq, use S for Balaji's library prep
-MinCoverage = 5
-MinConfidence = 0.995
-MinEditFrac = 0.1
-pseudoG = 5
-pseudoA = 5
+# SOMETIMES change SPECIES 
+snpEffDB = &snpEffDB # hg19
+SNP_DB = &SNP_DB # /projects/ps-yeolab/genomes/hg19/snp137.txt.gz
+FA = &FA # /projects/ps-yeolab/genomes/hg19/chromosomes/all.fa
 
+# RARELY change OPTIONS
+S = &S # s # for TruSeq, S for Balaji's library prep
+MinCoverage = &MinCoverage # 5
+MinConfidence = &MinConfidence
+MinEditFrac = &MinEditFrac # 0.1
+pseudoG = &pseudoG # 5
+pseudoA = &pseudoA # 5
+
+# NEVER change DEPENDENCIES
 RNA_edit_bin = /home/yeo-lab/software/RNA_editing
 HashJoin = /home/yeo-lab/software/bin/hashjoin.pl
 snpEFF = /home/yeo-lab/software/snpEff_2_0_5d/
-snpEffDB = &snpEffDb #hg19
-SNP_DB = &snpDb #/projects/ps-yeolab/genomes/hg19/snp137.txt.gz
-FA= &FA #/projects/ps-yeolab/genomes/hg19/chromosomes/all.fa
-
 SUFFIXES = sorted.bam sorted.bam.bai bcf var vcf eff5 eff5-10 eff10 noSNP conf conf$(MinConfidence).regions conf$(MinConfidence).no100 conf$(MinConfidence) conf$(MinConfidence).csv conf$(MinConfidence).bed conf$(MinConfidence).bb 
 
 all_stages: stage1 stage2 stage3 
@@ -23,8 +27,8 @@ stage1: $(foreach SUFF, $(SUFFIXES), $(addsuffix .$(SUFF), $(SAMPLE)_stage1 ))
 
 .PHONY: stage1 stage2 stage3 all_stages -b
 
-#clean:
-#	rm -f *
+clean:
+	rm -f *stage*
 
 snpEff.config:
 	ln -s $(snpEFF)/snpEff.config ./
@@ -53,11 +57,12 @@ snpEff.config:
 	samtools view $@ | wc
 	echo >> $(SAMPLE).make.out
 
-#%_stage1.sorted.bam: %.bam
-#	echo "link stage1 to $<" >> $(SAMPLE).make.out
+%_stage1.sorted.bam: %.bam
+	echo "filter out unmapped reads from $<" >> $(SAMPLE).make.out
+	samtools view -bF 4 $< > $@ 
 #	rm $@
 #	ln -s $^ $@
-#	samtools sort -m 10000000000 $< accepted_hits.sorted
+#	samtools sort -m 10000000000 $< > $@
 
 %.sorted.bam.bai: %.sorted.bam
 	echo "Indexing $<" >> $(SAMPLE).make.out
@@ -75,7 +80,7 @@ snpEff.config:
 	wc $@ >> $(SAMPLE).make.out
 	echo >> $(SAMPLE).make.out
 
-%.vcf: %.bcf $(RNA_edit_bin)/vcf2eff.pl
+%.vcf: %.bcf $(RNA_edit_bin)/vcf2eff.pl snpEff.config
 	echo "De-compressing $< , selecting AtoG variants only and annotating with snpEff" >> $(SAMPLE).make.out
 	bcftools view $< | perl $(RNA_edit_bin)/vcf2eff.pl - 1 | java -classpath $(snpEFF) -jar $(snpEFF)/snpEff.jar -o vcf -chr 'chr' $(snpEffDB) | perl $(RNA_edit_bin)/vcf2eff.pl - 1 > $@
 	wc $@ >> $(SAMPLE).make.out
@@ -100,16 +105,16 @@ snpEff.config:
 	wc $@ >> $(SAMPLE).make.out
 	echo >> $(SAMPLE).make.out
 
-$(SAMPLE)_stage2.noSNP: $(SAMPLE)_stage2.eff5 $(SAMPLE)_stage2.noSNP
-	echo "Filtering out SNPs from and joining $^" >> $(SAMPLE).make.out
-	grep "^#CHROM" $< > $@
-	zcat $(SNP_DB) | perl -lane 'print "$$F[1]\t",$$F[2]-0' | $(HashJoin) -r -k 0,1 -v 0 -j 0,1 -o 0-9 - $< - | $(HashJoin) -k 0,1 -v 2-L1 -j 0,1 -o 0,1,v - $(SAMPLE)_stage2.noSNP - >> $@
-	wc $@ >> $(SAMPLE).make.out
-	echo >> $(SAMPLE).make.out
+#$(SAMPLE)_stage2.noSNP: $(SAMPLE)_stage2.eff5 $(SAMPLE)_stage2.noSNP
+#	echo "Filtering out SNPs from and joining $^" >> $(SAMPLE).make.out
+#	grep "^#CHROM" $< > $@
+#	zcat $(SNP_DB) | perl -lane 'print "$$F[1]\t",$$F[2]-0' | $(HashJoin) -r -k 0,1 -v 0 -j 0,1 -o 0-9 - $< - | $(HashJoin) -k 0,1 -v 2-L1 -j 0,1 -o 0,1,v - $(SAMPLE)_stage2.noSNP - >> $@
+#	wc $@ >> $(SAMPLE).make.out
+#	echo >> $(SAMPLE).make.out
 
 %.noSNP: %.eff5
 	echo "Filtering out SNPs from $<" >> $(SAMPLE).make.out
-	grep "^#CHROM" $< > $@
+#	grep "^#CHROM" $< > $@
 	zcat $(SNP_DB) | perl -lane 'print "$$F[1]\t",$$F[2]-0' | $(HashJoin) -r -k 0,1 -v 0 -j 0,1 -o 0-9 - $< - >> $@
 	wc $@ >> $(SAMPLE).make.out
 	echo >> $(SAMPLE).make.out
@@ -135,7 +140,7 @@ $(SAMPLE)_stage2.noSNP: $(SAMPLE)_stage2.eff5 $(SAMPLE)_stage2.noSNP
 %.conf$(MinConfidence).bed: %.conf$(MinConfidence).no100
 	echo '$(date +"%Y%m%d%H%M")  Converting $< to BED format' >> $(SAMPLE).make.out
 	perl -le 'print "#CHROM\tPOS-1\tPOS\t%EDIT\tCOVER\tSTRAND" ' > $@
-	perl -lane 'next if m/^\#/; $$strand = "." ; $$strand = "+" if $$F[3] eq "A" ; $$strand = "-" if $$F[3] eq "T" ; print join("\t",($$F[0],$$F[1]-1,$$F[1],int($$F[7]*100),$$F[2],$$strand))' $< >> $@
+	perl -lane 'next if m/^\#/; $$strand = "." ; $$strand = "+" if $$F[3] eq "A" ; $$strand = "-" if $$F[3] eq "T" ; print join("\t",($$F[0],$$F[1]-1,$$F[1],int($$F[7]*100),int($$F[2]/10),$$strand))' $< >> $@
 	wc $@ >> $(SAMPLE).make.out
 	echo >> $(SAMPLE).make.out
 

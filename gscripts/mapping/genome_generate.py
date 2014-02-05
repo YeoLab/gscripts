@@ -6,7 +6,7 @@ import argparse
 
 class CommandLine(object):
     def __init__(self, inOpts=None):
-        parser = argparse.ArgumentParser()
+        self.parser = parser = argparse.ArgumentParser()
         parser.add_argument('-g', '--genomeFastaFiles', required=True,
                             type=str, action='store',
                             help='Fasta files of the genome you want to index using '
