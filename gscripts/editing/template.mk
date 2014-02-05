@@ -2,17 +2,29 @@
 SAMPLE = &SAMPLE
 
 # SOMETIMES change SPECIES 
-snpEffDB = &snpEffDB # hg19
-SNP_DB = &SNP_DB # /projects/ps-yeolab/genomes/hg19/snp137.txt.gz
-FA = &FA # /projects/ps-yeolab/genomes/hg19/chromosomes/all.fa
+snpEffDB = &snpEffDB
+# hg19
+
+SNP_DB = &SNP_DB
+# /projects/ps-yeolab/genomes/hg19/snp137.txt.gz
+
+FA = &FA
+# /projects/ps-yeolab/genomes/hg19/chromosomes/all.fa
 
 # RARELY change OPTIONS
-S = &S # s # for TruSeq, S for Balaji's library prep
-MinCoverage = &MinCoverage # 5
+S = &S
+# s # for TruSeq, S for Balaji's library prep
+
+MinCoverage = &MinCoverage
+# 5
 MinConfidence = &MinConfidence
-MinEditFrac = &MinEditFrac # 0.1
-pseudoG = &pseudoG # 5
-pseudoA = &pseudoA # 5
+# 0.995
+MinEditFrac = &MinEditFrac
+# 0.1
+pseudoG = &pseudoG
+# 5
+pseudoA = &pseudoA
+# 5
 
 # NEVER change DEPENDENCIES
 RNA_edit_bin = /home/yeo-lab/software/RNA_editing
