@@ -1,28 +1,30 @@
 
-import pandas as pd
-import numpy as np
-from sklearn import decomposition as dc
-import matplotlib.pyplot as plt
-from math import sqrt
-from numpy.linalg import norm
-import prettyplotlib as ppl
-import matplotlib.patches as patches
+from collections import Iterable
 import math
+from math import sqrt
+import os
+
 import brewer2mpl
+import matplotlib as mpl
 from matplotlib.colors import LogNorm
 import matplotlib.gridspec as gridspec
-import scipy.spatial.distance as distance
+import matplotlib.patches as patches
+import matplotlib.pyplot as plt
+import numpy as np
+from numpy.linalg import norm
+import pandas as pd
+import prettyplotlib as ppl
 import scipy.cluster.hierarchy as sch
-import matplotlib as mpl
-from collections import Iterable
+import scipy.spatial.distance as distance
 from scipy.stats import gaussian_kde
-
+from sklearn import decomposition as dc
+import statsmodels.api as sm
 
 def clusterGram(dataFrame, distance_metric = 'euclidean', linkage_method = 'average',
             outfile = None, clusterRows=True, clusterCols=True, timeSeries=False, doCovar=False,
-            figsize=(8, 10), row_label_color_fun=lambda x: ppl.almost_black,
-            col_label_color_fun=lambda x: ppl.almost_black,
-            link_color_func = lambda x: ppl.almost_black):
+            figsize=(8, 10), row_label_color_fun=lambda x: ppl.colors.almost_black,
+            col_label_color_fun=lambda x: ppl.colors.almost_black,
+            link_color_func = lambda x: ppl.colors.almost_black):
     import scipy
     import pylab
     import matplotlib.gridspec as gridspec
@@ -279,11 +281,12 @@ def heatmap(df, title=None, colorbar_label='values',
 
     ### col dendrogram ###
     column_dendrogram_ax = fig.add_subplot(heatmap_gridspec[0, ncols - 1])
+    black = ppl.colors.almost_black
     if cluster_cols:
         column_dendrogram_distances = sch.dendrogram(col_clusters,
                                                      color_threshold=np.inf,
                                                      color_list=[
-                                                         ppl.almost_black])
+                                                         black])
     else:
         column_dendrogram_distances = {'leaves': range(df.shape[1])}
     clean_axis(column_dendrogram_ax)
@@ -308,7 +311,7 @@ def heatmap(df, title=None, colorbar_label='values',
             sch.dendrogram(row_clusters,
                            color_threshold=np.inf,
                            orientation='right',
-                           color_list=[ppl.almost_black])
+                           color_list=[black])
     else:
         row_dendrogram_distances = {'leaves': range(df.shape[0])}
     clean_axis(row_dendrogram_ax)
@@ -637,13 +640,13 @@ def skipped_exon_figure(ax, which_axis='y', height_multiplier=0.025,
     # y = -0.1*delta_y
 
     artists = []
-
+    black = ppl.colors.almost_black
     adjacent_exon_kwargs = {'fill': True, 'width': width, 'height': height,
                             'clip_on': False, 'facecolor': 'white',
-                            'edgecolor': ppl.almost_black}
+                            'edgecolor': black}
     skipped_exon_kwargs = {'fill': True, 'width': width, 'height': height,
-                           'clip_on': False, 'facecolor': ppl.almost_black,
-                           'edgecolor': ppl.almost_black}
+                           'clip_on': False, 'facecolor': black,
+                           'edgecolor': black}
 
     if which_axis == 'y':
         # Spliced-out exon at bottom (psi_ci_halves_max_filtered_drop_na = 0)
@@ -1047,7 +1050,7 @@ def splicing_diagram(ax, bottom_y, highlight=None, height_multiplier=0.025):
 
     exon_kwargs = {'fill': True, 'width': width, 'height': height,
                    'clip_on': False, 'facecolor': 'white', #ppl.almost_black,
-                   'edgecolor': ppl.almost_black, 'alpha': 0.5}
+                   'edgecolor': ppl.colors.almost_black, 'alpha': 0.5}
     intron_kwargs = {'fill': True, 'height': height * 0.5,
                      'clip_on': False, 'facecolor': highlight_color,
                      #ppl.almost_black,
@@ -1065,20 +1068,21 @@ def splicing_diagram(ax, bottom_y, highlight=None, height_multiplier=0.025):
     left_alternative = [(leftmost_x + 1 * width, bottom_y + height),
                         (leftmost_x + 1.5 * width, bottom_y + 1.5 * height),
                         (leftmost_x + 2 * width, bottom_y + height)]
+    black = ppl.colors.almost_black
     ax.add_patch(patches.PathPatch(patches.Path(left_alternative),
-                                   edgecolor=ppl.almost_black, clip_on=False))
+                                   edgecolor= black, clip_on=False))
 
     right_alternative = [(leftmost_x + 3 * width, bottom_y + height),
                          (leftmost_x + 3.5 * width, bottom_y + 1.5 * height),
                          (leftmost_x + 4 * width, bottom_y + height)]
     ax.add_patch(patches.PathPatch(patches.Path(right_alternative),
-                                   edgecolor=ppl.almost_black, clip_on=False))
+                                   edgecolor= black, clip_on=False))
 
     constitutive = [(leftmost_x + 1 * width, bottom_y),
                     (leftmost_x + 2.5 * width, bottom_y - 1 * height),
                     (leftmost_x + 4 * width, bottom_y)]
     ax.add_patch(patches.PathPatch(patches.Path(constitutive),
-                                   edgecolor=ppl.almost_black, clip_on=False))
+                                   edgecolor= black, clip_on=False))
 
     first_exon_donor = (leftmost_x + 1 * width, bottom_y + 0.5 * height)
     second_exon_acceptor = (leftmost_x + 2 * width, bottom_y + 0.5 * height)
@@ -1173,11 +1177,22 @@ def pdf(data, bins=50):
     return pos, pdf
 
 
-def plot_cdf(data, bins=50, ax=None):
-    if ax is None:
-        ax = plt.gca()
-    x, y = cdf(data, bins=bins)
-    ax.plot(x,y)
+def plot_cdf(cdf_list, **kwargs):
+        cdf = sm.distributions.ECDF(cdf_list)
+        cdf_linspace = np.linspace(min(cdf_list), max(cdf_list))
+        if kwargs['ax'] is not None:
+            ax = kwargs['ax']
+            del kwargs['ax']
+            ax.plot(cdf_linspace, cdf(cdf_linspace), **kwargs)
+            ax.set_ylim((0,1))
+        else:
+            plot(cdf_linspace, cdf(cdf_linspace), **kwargs)
+
+#def plot_cdf(data, bins=50, ax=None):
+#    if ax is None:
+#        ax = plt.gca()
+#    x, y = cdf(data, bins=bins)
+#    ax.plot(x,y)
 
 
 def plot_pdf(data, bins=50, ax=None):
@@ -1288,3 +1303,4 @@ class Figure(object):
             ax.set_title(ax.get_title(), fontsize=20)
         self.figure.tight_layout()
         self.figure.savefig(self.saveas)
+        self.figure.savefig(os.path.splitext(self.saveas)[0] + ".pdf")

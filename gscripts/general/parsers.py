@@ -12,6 +12,16 @@ import os
 import pandas as pd
 import pybedtools
 
+def get_names(files, num_seps, sep):
+
+    """ Given a list of files return that files base name and the path to that file
+        files -- list of files
+        num_seps -- int number of seperators in to call the real name
+        sep -- str seperator to split on
+    """
+
+    return {sep.join(os.path.basename(file_name).split(sep)[0 : num_seps]) : file_name for file_name in files}
+
 def rnaseq_metrics(analysis_dir, num_seps=1, sep="."):
     """
 
@@ -29,9 +39,9 @@ def rnaseq_metrics(analysis_dir, num_seps=1, sep="."):
     
 
     
-    nrf_names = {sep.join(os.path.basename(nrf_file).split(sep)[0 : num_seps]) : nrf_file for nrf_file in nrf_files}
-    cutadapt_names = {sep.join(os.path.basename(cutadapt_file).split(sep)[0 : num_seps]) : cutadapt_file for cutadapt_file in cutadapt_files}
-    star_names = {sep.join(os.path.basename(star_file).split(sep)[0 : num_seps]) : star_file for star_file in star_files}
+    nrf_names = get_names(nrf_files, num_seps, sep) 
+    cutadapt_names = get_names(cutadapt_files, num_seps, sep)
+    star_names = get_names(star_files, num_seps, sep) 
     
     nrf_df = pd.DataFrame({name : parse_nrf_file(nrf_file) for name, nrf_file in nrf_names.items()}).transpose()
     cutadapt_df = pd.DataFrame({name : parse_cutadapt_file(cutadapt_file) for name, cutadapt_file in cutadapt_names.items()}).transpose()
@@ -56,8 +66,9 @@ def clipseq_metrics(analysis_dir, iclip=False, sep="."):
     peaks_files = glob.glob(os.path.join(analysis_dir, "*.rmDup.sorted.peaks.bed"))
     spot_files = glob.glob(os.path.join(analysis_dir, "*peaks.metrics"))
 
-    rm_duped_names = {sep.join(os.path.basename(rm_duped_file).split(sep)[0 : num_seps]) : rm_duped_file for rm_duped_file in rm_duped_files}
-    peaks_names = {sep.join(os.path.basename(peaks_file).split(sep)[0 : num_seps]) : peaks_file for peaks_file in peaks_files}
+    rm_duped_names = get_names(rm_duped_files, num_seps, sep)
+    peaks_names = get_names(peaks_files, num_seps, sep)
+    spot_names = get_names(spot_files, num_seps, sep) 
 
     rm_duped_df = pd.DataFrame({name : parse_rm_duped_metrics_file(rm_duped_file) for name, rm_duped_file in rm_duped_names.items()}).transpose()
     spot_df = pd.DataFrame({name : parse_peak_metrics(spot_file) for name, spot_file in spot_names.items()}).transpose()
@@ -66,6 +77,8 @@ def clipseq_metrics(analysis_dir, iclip=False, sep="."):
     combined_df = pd.merge(combined_df, rm_duped_df, left_index=True, right_index=True, how="outer")
     combined_df = pd.merge(combined_df, spot_df, left_index=True, right_index=True, how="outer")
     combined_df = pd.merge(combined_df, peaks_df, left_index=True, right_index=True, how="outer")
+    return combined_df
+
 def parse_star_file(star_file_name):
     with open(star_file_name) as star_file:
         star_dict = {}

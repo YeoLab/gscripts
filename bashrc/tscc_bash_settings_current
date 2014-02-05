@@ -3,15 +3,21 @@ module load biotools
 
 SERVER=/projects
 
-export LD_LIBRARY_PATH=/home/yeo-lab/software/lib:/home/yeo-lab/software/linux/gcc/dyn/x86_64/rel/lib:$LD_LIBRARY_PATH
+export LD_LIBRARY_PATH=/home/yeo-lab/software/lib:$LD_LIBRARY_PATH
+export LD_LIBRARY_PATH=/home/yeo-lab/software/linux/gcc/dyn/x86_64/rel/lib:$LD_LIBRARY_PATH
+export LD_RUN_PATH=/home/yeo-lab/software/lib:$LD_RUN_PATH 
 
 #export GDFONTPATH=${SERVER}/yeolab/Software/liberation-fonts-ttf-1.06.0.20100721
 export GNUPLOT_DEFAULT_GDFONT=LiberationSans-Regular
 
 export BOWTIE_INDEXES=/projects/ps-yeolab/genomes/bowtie_index
 export BOWTIE2_INDEXES=/projects/ps-yeolab/genomes/bowtie_index
-#export PERL5LIB=$SERVER/yeolab/Conservation/scripts/:$SERVER/yeolab/Software/EXTRA_perlmodules:$SERVER/yeolab/Software/perl16/lib:/home/yeo-lab/software/vcftools_0.1.11/lib/perl5/site_perl:$PERL5LIB
 
+#PERL5
+#export PERL5LIB=$SERVER/yeolab/Conservation/scripts/:$PERL5LIB
+#export PERL5LIB=$SERVER/yeolab/Software/EXTRA_perlmodules:$PERL5LIB
+#export PERL5LIB=$SERVER/yeolab/Software/perl16/lib:$PERL5LIB
+#export PERL5LIB=/home/yeo-lab/software/vcftools_0.1.11/lib/perl5/site_perl:$PERL5LIB
 #export PERL5LIB=/opt/rocks/lib/perl5/site_perl/5.10.1/
 
 #Perl 5.16 from ActivePerl
@@ -20,35 +26,20 @@ export BOWTIE2_INDEXES=/projects/ps-yeolab/genomes/bowtie_index
 #export MANPATH=/home/yeo-lab/software/perl/site/man:/home/yeo-lab/software/perl/man:$MANPATH 
 #export PERL5LIB=/home/yeo-lab/software/perl/lib:/home/yeo-lab/software/perl/site/lib
 
-#making it so I can switch between different version of python quickly
-
 #Python 2.7.5
-#export PATH=/opt/python/bin:$PATH
-#export PATH=/home/yeo-lab/software/python_packages:$PATH
-
-#export PYTHONPATH=/home/yeo-lab/software/python_packages:$PYTHONPATH
-
+export PYTHONPATH=/home/jpg/opt/python/lib/python2.7/site-packages:$PYTHONPATH
 export PYTHONPATH=/opt/scipy/lib64/python2.6/site-packages/:$PYTHONPATH
 export PYTHONPATH=/home/yeo-lab/software/lib:$PYTHONPATH
 export PYTHONPATH=/home/yeo-lab/software/lib/python2.7/site-packages:$PYTHONPATH
-export PYTHONPATH=/home/jpg/opt/python/lib/python2.7/site-packages:$PYTHONPATH
+
 #fastqc
 export PATH=/home/yeo-lab/software/FastQC:$PATH
 #General
 
 export PATH=/home/yeo-lab/software/bin:$PATH
 export PATH=/home/yeo-lab/software/weblogo:$PATH
-PATH=$PATH:/home/yeo-lab/software/homer/.//bin/
+export PATH=$PATH:/home/yeo-lab/software/homer/.//bin/
 
-#export PATH=$SERVER/yeolab/Software/MongoDB/bin:$SERVER/yeolab/Software/perl16/bin:${SERVER}/yeolab/Software/git/bin:${SERVER}/yeolab/Software/primer3-2.2.3/src:${SERVER}/yeolab/Software/gnuplot/bin:${SERVER}/yeolab/Software/Homer2/bin:${SERVER}/yeolab/Software/blatexe:${SERVER}/yeolab/Software/weblogo:${SERVER}/yeolab/Software/bin:${SERVER}/yeolab/Software/mysqlc/bin:${SERVER}/yeolab/Software/boost:${SERVER}/yeolab/Software/boost/lib:${SERVER}/yeolab/Software/fastx/bin:${SERVER}/yeolab/Software/ghostscript-8.71/bin:${SERVER}/yeolab/Software/generalscripts:${SERVER}/yeolab/Software/ViennaPackage/bin:${SERVER}/yeolab/Software/bedtools-2.17.0/bin:${SERVER}/yeolab/Software/GSNAP/bin:/home/thumper3-10g/yeolab/Software/MatrixREDUCE/bin:${SERVER}/yeolab/Software/seqan/projects/library/apps/razers:${SERVER}/yeolab/Software/bowtie-0.12.7:${SERVER}/yeolab/Software/tophat/bin:/home/install/usr/apps/screen-4.0.3/bin:/export/apps/matlab_R2007a/bin:${SERVER}/yeolab/Software/EMBOSS-2.10.0/emboss:${SERVER}/yeolab/Software/cufflinks/bin::${SERVER}/yeolab/Software/FastQC/FastQC/:${SERVER}/yeolab/Software/sra_sdk-2.1.10/bin64/:${SERVER}/yeolab/Software/hdf5/:${SERVER}/yeolab/Software/IGVDistribution_2.1.17/:$SERVER/yeolab/Software/bin:$SERVER/yeolab/Software/samtools/samtools-0.1.18:${SERVER}/yeolab/Software/MEME/meme_4.5.0/bin:${SERVER}/yeolab/Software/gmtk-20091016/tksrc:${SERVER}/yeolab/Software/eclipse:${SERVER}/yeolab/Software/piranha-1.1.1/bin:${SERVER}/yeolab/Softwhere/ucsc_tools:${SERVER}/yeolab/Software/sqlite3/bin:$PATH
-#export PATH=${SERVER}/yeolab/Software/Python_dependencies/bin/cutadapt:$PATH
+export HDF5_DIR=/home/yeo-lab/software
 
-#export MATRIXREDUCE=/home/thumper3-10g/yeolab/Software/MatrixREDUCE
-#export MACHTYPE=unixLike
-#export LAPACK=${SERVER}/yeolab/Software/Python-Triton/LAPACK/liblapack.a
-
-#export BLAS=${SERVER}/yeolab/Software/Python-Triton/BLAS/libfblas.a
-
-#export LD_RUN_PATH=${SERVER}/yeolab/Software/lib:${SERVER}/gpratt/gsl/lib:$LD_RUN_PATH
-#export LD_LIBRARY_PATH=/nas3/yeolab/Software/lib:/home/yeo-lab/software/boost_1_54_0/stage/lib:$LD_LIBRARY_PATH
 

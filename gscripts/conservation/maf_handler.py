@@ -14,6 +14,7 @@ import socket
 
 if "tscc" in socket.gethostname():
     conservation_basedir = "/projects/ps-yeolab/conservation"
+    genome_basedir = "/projects/ps-yeolab/genomes"
 else:
     #haven't set up this system yet... download and index .maf files
     raise NotImplementedError
@@ -45,7 +46,7 @@ class MafRangeGetter(object):
         mask = [ -1 ] * base_len
 
         ref_src_size = None
-        if len(blocks) == 0 or blocks[0] is not None:
+        if len(blocks) > 0 and blocks[0] is not None:
             for i, block in enumerate( blocks ):
                 ref = block.get_component_by_src_start( ref_src )
                 ref_src_size = ref.src_size
@@ -137,8 +138,8 @@ class ce10MafRangeGetter(MafRangeGetter):
         chrs = ["I", "II", "III", "IV", "V", "X", "M"]
         maf_files = [(os.path.join(conservation_basedir, "ce10_7way/", "multiz7way/", "chr" + c + ".maf.bz2"))\
                      for c in chrs]
-        self.index = bx.align.maf.MultiIndexed( maf_files, keep_open=True, parse_e_rows=True, use_cache=True)
-        self.fasta = pyfasta.Fasta("/projects/ps-yeolab/genomes/ce10/chromosomes/all.fa", flatten_inplace=True)
+        self.index = bx.align.maf.MultiIndexed(maf_files, keep_open=True, parse_e_rows=True, use_cache=True)
+        self.fasta = pyfasta.Fasta(os.path.join(genome_basedir, "ce10/chromosomes/all.fa"), flatten_inplace=True)
         treeFile = os.path.join(conservation_basedir, "ce10_7way/", "multiz7way/", "ce10.7way.nh")
         self.tree = Phylo.read(treeFile, 'newick')
         self.sources = [i.name for i in self.tree.get_terminals()]
@@ -149,16 +150,17 @@ class ce10MafRangeGetter(MafRangeGetter):
 
 
 class hg19MafRangeGetter(MafRangeGetter):
+
     def __init__(self):
         self.species = "hg19"
         super(MafRangeGetter,self).__init__()
         chrs = map(str, range(1,23)) + ["X", "Y", "M"]
-        maf_files = [("/projects/yeolab/Conservation/hg19_46way/zipped/chr" + c + ".maf.bz2")\
+        maf_files = [os.path.join(conservation_basedir, "hg19_100way/multiz100way/maf/chr" + c + ".maf.bz2")\
                      for c in chrs]
         self.index = bx.align.maf.MultiIndexed( maf_files, keep_open=True, parse_e_rows=True, use_cache=True )
-        self.fasta = pyfasta.Fasta("/projects/yeolab/Genome/ucsc/hg19/chromosomes/all.fa", flatten_inplace=True)
+        self.fasta = pyfasta.Fasta(os.path.join(genome_basedir, "hg19/chromosomes/all.fa"), flatten_inplace=True)
 
-        treeFile = ("/projects/yeolab/Conservation/hg19_46way/46way.corrected.nh")
+        treeFile = os.path.join(conservation_basedir, "hg19_100way/multiz100way/hg19.100way.scientificNames.nh")
         self.tree = Phylo.read(treeFile, 'newick')
         self.sources = [i.name for i in self.tree.get_terminals()]
         self.tree.root_with_outgroup({"name":"hg19"})
@@ -183,9 +185,8 @@ def chop_maf(maf, maxSize=2500, overlap=6, id = "none", verbose=False):
 
 
     while i < fullSize:
-        if i > 0:
-		pDone = 100*float(i)/fullSize
-        if verbose:
+        if i > 0 and verbose:
+            pDone = 100*float(i)/fullSize
             sys.stderr.write( "chunking id:%s from %d-%d, %3.2f \r" %(id, i, j, pDone)  )
         yield maf.slice(i,j)
 
