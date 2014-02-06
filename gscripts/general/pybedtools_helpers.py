@@ -209,9 +209,13 @@ def convert_to_mRNA_position(interval, gene_model):
         #raise ValueError("strands not the same, there is some issue with gene annotations")
 
     running_length = 0
-    merged_exons = pybedtools.BedTool(gene_model[interval.chrom]).merge(nms=True, scores='max', s=True).sort().saveas()
-    exons = [i for i in merged_exons]
+    exons = pybedtools.BedTool(gene_model[interval.chrom])
+    merged_exons = exons.merge(nms=True, scores='max', s=True)
+    _ = pybedtools.helpers.close_or_delete(exons)
+    sortmerge = merged_exons.sort().saveas()
     _ = pybedtools.helpers.close_or_delete(merged_exons)
+    exons = [i for i in sortmerge]
+    _ = pybedtools.helpers.close_or_delete(sortmerge)
     if exons[0].strand == '-':
         exons = exons[::-1]
     for region in exons:
