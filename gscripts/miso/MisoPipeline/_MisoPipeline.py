@@ -499,7 +499,7 @@ class MisoPipeline(object):
             "print"
             " length }')" % (bam))
 
-        print 'self.read_type', self.read_type
+        #print 'self.read_type', self.read_type
 
         if self.read_type == 'paired_end':
             commands.append('\n# Calculate insert size')
@@ -528,7 +528,8 @@ class MisoPipeline(object):
                                                                insert_len_stddev)
 
         for event_type in event_types:
-            out_dir = '{}/miso/{}/{}'.format(os.path.dirname(bam),
+            out_dir = '{}/miso/{}/{}'.format(os.path.dirname(os.path
+            .abspath(bam)),
                                              sample_id, event_type)
             psi_out = '{}/psi.out'.format(out_dir)
             psi_err = '{}/psi.err'.format(out_dir)
