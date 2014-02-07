@@ -476,6 +476,8 @@ class MisoPipeline(object):
         bam = self.bams[0]
         sample_id = self.sample_ids[0]
 
+        bam_dir = os.path.dirname(os.path.abspath(bam))
+
         commands = []
         commands.append('#!/bin/sh')
         commands.append('# Finding all MISO splicing scores for sample: {}. '
@@ -510,7 +512,7 @@ class MisoPipeline(object):
                             '.const_exons.gff '
                             '--no-bam-filter '
                             '--output-dir {2} '.format(bam, self.genome,
-                                                       os.path.dirname(bam)))
+                                                       bam_dir))
 
             insert_len_stddev = 'INSERT_LEN_STDDEV'
             insert_len_mean = 'INSERT_LEN_MEAN'
