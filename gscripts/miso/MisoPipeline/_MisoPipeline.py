@@ -507,7 +507,7 @@ class MisoPipeline(object):
             commands.append('\n# Calculate insert size')
             commands.append('python /home/yeo-lab/software/bin/pe_utils.py '
                             '--compute-insert-len {0} '
-                            '/home/yeo-lab/genomes/{1'
+                            '/projects/ps-yeolab/genomes/{1'
                             '}/miso_annotations/SE_constitutive/SE.{1}.min_20'
                             '.const_exons.gff '
                             '--no-bam-filter '
@@ -540,7 +540,7 @@ class MisoPipeline(object):
                             ' all {} events'.format(event_type))
             commands.append('mkdir -p {}'.format(out_dir))
             commands.append('python /home/yeo-lab/software/bin/miso \
---run /home/yeo-lab/genomes/{0}/miso_annotations/{1}_index \
+--run /projects/ps-yeolab/genomes/{0}/miso_annotations/{1}_index \
 {2} --output-dir {3} \
 --read-len $READ_LEN \
 {4} \

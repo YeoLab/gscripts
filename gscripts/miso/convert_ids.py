@@ -1,21 +1,20 @@
 import numpy as np
 import gffutils
-from collections import defaultdict, Counter
+from collections import defaultdict
 
 
 def miso_exon_to_gencode_exon(exon):
     return 'exon:{}:{}-{}:{}'.format(*miso_exon_to_coords(exon))
 
-
 def miso_id_to_exon_ids(miso_id):
     return map(miso_exon_to_gencode_exon, miso_id.split('@'))
-
 
 def miso_exon_to_coords(exon):
     return exon.split(':')
 
 
-def convert_miso_id_to_everything(miso_ids, db):
+def convert_miso_ids_to_everything(miso_ids, db, event_type,
+                                   out_dir):
     """
     Given a list of miso IDs and a gffutils database, pull out the
     ensembl/gencode/gene name/gene type/transcript names
@@ -32,6 +31,8 @@ def convert_miso_id_to_everything(miso_ids, db):
     miso_to_gencode = {}
     miso_to_gene_name = {}
     miso_to_gene_type = {}
+    miso_to_ensembl_transcript = {}
+    miso_to_gencode_transcript = {}
 
     ensembl_to_miso = defaultdict(list)
     gene_name_to_miso = defaultdict(list)
@@ -43,6 +44,8 @@ def convert_miso_id_to_everything(miso_ids, db):
         ensembl = set([])
         gene_name = set([])
         gene_type = set([])
+        gencode_transcript = set([])
+        ensembl_transcript = set([])
         for e in exons:
             try:
                 exon = db[e]
@@ -52,6 +55,10 @@ def convert_miso_id_to_everything(miso_ids, db):
                     map(lambda x: x.split('.')[0], exon.attributes['gene_id']))
                 gene_name.update(exon.attributes['gene_name'])
                 gene_type.update(exon.attributes['gene_type'])
+                gencode_transcript(exon.attributes['transcript_id'])
+                ensembl_transcript.update(
+                    map(lambda x: x.split('.')[0], exon.attributes['gene_id'])
+                )
             except gffutils.FeatureNotFoundError:
                 continue
 
@@ -71,10 +78,13 @@ def convert_miso_id_to_everything(miso_ids, db):
             ensembl_to_miso[ensembl].append(miso_id)
             gene_name_to_miso[gene_name].append(miso_id)
         else:
-        #         print gencode.most_common(1)[0][0]
-            print miso_id
             miso_to_gencode[miso_id] = np.nan
             miso_to_ensembl[miso_id] = np.nan
             miso_to_gene_name[miso_id] = np.nan
             miso_to_gene_type[miso_id] = np.nan
 
+    miso_tos = {'gencode_gene': miso_to_gencode,
+                'ensembl_gene': miso_to_ensembl,
+                'gene_name': miso_to_gene_name,
+                'gene_type': miso_to_gene_type,
+                'gencode_transcript': miso_to_}
