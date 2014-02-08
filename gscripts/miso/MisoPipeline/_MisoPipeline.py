@@ -546,7 +546,7 @@ class MisoPipeline(object):
 {4} \
 --no-filter-events \
 -p {5} \
- > {6}\
+ > {6} \
 2> {7}'.format(self.genome, event_type, bam, out_dir,
                insert_len_arguments, self.num_processes, psi_out,
                psi_err))
