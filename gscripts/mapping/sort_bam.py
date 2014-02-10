@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+
 from glob import glob
 from gscripts.qtools._Submitter import Submitter
 import sys
@@ -32,5 +34,3 @@ def submit_and_write(name, command_list):
 #        submit_and_write('{}{}'.format(name, i + 1), commands)
 #else:
 submit_and_write(name, command_list)
-
-

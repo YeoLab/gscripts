@@ -1,9 +1,11 @@
+#!/usr/bin/env python
+
 from glob import glob
 from gscripts.qtools._Submitter import Submitter
 import sys
 
 try:
-    name = sys.argv[1]+"_index_bam"
+    name = sys.argv[1] + "_index_bam"
 except IndexError:
     name = "index_bam"
 
