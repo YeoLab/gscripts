@@ -148,11 +148,17 @@ class Submitter:
             if not self.data[key]:
                 raise ValueError("missing value for required key: " + str(key))
 
+
+        if 'array' in self.data:
+            use_array = self.data['array']
+
+            if chunks != 1:
+                raise ValueError("only a chunk size of 1 is allowed, please fix the Submitter code if you want to do that")
+            number_jobs = math.ceil(len(self.data['command_list'])/int(chunks))
+
         # PBS/TSCC does not allow array jobs with more than 500 commands
         print "len(self.data['command_list'])", len(self.data['command_list'])
-        print "self.data['use_array']", self.data['use_array']
-        use_array = False if 'use_array' not in self.data else self.data[
-            'use_array']
+        print "self.data['array']", self.data['array']
         if len(self.data['command_list']) > 500 and use_array:
             command_list = self.data['command_list']
             name = self.data['job_name']
@@ -164,14 +170,6 @@ class Submitter:
                 kwargs['job_name'] = '{}{}'.format(name, i + 1)
                 sub = Submitter(**kwargs)
                 sub.write_sh(**kwargs)
-
-        if 'array' in self.data:
-            use_array = self.data['array']
-
-            if chunks != 1:
-                raise ValueError("only a chunk size of 1 is allowed, please fix the Submitter code if you want to do that")
-            number_jobs = math.ceil(len(self.data['command_list'])/int(chunks))
-
 
         if 'chunks' in kwargs:
             if kwargs['chunks']:
