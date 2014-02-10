@@ -149,6 +149,8 @@ class Submitter:
                 raise ValueError("missing value for required key: " + str(key))
 
         # PBS/TSCC does not allow array jobs with more than 500 commands
+        print "len(self.data['command_list'])", len(self.data['command_list'])
+        print "self.data['use_array']", self.data['use_array']
         use_array = False if 'use_array' not in self.data else self.data[
             'use_array']
         if len(self.data['command_list']) > 500 and use_array:
@@ -202,8 +204,6 @@ class Submitter:
             queue = kwargs['queue']
         else:
             queue = 'home'
-
-      
 
         sh_filename = self.data['sh_file']
         sh_file = open(sh_filename, 'w')
