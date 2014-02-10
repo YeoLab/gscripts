@@ -136,7 +136,7 @@ class Submitter:
 
         ret_val = 0
         chunks = 1
-        number_jobs=1
+        number_jobs = 1
 
         self.data.update(kwargs)
 
@@ -148,7 +148,20 @@ class Submitter:
             if not self.data[key]:
                 raise ValueError("missing value for required key: " + str(key))
 
-            
+        # PBS/TSCC does not allow array jobs with more than 500 commands
+        use_array = False if 'use_array' not in self.data else self.data[
+            'use_array']
+        if len(self.data['command_list']) > 500 and use_array:
+            command_list = self.data['command_list']
+            name = self.data['job_name']
+            command_list_list = [command_list[i:(i + 500)]
+                                 for i in xrange(0, len(command_list), 500)]
+            kwargs = dict(self.data)
+            for i, commands in enumerate(command_list_list):
+                kwargs['command_list'] = commands
+                kwargs['job_name'] = '{}{}'.format(name, i + 1)
+                sub = Submitter(**kwargs)
+                sub.write_sh(**kwargs)
 
         if 'array' in self.data:
             use_array = self.data['array']
