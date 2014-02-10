@@ -23,14 +23,14 @@ def submit_and_write(name, command_list):
 
 
 # max number of jobs in an array on TSCC is 500
-if len(command_list) > 500:
-    command_list_list = [command_list[i:(i + 500)] for i in xrange(0,
-                                                                   len(
-                                                                       command_list),
-                                                                   500)]
-    for i, commands in enumerate(command_list_list):
-        submit_and_write('{}{}'.format(name, i + 1), commands)
-else:
-    submit_and_write(name, command_list)
+#if len(command_list) > 500:
+#    command_list_list = [command_list[i:(i + 500)] for i in xrange(0,
+#                                                                   len(
+#                                                                       command_list),
+#                                                                   500)]
+#    for i, commands in enumerate(command_list_list):
+#        submit_and_write('{}{}'.format(name, i + 1), commands)
+#else:
+submit_and_write(name, command_list)
 
 
