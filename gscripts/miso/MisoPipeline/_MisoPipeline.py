@@ -544,7 +544,8 @@ class MisoPipeline(object):
 {2} --output-dir {3} \
 --read-len $READ_LEN \
 {4} \
---no-filter-events \
+--settings-filename /projects/ps-yeolab/genomes/hg19/miso_annotations'
+                            '/miso_settings_min_event_reads10.txt \
 -p {5} \
  > {6} \
 2> {7}'.format(self.genome, event_type, bam, out_dir,
