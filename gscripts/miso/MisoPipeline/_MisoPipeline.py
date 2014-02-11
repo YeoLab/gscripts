@@ -560,11 +560,13 @@ class MisoPipeline(object):
                             "and 'shutdown' didn't find anything.")
             commands.append('iffailed=$(grep failed {})'.format(psi_out))
             commands.append('ifshutdown=$(grep shutdown {})'.format(psi_err))
-            commands.append('if [ ! -z "$iffailed" -o ! -z "$ifshutdown" ] ; '
-                            'then\n\
-    echo "MISO psi failed on event type: {}"\n\
+            commands.append(
+                "if [ ! -z \"$iffailed\" -o ! -z \"$ifshutdown\" ] ; "
+                "then\n\
+    rm -rf {}\n\
+    echo \"MISO psi failed on event type: {}\"\n\
     exit 1\n\
-fi\n'.format(event_type))
+fi\n".format(out_dir, event_type))
 
             commands.append('# Summarize psi scores for all {} events'
             .format(event_type))
@@ -576,10 +578,11 @@ fi\n'.format(event_type))
             commands.append("# '-s' returns true if file size is nonzero, "
                             "and the error file should be empty.")
             commands.append("""if [ -s {0}/summary.err ] ; then
-    echo 'MISO psi failed on event type: {0}'
+    rm -rf {}\n
+    echo 'MISO psi failed on event type: {1}'
     exit 1
 fi
-""".format(out_dir))
+""".format(out_dir, event_type))
         sh_file = self.output_sh
         with open(sh_file, 'w') as f:
             f.write('\n'.join(commands))
