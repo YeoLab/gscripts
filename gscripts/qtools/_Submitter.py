@@ -155,10 +155,10 @@ class Submitter:
             number_jobs = math.ceil(len(self.data['command_list'])/int(chunks))
 
         # PBS/TSCC does not allow array jobs with more than 500 commands
-        sys.stderr.write("len(self.data['command_list']) {}".format(len(self
+        sys.stderr.write("len(self.data['command_list']) {}\n".format(len(self
         .data[
             'command_list'])))
-        sys.stderr.write("self.data['array'] {}".format(self.data['array']))
+        sys.stderr.write("self.data['array'] {}\n".format(self.data['array']))
         print 'use_array', use_array
         if len(self.data['command_list']) > 500 and use_array:
             command_list = self.data['command_list']
