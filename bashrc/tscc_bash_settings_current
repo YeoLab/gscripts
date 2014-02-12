@@ -37,6 +37,9 @@ export PYTHONPATH=/home/jpg/opt/python/lib/python2.7/site-packages:$PYTHONPATH
 #fastqc
 export PATH=/home/yeo-lab/software/FastQC:$PATH
 
+#IGV
+export PATH=/home/yeo-lab/software/IGVTools:$PATH
+
 #General
 export PATH=/home/yeo-lab/software/bin:$PATH
 export PATH=/home/yeo-lab/software/weblogo:$PATH
