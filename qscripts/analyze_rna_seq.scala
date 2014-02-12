@@ -28,6 +28,9 @@ class AnalyzeRNASeq extends QScript {
   @Argument(doc = "strict triming run")
   var strict: Boolean = false
 
+  @Argument(doc = "start processing run from bam file")
+  var fromBam: Boolean = false
+
   @Argument(doc = "location to place trackhub (must have the rest of the track hub made before starting script)")
   var location: String = "rna_seq"
     
@@ -113,10 +116,10 @@ class AnalyzeRNASeq extends QScript {
        this.bamFileIndex = output
   }
 
-  case class cutadapt(fastq_file: File, noAdapterFastq: File, adapterReport: File, adapter: List[String]) extends Cutadapt{
+  case class cutadapt(fastqFile: File, noAdapterFastq: File, adapterReport: File, adapter: List[String]) extends Cutadapt{
        override def shortDescription = "cutadapt"
 
-       this.inFastq = fastq_file
+       this.inFastq = fastqFile
        this.outFastq = noAdapterFastq
        this.report = adapterReport
        this.anywhere = adapter ++ List("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
@@ -146,17 +149,17 @@ class AnalyzeRNASeq extends QScript {
  @Argument(doc="reads are single ended", shortName = "single_end", fullName = "single_end", required = false)
  var singleEnd: Boolean = true
 
-def stringentJobs(fastq_file: File) : File = {
+def stringentJobs(fastqFile: File) : File = {
 
         // run if stringent
-      val noPolyAFastq = swapExt(fastq_file, ".fastq", ".polyATrim.fastq")
+      val noPolyAFastq = swapExt(fastqFile, ".fastq", ".polyATrim.fastq")
       val noPolyAReport = swapExt(noPolyAFastq, ".fastq", ".metrics")
       val noAdapterFastq = swapExt(noPolyAFastq, ".fastq", ".adapterTrim.fastq")
       val adapterReport = swapExt(noAdapterFastq, ".fastq", ".metrics")
       val filteredFastq = swapExt(noAdapterFastq, ".fastq", ".rmRep.fastq")
       val filtered_results = swapExt(filteredFastq, ".fastq", ".metrics")
             //filters out adapter reads
-      add(cutadapt(fastq_file = fastq_file, noAdapterFastq = noAdapterFastq, 
+      add(cutadapt(fastqFile = fastqFile, noAdapterFastq = noAdapterFastq, 
           adapterReport = adapterReport, 
           adapter = adapter))
           
@@ -204,31 +207,40 @@ def script() {
     var bamFiles: List[File] = List()
     
     for (item : Tuple3[File, String, String] <- fileList) {
-      var fastq_files = item._1.toString().split(""";""")
+      var fastqFiles = item._1.toString().split(""";""")
       var species = item._2
-
-      var fastq_file: File = new File(fastq_files(0))
+      var fastqFile: File = new File(fastqFiles(0))
       var fastqPair: File = null
       var singleEnd = true
+      var samFile: File = null
+      if(!fromBam) {
+      	if (fastqFiles.length == 2){
+           singleEnd = false
+           fastqPair = new File(fastqFiles(1))
+	   add(new FastQC(inFastq = fastqPair))
+      	}
+            
+     	add(new FastQC(inFastq = fastqFile))
 
-      if (fastq_files.length == 2){
-        singleEnd = false
-        fastqPair = new File(fastq_files(1))
-	add(new FastQC(inFastq = fastqPair))
-      }
-      
-      add(new FastQC(inFastq = fastq_file))
+      	var filteredFastq: File = null
+      	if(strict && fastqPair == null) {
+       		  filteredFastq = stringentJobs(fastqFile)
+      	} else {
+          filteredFastq = fastqFile
+      	}
+	samFile = swapExt(filteredFastq, ".fastq", ".sam")
+      	if(fastqPair != null) { //if paired	
+           add(new star(filteredFastq, samFile, not_stranded, fastqPair, species = species))
+      	} else { //unpaired
+           add(new star(filteredFastq, samFile, not_stranded, species = species))
+      	}
 
-      var filteredFastq: File = null
-      if(strict && fastqPair == null) {
-        filteredFastq = stringentJobs(fastq_file)
+	// run regardless of stringency
+      	
       } else {
-        filteredFastq = fastq_file
+      	samFile = new File(fastqFiles(0))
       }
 
-
-      // run regardless of stringency
-      val samFile = swapExt(filteredFastq, ".fastq", ".sam")
       val sortedBamFile = swapExt(samFile, ".sam", ".sorted.bam")
       val rgSortedBamFile = swapExt(sortedBamFile, ".bam", ".rg.bam")
       val indexedBamFile = swapExt(rgSortedBamFile, "", ".bai")
@@ -247,11 +259,7 @@ def script() {
       splicesFiles = splicesFiles ++ List(oldSpliceOut)      
       bamFiles = bamFiles ++ List(rgSortedBamFile)
 
-      if(fastqPair != null) { //if paired	
-        add(new star(filteredFastq, samFile, not_stranded, fastqPair, species = species))
-      } else { //unpaired
-        add(new star(filteredFastq, samFile, not_stranded, species = species))
-      }
+
       
       add(new sortSam(samFile, sortedBamFile, SortOrder.coordinate))
       add(addOrReplaceReadGroups(sortedBamFile, rgSortedBamFile))
