@@ -177,19 +177,6 @@ def closest_by_feature(bedtool, closest_feature):
 
     return pybedtools.BedTool(distances).saveas()
 
-def merge_it(intervals):
-
-    exons = pybedtools.BedTool(intervals)
-    merged_exons = exons.merge(nms=True, scores='max', s=True)
-    sortmerge = merged_exons.sort()
-    exons = [i for i in sortmerge]
-
-    if exons[0].strand == '-':
-        exons = exons[::-1]
-    return exons
-
-from multiprocessing import Pool
-
 
 def convert_to_mRNA_position(interval, gene_model):
     """
@@ -222,14 +209,8 @@ def convert_to_mRNA_position(interval, gene_model):
         #raise ValueError("strands not the same, there is some issue with gene annotations")
 
     running_length = 0
-    raw_exons = gene_model[interval.chrom]
 
-    p = Pool(1)
-    exons = p.apply(merge_it, args=(raw_exons)) #because pybedtools opens too many files, try in a subproc.
-    p.join()
-    p.terminate()
-
-    for region in exons:
+    for region in gene_model[interval.chrom]:
 
         if interval.start >= int(region.start) and interval.start <= int(
                 region.stop):
