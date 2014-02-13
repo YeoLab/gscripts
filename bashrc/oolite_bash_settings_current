@@ -13,7 +13,7 @@ export BOWTIE_INDEXES=${SERVER}/yeolab/Software/bowtie/indexes/
 export BOWTIE2_INDEXES=${SERVER}/yeolab/Software/bowtie2/indexes/
 
 #PERL
-#export PATH=${SERVER}/yeolab/Software/perl16/bin:$PATH
+export PATH=${SERVER}/yeolab/Software/perl16/bin:$PATH
 
 export PERL5LIB=$SERVER/yeolab/Conservation/scripts/:$PERL5LIB
 export PERL5LIB=$SERVER/yeolab/Software/EXTRA_perlmodules:$PERL5LIB
