@@ -40,6 +40,9 @@ export PATH=/home/yeo-lab/software/FastQC:$PATH
 #IGV
 export PATH=/home/yeo-lab/software/IGVTools:$PATH
 
+#PARalizer
+export PATH=/home/yeo-lab/software/PARalyzer_v1_1:$PATH
+
 #General
 export PATH=/home/yeo-lab/software/bin:$PATH
 export PATH=/home/yeo-lab/software/weblogo:$PATH
