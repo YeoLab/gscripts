@@ -1,0 +1,15 @@
+#!/usr/bin/perl
+#use strict;
+use warnings;
+use POSIX;
+# Initialize variables
+
+$inputfile = $ARGV[0];
+open(SORTED, "/nas3/yeolab/Software/BEDTools/BEDTools/bin/sortBed -i $inputfile |");
+
+while(defined($line = <SORTED>)) {
+    print "$line";
+}
+
+exit
+
