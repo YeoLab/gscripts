@@ -169,10 +169,12 @@ class Submitter:
             for i, commands in enumerate(command_list_list):
                 kwargs['command_list'] = commands
                 kwargs['job_name'] = '{}{}'.format(name, i + 1)
-                sys.stderr.write('Writing to new job {}'.format(kwargs[
+                kwargs['submit'] = True
+                sys.stderr.write('Writing to new job {}\n'.format(kwargs[
                     'job_name']))
                 sub = Submitter(**kwargs)
                 sub.write_sh(**kwargs)
+            return
 
         if 'chunks' in kwargs:
             if kwargs['chunks']:
