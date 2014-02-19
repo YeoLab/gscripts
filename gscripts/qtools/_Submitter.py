@@ -155,12 +155,12 @@ class Submitter:
             number_jobs = math.ceil(len(self.data['command_list'])/int(chunks))
 
         # PBS/TSCC does not allow array jobs with more than 500 commands
-        sys.stderr.write("len(self.data['command_list']) {}\n".format(len(self
-        .data[
-            'command_list'])))
-        sys.stderr.write("self.data['array'] {}\n".format(self.data['array']))
-        print 'use_array', use_array
-        print "self.data['walltime']", self.data['walltime']
+        #sys.stderr.write("len(self.data['command_list']) {}\n".format(len(self
+        #.data[
+        #    'command_list'])))
+        #sys.stderr.write("self.data['array'] {}\n".format(self.data['array']))
+        #print 'use_array', use_array
+        #print "self.data['walltime']", self.data['walltime']
         if len(self.data['command_list']) > 500 and use_array:
             command_list = self.data['command_list']
             name = self.data['job_name']
@@ -170,10 +170,10 @@ class Submitter:
             for i, commands in enumerate(command_list_list):
                 kwargs['command_list'] = commands
                 kwargs['job_name'] = '{}{}'.format(name, i + 1)
-                kwargs['submit'] = False
+                kwargs['submit'] = True
                 kwargs['walltime'] = self.data['walltime']
-                sys.stderr.write('Writing to new job {}\n'.format(kwargs[
-                    'job_name']))
+                #sys.stderr.write('Writing to new job {}\n'.format(kwargs[
+                #    'job_name']))
                 sub = Submitter(**kwargs)
                 sub.write_sh(**kwargs)
             return
@@ -311,7 +311,7 @@ class Submitter:
             
    
         if use_array:
-            sys.stderr.write( "running %d tasks as an array-job. " % (len(
+            sys.stderr.write("running %d tasks as an array-job.\n" % (len(
                 self.data['command_list'])))
             for i, cmd in enumerate(self.data['command_list']):
                 sh_file.write("cmd[%d]=\"%s\"\n" %((i+1), cmd))

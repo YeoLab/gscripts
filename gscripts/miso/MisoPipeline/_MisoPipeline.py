@@ -654,7 +654,7 @@ fi
                 #                     # Tell the queue to parallelize this job
                 #                          # into a job array
                 #                     additional_resources=additional_resources)
-                # else:
+                # else:q
                 sub = Submitter(queue_type='PBS', sh_file=submit_sh,
                                 command_list=[command],
                                 job_name=job_name,
