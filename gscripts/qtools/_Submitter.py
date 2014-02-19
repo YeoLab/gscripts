@@ -51,7 +51,7 @@ class Submitter:
         elif ("tscc" in hostname):
             sys.stderr.write("automatically setting parameters for tscc\n")
             self.data['queue_type'] = "PBS"
-            if 'array' not in self.data:
+            if 'use_array' not in self.data:
                 ar = False
                 sys.stderr.write("\tuse array?: %s\n" %ar)
                 self.data['use_array'] = ar
