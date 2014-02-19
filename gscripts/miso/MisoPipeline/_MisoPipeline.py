@@ -578,7 +578,7 @@ fi\n".format(out_dir, event_type))
             commands.append("# '-s' returns true if file size is nonzero, "
                             "and the error file should be empty.")
             commands.append("""if [ -s {0}/summary.err ] ; then
-    rm -rf {}\n
+    rm -rf {0}\n
     echo 'MISO psi failed on event type: {1}'
     exit 1
 fi
