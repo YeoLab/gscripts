@@ -21,7 +21,7 @@ def submit_and_write(name, command_list):
                     job_name=name)
 
     sub.write_sh(submit=True, nodes=1, ppn=16, queue='home', array=True,
-                 max_running=10)
+                 max_running=10, walltime='18:00:00')
 
 
 # max number of jobs in an array on TSCC is 500

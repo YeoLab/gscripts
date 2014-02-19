@@ -170,7 +170,7 @@ class Submitter:
             for i, commands in enumerate(command_list_list):
                 kwargs['command_list'] = commands
                 kwargs['job_name'] = '{}{}'.format(name, i + 1)
-                kwargs['submit'] = True
+                kwargs['submit'] = False
                 kwargs['walltime'] = self.data['walltime']
                 sys.stderr.write('Writing to new job {}\n'.format(kwargs[
                     'job_name']))
