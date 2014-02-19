@@ -160,6 +160,7 @@ class Submitter:
             'command_list'])))
         sys.stderr.write("self.data['array'] {}\n".format(self.data['array']))
         print 'use_array', use_array
+        print "kwargs['walltime']", kwargs['walltime']
         if len(self.data['command_list']) > 500 and use_array:
             command_list = self.data['command_list']
             name = self.data['job_name']
@@ -170,6 +171,7 @@ class Submitter:
                 kwargs['command_list'] = commands
                 kwargs['job_name'] = '{}{}'.format(name, i + 1)
                 kwargs['submit'] = True
+                kwargs['walltime'] = self.data['walltime']
                 sys.stderr.write('Writing to new job {}\n'.format(kwargs[
                     'job_name']))
                 sub = Submitter(**kwargs)
