@@ -160,7 +160,7 @@ class Submitter:
             'command_list'])))
         sys.stderr.write("self.data['array'] {}\n".format(self.data['array']))
         print 'use_array', use_array
-        print "kwargs['walltime']", kwargs['walltime']
+        print "self.data['walltime']", self.data['walltime']
         if len(self.data['command_list']) > 500 and use_array:
             command_list = self.data['command_list']
             name = self.data['job_name']
