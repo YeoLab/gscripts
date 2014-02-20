@@ -1,5 +1,7 @@
 #!/bin/env perl
  
+# from: http://davetang.org/muse/2013/01/18/defining-genomic-regions/
+
 use strict;
 use warnings;
  
