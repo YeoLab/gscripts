@@ -8,7 +8,8 @@ sInfo = pd.read_table(sys.argv[1])
 
 cmds = []
 
-Sub = qtools.Submitter()
+Sub = qtools.Submitter(use_array=True, queue="home", nodes=1,
+        ppn=16,)
 for row, dat in sInfo.iterrows():
     id =  dat['Sample ID']
     bam = dat['Bam File']
@@ -32,5 +33,4 @@ for row, dat in sInfo.iterrows():
         oldsplice_command = "oldsplice.py -f -b %s -s %s -o %s --splice_type SE --splice_type MXE --processors 16" %(bam, species, out.replace(".splices", ".flip.splices")  )
         cmds.append(oldsplice_command)
 
-Sub.job(command_list=cmds, sh_file="runOldsplice.sh", job_name="oldsplice", use_array=True, queue="home", nodes=1,
-        ppn=16, submit=True, max_running=1000)
+Sub.job(command_list=cmds, sh_file="runOldsplice.sh", job_name="oldsplice",  submit=True, max_running=1000)
