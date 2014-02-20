@@ -2,6 +2,7 @@ from setuptools import setup, find_packages
 
 
 scripts = [
+    'annotations/gencode_annotate_utrs_5p_3p.pl',
     'clipseq/kmer_extractor.py',
     'clipseq/perform_idr.py',
     'clipseq/run_piranha.py',
