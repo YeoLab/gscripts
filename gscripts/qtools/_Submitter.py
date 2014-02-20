@@ -149,8 +149,6 @@ class Submitter:
                 raise ValueError("missing value for required key: " + str(key))
         number_jobs=1
             
-        import pdb
-        pdb.set_trace()
 
         if 'use_array' in self.data and self.data['use_array']:
             if chunks != 1:
