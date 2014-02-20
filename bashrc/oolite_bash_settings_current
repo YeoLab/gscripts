@@ -1,5 +1,4 @@
 
-
 SERVER=/nas3
 
 #FONTS
@@ -15,11 +14,18 @@ export BOWTIE2_INDEXES=${SERVER}/yeolab/Software/bowtie2/indexes/
 #PERL
 export PATH=${SERVER}/yeolab/Software/perl16/bin:$PATH
 
-export PERL5LIB=$SERVER/yeolab/Conservation/scripts/:$PERL5LIB
-export PERL5LIB=$SERVER/yeolab/Software/EXTRA_perlmodules:$PERL5LIB
-export PERL5LIB=$SERVER/yeolab/Software/perl16/lib:$PERL5LIB
-export PERL5LIB=$SERVER/yeolab/Software/perl16/:$PERL5LIB
-export PERL5LIB=/opt/rocks/lib/perl5/site_perl/5.10.1/:$PERL5LIB
+#export PERL5LIB=$SERVER/yeolab/Conservation/scripts/:$PERL5LIB
+#export PERL5LIB=$SERVER/yeolab/Software/EXTRA_perlmodules:$PERL5LIB
+#export PERL5LIB=$SERVER/yeolab/Software/perl16/lib:$PERL5LIB
+#export PERL5LIB=$SERVER/yeolab/Software/perl16/:$PERL5LIB
+#export PERL5LIB=/opt/rocks/lib/perl5/site_perl/5.10.1/:$PERL5LIB
+
+#gmp
+export LD_LIBRARY_PATH=/nas3/yeolab/Software/gmp/lib:$LD_LIBRARY_PATH
+
+#ghc
+export PATH=/nas3/yeolab/Software/ghc-6.12.1-install/bin:$PATH
+
 
 #Python 2.7.5
 #export PYTHONPATH=/nas3/yeolab/Software/Python-2.7.5/lib/python2.7/site-packages
@@ -84,8 +90,9 @@ export LD_LIBRARY_PATH=${SERVER}/yeolab/Software/R-3.0.0/lib:$LD_LIBRARY_PATH
 export LD_LIBRARY_PATH=${SERVER}/yeolab/Software/lib64:$LD_LIBRARY_PATH
 export LD_LIBRARY_PATH=${SERVER}/yeolab/Software/lib:$LD_LIBRARY_PATH
 export LD_LIBRARY_PATH=${SERVER}/gpratt/tools/gtextutils/lib:$LD_LIBRARY_PATH
-export LD_LIBRARY_PATH=${SERVER}/yeolab/Software/ghc/lib:$LD_LIBRARY_PATH
-export LD_LIBRARY_PATH=${SERVER}/yeolab/Software/Python_dependencies/lib:$LD_LIBRARY_PATH
+
+#export LD_LIBRARY_PATH=${SERVER}/yeolab/Software/ghc/lib:$LD_LIBRARY_PATH
+#export LD_LIBRARY_PATH=${SERVER}/yeolab/Software/Python_dependencies/lib:$LD_LIBRARY_PATH
 
 export LD_RUN_PATH=$SERVER/yeolab/Software/lib:$LD_RUN_PATH
 export LD_RUN_PATH=$SERVER/yeolab/Software/lib64:$LD_RUN_PATH
