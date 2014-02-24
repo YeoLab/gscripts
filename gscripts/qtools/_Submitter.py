@@ -171,6 +171,7 @@ class Submitter:
                 kwargs['command_list'] = commands
                 kwargs['job_name'] = '{}{}'.format(name, i + 1)
                 kwargs['submit'] = True
+                kwargs['array'] = True
                 kwargs['walltime'] = self.data['walltime']
                 #sys.stderr.write('Writing to new job {}\n'.format(kwargs[
                 #    'job_name']))

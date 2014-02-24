@@ -508,7 +508,7 @@ class MisoPipeline(object):
             commands.append('python /home/yeo-lab/software/bin/pe_utils.py '
                             '--compute-insert-len {0} '
                             '/projects/ps-yeolab/genomes/{1'
-                            '}/miso_annotations/SE_constitutive/SE.{1}.min_20'
+                            '}/miso/SE_constitutive/SE.{1}.min_20'
                             '.const_exons.gff '
                             '--no-bam-filter '
                             '--output-dir {2} '.format(bam, self.genome,
@@ -540,7 +540,7 @@ class MisoPipeline(object):
                             ' all {} events'.format(event_type))
             commands.append('mkdir -p {}'.format(out_dir))
             commands.append('python /home/yeo-lab/software/bin/miso \
---run /projects/ps-yeolab/genomes/{0}/miso_annotations/{1}_index \
+--run /projects/ps-yeolab/genomes/{0}/miso/{1}_index \
 {2} --output-dir {3} \
 --read-len $READ_LEN \
 {4} \
