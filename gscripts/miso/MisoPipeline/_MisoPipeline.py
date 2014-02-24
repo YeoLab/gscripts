@@ -486,7 +486,8 @@ class MisoPipeline(object):
 
         insert_len_arguments = ''
 
-        event_types = ['SE', 'MXE', 'AFE', 'ALE', 'A3SS', 'A5SS', 'TANDEMUTR']
+        event_types = ['SE', 'MXE', 'AFE', 'ALE', 'A3SS', 'A5SS', 'TANDEMUTR'
+        ]
 
         # Get the read length. Gonna keep this as bash because samtools
         # and less are very fast
@@ -540,16 +541,16 @@ class MisoPipeline(object):
                             ' all {} events'.format(event_type))
             commands.append('mkdir -p {}'.format(out_dir))
             commands.append('python /home/yeo-lab/software/bin/miso \
---run /projects/ps-yeolab/genomes/{0}/miso/{1}_index \
-{2} --output-dir {3} \
---read-len $READ_LEN \
+ --run /projects/ps-yeolab/genomes/{0}/miso/{1}_index \
+ {2} --output-dir {3} \
+ --read-len $READ_LEN \
 {4} \
---settings-filename /projects/ps-yeolab/genomes/hg19/miso_annotations'
+ --settings-filename /projects/ps-yeolab/genomes/hg19/miso_annotations'
                             '/miso_settings_min_event_reads10.txt \
--p {5} \
+ -p {5} \
  > {6} \
-2> {7}'.format(self.genome, event_type, bam, out_dir,
-               insert_len_arguments, self.num_processes, psi_out,
+ 2> {7}'.format(self.genome, event_type, bam, out_dir,
+                insert_len_arguments, self.num_processes, psi_out,
                psi_err))
 
             commands.append("\n# Check that the psi calculation jobs didn't "
