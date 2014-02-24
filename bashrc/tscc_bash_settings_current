@@ -36,7 +36,7 @@ export PYTHONPATH=/home/yeo-lab/software/lib/python2.7/site-packages:$PYTHONPATH
 export PATH=/home/yeo-lab/software/FastQC:$PATH
 #General
 
-export PATH=/home/yeo-lab/software/bin:$PATH
+export PATH=/projects/ps-yeolab/software/bin:/home/yeo-lab/software/bin:$PATH
 export PATH=/home/yeo-lab/software/weblogo:$PATH
 export PATH=$PATH:/home/yeo-lab/software/homer/.//bin/
 
