@@ -564,8 +564,8 @@ class MisoPipeline(object):
             commands.append(
                 "if [ ! -z \"$iffailed\" -o ! -z \"$ifshutdown\" ] ; "
                 "then\n\
-    #rm -rf {}\n\
-    echo \"MISO psi failed on event type: {}\"\n\
+    #rm -rf {1}\n\
+    echo \"MISO psi failed on event type: {0}\"\n\
     exit 1\n\
 fi\n".format(out_dir, event_type))
 
