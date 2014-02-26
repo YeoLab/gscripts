@@ -48,15 +48,13 @@ def _print_and_plot(mean_alpha, mean_beta, alphas, betas, n_iter, data):
     ax.annotate('mean_alpha = {:.5f}'.format(mean_alpha),
                 (0, mean_alpha), fontsize=12,
                 xytext=(0, 1), textcoords='offset points')
-    ax.annotate('mean_beta = {:.5f}'.format(betas.mean()),
+    ax.annotate('mean_beta = {:.5f}'.format(mean_alpha),
                 (0, mean_beta), fontsize=12,
                 xytext=(0, 1), textcoords='offset points')
     ax.set_xlim(0, n_iter)
 
     ax = axes[1]
     x = np.arange(0, 1.01, 0.01)
-    #     fig, ax = plt.subplots(1)
-
     for a, b in zip(alphas, betas):
         ppl.plot(x, beta(a, b).pdf(x), color=ppl.colors.set2[0], alpha=0.1,
                  linewidth=2, ax=ax, zorder=1)
@@ -65,6 +63,8 @@ def _print_and_plot(mean_alpha, mean_beta, alphas, betas, n_iter, data):
 
 
 def estimate_modality(data, n_iter=1000, plot=False):
+    if plot:
+        print data.name,
     alpha_var = pm.Exponential('alpha', .5)
     beta_var = pm.Exponential('beta', .5)
 
