@@ -59,8 +59,9 @@ def _print_and_plot(mean_alpha, mean_beta, alphas, betas, n_iter, data):
 
     for a, b in zip(alphas, betas):
         ppl.plot(x, beta(a, b).pdf(x), color=ppl.colors.set2[0], alpha=0.1,
-                 linewidth=2, ax=ax)
-    ppl.hist(data, facecolor='grey', alpha=0.5, bins=np.arange(0, 1, 0.05))
+                 linewidth=2, ax=ax, zorder=1)
+    ppl.hist(data, facecolor='grey', alpha=0.5, bins=np.arange(0, 1, 0.05),
+             zorder=10)
 
 
 def estimate_modality(data, n_iter=1000, plot=False):

@@ -47,11 +47,9 @@ class Test(unittest.TestCase):
                           'uniform_true': 'uniform'}}
         )
 
-        for true, test in zip(true_result.iterrows(), test_result.iterrows()):
-            true_name, true_series = true
-            test_name, test_series = test
-            for col in true_result.columns:
-                self.assertEqual(test_series[col], test_series[col])
+        for ind in true_result.index:
+            self.assertEqual(true_result.ix[ind, 'modality'],
+                             test_result.ix[ind, 'modality'])
 
 
 if __name__ == "__main__":
