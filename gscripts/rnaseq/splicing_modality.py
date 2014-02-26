@@ -64,7 +64,8 @@ def _print_and_plot(mean_alpha, mean_beta, alphas, betas, n_iter, data):
 
 def estimate_modality(data, n_iter=1000, plot=False):
     if plot:
-        print data.name,
+        print data.name
+        print data
     alpha_var = pm.Exponential('alpha', .5)
     beta_var = pm.Exponential('beta', .5)
 
