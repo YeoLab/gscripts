@@ -3,7 +3,6 @@ Created on Jun 21, 2013
 
 @author: @olgabot
 '''
-import os
 import unittest
 
 from gscripts.rnaseq import splicing_modality
@@ -56,7 +55,8 @@ class Test(unittest.TestCase):
 
 
 if __name__ == "__main__":
-    import sys;
+    import sys
 
     sys.argv = ['', 'Test.test_main']
+
     unittest.main()
