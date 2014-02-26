@@ -54,12 +54,17 @@ def _print_and_plot(mean_alpha, mean_beta, alphas, betas, n_iter, data):
     ax.set_xlim(0, n_iter)
 
     ax = axes[1]
-    x = np.arange(0, 1.01, 0.01)
-    for a, b in zip(alphas, betas):
-        ppl.plot(x, beta(a, b).pdf(x), color=ppl.colors.set2[0], alpha=0.1,
-                 linewidth=2, ax=ax, zorder=1)
     ppl.hist(data, facecolor='grey', alpha=0.5, bins=np.arange(0, 1, 0.05),
-             zorder=10)
+             zorder=10, ax=ax)
+    ymin, ymax = ax.get_ylim()
+    one_x = np.arange(0, 1.01, 0.01)
+    x = np.repeat(one_x, n_iter).reshape(len(one_x), n_iter)
+    beta_distributions = np.vstack((beta(a, b).pdf(one_x)
+                                    for a, b in zip(alphas, betas))).T
+
+    ppl.plot(x, beta_distributions, color=ppl.colors.set2[0], alpha=0.1,
+             linewidth=2, ax=ax)
+    ax.set_ylim(0, ymax)
 
 
 def estimate_modality(data, n_iter=1000, plot=False):
