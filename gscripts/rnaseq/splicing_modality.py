@@ -2,6 +2,7 @@ __author__ = 'Olga'
 
 import pymc as pm
 import pandas as pd
+from collections import Counter
 
 
 def _assign_modality_from_estimate(mean_alpha, mean_beta):
@@ -87,6 +88,8 @@ def estimate_modality(data, n_iter=1000, plot=False):
     mean_alpha = alphas.mean()
     mean_beta = betas.mean()
     estimated_modality = _assign_modality_from_estimate(mean_alpha, mean_beta)
+    print Counter(_assign_modality_from_estimate(a, b)
+                  for a, b in zip(alphas, betas))
 
     if plot:
         _print_and_plot(mean_alpha, mean_beta, alphas, betas, n_iter, data)
