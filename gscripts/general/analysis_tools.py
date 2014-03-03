@@ -9,7 +9,7 @@ import itertools
 import seaborn
 seaborn.set_axes_style('nogrid', 'notebook')
 seaborn.set_color_palette('deep')
-import dataviz as dv
+from ..general import dataviz as dv
 
 from sklearn.preprocessing import LabelEncoder
 from sklearn.ensemble import ExtraTreesClassifier, ExtraTreesRegressor
