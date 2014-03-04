@@ -53,6 +53,7 @@ setup(
                       'matplotlib >= 1.1.0',
                       'pybedtools >= 0.5',
                       'scikit-learn >= 0.13.0',
+                      'clipper'
     ],
 
     setup_requires=["setuptools_git >= 0.3", ],
