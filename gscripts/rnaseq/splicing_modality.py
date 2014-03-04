@@ -68,10 +68,7 @@ def _print_and_plot(mean_alpha, mean_beta, alphas, betas, n_iter, data):
     ax.set_ylim(0, ymax)
 
 
-def estimate_modality(data, n_iter=1000, plot=False):
-    #if plot:
-    #    print data.name
-    #    print data
+def _fit_beta_distribution(data, n_iter):
     alpha_var = pm.Exponential('alpha', .5)
     beta_var = pm.Exponential('beta', .5)
 
@@ -84,6 +81,14 @@ def estimate_modality(data, n_iter=1000, plot=False):
 
     alphas = mcmc.trace('alpha')[:]
     betas = mcmc.trace('beta')[:]
+    return alphas, betas
+
+
+def estimate_modality(data, n_iter=1000, plot=False):
+    #if plot:
+    #    print data.name
+    #    print data
+    alphas, betas = _fit_beta_distribution(data, n_iter)
 
     mean_alpha = alphas.mean()
     mean_beta = betas.mean()
