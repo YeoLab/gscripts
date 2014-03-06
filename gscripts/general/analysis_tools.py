@@ -267,8 +267,9 @@ class Visualizer(Comparer):
         wraps pca on all (default) or on a subset of features
         kwargs: non-default parameters for gscripts.general.plot_pca
         """
-
-        dv.plot_pca(self.X, title=self.descrip, **kwargs)
+        from .dataviz import PCA_viz
+        PCA_viz(self.X, title=self.descrip)
+        PCA_viz( **kwargs)
 
     def generate_scatter_table(self,
                               excel_out=None, external_xref=[]):

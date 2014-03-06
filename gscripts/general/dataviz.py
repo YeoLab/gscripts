@@ -412,7 +412,7 @@ def heatmap(df, title=None, colorbar_label='values',
     fig.tight_layout()
     return fig, row_dendrogram_distances, column_dendrogram_distances
 
-from .analysis_tools import PCA as PCA
+from ..general.analysis_tools import PCA
 
 def L1_distance(x,y):
     return abs(y) + abs(x)
@@ -479,7 +479,6 @@ class PCA_viz(PCA):
 
     def __call__(self, ax=None, **kwargs):
 
-        from pylab import gca
         from matplotlib.gridspec import GridSpec, GridSpecFromSubplotSpec
         import pylab
 
