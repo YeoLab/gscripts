@@ -625,7 +625,7 @@ class PCA_viz(PCA):
 
         return comp_magn[:num_vectors], ax
 
-    def plot_loadings(self, pc='pc_1', n_features=50, ax=ax):
+    def plot_loadings(self, pc='pc_1', n_features=50, ax=None):
 
         import pylab
         x = self.components_.ix[pc].copy()
