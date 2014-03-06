@@ -19,6 +19,9 @@ import scipy.spatial.distance as distance
 from scipy.stats import gaussian_kde
 from sklearn import decomposition as dc
 import statsmodels.api as sm
+import seaborn
+
+
 
 def clusterGram(dataFrame, distance_metric = 'euclidean', linkage_method = 'average',
             outfile = None, clusterRows=True, clusterCols=True, timeSeries=False, doCovar=False,
@@ -409,200 +412,245 @@ def heatmap(df, title=None, colorbar_label='values',
     fig.tight_layout()
     return fig, row_dendrogram_distances, column_dendrogram_distances
 
+from .analysis_tools import PCA as PCA
 
-def plot_pca(df, c_scale=None, x_pc=1, y_pc=2, distance='L1', \
-             save_as=None, save_format='png', whiten=True, num_vectors=30, \
-             figsize=(10, 10), colors_dict=None, markers_dict=None, \
-             title='PCA', show_vectors=True, show_point_labels=True, \
-             column_ids_dict=None, index_ids_dict=None, \
-             show_vector_labels=True, fig=None, ax=None, \
-             marker_size=None, vector_width=None, \
-             axis_label_size=None, title_size=None, vector_label_size=None, \
-             point_label_size=None, vector_colors_dict=None):
+def L1_distance(x,y):
+    return abs(y) + abs(x)
+
+def L2_distance(x,y):
+    return math.sqrt((y ** 2) + (x ** 2))
+
+class PCA_viz(PCA):
+
     """
-    Given a pandas dataframe, performs PCA and plots the results in a
-    convenient single function.
+        Given a pandas dataframe, performs PCA and plots the results in a
+        convenient single function.
 
-    @param df: Samples x genes pandas dataframe. Samples on the rows,
-    genes in the columns
-    @param c_scale: Component scaling of the plot, e.g. for making the
-    plotted vectors larger or smaller.
-    @param x_pc: Integer, which principal component to use for the x-axis
-    (usually 1)
-    @param y_pc: Integer, which principal component to use for the y-axis
-    (usually 2)
-    @param distance:
-    @param save_as: String, full name of the plot, including the file extension
-    @param save_format: String, usually 'png' or 'pdf'
-    @param whiten: Boolean, Whether or not to perform 'whitening'
-    normalization on the data, which transforms the data so that it is less
-    correlated with itself.
-    @param num_vectors: Number of vectors to show on the plot
-    @param figsize: Figure size in integers, (width, height)
-    @param colors_dict: A dictionary of index (samples) to matplotlib colors
-    @param markers_dict: A dictionary of index (samples) to matplotlib markers
-    @param title: A string, the title of the plot
-    @param show_vectors: Boolean, whether or not to show vectors
-    @param show_point_labels: Boolean, whether or not to show the index,
-    e.g. the sample name, on the plot
-    @param column_ids_dict: A dictionary of column names to another
-    value, e.g. if the columns are splicing events with a strange ID,
-    this could be a dictionary that matches the ID to a gene name.
-    @param index_ids_dict: A dictionary of index names to another
-    value, e.g. if the indexes are samples with a strange ID, this could be a
-     dictionary that matches the ID to a more readable sample name.
-    @param show_vector_labels: Boolean. Can be helpful if the vector labels
-    are gene names.
-    @return: x, y, marker, distance of each vector in the data.
-    """
+        @param c_scale: Component scaling of the plot, e.g. for making the
+        plotted vectors larger or smaller.
+        @param x_pc: Integer, which principal component to use for the x-axis
+        (usually 1)
+        @param y_pc: Integer, which principal component to use for the y-axis
+        (usually 2)
+        @param distance:
+        @param colors_dict: A dictionary of index (samples) to matplotlib colors
+        @param markers_dict: A dictionary of index (samples) to matplotlib markers
+        @param markers_size_dict: A dictionary of index (samples) to matplotlib marker sizes
+        @param title: A string, the title of the plot
+        @param show_vectors: Boolean, whether or not to show vectors
+        @param show_point_labels: Boolean, whether or not to show the index,
+        e.g. the sample name, on the plot
+        @param column_ids_dict: A dictionary of column names to another
+        value, e.g. if the columns are splicing events with a strange ID,
+        this could be a dictionary that matches the ID to a gene name.
+        @param index_ids_dict: A dictionary of index names to another
+        value, e.g. if the indexes are samples with a strange ID, this could be a
+         dictionary that matches the ID to a more readable sample name.
+        @param show_vector_labels: Boolean. Can be helpful if the vector labels
+        are gene names.
+        @return: x, y, marker, distance of each vector in the data.
+        """
+
+    _default_plotting_args = {'ax':None, 'x_pc':'pc_1', 'y_pc':'pc_2',
+                      'num_vectors':20, 'title':'PCA', 'title_size':None, 'axis_label_size':None,
+                      'colors_dict':None, 'markers_dict':None, 'markers_size_dict':None,
+                      'default_marker_size':100, 'distance_metric':'L1',
+                      'show_vectors':True, 'c_scale':None, 'vector_width':None, 'vector_colors_dict':None,
+                      'show_vector_labels':True,  'vector_label_size':None,
+                      'show_point_labels':True, 'point_label_size':None,}
+
+    _default_pca_args = {'whiten':True, 'n_components':None}
+
+    _default_args = dict(_default_plotting_args.items() + _default_pca_args.items())
+
+    def __init__(self, df, **kwargs):
+
+        self._validate_params(self._default_args, **kwargs)
+
+        self.plotting_args = self._default_plotting_args.copy()
+        self.plotting_args.update([(k,v) for (k,v) in kwargs.items() if k in self._default_plotting_args.keys()])
+
+        self.pca_args = self._default_pca_args.copy()
+        self.pca_args.update([(k,v) for (k,v) in kwargs.items() if k in self._default_pca_args.keys()])
+
+        super(PCA_viz, self).__init__(**self.pca_args) #initialize PCA object
+        assert type(df) == pd.DataFrame
+        self.pca_space = self.fit_transform(df)
+
+    def __call__(self, ax=None, **kwargs):
+
+        from pylab import gca
+        from matplotlib.gridspec import GridSpec, GridSpecFromSubplotSpec
+        import pylab
+
+        gs_x = 12
+        gs_y = 12
+
+        if ax is None:
+            fig, ax = pylab.subplots(1,1,figsize=(18,9))
+            gs = GridSpec(gs_x,gs_y)
+
+        else:
+            gs = GridSpecFromSubplotSpec(gs_x,gs_y,ax.get_subplotspec())
+
+        ax_pca = pylab.subplot(gs[:, :5])
+        ax_loading1 = pylab.subplot(gs[1:5, 5:])
+        ax_loading2 = pylab.subplot(gs[6:11, 5:])
+
+        passed_kwargs = kwargs
+        local_kwargs = self.plotting_args.copy()
+        local_kwargs.update(passed_kwargs)
+        local_kwargs.update({'ax':ax_pca})
+        self.plot_samples(**local_kwargs)
+        self.plot_loadings(pc=local_kwargs['x_pc'], ax=ax_loading1)
+        self.plot_loadings(pc=local_kwargs['y_pc'], ax=ax_loading2)
+        pylab.tight_layout()
+        return self
 
 
-    row_ids = []
-    column_ids = []
+    def _validate_params(self, valid, **kwargs):
 
-    if index_ids_dict is not None:
-        for ind in df.index:
+        for key in kwargs.keys():
             try:
-                row_ids.append(index_ids_dict[ind])
+                assert key in valid.keys()
+            except:
+                print self.__doc__
+                raise ValueError("unrecognized parameter for pca plot: "\
+                                 "%s. acceptable values are:\n%s" % (key, "\n".join(valid.keys())))
 
-            except KeyError:
-                row_ids.append(ind)
-    
-        assert len(row_ids) == len(df.index)
+    def plot_samples(self, **kwargs):
 
-    else:
-        row_ids = df.index
+        self._validate_params(self._default_plotting_args, **kwargs)
+        default_params = self.plotting_args.copy() #fill missing parameters
+        default_params.update(kwargs)
+        kwargs = default_params
 
-    if column_ids_dict is not None:
+        #cheating!
+        #move kwargs out of a dict, into local namespace, mostly because I don't want to refactor below
 
-        for col in df.columns:
-            try:
-                column_ids.append(column_ids_dict[col])
+        for key in kwargs.keys():
+            exec(key + " = kwargs['" + key + "']")
+        x_loading, y_loading = self.components_.ix[x_pc], self.components_.ix[y_pc]
 
-            except KeyError:
-                column_ids.append(col)
-        
-        assert len(column_ids) == len(df.columns)
+        if ax is None:
+            fig, ax = pylab.subplots(1,1, figsize=(5,5))
+        self.ax = ax
 
-    else:
-        column_ids = df.columns
+        pca_space = self.pca_space
+        x_list = pca_space[x_pc]
+        y_list = pca_space[y_pc]
 
-    df_array = df.as_matrix()
+        if not c_scale:
+            c_scale = .75 * max([norm(point) for point in zip(x_list, y_list)]) / \
+                      max([norm(vector) for vector in zip(x_loading, y_loading)])
 
-    # perform pca
-    n_components = max(x_pc, y_pc, 2)
-    pca = dc.PCA(whiten=whiten, n_components=n_components)
-    pca.fit(df_array)
-    X = pca.transform(df_array)
-    (comp_x, comp_y) = (
-        pca.components_[x_pc - 1, :], pca.components_[y_pc - 1, :])
+        figsize = tuple(gcf().get_size_inches())
+        size_scale = sqrt(figsize[0] * figsize[1]) / 1.5
+        default_marker_size = size_scale*5 if not default_marker_size else default_marker_size
+        vector_width = .5 if not vector_width else vector_width
+        axis_label_size = size_scale *1.5 if not axis_label_size else axis_label_size
+        title_size = size_scale*2 if not title_size else title_size
+        vector_label_size = size_scale * 1.5 if not vector_label_size else vector_label_size
+        point_label_size = size_scale * 1.5 if not point_label_size else point_label_size
 
-    x_list = X[:, x_pc - 1]
-    y_list = X[:, y_pc - 1]
+        # sort features by magnitude/contribution to transformation
+        comp_magn = []
+        magnitudes = []
+        for (x, y, an_id) in zip(x_loading, y_loading, self.X.columns):
 
-    if not c_scale:
-        c_scale = .75 * max([norm(point) for point in zip(x_list, y_list)]) / \
-                  max([norm(vector) for vector in zip(comp_x, comp_y)])
+            x = x * c_scale
+            y = y * c_scale
+
+            if distance_metric == 'L1':
+                mg = L1_distance(x,y)
+
+            elif distance_metric == 'L2':
+                mg = L2_distance(x,y)
+
+            comp_magn.append((x, y, an_id, mg))
+            magnitudes.append(mg)
+
+        self.magnitudes = pd.Series(magnitudes, index=self.X.columns)
+        self.magnitudes.sort(ascending=False)
 
 
-    size_scale = sqrt(figsize[0] * figsize[1]) / 1.5
-    marker_size = size_scale*5 if not(marker_size) else marker_size
-    vector_width = .5 if not vector_width else vector_width
-    axis_label_size = size_scale*2 if not axis_label_size else axis_label_size
-    title_size = size_scale*3 if not title_size else title_size
-    vector_label_size = size_scale if not vector_label_size else vector_label_size
-    point_label_size = size_scale if not point_label_size else point_label_size
+        for (x, y, an_id) in zip(x_list, y_list, self.X.index):
 
-    # sort features by magnitude/contribution to transformation
-    comp_magn = []
-    for (x, y, an_id) in zip(comp_x, comp_y, column_ids):
-
-        x = x * c_scale
-        y = y * c_scale
-
-        if distance == 'L1':
-            comp_magn.append((x, y, an_id, abs(y) + abs(x)))
-
-        elif distance == 'L2':
-            comp_magn.append((x, y, an_id, math.sqrt((y ** 2) + (x ** 2))))
-
-    # create figure and plot
-    if (fig is None) and (ax is None):
-        fig, ax = plt.subplots(figsize=figsize)
-
-    for (x, y, an_id) in zip(x_list, y_list, row_ids):
-
-        if colors_dict:
             try:
                 color = colors_dict[an_id]
             except:
                 color = 'black'
-        else:
-            color = 'black'
 
-        if markers_dict:
             try:
                 marker = markers_dict[an_id]
             except:
-                marker = 'x'
+                marker = '.'
 
-        else:
-            marker = 'x'
-
-        if show_point_labels:
-            if index_ids_dict:
-                try:
-                    an_id = index_ids_dict[an_id]
-                except:
-                    pass
-
-            ax.text(x, y, an_id, color=color, size=point_label_size)
-
-        ppl.scatter(ax, x, y, marker=marker, color=color, s=marker_size, edgecolor='gray')
+            try:
+                marker_size = markers_size_dict[an_id]
+            except:
+                marker_size = default_marker_size
 
 
-    vectors = sorted(comp_magn, key=lambda item: item[3], reverse=True)[
-              :num_vectors]
-    for x, y, marker, distance in vectors:
+            if show_point_labels:
+                ax.text(x, y, an_id, color=color, size=point_label_size)
 
-        if vector_colors_dict:
-            if marker in vector_colors_dict.keys():
+            ppl.scatter(ax, x, y, marker=marker, color=color, s=marker_size, edgecolor='none')
+
+        vectors = sorted(comp_magn, key=lambda item: item[3], reverse=True)[:num_vectors]
+
+        for x, y, marker, distance in vectors:
+
+            try:
                 color = vector_colors_dict[marker]
-            else:
+            except:
                 color = 'black'
 
-        else:
-            color = 'black'
+            if show_vectors:
+                ppl.plot(ax, [0, x], [0, y], color=color, linewidth=vector_width)
 
-        if show_vectors:
-            ppl.plot(ax, [0, x], [0, y], color=color, linewidth=vector_width)
+                if show_vector_labels:
 
-            if show_vector_labels:
-                 if column_ids_dict:
-                     try:
-                         marker = column_ids_dict[marker]
-                     except:
-                         pass
+                     ax.text(1.1*x, 1.1*y, marker, color=color, size=vector_label_size)
 
-                 ax.text(1.1*x, 1.1*y, marker, color=color, size=vector_label_size)
+        var_1 = int(self.explained_variance_ratio_[x_pc] * 100)
+        var_2 = int(self.explained_variance_ratio_[y_pc] * 100)
 
-    var_1 = int(pca.explained_variance_ratio_[x_pc - 1] * 100)
-    var_2 = int(pca.explained_variance_ratio_[y_pc - 1] * 100)
+        ax.set_xlabel(
+            'Principal Component {} (Explains {}% Of Variance)'.format(str(x_pc), \
+                str(var_1)), size=axis_label_size)
+        ax.set_ylabel(
+            'Principal Component {} (Explains {}% Of Variance)'.format(str(y_pc), \
+                str(var_2)), size=axis_label_size)
+        ax.set_title(title, size=title_size)
 
-    ax.set_xlabel(
-        'Principal Component {} (Explains {}% Of Variance)'.format(str(x_pc), \
-            str(var_1)), size=axis_label_size)
-    ax.set_ylabel(
-        'Principal Component {} (Explains {}% Of Variance)'.format(str(y_pc), \
-            str(var_2)), size=axis_label_size)
-    ax.set_title(title, size=title_size)
+        return comp_magn[:num_vectors], ax
 
-    if save_as:
-        fig.savefig(save_as, format=save_format)
+    def plot_loadings(self, pc='pc_1', n_features=50, ax=ax):
 
-    fig.show()
-    return vectors
+        import pylab
+        x = self.components_.ix[pc].copy()
+        x.sort(ascending=False)
+        half_features = int(n_features/2)
+        a = x[:half_features]
+        b = x[-half_features:]
+        if ax is None:
+            ax = pylab.gca()
+        ax.plot(np.r_[a,b], 'o')
+        ax.set_xticks(np.arange(n_features))
+        _ = ax.set_xticklabels(np.r_[a.index, b.index], rotation=90)
+        ax.set_title("loadings on " + pc)
+        x_offset = 0.5
+        xmin, xmax = ax.get_xlim()
+        ax.set_xlim(left=xmin-x_offset, right=xmax-x_offset)
 
+        seaborn.despine(ax=ax)
+
+def plot_pca(df, **kwargs):
+    """ for backwards-compatibility """
+    pcaObj = PCA_viz(df, **kwargs)
+    return_me, ax = pcaObj.plot_samples()
+    return return_me
 
 def skipped_exon_figure(ax, which_axis='y', height_multiplier=0.025,
                         width_multiplier=0.04, leftmost_x=None):

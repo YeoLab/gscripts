@@ -346,3 +346,41 @@ class Visualizer(Comparer):
                    alpha=0.5, bw='silverman', inner='points', names=None, **vp_params)
         seaborn.despine()
         return xx
+
+import sklearn
+from sklearn import decomposition
+class PCA(sklearn.decomposition.PCA):
+
+
+    def relabel_pcs(self, x):
+        return "pc_" + str(int(x) + 1)
+
+    def fit(self, X):
+
+        try:
+            assert type(X) == pd.DataFrame
+        except:
+            print "Try again as a pandas data frame"
+            raise
+
+        self.X = X
+        super(PCA, self).fit(X)
+        self.components_ = pd.DataFrame(self.components_, columns=self.X.columns).rename_axis(self.relabel_pcs, 0)
+        self.explained_variance_ = pd.Series(self.explained_variance_).rename_axis(self.relabel_pcs, 0)
+        self.explained_variance_ratio_ = pd.Series(self.explained_variance_ratio_).rename_axis(self.relabel_pcs, 0)
+        return self
+
+    def transform(self, X):
+        pca_space = super(PCA, self).transform(X)
+        if type(self.X) == pd.DataFrame:
+            pca_space = pd.DataFrame(pca_space, index=self.X.index).rename_axis(self.relabel_pcs, 1)
+        return pca_space
+
+    def fit_transform(self, X):
+        try:
+            assert type(X) == pd.DataFrame
+        except:
+            print "Try again as a pandas data frame"
+            raise
+        self.fit(X)
+        return self.transform(X)

@@ -16,14 +16,15 @@ __author__ = 'Michael Lovci'
 def calculate_psi_SE(IN, EX):
 
     if IN == 0 and EX == 0:
-        psi = float('nan')
+        psi = 0.0
     else:
+        psi = ((IN + 2.) / 2) / (((IN +2.) / 2) + (EX+1))
+
         if IN == 0:
             psi = 0.0
         elif EX == 0:
             psi = 1.0
-        else:
-            psi = ((IN +2.) / 2) / (((IN +2.) / 2) + (EX+1))
+
     return psi
 
 
