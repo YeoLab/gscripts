@@ -486,7 +486,8 @@ class MisoPipeline(object):
 
         insert_len_arguments = ''
 
-        event_types = ['SE', 'MXE', 'AFE', 'ALE', 'A3SS', 'A5SS', 'TANDEMUTR']
+        event_types = ['SE', 'MXE', 'AFE', 'ALE', 'A3SS', 'A5SS', 'TANDEMUTR'
+        ]
 
         # Get the read length. Gonna keep this as bash because samtools
         # and less are very fast
@@ -508,7 +509,7 @@ class MisoPipeline(object):
             commands.append('python /home/yeo-lab/software/bin/pe_utils.py '
                             '--compute-insert-len {0} '
                             '/projects/ps-yeolab/genomes/{1'
-                            '}/miso_annotations/SE_constitutive/SE.{1}.min_20'
+                            '}/miso/SE_constitutive/SE.{1}.min_20'
                             '.const_exons.gff '
                             '--no-bam-filter '
                             '--output-dir {2} '.format(bam, self.genome,
@@ -540,16 +541,17 @@ class MisoPipeline(object):
                             ' all {} events'.format(event_type))
             commands.append('mkdir -p {}'.format(out_dir))
             commands.append('python /home/yeo-lab/software/bin/miso \
---run /projects/ps-yeolab/genomes/{0}/miso_annotations/{1}_index \
-{2} --output-dir {3} \
---read-len $READ_LEN \
+ --run /projects/ps-yeolab/genomes/{0}/miso/{1}_index \
+ {2} --output-dir {3} \
+ --read-len $READ_LEN \
 {4} \
---no-filter-events \
--p {5} \
- > {6}\
-2> {7}'.format(self.genome, event_type, bam, out_dir,
-               insert_len_arguments, self.num_processes, psi_out,
-               psi_err))
+ --settings-filename /projects/ps-yeolab/genomes/hg19/miso_annotations'
+                            '/miso_settings_min_event_reads10.txt \
+ -p {5} \
+ > {6} \
+ 2> {7}'.format(self.genome, event_type, bam, out_dir,
+                insert_len_arguments, self.num_processes, psi_out,
+                psi_err))
 
             commands.append("\n# Check that the psi calculation jobs didn't "
                             "fail.\n#'-z' "
@@ -559,11 +561,13 @@ class MisoPipeline(object):
                             "and 'shutdown' didn't find anything.")
             commands.append('iffailed=$(grep failed {})'.format(psi_out))
             commands.append('ifshutdown=$(grep shutdown {})'.format(psi_err))
-            commands.append('if [ ! -z "$iffailed" -o ! -z "$ifshutdown" ] ; '
-                            'then\n\
-    echo "MISO psi failed on event type: {}"\n\
+            commands.append(
+                "if [ ! -z \"$iffailed\" -o ! -z \"$ifshutdown\" ] ; "
+                "then\n\
+    #rm -rf {0}\n\
+    echo \"MISO psi failed on event type: {1}\"\n\
     exit 1\n\
-fi\n'.format(event_type))
+fi\n".format(out_dir, event_type))
 
             commands.append('# Summarize psi scores for all {} events'
             .format(event_type))
@@ -575,10 +579,11 @@ fi\n'.format(event_type))
             commands.append("# '-s' returns true if file size is nonzero, "
                             "and the error file should be empty.")
             commands.append("""if [ -s {0}/summary.err ] ; then
-    echo 'MISO psi failed on event type: {0}'
+    #rm -rf {0}\n
+    echo 'MISO psi failed on event type: {1}'
     exit 1
 fi
-""".format(out_dir))
+""".format(out_dir, event_type))
         sh_file = self.output_sh
         with open(sh_file, 'w') as f:
             f.write('\n'.join(commands))
@@ -650,7 +655,7 @@ fi
                 #                     # Tell the queue to parallelize this job
                 #                          # into a job array
                 #                     additional_resources=additional_resources)
-                # else:
+                # else:q
                 sub = Submitter(queue_type='PBS', sh_file=submit_sh,
                                 command_list=[command],
                                 job_name=job_name,

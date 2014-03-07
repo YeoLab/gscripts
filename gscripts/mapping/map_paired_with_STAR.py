@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+
 from glob import glob
 from gscripts.qtools._Submitter import Submitter
 import sys
