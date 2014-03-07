@@ -3,14 +3,17 @@ import argparse
 
 OFFSET = 14
 
-def five_prime(feature):
-    if feature.strand == "+":
-        feature.start = feature.start + OFFSET
-        feature.end = feature.start
+def five_prime(interval):
+
+    #There could be an off by one bug here, need to think about it a bit
+    if interval.strand == "+":
+        interval.start = interval.start + OFFSET
+        interval.end = interval.start + 1
     else:
-        feature.end = feature.end - OFFSET
-        feature.start = feature.end
-    return feature
+        interval.end = interval.end - OFFSET 
+        interval.start = interval.end - 1
+
+    return interval
 
 parser = argparse.ArgumentParser(description="Adjusts bam files (or bed files) to correct position for riboseq, outputs bed file of corrected positions")
 parser.add_argument("--bam", help="bam file to adjust", required=True)

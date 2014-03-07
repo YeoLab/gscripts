@@ -13,6 +13,7 @@ scripts = [
     'general/normalize_bedGraph.py',
     'general/parsers.py',
     'general/gsnap_index.py',
+    'ipython_server/serve_ipython.py',
     'mapping/map_paired_with_STAR.py',
     'mapping/sam_to_bam_and_sort.py',
     'miso/submit_index_gff.py',

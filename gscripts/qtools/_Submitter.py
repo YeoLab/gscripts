@@ -51,7 +51,7 @@ class Submitter:
         elif ("tscc" in hostname):
             sys.stderr.write("automatically setting parameters for tscc\n")
             self.data['queue_type'] = "PBS"
-            if 'array' not in self.data:
+            if 'use_array' not in self.data:
                 ar = False
                 sys.stderr.write("\tuse array?: %s\n" %ar)
                 self.data['use_array'] = ar
@@ -136,7 +136,7 @@ class Submitter:
 
         ret_val = 0
         chunks = 1
-        number_jobs=1
+
 
         self.data.update(kwargs)
 
@@ -147,12 +147,10 @@ class Submitter:
 
             if not self.data[key]:
                 raise ValueError("missing value for required key: " + str(key))
-
+        number_jobs=1
             
 
-        if 'array' in self.data:
-            use_array = self.data['array']
-
+        if 'use_array' in self.data and self.data['use_array']:
             if chunks != 1:
                 raise ValueError("only a chunk size of 1 is allowed, please fix the Submitter code if you want to do that")
             number_jobs = math.ceil(len(self.data['command_list'])/int(chunks))
@@ -280,8 +278,8 @@ class Submitter:
                         # for value in kwargs['additional_resources'][key]:
                         sh_file.write("%s %s %s\n" % (queue_param_prefix,
                                                       key, value))
-            if use_array:
-                if self.data['max_running']:
+            if 'use_array' in self.data and self.data['use_array']:
+                if 'max_running' in self.data:
                     sh_file.write("%s -t 1-%d%%%d\n" %(queue_param_prefix, number_jobs, self.data['max_running']))
                 else:
                     sh_file.write("%s -t 1-%d\n" %(queue_param_prefix, number_jobs))
@@ -292,7 +290,7 @@ class Submitter:
             array_job_identifier = "$PBS_ARRAYID"
             
    
-        if use_array:
+        if 'use_array' in self.data and self.data['use_array']:
             sys.stderr.write( "running %d tasks as an array-job. " % (len(
                 self.data['command_list'])))
             for i, cmd in enumerate(self.data['command_list']):

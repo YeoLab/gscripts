@@ -28,6 +28,9 @@ class AnalyzeRNASeq extends QScript {
   @Argument(doc = "strict triming run")
   var strict: Boolean = false
 
+  @Argument(doc = "start processing from bam file")
+  var fromBam: Boolean = false
+
   @Argument(doc = "location to place trackhub (must have the rest of the track hub made before starting script)")
   var location: String = "rna_seq"
 
@@ -205,29 +208,42 @@ def script() {
       var fastq_files = item._1.toString().split(""";""")
       var species = item._2
       var chr_sizes = chromSizeLocation(species)
+      var samFile: File = null
+      if(!fromBam) {
+      	var fastq_file: File = new File(fastq_files(0))
+      	var fastqPair: File = null
+      	var singleEnd = true
 
-      var fastq_file: File = new File(fastq_files(0))
-      var fastqPair: File = null
-      var singleEnd = true
-
-      if (fastq_files.length == 2){
-        singleEnd = false
-        fastqPair = new File(fastq_files(1))
-        add(new FastQC(inFastq = fastqPair))
-      }
+      	if (fastq_files.length == 2){
+           singleEnd = false
+           fastqPair = new File(fastq_files(1))
+           add(new FastQC(inFastq = fastqPair))
+      	}
       
-      add(new FastQC(inFastq = fastq_file))
+	add(new FastQC(inFastq = fastq_file))
 
-      var filteredFastq: File = null
-      if(strict && fastqPair == null) {
-        filteredFastq = stringentJobs(fastq_file)
+      	var filteredFastq: File = null
+      	if(strict && fastqPair == null) {
+		filteredFastq = stringentJobs(fastq_file)
+     	} else {
+	    	filteredFastq = fastq_file
+      	}
+
+
+	// run regardless of stringency
+      	samFile = swapExt(filteredFastq, ".fastq", ".sam")
+	
+	if(item._2 != "null") { //if paired	
+       	  add(new star(filteredFastq, samFile, not_stranded, fastqPair, species = species))
+        } else { //unpaired
+          add(new star(filteredFastq, samFile, not_stranded, species = species))
+      	}
+
       } else {
-        filteredFastq = fastq_file
+        samFile = new File(fastq_files(0))
       }
 
-
-      // run regardless of stringency
-      val samFile = swapExt(filteredFastq, ".fastq", ".sam")
+      
       val sortedBamFile = swapExt(samFile, ".sam", ".sorted.bam")
       val rgSortedBamFile = swapExt(sortedBamFile, ".bam", ".rg.bam")
       val indexedBamFile = swapExt(rgSortedBamFile, "", ".bai")
@@ -245,12 +261,6 @@ def script() {
       splicesFiles = splicesFiles ++ List(oldSpliceOut)      
       bamFiles = bamFiles ++ List(rgSortedBamFile)
 
-      if(item._2 != "null") { //if paired	
-        add(new star(filteredFastq, samFile, not_stranded, fastqPair, species = species))
-      } else { //unpaired
-        add(new star(filteredFastq, samFile, not_stranded, species = species))
-      }
-      
       add(new sortSam(samFile, sortedBamFile, SortOrder.coordinate))
       add(addOrReplaceReadGroups(sortedBamFile, rgSortedBamFile))
       add(new samtoolsIndexFunction(rgSortedBamFile, indexedBamFile))

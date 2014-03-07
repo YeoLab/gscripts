@@ -1,0 +1,282 @@
+#!/usr/bin/perl
+#use strict;
+use warnings;
+use POSIX;
+# Initialize variables
+
+#$lane = $ARGV[0];
+#$window = $ARGV[1];
+#$target_pval = 0.00001;
+$dir = $ARGV[3];
+$mRNA = $ARGV[2];
+if ($mRNA == 0) {
+	$annotfile = $dir."clusterid_location_mm8.pre";
+} else {
+	$annotfile = $dir."clusterid_location_mm8";
+}
+$inputfile = $ARGV[0];
+$outputfile = $ARGV[1];
+#$inputfile = "LIN28_ES_comb.ingenes.BED";
+#$outputfile = "LIN28_ES_comb_ingenes_sorted";
+#$outputfile2 = $inputfile."_ingenes_histo";
+# Open sequence file (can be very large)
+open(FINISHED, ">$outputfile");
+#open(FINISHED2, ">$outputfile2");
+open(ANNOT_DATA, "< $annotfile") or die "cannot open $annotfile : $!\n";
+while(defined($line = <ANNOT_DATA>)) {
+	chomp $line;
+	@a = split(/\t/, $line);
+	$chr = $a[0];
+	$start = $a[1];
+	$end = $a[2];
+	$direction = $a[3];
+	$id = $a[4];
+	$size = $a[5];
+	$id_annotation{$id}->[0] = $chr;
+	$id_annotation{$id}->[1] = $start;
+	$id_annotation{$id}->[2] = $end;
+	$id_annotation{$id}->[3] = $direction;
+	$id_annotation{$id}->[4] = $size;
+	$id_annotation{$id}->[5] = 1;
+}
+
+my @chr_array = ('chr1', 'chr2', 'chr3', 'chr4', 'chr5', 'chr6', 'chr7', 'chr8', 'chr9', 'chr10', 'chr11', 'chr12', 'chr13', 'chr14', 'chr15', 'chr16', 'chr17', 'chr18', 'chr19', 'chrX', 'chrY');
+#my @chr_array = ('chr22');
+
+$chr_max{"chr1"} = 247249719;
+$chr_max{"chr2"} = 242951149;
+$chr_max{"chr3"} = 199501827;
+$chr_max{"chr4"} = 191273063;
+$chr_max{"chr5"} = 180857866;
+$chr_max{"chr6"} = 170899992;
+$chr_max{"chr7"} = 158821424;
+$chr_max{"chr8"} = 146274826;
+$chr_max{"chr9"} = 140273252;
+$chr_max{"chr10"} = 135374737;
+$chr_max{"chr11"} = 134452384;
+$chr_max{"chr12"} = 132349534;
+$chr_max{"chr13"} = 114142980;
+$chr_max{"chr14"} = 106368585;
+$chr_max{"chr15"} = 100338915;
+$chr_max{"chr16"} = 88827254;
+$chr_max{"chr17"} = 78774742;
+$chr_max{"chr18"} = 76117153;
+$chr_max{"chr19"} = 63811651;
+$chr_max{"chr20"} = 62435964;
+$chr_max{"chr21"} = 46944323;
+$chr_max{"chr22"} = 49691432;
+$chr_max{"chrX"} = 154913754;
+$chr_max{"chrY"} = 57772954;
+
+#$N_size = 222406391;
+#$rep5_size = 74048982;
+#$rep10_size = 273864903;
+@pos_distribution = ();
+#@neg_distribution = ();
+
+foreach $chr_input (@chr_array) {
+	#$inputfile = "LIN28_ES_comb.".$chr_input.".bowtie";
+	print "$chr_input\n";
+	#@list = ();
+	@pos_list = ();
+	#@neg_list = ();
+	#%strand = ();
+	open(GET_DATA, "< $inputfile") or die "cannot open $inputfile : $!\n";
+	#$chr_size = $chr_max{$chr_input};
+	#$genome_size += $chr_size;
+	#$line = <GET_DATA>;
+	while(defined($line = <GET_DATA>)) {
+
+		chomp $line;
+		@a = split(/\t/, $line);
+		#@b = split(/\|/, $a[3]);
+		#$b[0] =~ /.*\,(\d+)/;
+		#$id = $1;
+		#$start = $b[1];
+		#$end = $b[2];
+		$this_chr = $a[0];
+		$this_start = $a[1];
+		$this_end = $a[2];
+		$this_id = $a[5];
+		$peak_height = $a[3];
+		if ($this_chr eq $chr_input) {
+			if (exists($id_annotation{$this_id})) {
+				#$id_annotation{$this_id}->[5] += $peak_height;
+				$id_annotation{$this_id}->[5] += 1;
+			}
+		}
+		#$loc = floor(($this_start+$this_end)/2);
+		#$chr = $id_annotation{$id}->[0];
+		#$start = $id_annotation{$id}->[1];
+		#$end = $id_annotation{$id}->[2];
+		#$id_direction = $id_annotation{$id}->[3];
+		#$size = $id_annotation{$id}->[4];
+		#$id_size = $end - $start + 1;
+		#$this_pos = $a[3];
+	}
+	close (GET_DATA);
+}
+
+
+foreach $chr_input (@chr_array) {
+	#$inputfile = "LIN28_ES_comb.".$chr_input.".bowtie";
+	print "$chr_input\n";
+	#@list = ();
+	@pos_list = ();
+	#@neg_list = ();
+	#%strand = ();
+	open(GET_DATA, "< $inputfile") or die "cannot open $inputfile : $!\n";
+	#$chr_size = $chr_max{$chr_input};
+	#$genome_size += $chr_size;
+	#$line = <GET_DATA>;
+	while(defined($line = <GET_DATA>)) {
+
+		chomp $line;
+		@a = split(/\t/, $line);
+		#@b = split(/\|/, $a[3]);
+		#$b[0] =~ /.*\,(\d+)/;
+		#$id = $1;
+		#$start = $b[1];
+		#$end = $b[2];
+		$this_chr = $a[0];
+		$this_start = $a[1];
+		$this_end = $a[2];
+		$this_loc = floor(($this_start + $this_end)/2);
+		$id = $a[5];
+		if (exists($id_annotation{$id})) {	
+			#$loc = floor(($this_start+$this_end)/2);
+			$chr = $id_annotation{$id}->[0];
+			$start = $id_annotation{$id}->[1];
+			$end = $id_annotation{$id}->[2];
+			$id_direction = $id_annotation{$id}->[3];
+			$size = $id_annotation{$id}->[4];
+			$id_count = $id_annotation{$id}->[5];
+			$id_size = $end - $start + 1;
+			#$this_pos = $a[3];
+		
+			if ($id_count >= 1) {
+				if ($id_direction == 0) {
+				#if ($a[5] eq "+") {
+					if ($this_chr eq $chr_input) {
+						$tag_direction = 0;
+						#$loc = $this_start;
+						$this_pos = $this_loc - $start;
+						$relative_loc = floor(($this_pos/$id_size)*100);
+						$relative_tag_size = 1/$id_count;
+						if (($relative_loc >= 0) && ($relative_loc <= 100)) {
+							$pos_distribution[$relative_loc] += $relative_tag_size;
+						}
+						#$id_relative{$id}->[$relative_loc] += $relative_tag_size;
+				
+					}
+				} else {
+					if ($this_chr eq $chr_input) {
+						$tag_direction = 1;
+						$this_pos = $end - $this_loc;
+						$relative_loc = floor(($this_pos/$id_size)*100);
+						$relative_tag_size = 1/$id_count;
+				
+						#$pos_distribution[$relative_loc]++;
+						if (($relative_loc >= 0) && ($relative_loc <= 100)) {
+							$pos_distribution[$relative_loc] += $relative_tag_size;
+						}
+						#$id_relative{$id}->[$relative_loc] += $relative_tag_size;
+					}
+				}
+			}
+		}
+	}
+	close (GET_DATA);
+}
+
+close (GET_DATA);
+
+for ($i = 0; $i <= 100; $i++) {
+	$pos_count = $pos_distribution[$i];
+	if ($pos_count) {
+	} else {
+		$pos_count = 0;
+	}
+	#print "$i\t$count\n";
+	$total_count += $pos_count;
+	#$neg_count = $neg_distribution[$i];
+	#$total_count += $neg_count;
+	print FINISHED "$i\t$pos_count\t$total_count\n";
+}
+close (FINISHED);
+
+exit;
+
+sub gammln {
+	my $x = shift;
+	my $y = $x;
+	my @cof = (76.18009172947146, -86.50532032941677, 24.01409824083091, -1.231739572450155, 0.1208650973866179e-2, -0.5395239384953e-5);
+	my $tmp = $x + 5.5;
+	$tmp -= ($x+0.5)*log($tmp);
+	my $ser = 1.000000000190015;
+	for (my $j = 0; $j <= 5; $j++) {
+		$ser += ($cof[$j])/(++$y);
+	}
+	return -$tmp+log(2.506622746310005*$ser/$x);
+}
+
+sub factln {
+	my @a = ();
+	my $n = shift;
+	if ($n < 0) {
+		print "Negative factorial\n";
+	}
+	if ($n <= 1) {
+		return 0;
+	}
+	if ($n <= 100) {
+		return $a[$n] ? $a[$n] : ($a[$n] = gammln($n+1));
+	} else {
+		return gammln($n+1);
+	}
+}
+
+sub poisln {
+	my $freq = $_[0];
+	my $target = $_[1];
+	my $logfreq = log($freq);
+	my $totalp = 0;
+	for ($i = $target; $i >= 0; $i--) {
+		$lni = factln($i);
+		$lnp = $i * $logfreq - $freq - $lni;
+		$p = exp($lnp);
+		$totalp += $p;
+	}
+	$inverse = 1-$totalp;
+	return $inverse;
+}
+
+sub pois {
+	my $f = $_[0];
+	my $t = $_[1];
+	my $tp = 0;
+	$s1 = exp(-1 * $f);
+	
+	for ($i = $t; $i >= 0; $i--) {
+		$s2 = $f ** $i;
+		$s3 = factorial($i);
+		$p1 = ($s1 * $s2)/$s3;
+		$tp = $tp+$p1;
+	}
+	$inverse = 1-$tp;
+	return $inverse;
+}
+
+sub factorial {
+	$s = 1;
+	$r = 1;
+	$input = $_[0];
+	while ($s <= $input) {
+		$r *= $s;
+		$s++;
+	}
+	if ($input == 0) {
+		$r = 1;
+	}
+return $r;
+}

@@ -3,7 +3,7 @@
 # Parse command line arguments
 import argparse
 
-import qtools
+import gscripts.qtools as qtools
 
 '''
 Author: olga

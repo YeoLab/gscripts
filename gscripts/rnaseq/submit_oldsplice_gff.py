@@ -20,6 +20,13 @@ for row, dat in sInfo.iterrows():
                 gff = dat['gff']
             else:
                 gff = "/home/yeo-lab/genomes/hg19/miso_annotations/SE.hg19.gff3"
+        elif species == "panTro4":
+            if 'gff' in dat:
+                gff = dat['gff']
+            else:
+                gff = '/oasis/tscc/scratch/mlovci/apeSeq/genomes/all_genomes/annotations/chimp/events/commonshortest/SE.panTro4.gff3'
+'
+
         else:
             raise ValueError("I don't know where species %s's gff file is" % (dat['Species']))
 

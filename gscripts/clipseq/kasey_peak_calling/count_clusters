@@ -1,0 +1,73 @@
+#!/usr/bin/perl
+#use strict;
+use warnings;
+use POSIX;
+# Initialize variables
+
+#$lane = $ARGV[0];
+#$window = $ARGV[1];
+#$target_pval = 0.00001;
+
+
+$inputfile = $ARGV[0];
+$outputfile = $ARGV[1];
+#$dir = $ARGV[2];
+$species = $ARGV[2];
+# Open sequence file (can be very large)
+open(FINISHED, ">$outputfile");
+
+if ($species =~ /^mm/) {
+	@chr_array = ('chr1', 'chr2', 'chr3', 'chr4', 'chr5', 'chr6', 'chr7', 'chr8', 'chr9', 'chr10', 'chr11', 'chr12', 'chr13', 'chr14', 'chr15', 'chr16', 'chr17', 'chr18', 'chr19','chrX', 'chrY');
+	print FINISHED "Expecting mouse chromosomes\nChromosome\tCluster count\n";
+} elsif ($species =~ /^hg/) {
+	@chr_array = ('chr1', 'chr2', 'chr3', 'chr4', 'chr5', 'chr6', 'chr7', 'chr8', 'chr9', 'chr10', 'chr11', 'chr12', 'chr13', 'chr14', 'chr15', 'chr16', 'chr17', 'chr18', 'chr19', 'chr20', 'chr21', 'chr22', 'chrX', 'chrY');
+	print FINISHED "Expecting human chromosomes\nChromosome\tCluster count\n";
+} elsif ($species =~ /^ce/) {
+	@chr_array = ('chrI', 'chrII', 'chrIII', 'chrIV', 'chrV', 'chrX');
+	print FINISHED "Expecting C.elegans chromosomes\nChromosome\tCluster count\n";
+} else {
+	print FINISHED "Unexpected species listed\nChromosome\tCluster count\n";
+}
+
+foreach $chr (@chr_array) {
+	$expected_chr{$chr} = 0;
+}
+#print FINISHED "@chr_array\n";
+open(GET_DATA, "< $inputfile") or die "cannot open $inputfile : $!\n";
+while(defined($line = <GET_DATA>)) {
+	if ($line !~ /^chr/) { } else {
+		chomp $line;
+		@a = split(/\t/, $line);
+		$chr = $a[0];
+		$cluster_count{$chr}++;
+	}
+}
+
+foreach $chr (@chr_array) {
+	if (exists($cluster_count{$chr})) {
+		$count = $cluster_count{$chr};
+	} else {
+		$count = 0;
+	}
+	print FINISHED "$chr\t$count\n";
+}
+
+foreach $chr (sort keys %expected_chr) {
+	if (exists($cluster_count{$chr})) {
+	} else {
+		print FINISHED "No clusters on chromosome $chr found. Is this expected?\n";
+	}
+}
+foreach $chr (sort keys %cluster_count) {
+	if (exists($expected_chr{$chr})) {
+	} else {
+		print FINISHED "Clusters on chromsome $chr unexpectedly found. Expecting $species specific chromosomes.\n";
+	}
+}
+
+
+close (GET_DATA);
+close (FINISHED);
+
+exit;
+
