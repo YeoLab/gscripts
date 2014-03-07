@@ -518,7 +518,7 @@ class PCA_viz(PCA):
                                  "%s. acceptable values are:\n%s" % (key, "\n".join(valid.keys())))
 
     def plot_samples(self, **kwargs):
-
+        from pylab import gcf
         self._validate_params(self._default_plotting_args, **kwargs)
         default_params = self.plotting_args.copy() #fill missing parameters
         default_params.update(kwargs)

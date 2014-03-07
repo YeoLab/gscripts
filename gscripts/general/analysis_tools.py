@@ -260,7 +260,7 @@ class Visualizer(Comparer):
         ax.axvline(x=clf.score_cutoff)
         [lab.set_rotation(90) for lab in ax.get_xticklabels()]
 
-    def do_pca(self, pca_args_dict, plotting_args_dict):
+    def do_pca(self, pca_args_dict={}, plotting_args_dict={}):
 
         """
         wraps pca on all (default) or on a subset of features
