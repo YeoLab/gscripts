@@ -629,7 +629,7 @@ class PCA_viz(PCA):
 
         import pylab
         x = self.components_.ix[pc].copy()
-        x.sort(ascending=False)
+        x.sort(ascending=True)
         half_features = int(n_features/2)
         a = x[:half_features]
         b = x[-half_features:]
