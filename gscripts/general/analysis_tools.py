@@ -260,15 +260,16 @@ class Visualizer(Comparer):
         ax.axvline(x=clf.score_cutoff)
         [lab.set_rotation(90) for lab in ax.get_xticklabels()]
 
-    def do_pca(self, **kwargs):
+    def do_pca(self, pca_args_dict, plotting_args_dict):
 
         """
         wraps pca on all (default) or on a subset of features
         kwargs: non-default parameters for gscripts.general.plot_pca
         """
         from .dataviz import PCA_viz
-        PCA_viz(self.X, title=self.descrip)
-        PCA_viz( **kwargs)
+        pcaObj = PCA_viz(self.X, title=self.descrip, **pca_args_dict)
+        pcaObj(**plotting_args_dict)
+        return pcaObj
 
     def generate_scatter_table(self,
                               excel_out=None, external_xref=[]):
