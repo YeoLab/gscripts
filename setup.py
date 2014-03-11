@@ -3,9 +3,11 @@ from setuptools import setup, find_packages
 
 scripts = [
     'annotations/gencode_annotate_utrs_5p_3p.pl',
+    'clipseq/run_kasey.py',
     'clipseq/kmer_extractor.py',
     'clipseq/perform_idr.py',
     'clipseq/run_piranha.py',
+    'clipseq/run_ripseeker.py',
     'editing/create_rna_editing_makefile.py',
     'general/calculate_NRF.py',
     'general/count_aligned_from_sam.py',

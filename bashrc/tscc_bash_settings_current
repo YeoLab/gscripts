@@ -14,6 +14,11 @@ export GNUPLOT_DEFAULT_GDFONT=LiberationSans-Regular
 export BOWTIE_INDEXES=/projects/ps-yeolab/genomes/bowtie_index
 export BOWTIE2_INDEXES=/projects/ps-yeolab/genomes/bowtie_index
 
+#GHC
+export LD_RUN_PATH=/home/yeo-lab/software/ghc/lib:$LD_RUN_PATH 
+export LD_LIBRARY_PATH=/home/yeo-lab/software/ghc/lib:$LD_LIBRARY_PATH
+export PATH=/home/yeo-lab/software/ghc/bin:$PATH
+
 #perl stuff
 #export PERL5LIB=$SERVER/yeolab/Conservation/scripts/:$PERL5LIB
 #export PERL5LIB=$SERVER/yeolab/Software/EXTRA_perlmodules:$PERL5LIB

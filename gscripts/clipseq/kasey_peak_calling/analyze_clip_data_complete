@@ -1,7 +1,7 @@
 #!/usr/bin/perl
 
 #$program_dir = "/home/kasey/Sequence/Solexa/gy_mrna/scripts_peak_calling/";
-$program_dir = "/nas3/khutt/scripts_peak_calling/";
+$program_dir = "/home/gpratt/gscripts/gscripts/clipseq/kasey_peak_calling/";
 if (@ARGV < 2) {
 	printCMD();
 }

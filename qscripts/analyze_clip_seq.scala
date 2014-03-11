@@ -84,13 +84,6 @@ class AnalizeCLIPSeq extends QScript {
     required("--out_file", outBed)
     this.isIntermediate = true
   }
-
-  class Ripseeker(@Input inBam: File, @Output outBed: File) extends CommandLineFunction {
-   override def shortDescription = "ripseeker"
-   def commandLine = "python ~/gscripts/gscripts/clipseq/run_ripseeker.py " + 
-       		     required("--bam", inBam) +
-   		     required("--out", outBed) 
-  }
    
   class BamToBed(@Input inBam: File, @Output outBed: File) extends CommandLineFunction {
   override def shortDescription = "bamToBed"
@@ -193,7 +186,6 @@ class AnalizeCLIPSeq extends QScript {
 	     
 	     val rmDupedBedFile = swapExt(bamFile, ".bam", ".bed")
       	     val pyicoclipResults = swapExt(bamFile, ".bed", ".pyicoclip.bed")
-      	     val ripseekerResults = swapExt(bamFile, ".bam", ".ripseeker.bed")
       	     val IDRResult = swapExt(bamFile, "", ".IDR")
 	     
       	     val countFile = swapExt(bamFile, "bam", "count")
@@ -224,7 +216,21 @@ class AnalizeCLIPSeq extends QScript {
 
 	     add(new BamToBed(inBam=bamFile, outBed=rmDupedBedFile))
       	     add(new Pyicoclip(inBed = rmDupedBedFile, outBed = pyicoclipResults, regions = genicRegionsLocation(genome) ))
-      	     //add(new Ripseeker(inBam = bamFile, outBed=ripseekerResults))
+
+	     var ripseeker = new RipSeeker
+	     ripseeker.inBam = bamFile
+	     ripseeker.outBed = swapExt(bamFile, ".bam", ".ripseeker.bed")
+     
+	     var piranha = new Piranha
+	     piranha.inBam = bamFile
+	     piranha.outBed = swapExt(bamFile, ".bam", ".piranha.bed")
+
+	     var clipClassic = new ClipClassic
+	     clipClassic.inBam = bamFile
+	     clipClassic.species = genome
+
+	     add(ripseeker, piranha, clipClassic)
+
       	     add(new IDR(inBam = bamFile, species = genome, genome = chromSizeLocation(genome), outResult = IDRResult, premRNA = premRNA))
 
       	     add(new countTags(input = bamFile, index = bamIndex, output = countFile, a = exonLocation(genome)))
