@@ -2,9 +2,12 @@ from setuptools import setup, find_packages
 
 
 scripts = [
+    'annotations/gencode_annotate_utrs_5p_3p.pl',
+    'clipseq/run_kasey.py',
     'clipseq/kmer_extractor.py',
     'clipseq/perform_idr.py',
     'clipseq/run_piranha.py',
+    'clipseq/run_ripseeker.py',
     'editing/create_rna_editing_makefile.py',
     'general/calculate_NRF.py',
     'general/count_aligned_from_sam.py',
@@ -14,11 +17,14 @@ scripts = [
     'general/parsers.py',
     'general/gsnap_index.py',
     'ipython_server/serve_ipython.py',
+    'mapping/sort_bam.py',
+    'mapping/index_bam.py',
     'mapping/map_paired_with_STAR.py',
     'mapping/sam_to_bam_and_sort.py',
     'miso/submit_index_gff.py',
     'miso/submit_miso_pipeline.py',
     'output_parsers/parseMiso.py',
+    'pwm/cisbp_to_meme.py',
     'riboseq/riboseq_coverage.py',
     'rnaseq/count_tags.py',
     'rnaseq/make_rnaseqc.py',
@@ -40,7 +46,7 @@ setup(
 
     name="gscripts",
     long_description=long_description,
-    version="0.1.5",
+    version="0.1.6",
     packages=find_packages(),
 
 
@@ -51,6 +57,7 @@ setup(
                       'matplotlib >= 1.1.0',
                       'pybedtools >= 0.5',
                       'scikit-learn >= 0.13.0',
+                      'clipper'
     ],
 
     setup_requires=["setuptools_git >= 0.3", ],

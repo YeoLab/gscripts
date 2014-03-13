@@ -1,3 +1,6 @@
+#!/usr/bin/env python
+
+
 __author__ = 'olga'
 from glob import glob
 from gscripts.qtools._Submitter import Submitter

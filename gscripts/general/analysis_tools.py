@@ -9,7 +9,6 @@ import itertools
 import seaborn
 seaborn.set_axes_style('nogrid', 'notebook')
 seaborn.set_color_palette('deep')
-from ..general import dataviz as dv
 
 from sklearn.preprocessing import LabelEncoder
 from sklearn.ensemble import ExtraTreesClassifier, ExtraTreesRegressor
@@ -261,14 +260,16 @@ class Visualizer(Comparer):
         ax.axvline(x=clf.score_cutoff)
         [lab.set_rotation(90) for lab in ax.get_xticklabels()]
 
-    def do_pca(self, **kwargs):
+    def do_pca(self, pca_args_dict={}, plotting_args_dict={}):
 
         """
         wraps pca on all (default) or on a subset of features
         kwargs: non-default parameters for gscripts.general.plot_pca
         """
-
-        dv.plot_pca(self.X, title=self.descrip, **kwargs)
+        from .dataviz import PCA_viz
+        pcaObj = PCA_viz(self.X, title=self.descrip, **pca_args_dict)
+        pcaObj(**plotting_args_dict)
+        return pcaObj
 
     def generate_scatter_table(self,
                               excel_out=None, external_xref=[]):
@@ -346,3 +347,41 @@ class Visualizer(Comparer):
                    alpha=0.5, bw='silverman', inner='points', names=None, **vp_params)
         seaborn.despine()
         return xx
+
+import sklearn
+from sklearn import decomposition
+class PCA(sklearn.decomposition.PCA):
+
+
+    def relabel_pcs(self, x):
+        return "pc_" + str(int(x) + 1)
+
+    def fit(self, X):
+
+        try:
+            assert type(X) == pd.DataFrame
+        except:
+            print "Try again as a pandas data frame"
+            raise
+
+        self.X = X
+        super(PCA, self).fit(X)
+        self.components_ = pd.DataFrame(self.components_, columns=self.X.columns).rename_axis(self.relabel_pcs, 0)
+        self.explained_variance_ = pd.Series(self.explained_variance_).rename_axis(self.relabel_pcs, 0)
+        self.explained_variance_ratio_ = pd.Series(self.explained_variance_ratio_).rename_axis(self.relabel_pcs, 0)
+        return self
+
+    def transform(self, X):
+        pca_space = super(PCA, self).transform(X)
+        if type(self.X) == pd.DataFrame:
+            pca_space = pd.DataFrame(pca_space, index=self.X.index).rename_axis(self.relabel_pcs, 1)
+        return pca_space
+
+    def fit_transform(self, X):
+        try:
+            assert type(X) == pd.DataFrame
+        except:
+            print "Try again as a pandas data frame"
+            raise
+        self.fit(X)
+        return self.transform(X)

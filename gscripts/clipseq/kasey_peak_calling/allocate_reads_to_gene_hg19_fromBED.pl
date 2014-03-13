@@ -3,10 +3,12 @@ use warnings;
 
 #read GrOUPED, drops reads into genes and convert coordinates into BED
 my %GENES;
-my $spec = $ARGV[0]; #hg18, mm8, ce6
+my $spec = $ARGV[0]; #hg19, hg18, mm8, ce6
 my $file = $ARGV[1]; #"AGO2_293T_comb";
 #open(GRP,"/nas3/yeolab/Genome/ucsc_output/hg18data4/grouped") || die " can't open file: $!";
-open(GRP,"/projects/ps-yeolab/genomes/hg19/hg19data4/grouped") || die "can't open file: $!";
+#open(GRP,"/nas3/yeolab/Genome/ensembl/AS_STRUCTURE/hg19data4/grouped") || die "can't open file: $!";
+open(GRP,"/projects/ps-yeolab/genomes/hg19/hg19data4/grouped" ) ||die "can't open file: $!\n";
+
 while (<GRP>)
 {
    chomp;
@@ -33,12 +35,16 @@ open(BED,">".$file.".ingenes.BED") || die;
 printf BED "track name\=".$file."_genic description\=".$file."_genic visibility\=2 itemRgb\=\"On\" useScore\=1\n";
 
 my %target_counts;
-open(FI,"<".$file.".unique.rmsk") || die;
+open(FI,"<".$file) || die;
 while (<FI>)
 {
    chomp;
    my $line = $_;
-   my ($qname,$qsign,$chr,$x,$y,$seq) = split(/\t/,$line);
+   # Version that reads BED format
+   my ($chr,$x,$y ,$qname,$color, $qsign) = split(/\t/,$line);
+
+   #ORIGIANL VERSION
+   #my ($qname,$qsign,$chr,$x,$y,$seq) = split(/\t/,$line);
    my $qstrand = -1;
    if ($qsign eq '+')
    {

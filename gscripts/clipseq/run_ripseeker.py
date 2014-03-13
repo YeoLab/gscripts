@@ -15,4 +15,5 @@ if __name__ == "__main__":
     print "cat %s_neg.bed %s_pos.bed > %s" % (args.out, args.out, args.out)
     p2 = subprocess.Popen("cat %s_neg.bed %s_pos.bed > %s" % (args.out, args.out, args.out), shell=True) 
     p2.wait()
-    p3 = subprocess.Popen("rm -rf %s_neg.bed %s_pos.bed" % (args.out, args.out, args.out), shell=True) 
+    os.remove("%s_neg.bed" % (args.out))
+    os.remove("%s_pos.bed" % (args.out))
