@@ -20,7 +20,7 @@ from scipy.stats import gaussian_kde
 from sklearn import decomposition as dc
 import statsmodels.api as sm
 import seaborn
-
+import pylab
 
 
 def clusterGram(dataFrame, distance_metric = 'euclidean', linkage_method = 'average',
@@ -1093,7 +1093,7 @@ def splicing_diagram(ax, bottom_y, highlight=None, height_multiplier=0.025):
     # bottom_y = -0.01
     top_y = 0.975
 
-    highlight_color = ppl.set1[1]
+    highlight_color = ppl.colors.set1[1]
 
     exon_kwargs = {'fill': True, 'width': width, 'height': height,
                    'clip_on': False, 'facecolor': 'white', #ppl.almost_black,
