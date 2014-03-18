@@ -335,10 +335,12 @@ def heatmap(df, title=None, colorbar_label='values',
 
     ### heatmap ####
     heatmap_ax = fig.add_subplot(heatmap_gridspec[nrows - 1, ncols - 1])
+
+    rows = plot_df.index.values[row_dendrogram_distances['leaves']]
+    columns = plot_df.columns.values[column_dendrogram_distances[
+        'leaves']]
     heatmap_ax_pcolormesh = \
-        heatmap_ax.pcolormesh(plot_df.ix[row_dendrogram_distances['leaves'],
-                                         column_dendrogram_distances[
-                                             'leaves']].values,
+        heatmap_ax.pcolormesh(plot_df.ix[rows, columns].values,
                               norm=my_norm, cmap=cmap, vmin=vmin, vmax=vmax)
     heatmap_ax.set_ylim(0, df.shape[0])
     heatmap_ax.set_xlim(0, df.shape[1])
