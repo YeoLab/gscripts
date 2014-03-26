@@ -9,9 +9,9 @@ import gzip
 import os
 from optparse import OptionParser
 
-RANDOMER_FRONT_LENGTH = 3
-RANDOMER_BACK_LENGTH = 2
-def reformat_read(name, seq, plus, quality, barcodes):
+
+def reformat_read(name, seq, plus, quality, barcodes,
+                  RANDOMER_FRONT_LENGTH=3, RANDOMER_BACK_LENGTH=2):
     """ reformats read to have correct barcode attached 
         name - read name
         seq - read sequence
@@ -53,6 +53,8 @@ if __name__ == "__main__":
     parser.add_option("-b", "--barcodes", dest="barcodes", help="file of barcode / barcode id")
     parser.add_option("-o", "--out_file", dest="out_file")
     parser.add_option("-m", "--metrics_file", dest="metrics_file")
+    parser.add_option("--front", type=int, dest="front_length", help="Number of randomers before the barcode", default=3)
+    parser.add_option("--back", type=int, dest="back_length", help="Number of randomers after the barcode", default=2)
     
     (options,args) = parser.parse_args()
     
@@ -61,13 +63,14 @@ if __name__ == "__main__":
     my_open = gzip.open if os.path.splitext(options.fastq)[1] == ".gz" else open
     #creates different barcode files to assign reads to
 
-
+    RANDOMER_FRONT_LENGTH = options.front_length
+    RANDOMER_BACK_LENGTH = options.back_length
 
     barcodes = {}
     randomer_counts = {} 
     with open(options.barcodes) as barcodes_file:
         for line in barcodes_file:
-            line = line.strip().split()
+            line = line.strip("\n").split("\t")
             split_file = options.out_file.split(".")
             split_file.insert(-1, line[1])
             barcodes[line[0]] = open(".".join(split_file), 'w')
@@ -88,7 +91,8 @@ if __name__ == "__main__":
                 plus = "+\n" #sometimes the descriptor is here, don't want it
                 quality = fastq_file.next()
                 
-                barcode, randomer, result = reformat_read(name, seq, plus, quality, barcodes)
+                barcode, randomer, result = reformat_read(name, seq, plus, quality, barcodes,
+                                                          RANDOMER_FRONT_LENGTH, RANDOMER_BACK_LENGTH)
                 randomer_counts[barcode][randomer] += 1
                 barcodes[barcode].write(result)
             except StopIteration:
