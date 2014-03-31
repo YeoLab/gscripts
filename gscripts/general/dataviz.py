@@ -450,6 +450,7 @@ class PCA_viz(PCA):
          dictionary that matches the ID to a more readable sample name.
         @param show_vector_labels: Boolean. Can be helpful if the vector labels
         are gene names.
+        @param scale_by_variance: Boolean. Scale vector components by explained variance
         @return: x, y, marker, distance of each vector in the data.
         """
 
@@ -459,7 +460,7 @@ class PCA_viz(PCA):
                       'default_marker_size':100, 'distance_metric':'L1',
                       'show_vectors':True, 'c_scale':None, 'vector_width':None, 'vector_colors_dict':None,
                       'show_vector_labels':True,  'vector_label_size':None,
-                      'show_point_labels':True, 'point_label_size':None,}
+                      'show_point_labels':True, 'point_label_size':None, 'scale_by_variance':True}
 
     _default_pca_args = {'whiten':True, 'n_components':None}
 
@@ -568,10 +569,18 @@ class PCA_viz(PCA):
 
             # scale metric by explained variance
             if distance_metric == 'L1':
-                mg = L1_distance((x * var_1), (y * var_2))
+                if scale_by_variance:
+                    mg = L1_distance((x * var_1), (y * var_2))
+
+                else:
+                    mg = L1_distance(x, y)
 
             elif distance_metric == 'L2':
-                mg = L2_distance((x * var_1), (y * var_2))
+                if scale_by_variance:
+                    mg = L2_distance((x * var_1), (y * var_2))
+
+                else:
+                    mg = L2_distance(x, y)
 
             comp_magn.append((x, y, an_id, mg))
             magnitudes.append(mg)
