@@ -554,6 +554,10 @@ class PCA_viz(PCA):
         vector_label_size = size_scale * 1.5 if not vector_label_size else vector_label_size
         point_label_size = size_scale * 1.5 if not point_label_size else point_label_size
 
+        # get amount of variance explained
+        var_1 = int(self.explained_variance_ratio_[x_pc] * 100)
+        var_2 = int(self.explained_variance_ratio_[y_pc] * 100)
+
         # sort features by magnitude/contribution to transformation
         comp_magn = []
         magnitudes = []
@@ -562,11 +566,12 @@ class PCA_viz(PCA):
             x = x * c_scale
             y = y * c_scale
 
+            # scale metric by explained variance
             if distance_metric == 'L1':
-                mg = L1_distance(x,y)
+                mg = L1_distance((x * var_1), (y * var_2))
 
             elif distance_metric == 'L2':
-                mg = L2_distance(x,y)
+                mg = L2_distance((x * var_1), (y * var_2))
 
             comp_magn.append((x, y, an_id, mg))
             magnitudes.append(mg)
@@ -613,9 +618,6 @@ class PCA_viz(PCA):
                 if show_vector_labels:
 
                      ax.text(1.1*x, 1.1*y, marker, color=color, size=vector_label_size)
-
-        var_1 = int(self.explained_variance_ratio_[x_pc] * 100)
-        var_2 = int(self.explained_variance_ratio_[y_pc] * 100)
 
         ax.set_xlabel(
             'Principal Component {} (Explains {}% Of Variance)'.format(str(x_pc), \
