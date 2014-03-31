@@ -20,6 +20,7 @@ import os
 from clipper.src.readsToWiggle import readsToWiggle_pysam
 import numpy as np
 import pysam
+import pandas as pd
 
 count = namedtuple('count', ['gene_count', 'region_count'])
                 
@@ -132,13 +133,15 @@ def count_gene(bam_file, gene, flip):
                       "strand" : gene["strand"],
                       "gene_id": gene['gene_id'],
                       'frea' : gene["frea"],
-                      "counts" : count(gene_sum, region_counts[gene['gene_id'] + ":" + str(start) + "-" + str(stop)])}) for start, stop in gene['regions']]
+                      "counts" : count(gene_sum, region_counts[gene['gene_id'] + ":" + str(start) + "-" + str(stop)]),
+                      'jxns':jxns})\
+            for start, stop in gene['regions']]
 
 def func_star(varables):
     """ covert f([1,2]) to f(1,2) """
     return count_gene(*varables)
 
-def count_tags(bam_file, flip, out_file, annotation, num_cpu = "autodetect", ):
+def count_tags(bam_file, flip, out_file, annotation, num_cpu = "autodetect", jxns_file=None):
     
     """
         Main function counts tags and ouptouts counts to outfile
@@ -176,6 +179,12 @@ def count_tags(bam_file, flip, out_file, annotation, num_cpu = "autodetect", ):
                               region['strand'], region['gene_id'], region['frea'], "\n"
                               ])))
 
+    if jxns_file is not None:
+        with open(jxns_file, 'w') as jxns_file:
+            for region in region_counts.values():
+                jxns_file.write("\t".join(map(str, region['gene_id'], pd.Series(region['jxns']).to_json(),
+                                  )) + "\n")
+
 if __name__ == "__main__":
 
     # gather command line option values
@@ -187,11 +196,11 @@ if __name__ == "__main__":
               help="Number of processors to use. Default: All processors on machine",
               type="str", metavar="NP")
     parser.add_option("--annotation_file", dest="annotation", help="annotation to count tags from, generated from gtfutils")
-    
+    parser.add_option("--junctions", dest="jxns", help="output file for junction counts in genes", default=None)
     # assign parameters to variables
     (options,args) = parser.parse_args()
     count_tags(bam_file = options.bam_path, flip = options.flip,
            out_file = options.out_file, num_cpu = options.np,
-           annotation = options.annotation)
+           annotation = options.annotation, jxns_file=options.jxns)
 
     sys.exit(0)
