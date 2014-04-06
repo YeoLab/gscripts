@@ -54,3 +54,8 @@ export PATH=/home/yeo-lab/software/weblogo:$PATH
 export PATH=$PATH:/home/yeo-lab/software/homer/.//bin/
 
 export HDF5_DIR=/home/yeo-lab/software
+
+# Make sure that scipy works on TSCC
+source /opt/intel/composer_xe_2013.1.117/bin/compilervars.sh intel64
+source /opt/intel/composer_xe_2013.1.117/mkl/bin/mklvars.sh intel64
+export LD_RUN_PATH=/opt/intel/composer_xe_2013.1.117/mkl/lib/intel64:/opt/intel/composer_xe_2013.1.117/compiler/lib/intel64:$LD_RUN_PATH
