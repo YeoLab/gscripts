@@ -1,5 +1,11 @@
-import pybedtools
+#!/usr/bin/python
+
 import argparse
+import os
+import subprocess
+
+import pybedtools
+
 
 OFFSET = 14
 
@@ -20,4 +26,8 @@ parser.add_argument("--bam", help="bam file to adjust", required=True)
 parser.add_argument("--out", help="output file (bed format)", required=True)
 args = parser.parse_args()
 
-pybedtools.BedTool(args.bam).bam_to_bed().each(five_prime).sort().saveas(args.out) 
+pybedtools.BedTool(args.bam).bam_to_bed(stream=True).each(five_prime).saveas(args.out + "tmp") 
+#bedtools sort runs into memory issues, can't use it. 
+p = subprocess.Popen("sort -k 1,1 -k 2,2n %s > %s" % (args.out + "tmp", args.out), shell=True)
+p.wait()
+os.remove(args.out + "tmp")

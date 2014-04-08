@@ -499,8 +499,7 @@ class MisoPipeline(object):
         #    '\n# and use that for our algorithm')
         commands.append(
             "READ_LEN=$(samtools view %s | head -n 1 | cut -f 10 | awk '{ "
-            "print"
-            " length }')" % (bam))
+            "print length }')" % (bam))
 
         #print 'self.read_type', self.read_type
 

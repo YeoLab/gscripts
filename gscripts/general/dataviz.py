@@ -21,6 +21,33 @@ from sklearn import decomposition as dc
 import statsmodels.api as sm
 import seaborn
 
+seaborn.set_style({'axes.axisbelow': True,
+                 'axes.edgecolor': '.15',
+                 'axes.facecolor': 'white',
+                 'axes.grid': False,
+                 'axes.labelcolor': '.15',
+                 'axes.linewidth': 1.25,
+                 'font.family': 'Helvetica',
+                 'grid.color': '.8',
+                 'grid.linestyle': '-',
+                 'image.cmap': 'Greys',
+                 'legend.frameon': False,
+                 'legend.numpoints': 1,
+                 'legend.scatterpoints': 1,
+                 'lines.solid_capstyle': 'round',
+                 'text.color': '.15',
+                 'xtick.color': '.15',
+                 'xtick.direction': 'out',
+                 'xtick.major.size': 0,
+                 'xtick.minor.size': 0,
+                 'ytick.color': '.15',
+                 'ytick.direction': 'out',
+                 'ytick.major.size': 0,
+                 'ytick.minor.size': 0})
+
+seaborn.set_color_palette('deep')
+
+import pylab
 
 
 def clusterGram(dataFrame, distance_metric = 'euclidean', linkage_method = 'average',
@@ -335,10 +362,12 @@ def heatmap(df, title=None, colorbar_label='values',
 
     ### heatmap ####
     heatmap_ax = fig.add_subplot(heatmap_gridspec[nrows - 1, ncols - 1])
+
+    rows = plot_df.index.values[row_dendrogram_distances['leaves']]
+    columns = plot_df.columns.values[column_dendrogram_distances[
+        'leaves']]
     heatmap_ax_pcolormesh = \
-        heatmap_ax.pcolormesh(plot_df.ix[row_dendrogram_distances['leaves'],
-                                         column_dendrogram_distances[
-                                             'leaves']].values,
+        heatmap_ax.pcolormesh(plot_df.ix[rows, columns].values,
                               norm=my_norm, cmap=cmap, vmin=vmin, vmax=vmax)
     heatmap_ax.set_ylim(0, df.shape[0])
     heatmap_ax.set_xlim(0, df.shape[1])
@@ -448,6 +477,7 @@ class PCA_viz(PCA):
          dictionary that matches the ID to a more readable sample name.
         @param show_vector_labels: Boolean. Can be helpful if the vector labels
         are gene names.
+        @param scale_by_variance: Boolean. Scale vector components by explained variance
         @return: x, y, marker, distance of each vector in the data.
         """
 
@@ -457,7 +487,7 @@ class PCA_viz(PCA):
                       'default_marker_size':100, 'distance_metric':'L1',
                       'show_vectors':True, 'c_scale':None, 'vector_width':None, 'vector_colors_dict':None,
                       'show_vector_labels':True,  'vector_label_size':None,
-                      'show_point_labels':True, 'point_label_size':None,}
+                      'show_point_labels':True, 'point_label_size':None, 'scale_by_variance':True}
 
     _default_pca_args = {'whiten':True, 'n_components':None}
 
@@ -552,6 +582,10 @@ class PCA_viz(PCA):
         vector_label_size = size_scale * 1.5 if not vector_label_size else vector_label_size
         point_label_size = size_scale * 1.5 if not point_label_size else point_label_size
 
+        # get amount of variance explained
+        var_1 = int(self.explained_variance_ratio_[x_pc] * 100)
+        var_2 = int(self.explained_variance_ratio_[y_pc] * 100)
+
         # sort features by magnitude/contribution to transformation
         comp_magn = []
         magnitudes = []
@@ -560,11 +594,20 @@ class PCA_viz(PCA):
             x = x * c_scale
             y = y * c_scale
 
+            # scale metric by explained variance
             if distance_metric == 'L1':
-                mg = L1_distance(x,y)
+                if scale_by_variance:
+                    mg = L1_distance((x * var_1), (y * var_2))
+
+                else:
+                    mg = L1_distance(x, y)
 
             elif distance_metric == 'L2':
-                mg = L2_distance(x,y)
+                if scale_by_variance:
+                    mg = L2_distance((x * var_1), (y * var_2))
+
+                else:
+                    mg = L2_distance(x, y)
 
             comp_magn.append((x, y, an_id, mg))
             magnitudes.append(mg)
@@ -611,9 +654,6 @@ class PCA_viz(PCA):
                 if show_vector_labels:
 
                      ax.text(1.1*x, 1.1*y, marker, color=color, size=vector_label_size)
-
-        var_1 = int(self.explained_variance_ratio_[x_pc] * 100)
-        var_2 = int(self.explained_variance_ratio_[y_pc] * 100)
 
         ax.set_xlabel(
             'Principal Component {} (Explains {}% Of Variance)'.format(str(x_pc), \
@@ -1093,7 +1133,7 @@ def splicing_diagram(ax, bottom_y, highlight=None, height_multiplier=0.025):
     # bottom_y = -0.01
     top_y = 0.975
 
-    highlight_color = ppl.set1[1]
+    highlight_color = ppl.colors.set1[1]
 
     exon_kwargs = {'fill': True, 'width': width, 'height': height,
                    'clip_on': False, 'facecolor': 'white', #ppl.almost_black,
