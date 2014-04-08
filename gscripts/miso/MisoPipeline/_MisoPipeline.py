@@ -551,7 +551,7 @@ class MisoPipeline(object):
  > {6} \
  2> {7}'.format(self.genome, event_type, bam, out_dir,
                 insert_len_arguments, self.num_processes, psi_out,
-               psi_err))
+                psi_err))
 
             commands.append("\n# Check that the psi calculation jobs didn't "
                             "fail.\n#'-z' "
@@ -564,8 +564,8 @@ class MisoPipeline(object):
             commands.append(
                 "if [ ! -z \"$iffailed\" -o ! -z \"$ifshutdown\" ] ; "
                 "then\n\
-    #rm -rf {1}\n\
-    echo \"MISO psi failed on event type: {0}\"\n\
+    #rm -rf {0}\n\
+    echo \"MISO psi failed on event type: {1}\"\n\
     exit 1\n\
 fi\n".format(out_dir, event_type))
 

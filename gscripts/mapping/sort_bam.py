@@ -5,7 +5,7 @@ from gscripts.qtools._Submitter import Submitter
 import sys
 
 try:
-    name = sys.argv[1]+"_sort_bam"
+    name = sys.argv[1] + "_sort_bam"
 except IndexError:
     name = "sort_bam"
 

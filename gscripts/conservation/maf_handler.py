@@ -160,7 +160,7 @@ class hg19MafRangeGetter(MafRangeGetter):
         self.index = bx.align.maf.MultiIndexed( maf_files, keep_open=True, parse_e_rows=True, use_cache=True )
         self.fasta = pyfasta.Fasta(os.path.join(genome_basedir, "hg19/chromosomes/all.fa"), flatten_inplace=True)
 
-        treeFile = os.path.join(conservation_basedir, "hg19_100way/multiz100way/hg19.100way.scientificNames.nh")
+        treeFile = os.path.join(conservation_basedir, "hg19_100way/multiz100way/hg19.100way.nh")
         self.tree = Phylo.read(treeFile, 'newick')
         self.sources = [i.name for i in self.tree.get_terminals()]
         self.tree.root_with_outgroup({"name":"hg19"})

@@ -8,8 +8,10 @@ import sys
 def miso_exon_to_gencode_exon(exon):
     return 'exon:{}:{}-{}:{}'.format(*miso_exon_to_coords(exon))
 
+
 def miso_id_to_exon_ids(miso_id):
     return map(miso_exon_to_gencode_exon, miso_id.split('@'))
+
 
 def miso_exon_to_coords(exon):
     return exon.split(':')

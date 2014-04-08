@@ -1,0 +1,434 @@
+#!/usr/bin/perl
+#use strict;
+use warnings;
+use POSIX;
+# Initialize variables
+
+#$lane = $ARGV[0];
+#$window = $ARGV[1];
+#$window = 100;
+#$target_pval = 0.05;
+#$bonf_active = 0;
+#$target_pval = 0.01;
+#$tag_corr = 1;
+$cutoff_corr = 1;
+$dir = $ARGV[9];
+#$inputfile = "s_".$lane."_eland_bed";
+$inputfile = $ARGV[0];
+$outputfile = $ARGV[1];
+$window = $ARGV[2];
+$target_pval = $ARGV[3];
+$bonf_active = $ARGV[4];
+my $range_limit = $ARGV[5];
+my $diff_limit = $ARGV[6];
+my $mRNA = $ARGV[7];
+
+#print STDERR "arguments are @ARGV\n";
+#print "$mRNA\n";
+if ($mRNA == 0) {
+	$annotfile = $dir."clusterid_location_mm8.pre";
+} else {
+	$annotfile = $dir."clusterid_location_mm8";
+}
+
+
+
+#$max_window = $ARGV[5];
+if ($bonf_active == 0) {
+	$annot = $window."_uncorrected";
+} else {
+	$annot = $window;
+}
+#$inputfile = "HnRNPU_293T_ingenes_sorted_hg18";
+#$outputfile = "HnRNPU_293T_ingenes_clusters_hg18";
+$outputfile2 = $outputfile.$annot.".bed"; #"HnRNPU_293T_ingenes_clusters_hg18_bed";
+$outputfile3 = "junk_clusters";
+# Open sequence file (can be very large)
+open(ANNOT_DATA, "< $annotfile") or die "cannot open $annotfile : $!\n";
+open(FINISHED, ">$outputfile");
+open(FINISHED2, ">$outputfile2");
+open(FINISHED3, ">>$outputfile3");
+my $output_annotation = $ARGV[8];
+print FINISHED2 "#$output_annotation\n";
+if ($outputfile =~ /.*\/+(.*)/) {
+	$outname = $1;
+} else {
+	$outname = $outputfile2;
+}
+
+
+print FINISHED2 "track name=$outname description=$outname visibility=2 itemRgb=\"On\" useScore=1\n";
+my @chr_array = ('chr1', 'chr2', 'chr3', 'chr4', 'chr5', 'chr6', 'chr7', 'chr8', 'chr9', 'chr10', 'chr11', 'chr12', 'chr13', 'chr14', 'chr15', 'chr16', 'chr17', 'chr18', 'chr19', 'chrX', 'chrY');
+
+while(defined($line = <ANNOT_DATA>)) {
+	if ($line =~ /\S*/) {
+		chomp $line;
+		@a = split(/\t/, $line);
+		$id = $a[4];
+		$direction = $a[3];
+		$size = $a[5];
+		$id2size{$id} = $size;
+		$id2direction{$id} = $direction;
+		$total_size += $size;
+	}
+}
+close (ANNOT_DATA);
+
+open(GET_DATA, "< $inputfile") or die "cannot open $inputfile : $!\n";
+while(defined($line = <GET_DATA>)) {
+	chomp $line;
+	@a = split(/\t/, $line);
+	$id = $a[3];		
+	$id2tagcount{$id}++;
+	$total_tags++;
+}
+$correct_gsize = $total_size;
+$windowed_gsize = $correct_gsize/$window;
+if ($bonf_active == 1) {
+	$new_target_pval = $target_pval/$windowed_gsize;
+} else {
+	$new_target_pval = $target_pval;
+}
+
+foreach $id (keys %id2size) {
+	$size = $id2size{$id};
+	if (exists($id2tagcount{$id})) {
+		$count = $id2tagcount{$id};
+	} else {
+		$count = 0;
+	}
+	$corrected_window =  $size/$window;
+	if ($corrected_window < 1) {
+		$corrected_window = 1;
+	}
+	$frequency = $count/$corrected_window;
+	if ($bonf_active == 1) {
+		$this_target_pval = $target_pval/$corrected_window;
+	} else {
+		$this_target_pval = $target_pval;
+	}
+	#$this_target_pval = $target_pval;
+	$pval = 1;
+	$this_tag_num = 0;
+	if ($count == 0) {
+		$this_tag_num = 1;
+	} else {
+		while ($pval >= $this_target_pval) {
+			$this_tag_num++;
+			#$pval = poisln($frequency, $this_tag_num);
+			$pval = pois($frequency, $this_tag_num);
+			#$pval = exp($lnpval);
+		}
+	}
+	$id2cutoff{$id} = $this_tag_num;
+	#print "$id\t$count\t$size\t$frequency\t$pval\t$this_tag_num\n";
+}
+
+close (GET_DATA);
+
+#$correct_gsize = $genome_size - $N_size - $rep10_size;
+
+#print "Total tags = $total_tags\n";
+
+#$corrected_tags = floor($total_tags*$tag_corr);
+
+#print "Corrected tags = $corrected_tags\n";
+
+$frequency = $total_tags/$windowed_gsize;
+#$frequency = $non_overlapping_tags/$windowed_gsize;
+
+#print "Non overlapping tags = $non_overlapping_tags\n";
+#print "Frequency per $window = $frequency\n";
+$pval = 1;
+$this_tag_num = 0;
+
+while ($pval >= $new_target_pval) {
+	$this_tag_num++;
+	#$pval = poisln($frequency, $this_tag_num);
+	$pval = pois($frequency, $this_tag_num);
+	#$pval = exp($lnpval);
+}
+
+#print "Cutoff correction is $cutoff_corr\n";
+$this_tag_num *= $cutoff_corr;
+
+$pval = pois($frequency, $this_tag_num);
+
+#print "Using $this_tag_num as cutoff, has pvalue of $pval\n";
+#$pval = poisln($frequency, $this_tag_num+1);
+$new_pval = pois($frequency, $this_tag_num+1);
+print "Next cutoff has pvalue of $new_pval\n";
+if ($this_tag_num == 1) {
+	print STDERR "Warning: Tag cutoff is 1, with pvalue of $pval. Tag cutoff of 2 has pvalue $new_pval\, adjust your pvalue cutoff.\n";
+	die;
+}
+
+$limit = $this_tag_num;
+
+#print "local = $local_limit\n";
+#print "global = $limit\n";
+$total_matches = 0;
+foreach $chr_input (@chr_array) {
+	@id_loc = ();
+	open(GET_DATA, "< $inputfile") or die "cannot open $inputfile : $!\n";
+	$counter = 0;
+	while(defined($line = <GET_DATA>)) {
+		chomp $line;
+		@a = split(/\t/, $line);
+		$chr = $a[0];
+		$loc = $a[1];
+		$id = $a[3];
+		#$local_limit = $id2cutoff{$id};
+		if ($chr eq $chr_input) {
+			$id_loc[$counter]->[0] = $loc;
+			$id_loc[$counter]->[1] = $id;
+			$counter++;
+		}
+	}
+	$id_loc[$counter]->[0] = 10000000000;
+	$stop_point = $#id_loc - $limit;
+	for (my $i = 0; $i < $stop_point; $i++) {
+		$start_pos = $id_loc[$i]->[0];
+		$id = $id_loc[$i]->[1];
+		if (exists($id2cutoff{$id})) {
+			$local_limit = $id2cutoff{$id};
+			$direction = $id2direction{$id};
+			my $j = $i+1;
+			$end_pos = $id_loc[$j]->[0];
+			$diff = $id_loc[$j]->[0] - $id_loc[$j-1]->[0];
+			$range = $end_pos - $start_pos;
+			#print "$range\n";
+			if ($range < $window) {
+				#print FINISHED "$start_pos\t$end_pos\t$range\n";
+				while (($end_pos - $start_pos) < $window) {
+					$j++;
+					$end_pos = $id_loc[$j]->[0];
+				}
+				$diff = $id_loc[$j]->[0] - $id_loc[$j-1]->[0];
+				my $k = $j-1;
+				$counter = 0;
+				$total_pos = 0;
+				for ($j = $i; $j <= $k; $j++) {
+					$total_pos += $id_loc[$j]->[0];
+					$counter++;
+				}
+				#print "$id\t$counter\t$local_limit\n";
+				if ($counter > $local_limit) {
+					#print FINISHED "$chr_input\t$start_pos\t$end_pos\t$counter\t$direction\t$id\n";
+					if ($counter > $limit) {
+						#print "local = $local_limit\n";
+						#print "global = $limit\n";
+						$temp_limit = $limit;
+						$temp_local_limit = $local_limit;
+						#$temp_count = $counter;
+						while (($counter >= $temp_local_limit) && ($counter >= $temp_limit) && ($range <= $range_limit) && ($j < $#id_loc) && ($diff <= $diff_limit)) {
+						#while (($counter >= $temp_local_limit) && ($counter >= $temp_limit)) {
+							
+							$j++;
+							$counter++;
+							$end_pos = $id_loc[$j]->[0];
+							$diff = $id_loc[$j]->[0] - $id_loc[$j-1]->[0];
+							$range = $end_pos - $start_pos;
+							if ($counter > 100) { 
+								#print "Too many tags ($counter) from $start_pos to $end_pos\n";
+							} else {
+								#$correct_gsize = $total_size;
+								$windowed_gsize = $correct_gsize/$range;
+								if ($bonf_active == 1) {
+									$new_target_pval = $target_pval/$windowed_gsize;
+								} else {
+									$new_target_pval = $target_pval;
+								}
+								$frequency = $total_tags/$windowed_gsize;
+								$pval = 1;
+								$this_tag_num = 0;
+
+								while ($pval >= $new_target_pval) {
+									$this_tag_num++;
+									#$pval = poisln($frequency, $this_tag_num);
+									$pval = pois($frequency, $this_tag_num);
+									#$pval = exp($lnpval);
+								}
+								$this_tag_num *= $cutoff_corr;
+								$temp_limit = $this_tag_num;
+							
+								$size = $id2size{$id};
+								if (exists($id2tagcount{$id})) {
+									$count = $id2tagcount{$id};
+								} else {
+									$count = 0;
+								}
+								$corrected_window =  $size/$range;
+								if ($corrected_window < 1) {
+									$corrected_window = 1;
+								}
+								$frequency = $count/$corrected_window;
+								if ($bonf_active == 1) {
+									$this_target_pval = $target_pval/$corrected_window;
+								} else {
+									$this_target_pval = $target_pval;
+								}
+								#$this_target_pval = $target_pval;
+								$pval = 1;
+								$this_tag_num = 0;
+								if ($count == 0) {
+									$this_tag_num = 1;
+								} else {
+									while ($pval >= $this_target_pval) {
+										$this_tag_num++;
+										#$pval = poisln($frequency, $this_tag_num);
+										$pval = pois($frequency, $this_tag_num);
+										#$pval = exp($lnpval);
+									}
+								}
+								$this_tag_num *= $cutoff_corr;
+								$temp_local_limit = $this_tag_num;
+								#print "here on $id found $counter tags, cutoff is $temp_limit and $temp_local_limit ranging from $start_pos to $end_pos\n";
+							}
+							
+						}
+						
+						#$counter--;
+						
+						$k = $j-2;
+						#print FINISHED2 "$k\t";
+						$end_pos = $id_loc[$k]->[0];
+						$range = $end_pos - $start_pos;
+						$counter = 0;
+						$total_pos = 0;
+						#$another_counter = $k-$i;
+						#print FINISHED2 "$another_counter\t";
+						for ($j = $i; $j <= $k; $j++) {
+							#$this_pos = $id_loc[$j]->[0];
+							#print FINISHED2 "$this_pos\t";
+							$total_pos += $id_loc[$j]->[0];
+							
+							$counter++;
+						}
+						$temp_counter = $counter;
+						$ave_pos = floor($total_pos/$temp_counter);
+						$this_start = $ave_pos - 5;
+						$this_end = $ave_pos + 4;
+						#$new_start = $id_loc[$i]->[0];
+						#$new_end = $id_loc[$k]->[0];
+						#print "$another_counter versus $temp_counter\n";
+						#print "$start_pos at position $i versus $new_start at position $i\n";
+						#print "$end_pos versus $new_end\n";
+						#$bed_info = $counter."_".$direction."_".$id;
+						print FINISHED "$chr_input\t$start_pos\t$end_pos\t$temp_counter\t$direction\t$id\n";
+						if ($direction == 0) {
+							$dir = '+';
+						} else {
+							$dir = '-';
+						}
+						#$new_start = $ave_pos - 49;
+						#$new_end = $ave_pos + 50;
+						#print FINISHED2 "$chr_input\t$new_start\t$new_end\t$id\t$counter\t$dir\t$this_start\t$this_end\t0,255,255\n";
+						#$range2 = $this_end - $this_start;
+						
+						if ($start_pos == $end_pos) {
+							$end_pos++;
+						}
+						if ($this_start < $start_pos) {
+							$this_start = $start_pos;
+						}
+						if ($this_end > $end_pos) {
+							$this_end = $end_pos;
+						}
+						
+						if ($range < 20) {
+							$this_start = $start_pos;
+							$this_end = $end_pos;
+						}
+						print FINISHED2 "$chr_input\t$start_pos\t$end_pos\t$id\t$temp_counter\t$dir\t$this_start\t$this_end\t0,255,255\n";
+						$total_matches++;
+					}
+					#$total_matches++;
+				}
+				$i = $k;
+			}
+		}
+		$total_pos = 0;
+		$counter = 0;
+	}
+	close (GET_DATA);
+}
+print FINISHED3 "CLIP clusters\t$total_matches\n";
+close (GET_DATA);
+close (FINISHED);
+close (FINISHED2);
+exit;
+
+sub gammln {
+	my $x = shift;
+	my $y = $x;
+	my @cof = (76.18009172947146, -86.50532032941677, 24.01409824083091, -1.231739572450155, 0.1208650973866179e-2, -0.5395239384953e-5);
+	my $tmp = $x + 5.5;
+	$tmp -= ($x+0.5)*log($tmp);
+	my $ser = 1.000000000190015;
+	for (my $j = 0; $j <= 5; $j++) {
+		$ser += ($cof[$j])/(++$y);
+	}
+	return -$tmp+log(2.506622746310005*$ser/$x);
+}
+
+sub factln {
+	my @a = ();
+	my $n = shift;
+	if ($n < 0) {
+		print "Negative factorial\n";
+	}
+	if ($n <= 1) {
+		return 0;
+	}
+	if ($n <= 100) {
+		return $a[$n] ? $a[$n] : ($a[$n] = gammln($n+1));
+	} else {
+		return gammln($n+1);
+	}
+}
+
+sub poisln {
+	my $freq = $_[0];
+	my $target = $_[1];
+	my $logfreq = log($freq);
+	my $totalp = 0;
+	for (my $i = $target; $i >= 0; $i--) {
+		$lni = factln($i);
+		$lnp = $i * $logfreq - $freq - $lni;
+		$p = exp($lnp);
+		$totalp += $p;
+	}
+	$inverse = 1-$totalp;
+	return $inverse;
+}
+
+sub pois {
+	my $f = $_[0];
+	my $t = $_[1];
+	my $tp = 0;
+	$s1 = exp(-1 * $f);
+	
+	for (my $i = $t; $i >= 0; $i--) {
+		$s2 = $f ** $i;
+		$s3 = factorial($i);
+		$p1 = ($s1 * $s2)/$s3;
+		$tp = $tp+$p1;
+	}
+	$inverse = 1-$tp;
+	return $inverse;
+}
+
+sub factorial {
+	$s = 1;
+	$r = 1;
+	$input = $_[0];
+	while ($s <= $input) {
+		$r *= $s;
+		$s++;
+	}
+	if ($input == 0) {
+		$r = 1;
+	}
+return $r;
+}

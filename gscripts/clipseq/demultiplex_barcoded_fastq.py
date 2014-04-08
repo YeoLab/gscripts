@@ -58,7 +58,7 @@ if __name__ == "__main__":
     
     #if a gziped file then we reassign open to be the gzip open and continue using that for the rest of the
     #program
-    open = gzip.open if os.path.splitext(options.fastq)[1] == ".gz" else open
+    my_open = gzip.open if os.path.splitext(options.fastq)[1] == ".gz" else open
     #creates different barcode files to assign reads to
 
 
@@ -79,7 +79,7 @@ if __name__ == "__main__":
     randomer_counts['unassigned'] = Counter()
     
     #reads through initial file parses everything out
-    with open(options.fastq) as fastq_file, open(options.metrics_file, 'w') as metrics_file:
+    with my_open(options.fastq) as fastq_file, open(options.metrics_file, 'w') as metrics_file:
         while True:
             try:
                 name = fastq_file.next()

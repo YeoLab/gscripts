@@ -5,6 +5,7 @@ SERVER=/projects
 
 export LD_LIBRARY_PATH=/home/yeo-lab/software/lib:$LD_LIBRARY_PATH
 export LD_LIBRARY_PATH=/home/yeo-lab/software/linux/gcc/dyn/x86_64/rel/lib:$LD_LIBRARY_PATH
+
 export LD_RUN_PATH=/home/yeo-lab/software/lib:$LD_RUN_PATH 
 
 #export GDFONTPATH=${SERVER}/yeolab/Software/liberation-fonts-ttf-1.06.0.20100721
@@ -13,7 +14,12 @@ export GNUPLOT_DEFAULT_GDFONT=LiberationSans-Regular
 export BOWTIE_INDEXES=/projects/ps-yeolab/genomes/bowtie_index
 export BOWTIE2_INDEXES=/projects/ps-yeolab/genomes/bowtie_index
 
-#PERL5
+#GHC
+export LD_RUN_PATH=/home/yeo-lab/software/ghc/lib:$LD_RUN_PATH 
+export LD_LIBRARY_PATH=/home/yeo-lab/software/ghc/lib:$LD_LIBRARY_PATH
+export PATH=/home/yeo-lab/software/ghc/bin:$PATH
+
+#perl stuff
 #export PERL5LIB=$SERVER/yeolab/Conservation/scripts/:$PERL5LIB
 #export PERL5LIB=$SERVER/yeolab/Software/EXTRA_perlmodules:$PERL5LIB
 #export PERL5LIB=$SERVER/yeolab/Software/perl16/lib:$PERL5LIB
@@ -26,20 +32,19 @@ export BOWTIE2_INDEXES=/projects/ps-yeolab/genomes/bowtie_index
 #export MANPATH=/home/yeo-lab/software/perl/site/man:/home/yeo-lab/software/perl/man:$MANPATH 
 #export PERL5LIB=/home/yeo-lab/software/perl/lib:/home/yeo-lab/software/perl/site/lib
 
-#Python 2.7.5
-export PYTHONPATH=/home/jpg/opt/python/lib/python2.7/site-packages:$PYTHONPATH
+#making it so I can switch between different version of python quickly
+
 export PYTHONPATH=/opt/scipy/lib64/python2.6/site-packages/:$PYTHONPATH
 export PYTHONPATH=/home/yeo-lab/software/lib:$PYTHONPATH
 export PYTHONPATH=/home/yeo-lab/software/lib/python2.7/site-packages:$PYTHONPATH
+export PYTHONPATH=/home/jpg/opt/python/lib/python2.7/site-packages:$PYTHONPATH
 
 #fastqc
 export PATH=/home/yeo-lab/software/FastQC:$PATH
-#General
 
 export PATH=/projects/ps-yeolab/software/bin:/home/yeo-lab/software/bin:$PATH
+
 export PATH=/home/yeo-lab/software/weblogo:$PATH
 export PATH=$PATH:/home/yeo-lab/software/homer/.//bin/
 
 export HDF5_DIR=/home/yeo-lab/software
-
-

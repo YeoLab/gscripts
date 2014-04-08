@@ -1,0 +1,417 @@
+#!/usr/bin/perl
+
+#$program_dir = "/home/kasey/Sequence/Solexa/gy_mrna/scripts_peak_calling/";
+$program_dir = "/nas3/khutt/scripts_peak_calling/";
+if (@ARGV < 2) {
+	printCMD();
+}
+$allowed_species{"ce6"} = 1;
+$allowed_species{"hg18"} = 1;
+$allowed_species{"mm8"} = 1;
+$allowed_species{"mm9"} = 1;
+$allowed_species{"hg19"} = 1;
+sub printCMD {
+	print STDERR "\n\tProgram will convert an ingenes bed file of clip tags into an ingenes bed file of clip clusters\n\n";
+	print STDERR "\t\tUsage: <species> <input bed file> [additional options]\n";
+	print STDERR "\n\t\texample: perl analyze_clip_data_complete hg18 Human.ingenes.BED\n";
+	print STDERR "\n\tAvailable species: hg18, mm8, mm9, hg19, ce6\n";
+	print STDERR "\n\tOptions:\n";
+	print STDERR "-force <0,1> force re-sorting of tag files (default: 0)\n";
+	print STDERR "-direct <path> force data to be analyzed to <path> instead of auto-generated path based on filename (default: auto-generated)\n";
+	print STDERR "-trim <0,1> removes redundant tags from ingenes.BED file (default: 1)\n";
+	print STDERR "-shift <#> shifts tag position by # to adjust for fragment size (default: 0)\n";
+	print STDERR "-window_min <#> minimum cluster size in bases (default: 150)\n";
+	print STDERR "-window_max <#> maximum cluster size in bases (default: 1000)\n";
+	print STDERR "-gap <#> allowed gap size between tags counting towards a cluster (default: 150)\n";
+	print STDERR "-pval <# less than 1> pvalue threshold for calling significant clusters (default: 0.01)\n";
+	print STDERR "-bonf <0,1> uses bonferroni correction for multiple hypothesis testing to adjust pvalue (default: 1)\n";
+	print STDERR "-mRNA <0,1> use effective mRNA length for background calculation, disabling uses pre-mRNA length (default: 1)\n";
+	print STDERR "-norepeats <0,1> remove tags overlapping repeats (default: 0)\n";
+	print STDERR "-distros <0,1> calculate distributions around various exons and gene annotation types (very buggy, default: 0)\n";
+	print STDERR "\n";
+	exit;
+}
+
+my $cmd = parseCMDLine(\@ARGV);
+
+sub parseCMDLine {
+	my ($argv) = @_;
+	my $cmd = {species=>$ARGV[0], input=>$ARGV[1], force=>0, direct=>'', trim=>1, shif=>0, win_min=>150, win_max=>1000, gap=>150, pval=>0.01, bonf=>1, mRNA=>1, norepeats=>0, distros=>0};
+	print STDERR "\n\tInput: $cmd->{'input'} as a $cmd->{'species'} file\n";
+	for (my $i=2; $i<@$argv; $i++) {
+		if ($ARGV[$i] eq '-trim') {
+			$cmd->{'trim'} = $ARGV[++$i];
+		} elsif ($ARGV[$i] eq '-shift') {
+			$cmd->{'shif'} = $ARGV[++$i];
+		} elsif ($ARGV[$i] eq '-window_min') {
+			$cmd->{'win_min'} = $ARGV[++$i];
+		} elsif ($ARGV[$i] eq '-window_max') {
+			$cmd->{'win_max'} = $ARGV[++$i];
+		} elsif ($ARGV[$i] eq '-gap') {
+			$cmd->{'gap'} = $ARGV[++$i];
+		} elsif ($ARGV[$i] eq '-pval') {
+			$cmd->{'pval'} = $ARGV[++$i];
+		} elsif ($ARGV[$i] eq '-bonf') {
+			$cmd->{'bonf'} = $ARGV[++$i];
+		} elsif ($ARGV[$i] eq '-mRNA') {
+			$cmd->{'mRNA'} = $ARGV[++$i];
+		} elsif ($ARGV[$i] eq '-norepeats') {
+			$cmd->{'norepeats'} = $ARGV[++$i];
+		} elsif ($ARGV[$i] eq '-force') {
+			$cmd->{'force'} = $ARGV[++$i];
+		} elsif ($ARGV[$i] eq '-direct') {
+			$cmd->{'direct'} = $ARGV[++$i];
+		} elsif ($ARGV[$i] eq '-distros') {
+			$cmd->{'distros'} = $ARGV[++$i];
+		}
+	}
+	return $cmd;
+}
+			
+	 
+
+$species = $cmd->{'species'};
+if (exists($allowed_species{$species})) {} else {
+	print STDERR "Allowed species are hg18, mm8, and ce6... not $species\n";
+	exit;
+}
+$input = $cmd->{'input'};
+$direct = $cmd->{'direct'};
+if ($input =~ /(.*\/)*(.*)\.ingenes\.BED/) {
+	$out_path = $1;
+	$file0 = $2;
+	$cluster_type = "ingenes";
+} elsif ($input =~ /(.*\/)*(.*)\.notingenes\.BED/) {
+	$out_path = $1;
+	$file0 = $2."_notingenes";
+	$cluster_type = "notingenes";
+	
+} elsif ($input =~ /(.*\/)*(.*)\.all\.BED/) {
+	$out_path = $1;
+	$file0 = $2."_all";
+	$cluster_type = "all";
+} else {
+	print STDERR "Expecting input filename to end in .ingenes.BED or .notingenes.BED or .all.BED\n";
+	exit;
+}
+
+if ($direct eq '') {
+} else {
+	$out_path = $direct;
+}
+
+$file_annot = $file0;
+#if ($input !~ /\.ingenes\.BED/) {
+#	print STDERR "Expecting input filename to end in .ingenes.BED\n";
+#	exit;
+#}
+$trimming = $cmd->{'trim'};
+
+
+if (($trimming != 0) && ($trimming != 1)) {
+	print STDERR "Trim value must be 0 or 1, not $trimming\n";
+	exit;
+
+}
+if ($trimming == 1) {
+	$file_annot .= "_trim";
+} else {
+	$file_annot .= "_notrim";
+}
+
+
+$shif = $cmd->{'shif'};
+$file_annot .= "_s$shif";
+$min_window = $cmd->{'win_min'};
+$max_window = $cmd->{'win_max'};
+$file_annot .= "_$min_window";
+$file_annot .= "-$max_window";
+
+$pval = $cmd->{'pval'};
+
+$gap = $cmd->{'gap'};
+$file_annot .= "_g$gap";
+
+$bonf_active = $cmd->{'bonf'};
+if (($bonf_active != 0) && ($bonf_active != 1)) {
+	print STDERR "Bonferroni correction must be 0 or 1, not $bonf_active\n";
+	exit;
+}
+if ($bonf_active == 1) {
+	$file_annot .= "_corrected";
+}
+
+$mRNA = $cmd->{'mRNA'};
+if (($mRNA != 0) && ($mRNA != 1)) {
+	print STDERR "mRNA flag must be 0 or 1, not $mRNA\n";
+	exit;
+}
+if ($mRNA == 0) {
+	$file_annot .= "_premRNA";
+} else {
+	$file_annot .= "_mRNA";
+}
+
+if (($mRNA != 0) && ($mRNA != 1)) {
+	print STDERR "mRNA value must be 0 or 1, not $mRNA\n";
+	exit;
+}
+
+$repeats = $cmd->{'norepeats'};
+if ($repeats == 0) {
+	$file_annot .= "_withrepeats";
+} else {
+	$file_annot .= "_norepeats";
+}
+#print "$trimming\t$window\t$pval\t$bonf_active\n";
+#$bonf_active = 0;
+
+
+if ($direct eq '') {
+	$outputfolder1 = $out_path.$file0."_data";
+	$outputfolder2 = $out_path.$file0."_data/".$file_annot."_clusters";
+} else {
+	$outputfolder1 = $out_path;
+	$outputfolder2 = $out_path."/".$file_annot."_clusters";
+}
+#$species = $ARGV[1];
+#$file0 = $input.".ingenes.BED";
+if ($cluster_type eq "ingenes") {
+	if ($trimming == 1) {
+
+		$file1 = $file0.".trim.ingenes.BED";
+		$file2 = $file0."_trim_ingenes_sorted_".$species;
+		$file3 = $file0."_trim_ingenes_clusters_".$species;
+	
+	} elsif ($trimming == 0) {
+		#$file1 = $file0;
+		$file1 = $file0.".notrim.ingenes.BED";
+		$file2 = $file0."_notrim_ingenes_sorted_".$species;
+		$file3 = $file0."_notrim_ingenes_clusters_".$species;
+	} else {
+		print STDERR "input 1 or 0 for trimming\n";
+		exit;
+	}
+} elsif ($cluster_type eq "notingenes") {
+	if ($trimming == 1) {
+
+		$file1 = $file0.".trim.notingenes.BED";
+		$file2 = $file0."_trim_notingenes_sorted_".$species;
+		$file3 = $file0."_trim_notingenes_clusters_".$species;
+	
+	} elsif ($trimming == 0) {
+		#$file1 = $file0;
+		$file1 = $file0.".notrim.notingenes.BED";
+		$file2 = $file0."_notrim_notingenes_sorted_".$species;
+		$file3 = $file0."_notrim_notingenes_clusters_".$species;
+	} else {
+		print STDERR "input 1 or 0 for trimming\n";
+		exit;
+	}
+} elsif ($cluster_type eq "all") {
+	if ($trimming == 1) {
+
+		$file1 = $file0.".trim.all.BED";
+		$file2 = $file0."_trim_all_sorted_".$species;
+		$file3 = $file0."_trim_all_clusters_".$species;
+	
+	} elsif ($trimming == 0) {
+		#$file1 = $file0;
+		$file1 = $file0.".notrim.all.BED";
+		$file2 = $file0."_notrim_all_sorted_".$species;
+		$file3 = $file0."_notrim_all_clusters_".$species;
+	} else {
+		print STDERR "input 1 or 0 for trimming\n";
+		exit;
+	}
+}
+
+
+
+$file2a = $file0."id_tag_count";
+#print "$gap\n";
+`mkdir $outputfolder1`;
+`mkdir $outputfolder2`;
+#$file2 = $input."_ingenes_sorted_ce6";
+#$file2 = $input."_ingenes_sorted_".$species;
+#$file3 = $input."_ingenes_clusters_ce6";
+#$file3 = $input."_ingenes_clusters_".$species;
+$file4 = $file3."_histo";
+
+$file5 = $file0."_clusters_CE_500_50_five.txt";
+$file6 = $file0."_clusters_CE_50_500_three.txt";
+$file7 = $file0."_clusters_SE_500_50_five.txt";
+$file8 = $file0."_clusters_SE_50_500_three.txt";
+$file9 = $file0."_clusters_AS_500_50_five.txt";
+$file10 = $file0."_clusters_AS_50_500_three.txt";
+$file11 = $file0."_clusters_tss_1000_1000_five.txt";
+$file12 = $file0."_clusters_polyA_1000_1000_five.txt";
+$file13 = $file0."_clusters_stopcodon_1000_1000_five.txt";
+$file24 = $file0."_clusters_startcodon_1000_1000_five.txt";
+#$file25 = $input."_clusters_decoy_500_50_five.txt";
+#$file26 = $input."_clusters_decoy_50_500_three.txt";
+#$file27 = $input."_clusters_H_excluded_500_50_five.txt";
+#$file28 = $input."_clusters_H_excluded_50_500_three.txt";
+#$file29 = $input."_clusters_H_included_500_50_five.txt";
+#$file30 = $input."_clusters_H_included_50_500_three.txt";
+#$file31 = $input."_clusters_H_unchanged_500_50_five.txt";
+#$file32 = $input."_clusters_H_unchanged_50_500_three.txt";
+#$file33 = $input."_clusters_FOX2_excluded_500_50_five.txt";
+#$file34 = $input."_clusters_FOX2_excluded_50_500_three.txt";
+#$file35 = $input."_clusters_FOX2_included_500_50_five.txt";
+#$file36 = $input."_clusters_FOX2_included_50_500_three.txt";
+#$file37 = $input."_clusters_FOX2_unchanged_500_50_five.txt";
+#$file38 = $input."_clusters_FOX2_unchanged_50_500_three.txt";
+
+#$file14 = $input."_exons_CE_500_50_five.txt";
+#$file15 = $input."_exons_CE_50_500_three.txt";
+#$file16 = $input."_exons_SE_500_50_five.txt";
+#$file17 = $input."_exons_SE_50_500_three.txt";
+#$file18 = $input."_exons_AS_500_50_five.txt";
+#$file19 = $input."_exons_AS_50_500_three.txt";
+#$file20 = $input."_tss_1000_1000_five.txt";
+#$file21 = $input."_polyA_1000_1000_five.txt";
+#$file22 = $input."_stopcodon_1000_1000_five.txt";
+#$file23 = $input."_startcodon_1000_1000_five.txt";
+#print "\n$file1\n";
+$force = $cmd->{'force'};
+if ($trimming == 1) {
+
+	if ($force == 0) {
+		
+		if (open(CHECK, "< $outputfolder1/$file1")) {
+			print STDERR "$outputfolder1/$file1 already exists, skipping sort_tags_clip_trim step\n";
+			close(CHECK);
+		} else {
+			$this_prog = $program_dir."sort_tags_clip_trim_$species";
+			`perl $this_prog $input $outputfolder1/$file1`;
+			#`perl $program_dir/sort_tags_clip_trim_$species`;
+		}
+	} else {
+		$this_prog = $program_dir."sort_tags_clip_trim_$species";
+		`perl $this_prog $input $outputfolder1/$file1`;
+		#`perl $program_dir/sort_tags_clip_trim_$species`;
+	}
+#	`perl sort_tags_clip_trim_$species $input $file1`;
+	
+} else {
+	#`perl sort_tags_ingenes_$species $file0 ./clusters/$file2`;
+	if ($force == 0) {
+		
+		if (open(CHECK, "< $outputfolder1/$file1")) {
+			print STDERR "$outputfolder1/$file1 already exists, skipping sort_tags_clip_notrim step\n";
+			close(CHECK);
+		} else {
+			$this_prog = $program_dir."sort_tags_clip_notrim_$species";
+			`perl $this_prog $input $outputfolder1/$file1`;
+		}
+	} else {
+		$this_prog = $program_dir."sort_tags_clip_notrim_$species";
+		`perl $this_prog $input $outputfolder1/$file1`;
+	}
+#	`perl sort_tags_clip_notrim_$species $input $file1`;
+	
+}
+if ($repeats == 1) {
+	$this_prog = $program_dir."remove_repeats_$species";
+	`perl $this_prog $outputfolder1/$file1 junk`;
+	`cp junk $outputfolder1/$file1`;
+	`rm junk`;
+	$this_prog = $program_dir."remove_user_repeats_$species";
+	`perl $this_prog $outputfolder1/$file1 junk`;
+	`cp junk $outputfolder1/$file1`;
+	`rm junk`;
+}
+
+#print "$gap\t$mRNA\n";
+if ($cluster_type eq "ingenes") {
+	if ($force == 0) {
+		if (open(CHECK, "< $outputfolder1/$file2")) {
+			print STDERR "$outputfolder1/$file2 already exists, skipping sort_tags_ingenes step\n";
+			close(CHECK);
+		} else {
+			$this_prog = $program_dir."sort_tags_ingenes_$species";
+			`perl $this_prog $outputfolder1/$file1 $outputfolder1/$file2 $shif $mRNA $program_dir`;
+		}
+	} else {
+		$this_prog = $program_dir."sort_tags_ingenes_$species";
+		`perl $this_prog $outputfolder1/$file1 $outputfolder1/$file2 $shif $mRNA $program_dir`;
+	}
+	$this_prog = $program_dir."count_tags2ids";
+	`perl $this_prog $outputfolder1/$file2 > $file2a`;
+	$this_prog = $program_dir."poisson_ingenes_vw3_$species";
+	`perl $this_prog $outputfolder1/$file2 $outputfolder2/$file3 $min_window $pval $bonf_active $max_window $gap $mRNA $outputfolder2 $program_dir`;
+	$this_prog = $program_dir."sort_clusters_ingenes_normalized_histo_$species";
+	`perl $this_prog $outputfolder2/$file3 $outputfolder2/$file4 $mRNA $program_dir`;
+} else {
+	if ($species eq "ce6") {
+		print STDERR "ce6 not supported yet for notingenes cluster finding\n";
+		exit;
+	}
+	if ($force == 0) {
+		if (open(CHECK, "< $outputfolder1/$file2")) {
+			print STDERR "$outputfolder1/$file2 already exists, skipping sort_tags_notingenes step\n";
+			close(CHECK);
+		} else {
+			$this_prog = $program_dir."sort_tags_notingenes_$species";
+			`perl $this_prog $outputfolder1/$file1 $outputfolder1/$file2 $shif $mRNA`;
+		}
+	} else {
+		$this_prog = $program_dir."sort_tags_notingenes_$species";
+		`perl $this_prog $outputfolder1/$file1 $outputfolder1/$file2 $shif $mRNA`;
+	}
+	$this_prog = $program_dir."poisson_notingenes_vw3_$species";
+	`perl $this_prog $outputfolder1/$file2 $outputfolder2/$file3 $min_window $pval $bonf_active $max_window $gap $mRNA $outputfolder2 $program_dir`;
+}
+
+#`perl sort_tags_ingenes_$species $file1 $file2 $shif $mRNA`;
+#`perl poisson_ingenes_vw3_$species $file2 $file3 $min_window $pval $bonf_active $max_window $gap $mRNA $outputfolder`;
+#`perl sort_clusters_ingenes_normalized_histo_$species $file3 $file4 $mRNA`;
+$distros = $cmd->{'distros'};
+if ($distros == 1) {
+	if ($species eq "ce6") {
+		print STDERR "ce6 not supported yet for cluster distributions\n";
+		exit;
+	} elsif ($cluster_type eq "ingenes") {
+		`mkdir distributions`;
+		$this_prog = $program_dir."sort_clusters_general_normalized_histo_$species";
+		$outdir = "$program_dir/structures/exons_CE_$species";
+		`perl $this_prog $outputfolder2/$file3 ./distributions/$file5 $mRNA $outdir 500 50 left $program_dir`;
+		`perl $this_prog $outputfolder2/$file3 ./distributions/$file6 $mRNA $outdir 50 500 right $program_dir`;
+		$outdir = $program_dir."/structures/exons_SE_$species";
+		`perl $this_prog $outputfolder2/$file3 ./distributions/$file7 $mRNA $outdir 500 50 left $program_dir`;
+		`perl $this_prog $outputfolder2/$file3 ./distributions/$file8 $mRNA $outdir 50 500 right $program_dir`;
+		$outdir = $program_dir."/structures/exons_AS_$species";
+		`perl $this_prog $outputfolder2/$file3 ./distributions/$file9 $mRNA $outdir 500 50 left $program_dir`;
+		`perl $this_prog $outputfolder2/$file3 ./distributions/$file10 $mRNA $outdir 50 500 right $program_dir`;
+		$outdir = $program_dir."/structures/starts_$species";
+		`perl $this_prog $outputfolder2/$file3 ./distributions/$file11 $mRNA $outdir 1000 1000 left $program_dir`;
+		$outdir = $program_dir."/structures/polyA_$species";
+		`perl $this_prog $outputfolder2/$file3 ./distributions/$file12 $mRNA $outdir 1000 1000 left $program_dir`;
+		$outdir = $program_dir."/structures/stopcodon_$species";
+		`perl $this_prog $outputfolder2/$file3 ./distributions/$file13 $mRNA $outdir 1000 1000 left $program_dir`;
+		$outdir = $program_dir."/structures/startcodon_$species";
+		`perl $this_prog $outputfolder2/$file3 ./distributions/$file24 $mRNA $outdir 1000 1000 left $program_dir`;
+	
+	#	`perl sort_clusters_general_normalized_histo_$species $outputfolder/$file3 ./distributions/$file25 $mRNA ./structures/exons_decoy_$species 500 50 left`;
+	#	`perl sort_clusters_general_normalized_histo_$species $outputfolder/$file3 ./distributions/$file26 $mRNA ./structures/exons_decoy_$species 50 500 right`;
+	
+	#	`perl sort_clusters_general_normalized_histo_$species $outputfolder/$file3 ./distributions/$file27 $mRNA ./structures/HnRNPH_exons_excluded_$species 500 50 left`;
+	#	`perl sort_clusters_general_normalized_histo_$species $outputfolder/$file3 ./distributions/$file28 $mRNA ./structures/HnRNPH_exons_excluded_$species 50 500 right`;
+	#	`perl sort_clusters_general_normalized_histo_$species $outputfolder/$file3 ./distributions/$file29 $mRNA ./structures/HnRNPH_exons_included_$species 500 50 left`;
+	#	`perl sort_clusters_general_normalized_histo_$species $outputfolder/$file3 ./distributions/$file30 $mRNA ./structures/HnRNPH_exons_included_$species 50 500 right`;
+	#	`perl sort_clusters_general_normalized_histo_$species $outputfolder/$file3 ./distributions/$file31 $mRNA ./structures/HnRNPH_exons_unchanged_$species 500 50 left`;
+	#	`perl sort_clusters_general_normalized_histo_$species $outputfolder/$file3 ./distributions/$file32 $mRNA ./structures/HnRNPH_exons_unchanged_$species 50 500 right`;
+	
+	#	`perl sort_clusters_general_normalized_histo_$species $outputfolder/$file3 ./distributions/$file33 $mRNA ./structures/FOX2_exons_excluded_$species 500 50 left`;
+	#	`perl sort_clusters_general_normalized_histo_$species $outputfolder/$file3 ./distributions/$file34 $mRNA ./structures/FOX2_exons_excluded_$species 50 500 right`;
+	#	`perl sort_clusters_general_normalized_histo_$species $outputfolder/$file3 ./distributions/$file35 $mRNA ./structures/FOX2_exons_included_$species 500 50 left`;
+	#	`perl sort_clusters_general_normalized_histo_$species $outputfolder/$file3 ./distributions/$file36 $mRNA ./structures/FOX2_exons_included_$species 50 500 right`;
+	#	`perl sort_clusters_general_normalized_histo_$species $outputfolder/$file3 ./distributions/$file37 $mRNA ./structures/FOX2_exons_unchanged_$species 500 50 left`;
+	#	`perl sort_clusters_general_normalized_histo_$species $outputfolder/$file3 ./distributions/$file38 $mRNA ./structures/FOX2_exons_unchanged_$species 50 500 right`;
+	}
+} else {
+	print "Distributions disabled.... for now.\n";
+}
+
+exit;

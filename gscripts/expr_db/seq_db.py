@@ -96,7 +96,7 @@ class CLIPSeq(SeqExpr):
         return (self.__tablename__, self.species)
 
 
-def manifest_setup(expr_list, working_dir='/oasis/tscc/scratch/yeo-lab',
+def manifest_setup(expr_list, working_dir='/oasis/tscc/scratch/yeo-lab/',
                    filename='manifest.txt'):
     f = open(working_dir + filename, 'w')
 
@@ -108,12 +108,21 @@ def manifest_setup(expr_list, working_dir='/oasis/tscc/scratch/yeo-lab',
             f.write(expr.species)
             f.write('\n')
 
+        elif expr.__tablename__ == 'rnaseq':
+            f.write(expr.file_location)
+            if expr.pair_location:
+                f.write(';')
+                f.write(expr.pair_location)
+            f.write('\t')
+            f.write(expr.species)
+            f.write('\n')
+
     f.close()
 
     pass
 
 
-def q_setup(expr_list, working_dir='/oasis/tscc/scratch/yeo-lab',
+def q_setup(expr_list, working_dir='/oasis/tscc/scratch/yeo-lab/',
             session_name=None, queue='home', group='yeo'):
     star_genome = {
         'hg19': '/projects/ps-yeolab/genomes/hg19/star/',

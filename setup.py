@@ -3,9 +3,11 @@ from setuptools import setup, find_packages
 
 scripts = [
     'annotations/gencode_annotate_utrs_5p_3p.pl',
+    'clipseq/run_kasey.py',
     'clipseq/kmer_extractor.py',
     'clipseq/perform_idr.py',
     'clipseq/run_piranha.py',
+    'clipseq/run_ripseeker.py',
     'editing/create_rna_editing_makefile.py',
     'general/calculate_NRF.py',
     'general/count_aligned_from_sam.py',
@@ -14,6 +16,7 @@ scripts = [
     'general/normalize_bedGraph.py',
     'general/parsers.py',
     'general/gsnap_index.py',
+    'ipython_server/serve_ipython.py',
     'mapping/sort_bam.py',
     'mapping/index_bam.py',
     'mapping/map_paired_with_STAR.py',
@@ -21,6 +24,7 @@ scripts = [
     'miso/submit_index_gff.py',
     'miso/submit_miso_pipeline.py',
     'output_parsers/parseMiso.py',
+    'pwm/cisbp_to_meme.py',
     'riboseq/riboseq_coverage.py',
     'rnaseq/count_tags.py',
     'rnaseq/make_rnaseqc.py',
