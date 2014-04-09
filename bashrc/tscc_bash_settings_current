@@ -34,10 +34,10 @@ export PATH=/home/yeo-lab/software/ghc/bin:$PATH
 
 #making it so I can switch between different version of python quickly
 
-export PYTHONPATH=/opt/scipy/lib64/python2.6/site-packages/:$PYTHONPATH
-export PYTHONPATH=/home/yeo-lab/software/lib:$PYTHONPATH
-export PYTHONPATH=/home/yeo-lab/software/lib/python2.7/site-packages:$PYTHONPATH
-export PYTHONPATH=/home/jpg/opt/python/lib/python2.7/site-packages:$PYTHONPATH
+#export PYTHONPATH=/opt/scipy/lib64/python2.6/site-packages/:$PYTHONPATH
+#export PYTHONPATH=/home/yeo-lab/software/lib:$PYTHONPATH
+#export PYTHONPATH=/home/yeo-lab/software/lib/python2.7/site-packages:$PYTHONPATH
+#export PYTHONPATH=/home/jpg/opt/python/lib/python2.7/site-packages:$PYTHONPATH
 
 #fastqc
 export PATH=/home/yeo-lab/software/FastQC:$PATH
@@ -48,3 +48,8 @@ export PATH=/home/yeo-lab/software/weblogo:$PATH
 export PATH=$PATH:/home/yeo-lab/software/homer/.//bin/
 
 export HDF5_DIR=/home/yeo-lab/software
+
+
+# added by Anaconda 1.9.1 installer
+export PATH="/projects/ps-yeolab/software/anaconda/bin:~/bin:$PATH"
+export PYTHONPATH=
