@@ -39,7 +39,7 @@ def GO_enrichment(geneList, ontology, expressedGenes = None, printIt=False, pCut
             pValues[GOTerm] = 'notest'
             continue
             
-        pVal = (1.-hypergeom.cdf(len(inBoth), lenAllGenes, len(expressedGOGenes), lenTheseGenes))
+        pVal = hypergeom.sf(len(inBoth), lenAllGenes, len(expressedGOGenes), lenTheseGenes)
         if pVal < 0:
             pVal = 0 
         symbols = []
