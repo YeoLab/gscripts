@@ -34,23 +34,22 @@ export PATH=/home/yeo-lab/software/ghc/bin:$PATH
 
 #making it so I can switch between different version of python quickly
 
-export PYTHONPATH=/opt/scipy/lib64/python2.6/site-packages/:$PYTHONPATH
-export PYTHONPATH=/home/yeo-lab/software/lib:$PYTHONPATH
-export PYTHONPATH=/home/yeo-lab/software/lib/python2.7/site-packages:$PYTHONPATH
-export PYTHONPATH=/home/jpg/opt/python/lib/python2.7/site-packages:$PYTHONPATH
+#export PYTHONPATH=/opt/scipy/lib64/python2.6/site-packages/:$PYTHONPATH
+#export PYTHONPATH=/home/yeo-lab/software/lib:$PYTHONPATH
+#export PYTHONPATH=/home/yeo-lab/software/lib/python2.7/site-packages:$PYTHONPATH
+#export PYTHONPATH=/home/jpg/opt/python/lib/python2.7/site-packages:$PYTHONPATH
 
 #fastqc
 export PATH=/home/yeo-lab/software/FastQC:$PATH
 
-#IGV
-export PATH=/home/yeo-lab/software/IGVTools:$PATH
+export PATH=/projects/ps-yeolab/software/bin:/home/yeo-lab/software/bin:$PATH
 
-#PARalizer
-export PATH=/home/yeo-lab/software/PARalyzer_v1_1:$PATH
-
-#General
-export PATH=/home/yeo-lab/software/bin:$PATH
 export PATH=/home/yeo-lab/software/weblogo:$PATH
 export PATH=$PATH:/home/yeo-lab/software/homer/.//bin/
 
 export HDF5_DIR=/home/yeo-lab/software
+
+
+# added by Anaconda 1.9.1 installer
+export PATH="/projects/ps-yeolab/software/anaconda/bin:~/bin:$PATH"
+export PYTHONPATH=
