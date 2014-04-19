@@ -59,5 +59,5 @@ for file in glob('*R1*gz'):
 sub = Submitter(queue_type='PBS', sh_file=jobname + '.sh',
                 command_list=cmd_list,
                 job_name=jobname)
-sub.write_sh(submit=True, nodes=1, ppn=16, walltime='0:30:00', array=True,
+sub.write_sh(submit=True, nodes=1, ppn=16, walltime='0:30:00', use_array=True,
              max_running=20)
