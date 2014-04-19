@@ -1,4 +1,3 @@
-
 from collections import Iterable
 import math
 from math import sqrt
@@ -22,42 +21,46 @@ import statsmodels.api as sm
 import seaborn
 
 seaborn.set_style({'axes.axisbelow': True,
-                 'axes.edgecolor': '.15',
-                 'axes.facecolor': 'white',
-                 'axes.grid': False,
-                 'axes.labelcolor': '.15',
-                 'axes.linewidth': 1.25,
-                 'font.family': 'Helvetica',
-                 'grid.color': '.8',
-                 'grid.linestyle': '-',
-                 'image.cmap': 'Greys',
-                 'legend.frameon': False,
-                 'legend.numpoints': 1,
-                 'legend.scatterpoints': 1,
-                 'lines.solid_capstyle': 'round',
-                 'text.color': '.15',
-                 'xtick.color': '.15',
-                 'xtick.direction': 'out',
-                 'xtick.major.size': 0,
-                 'xtick.minor.size': 0,
-                 'ytick.color': '.15',
-                 'ytick.direction': 'out',
-                 'ytick.major.size': 0,
-                 'ytick.minor.size': 0})
+                   'axes.edgecolor': '.15',
+                   'axes.facecolor': 'white',
+                   'axes.grid': False,
+                   'axes.labelcolor': '.15',
+                   'axes.linewidth': 1.25,
+                   'font.family': 'Helvetica',
+                   'grid.color': '.8',
+                   'grid.linestyle': '-',
+                   'image.cmap': 'Greys',
+                   'legend.frameon': False,
+                   'legend.numpoints': 1,
+                   'legend.scatterpoints': 1,
+                   'lines.solid_capstyle': 'round',
+                   'text.color': '.15',
+                   'xtick.color': '.15',
+                   'xtick.direction': 'out',
+                   'xtick.major.size': 0,
+                   'xtick.minor.size': 0,
+                   'ytick.color': '.15',
+                   'ytick.direction': 'out',
+                   'ytick.major.size': 0,
+                   'ytick.minor.size': 0})
 
 seaborn.set_color_palette('deep')
 
 import pylab
 
 
-def clusterGram(dataFrame, distance_metric = 'euclidean', linkage_method = 'average',
-            outfile = None, clusterRows=True, clusterCols=True, timeSeries=False, doCovar=False,
-            figsize=(8, 10), row_label_color_fun=lambda x: ppl.colors.almost_black,
-            col_label_color_fun=lambda x: ppl.colors.almost_black,
-            link_color_func = lambda x: ppl.colors.almost_black):
+def clusterGram(dataFrame, distance_metric='euclidean',
+                linkage_method='average',
+                outfile=None, clusterRows=True, clusterCols=True,
+                timeSeries=False, doCovar=False,
+                figsize=(8, 10),
+                row_label_color_fun=lambda x: ppl.colors.almost_black,
+                col_label_color_fun=lambda x: ppl.colors.almost_black,
+                link_color_func=lambda x: ppl.colors.almost_black):
     import scipy
     import pylab
     import matplotlib.gridspec as gridspec
+
     """
 
     Run hierarchical clustering on data. Creates a heatmap of cluster-ordered data
@@ -87,22 +90,25 @@ def clusterGram(dataFrame, distance_metric = 'euclidean', linkage_method = 'aver
         print "getting row distance matrix"
         y_events = scipy.spatial.distance.pdist(data, distance_metric)
         print "calculating linkages"
-        Z_events = scipy.cluster.hierarchy.linkage(y_events, linkage_method, metric=distance_metric)
+        Z_events = scipy.cluster.hierarchy.linkage(y_events, linkage_method,
+                                                   metric=distance_metric)
 
     if clusterCols:
         print "getting column distance matrix"
-        y_samples = scipy.spatial.distance.pdist(np.transpose(data), distance_metric)
+        y_samples = scipy.spatial.distance.pdist(np.transpose(data),
+                                                 distance_metric)
         print "calculating linkages"
-        Z_samples = scipy.cluster.hierarchy.linkage(y_samples, linkage_method, metric=distance_metric)
+        Z_samples = scipy.cluster.hierarchy.linkage(y_samples, linkage_method,
+                                                    metric=distance_metric)
     else:
         if doCovar:
             raise ValueError
 
     fig = pylab.figure(figsize=figsize)
 
-    gs = gridspec.GridSpec(18,10)
+    gs = gridspec.GridSpec(18, 10)
 
-    ax1 = pylab.subplot(gs[1:, 0:2]) #row dendrogram
+    ax1 = pylab.subplot(gs[1:, 0:2])  #row dendrogram
 
     ax1.set_xticklabels([])
     ax1.set_xticks([])
@@ -111,16 +117,16 @@ def clusterGram(dataFrame, distance_metric = 'euclidean', linkage_method = 'aver
     reordered = data
     event_order = range(nRow)
     if clusterRows:
-        d_events = scipy.cluster.hierarchy.dendrogram(Z_events, orientation='right',
+        d_events = scipy.cluster.hierarchy.dendrogram(Z_events,
+                                                      orientation='right',
                                                       link_color_func=link_color_func,
                                                       labels=rowLabels)
         event_order = d_events['leaves']
-        reordered = data[event_order,:]
+        reordered = data[event_order, :]
 
     labels = ax1.get_yticklabels()
 
-
-    ax2 = pylab.subplot(gs[0:1, 2:9]) #column dendrogram
+    ax2 = pylab.subplot(gs[0:1, 2:9])  #column dendrogram
 
     ax2.set_yticklabels([])
     ax2.set_yticks([])
@@ -128,10 +134,12 @@ def clusterGram(dataFrame, distance_metric = 'euclidean', linkage_method = 'aver
 
     sample_order = range(nCol)
     if clusterCols:
-        d_samples = scipy.cluster.hierarchy.dendrogram(Z_samples, labels=colLabels, leaf_rotation=90,
+        d_samples = scipy.cluster.hierarchy.dendrogram(Z_samples,
+                                                       labels=colLabels,
+                                                       leaf_rotation=90,
                                                        link_color_func=link_color_func)
         sample_order = d_samples['leaves']
-        reordered = reordered[:,sample_order]
+        reordered = reordered[:, sample_order]
 
     axmatrix = pylab.subplot(gs[1:, 2:9])
     bds = np.max(abs(reordered))
@@ -143,9 +151,10 @@ def clusterGram(dataFrame, distance_metric = 'euclidean', linkage_method = 'aver
     if (np.max(reordered) * np.min(reordered)) > 0:
         cmap = pylab.cm.Reds
     else:
-        cmap= pylab.cm.RdBu_r
+        cmap = pylab.cm.RdBu_r
 
-    im = axmatrix.matshow(reordered, aspect='auto', origin='lower', cmap=cmap, norm=norm)
+    im = axmatrix.matshow(reordered, aspect='auto', origin='lower', cmap=cmap,
+                          norm=norm)
     axmatrix.set_xticks([])
     axmatrix.set_yticks([])
     axcolor = pylab.subplot(gs[1:6, -1])
@@ -153,9 +162,10 @@ def clusterGram(dataFrame, distance_metric = 'euclidean', linkage_method = 'aver
     cbTicks = [np.min(data), np.mean(data), np.max(data)]
     cb = pylab.colorbar(im, cax=axcolor, ticks=cbTicks, use_gridspec=True)
     pylab.draw()
-    [i.set_color(row_label_color_fun(i.get_text())) for i in ax1.get_yticklabels()]
-    [i.set_color(col_label_color_fun(i.get_text())) for i in ax2.get_xticklabels()]
-
+    [i.set_color(row_label_color_fun(i.get_text())) for i in
+     ax1.get_yticklabels()]
+    [i.set_color(col_label_color_fun(i.get_text())) for i in
+     ax2.get_xticklabels()]
 
     pylab.tight_layout()
 
@@ -424,14 +434,14 @@ def heatmap(df, title=None, colorbar_label='values',
     ### scale colorbar ###
     scale_colorbar_ax = fig.add_subplot(
         heatmap_gridspec[0:(nrows - 1),
-        0]) # colorbar for scale in upper left corner
+        0])  # colorbar for scale in upper left corner
     cb = fig.colorbar(heatmap_ax_pcolormesh,
-                      cax=scale_colorbar_ax) # note that we could pass the norm explicitly with norm=my_norm
+                      cax=scale_colorbar_ax)  # note that we could pass the norm explicitly with norm=my_norm
     cb.set_label(colorbar_label)
     cb.ax.yaxis.set_ticks_position(
-        'left') # move ticks to left side of colorbar to avoid problems with tight_layout
+        'left')  # move ticks to left side of colorbar to avoid problems with tight_layout
     cb.ax.yaxis.set_label_position(
-        'left') # move label to left side of colorbar to avoid problems with tight_layout
+        'left')  # move label to left side of colorbar to avoid problems with tight_layout
     cb.outline.set_linewidth(0)
     # make colorbar labels smaller
     yticklabels = cb.ax.yaxis.get_ticklabels()
@@ -441,16 +451,19 @@ def heatmap(df, title=None, colorbar_label='values',
     fig.tight_layout()
     return fig, row_dendrogram_distances, column_dendrogram_distances
 
+
 from ..general.analysis_tools import PCA
 
-def L1_distance(x,y):
+
+def L1_distance(x, y):
     return abs(y) + abs(x)
 
-def L2_distance(x,y):
+
+def L2_distance(x, y):
     return math.sqrt((y ** 2) + (x ** 2))
 
-class PCA_viz(PCA):
 
+class PCA_viz(PCA):
     """
         Given a pandas dataframe, performs PCA and plots the results in a
         convenient single function.
@@ -481,29 +494,39 @@ class PCA_viz(PCA):
         @return: x, y, marker, distance of each vector in the data.
         """
 
-    _default_plotting_args = {'ax':None, 'x_pc':'pc_1', 'y_pc':'pc_2',
-                      'num_vectors':20, 'title':'PCA', 'title_size':None, 'axis_label_size':None,
-                      'colors_dict':None, 'markers_dict':None, 'markers_size_dict':None,
-                      'default_marker_size':100, 'distance_metric':'L1',
-                      'show_vectors':True, 'c_scale':None, 'vector_width':None, 'vector_colors_dict':None,
-                      'show_vector_labels':True,  'vector_label_size':None,
-                      'show_point_labels':True, 'point_label_size':None, 'scale_by_variance':True}
+    _default_plotting_args = {'ax': None, 'x_pc': 'pc_1', 'y_pc': 'pc_2',
+                              'num_vectors': 20, 'title': 'PCA',
+                              'title_size': None, 'axis_label_size': None,
+                              'colors_dict': None, 'markers_dict': None,
+                              'markers_size_dict': None,
+                              'default_marker_size': 100,
+                              'distance_metric': 'L1',
+                              'show_vectors': True, 'c_scale': None,
+                              'vector_width': None, 'vector_colors_dict': None,
+                              'show_vector_labels': True,
+                              'vector_label_size': None,
+                              'show_point_labels': True,
+                              'point_label_size': None,
+                              'scale_by_variance': True}
 
-    _default_pca_args = {'whiten':True, 'n_components':None}
+    _default_pca_args = {'whiten': True, 'n_components': None}
 
-    _default_args = dict(_default_plotting_args.items() + _default_pca_args.items())
+    _default_args = dict(
+        _default_plotting_args.items() + _default_pca_args.items())
 
     def __init__(self, df, **kwargs):
 
         self._validate_params(self._default_args, **kwargs)
 
         self.plotting_args = self._default_plotting_args.copy()
-        self.plotting_args.update([(k,v) for (k,v) in kwargs.items() if k in self._default_plotting_args.keys()])
+        self.plotting_args.update([(k, v) for (k, v) in kwargs.items() if
+                                   k in self._default_plotting_args.keys()])
 
         self.pca_args = self._default_pca_args.copy()
-        self.pca_args.update([(k,v) for (k,v) in kwargs.items() if k in self._default_pca_args.keys()])
+        self.pca_args.update([(k, v) for (k, v) in kwargs.items() if
+                              k in self._default_pca_args.keys()])
 
-        super(PCA_viz, self).__init__(**self.pca_args) #initialize PCA object
+        super(PCA_viz, self).__init__(**self.pca_args)  #initialize PCA object
         assert type(df) == pd.DataFrame
         self.pca_space = self.fit_transform(df)
 
@@ -516,11 +539,11 @@ class PCA_viz(PCA):
         gs_y = 12
 
         if ax is None:
-            fig, ax = pylab.subplots(1,1,figsize=(18,9))
-            gs = GridSpec(gs_x,gs_y)
+            fig, ax = pylab.subplots(1, 1, figsize=(18, 9))
+            gs = GridSpec(gs_x, gs_y)
 
         else:
-            gs = GridSpecFromSubplotSpec(gs_x,gs_y,ax.get_subplotspec())
+            gs = GridSpecFromSubplotSpec(gs_x, gs_y, ax.get_subplotspec())
 
         ax_pca = pylab.subplot(gs[:, :5])
         ax_loading1 = pylab.subplot(gs[1:5, 5:])
@@ -529,7 +552,7 @@ class PCA_viz(PCA):
         passed_kwargs = kwargs
         local_kwargs = self.plotting_args.copy()
         local_kwargs.update(passed_kwargs)
-        local_kwargs.update({'ax':ax_pca})
+        local_kwargs.update({'ax': ax_pca})
         self.plot_samples(**local_kwargs)
         self.plot_loadings(pc=local_kwargs['x_pc'], ax=ax_loading1)
         self.plot_loadings(pc=local_kwargs['y_pc'], ax=ax_loading2)
@@ -544,13 +567,15 @@ class PCA_viz(PCA):
                 assert key in valid.keys()
             except:
                 print self.__doc__
-                raise ValueError("unrecognized parameter for pca plot: "\
-                                 "%s. acceptable values are:\n%s" % (key, "\n".join(valid.keys())))
+                raise ValueError("unrecognized parameter for pca plot: " \
+                                 "%s. acceptable values are:\n%s" % (
+                                 key, "\n".join(valid.keys())))
 
     def plot_samples(self, **kwargs):
         from pylab import gcf
+
         self._validate_params(self._default_plotting_args, **kwargs)
-        default_params = self.plotting_args.copy() #fill missing parameters
+        default_params = self.plotting_args.copy()  #fill missing parameters
         default_params.update(kwargs)
         kwargs = default_params
 
@@ -558,11 +583,12 @@ class PCA_viz(PCA):
         #move kwargs out of a dict, into local namespace, mostly because I don't want to refactor below
 
         for key in kwargs.keys():
-            exec(key + " = kwargs['" + key + "']")
-        x_loading, y_loading = self.components_.ix[x_pc], self.components_.ix[y_pc]
+            exec (key + " = kwargs['" + key + "']")
+        x_loading, y_loading = self.components_.ix[x_pc], self.components_.ix[
+            y_pc]
 
         if ax is None:
-            fig, ax = pylab.subplots(1,1, figsize=(5,5))
+            fig, ax = pylab.subplots(1, 1, figsize=(5, 5))
         self.ax = ax
 
         pca_space = self.pca_space
@@ -570,15 +596,17 @@ class PCA_viz(PCA):
         y_list = pca_space[y_pc]
 
         if not c_scale:
-            c_scale = .75 * max([norm(point) for point in zip(x_list, y_list)]) / \
-                      max([norm(vector) for vector in zip(x_loading, y_loading)])
+            c_scale = .75 * max(
+                [norm(point) for point in zip(x_list, y_list)]) / \
+                      max([norm(vector) for vector in
+                           zip(x_loading, y_loading)])
 
         figsize = tuple(gcf().get_size_inches())
         size_scale = sqrt(figsize[0] * figsize[1]) / 1.5
-        default_marker_size = size_scale*5 if not default_marker_size else default_marker_size
+        default_marker_size = size_scale * 5 if not default_marker_size else default_marker_size
         vector_width = .5 if not vector_width else vector_width
-        axis_label_size = size_scale *1.5 if not axis_label_size else axis_label_size
-        title_size = size_scale*2 if not title_size else title_size
+        axis_label_size = size_scale * 1.5 if not axis_label_size else axis_label_size
+        title_size = size_scale * 2 if not title_size else title_size
         vector_label_size = size_scale * 1.5 if not vector_label_size else vector_label_size
         point_label_size = size_scale * 1.5 if not point_label_size else point_label_size
 
@@ -615,31 +643,26 @@ class PCA_viz(PCA):
         self.magnitudes = pd.Series(magnitudes, index=self.X.columns)
         self.magnitudes.sort(ascending=False)
 
-
         for (x, y, an_id) in zip(x_list, y_list, self.X.index):
-
             try:
                 color = colors_dict[an_id]
             except:
                 color = 'black'
-
             try:
                 marker = markers_dict[an_id]
             except:
                 marker = '.'
-
             try:
                 marker_size = markers_size_dict[an_id]
             except:
                 marker_size = default_marker_size
-
-
             if show_point_labels:
                 ax.text(x, y, an_id, color=color, size=point_label_size)
+            ppl.scatter(ax, x, y, marker=marker, color=color, s=marker_size,
+                        edgecolor='none')
 
-            ppl.scatter(ax, x, y, marker=marker, color=color, s=marker_size, edgecolor='none')
-
-        vectors = sorted(comp_magn, key=lambda item: item[3], reverse=True)[:num_vectors]
+        vectors = sorted(comp_magn, key=lambda item: item[3], reverse=True)[
+                  :num_vectors]
 
         for x, y, marker, distance in vectors:
 
@@ -649,17 +672,20 @@ class PCA_viz(PCA):
                 color = 'black'
 
             if show_vectors:
-                ppl.plot(ax, [0, x], [0, y], color=color, linewidth=vector_width)
+                ppl.plot(ax, [0, x], [0, y], color=color,
+                         linewidth=vector_width)
 
                 if show_vector_labels:
-
-                     ax.text(1.1*x, 1.1*y, marker, color=color, size=vector_label_size)
+                    ax.text(1.1 * x, 1.1 * y, marker, color=color,
+                            size=vector_label_size)
 
         ax.set_xlabel(
-            'Principal Component {} (Explains {}% Of Variance)'.format(str(x_pc), \
+            'Principal Component {} (Explains {}% Of Variance)'.format(
+                str(x_pc), \
                 str(var_1)), size=axis_label_size)
         ax.set_ylabel(
-            'Principal Component {} (Explains {}% Of Variance)'.format(str(y_pc), \
+            'Principal Component {} (Explains {}% Of Variance)'.format(
+                str(y_pc), \
                 str(var_2)), size=axis_label_size)
         ax.set_title(title, size=title_size)
 
@@ -668,28 +694,31 @@ class PCA_viz(PCA):
     def plot_loadings(self, pc='pc_1', n_features=50, ax=None):
 
         import pylab
+
         x = self.components_.ix[pc].copy()
         x.sort(ascending=True)
-        half_features = int(n_features/2)
+        half_features = int(n_features / 2)
         a = x[:half_features]
         b = x[-half_features:]
         if ax is None:
             ax = pylab.gca()
-        ax.plot(np.r_[a,b], 'o')
+        ax.plot(np.r_[a, b], 'o')
         ax.set_xticks(np.arange(n_features))
         _ = ax.set_xticklabels(np.r_[a.index, b.index], rotation=90)
         ax.set_title("loadings on " + pc)
         x_offset = 0.5
         xmin, xmax = ax.get_xlim()
-        ax.set_xlim(left=xmin-x_offset, right=xmax-x_offset)
+        ax.set_xlim(left=xmin - x_offset, right=xmax - x_offset)
 
         seaborn.despine(ax=ax)
+
 
 def plot_pca(df, **kwargs):
     """ for backwards-compatibility """
     pcaObj = PCA_viz(df, **kwargs)
     return_me, ax = pcaObj.plot_samples()
     return return_me
+
 
 def skipped_exon_figure(ax, which_axis='y', height_multiplier=0.025,
                         width_multiplier=0.04, leftmost_x=None):
@@ -780,7 +809,7 @@ def skipped_exon_figure(ax, which_axis='y', height_multiplier=0.025,
 
 #
 def x_with_ties(series, middle, sep=0.05):
-#     middle = 1.0
+    #     middle = 1.0
     """
     For making 'lava lamp' plots. Given a pandas series of y-axis values that
     may have some entries with identical values, return an x-axis vector that
@@ -812,23 +841,27 @@ def x_with_ties(series, middle, sep=0.05):
 
 
 def label_side_axis_as_title(ax_right, label):
-    ax = plt.subplot2grid((ax_right.numRows, ax_right.numCols), (ax_right.rowNum,0))
-    ax.set_xlim((0,1))
-    ax.set_ylim((0,1))
+    ax = plt.subplot2grid((ax_right.numRows, ax_right.numCols),
+                          (ax_right.rowNum, 0))
+    ax.set_xlim((0, 1))
+    ax.set_ylim((0, 1))
     ax.axis('off')
-    ax_limits = ax.axis() ;
-    ax.text(-1, (ax_limits[3]-ax_limits[2])/2,
+    ax_limits = ax.axis();
+    ax.text(-1, (ax_limits[3] - ax_limits[2]) / 2,
             label, fontsize=12,
             horizontalalignment='left', verticalalignment='center')
 
     handles, labels = ax_right.get_legend_handles_labels()
-    ax.legend(handles, labels, loc=2, frameon=False, bbox_to_anchor=(-2.0,1.5))
+    ax.legend(handles, labels, loc=2, frameon=False, bbox_to_anchor=(-2.0, 1.5))
+
 
 def add_side_legend(ax, **kwargs):
-    ax.legend(bbox_to_anchor=(-.3, 1), loc=2, borderaxespad=0., frameon=False, **kwargs)
+    ax.legend(bbox_to_anchor=(-.3, 1), loc=2, borderaxespad=0., frameon=False,
+              **kwargs)
 
 
-def rpkm_and_mapping_stats(rpkm, mapping_stats, img_filename, sort_by_reads=False):
+def rpkm_and_mapping_stats(rpkm, mapping_stats, img_filename,
+                           sort_by_reads=False):
     """
     Creates a plot of all the samples and their mapping stats
 
@@ -847,49 +880,52 @@ def rpkm_and_mapping_stats(rpkm, mapping_stats, img_filename, sort_by_reads=Fals
     print 'xticks', xticks
     if sort_by_reads:
         sorted_col = mapping_stats.columns[mapping_stats.ix['Uniquely mapped ' \
-                                                            'reads number', :].values.astype(int).argsort()[::-1]]
+                                                            'reads number',
+                                           :].values.astype(int).argsort()[
+                                           ::-1]]
     else:
         sorted_col = mapping_stats.columns
-    fig = plt.figure(figsize=(30,20))
+    fig = plt.figure(figsize=(30, 20))
 
     # this took a shit ton of time to figure out these parameters... don't change
     # unless you are highly confident.
-    ax0 = plt.subplot2grid((18,9), (0,2), colspan=7, rowspan=4)
-    ax1 = plt.subplot2grid((18,9), (0,1), colspan=1, rowspan=4)
-    ax2 = plt.subplot2grid((18,9), (4,2), colspan=7)
-    ax3 = plt.subplot2grid((18,9), (5,2), colspan=7)
-    ax4 = plt.subplot2grid((18,9), (6,2), colspan=7)
-    ax5 = plt.subplot2grid((18,9), (7,2), colspan=7)
-    ax6 = plt.subplot2grid((18,9), (8,2), colspan=7)
-    ax7 = plt.subplot2grid((18,9), (9,2), colspan=7)
-    ax8 = plt.subplot2grid((18,9), (10,2), colspan=7)
-    ax9 = plt.subplot2grid((18,9), (11,2), colspan=7)
-    ax10 = plt.subplot2grid((18,9), (12,2), colspan=7)
-    ax11 = plt.subplot2grid((18,9), (13,2), colspan=7)
-    ax12 = plt.subplot2grid((18,9), (14,2), colspan=7)
-    ax13 = plt.subplot2grid((18,9), (15,2), colspan=7)
-    ax14 = plt.subplot2grid((18,9), (16,2), colspan=7)
-    ax15 = plt.subplot2grid((18,9), (17,2), colspan=7)
+    ax0 = plt.subplot2grid((18, 9), (0, 2), colspan=7, rowspan=4)
+    ax1 = plt.subplot2grid((18, 9), (0, 1), colspan=1, rowspan=4)
+    ax2 = plt.subplot2grid((18, 9), (4, 2), colspan=7)
+    ax3 = plt.subplot2grid((18, 9), (5, 2), colspan=7)
+    ax4 = plt.subplot2grid((18, 9), (6, 2), colspan=7)
+    ax5 = plt.subplot2grid((18, 9), (7, 2), colspan=7)
+    ax6 = plt.subplot2grid((18, 9), (8, 2), colspan=7)
+    ax7 = plt.subplot2grid((18, 9), (9, 2), colspan=7)
+    ax8 = plt.subplot2grid((18, 9), (10, 2), colspan=7)
+    ax9 = plt.subplot2grid((18, 9), (11, 2), colspan=7)
+    ax10 = plt.subplot2grid((18, 9), (12, 2), colspan=7)
+    ax11 = plt.subplot2grid((18, 9), (13, 2), colspan=7)
+    ax12 = plt.subplot2grid((18, 9), (14, 2), colspan=7)
+    ax13 = plt.subplot2grid((18, 9), (15, 2), colspan=7)
+    ax14 = plt.subplot2grid((18, 9), (16, 2), colspan=7)
+    ax15 = plt.subplot2grid((18, 9), (17, 2), colspan=7)
 
     axes = [ax0, ax1, ax2, ax3, ax4, ax5, ax6, ax7, ax8, ax9, ax10, ax11, ax12,
             ax13, ax14, ax15]
 
     # --- ax0: samples vs RPKM --- #
-    ax0.set_title('Samples, sorted by mapped read count -vs- RPKM, sorted in sample with most reads')
+    ax0.set_title(
+        'Samples, sorted by mapped read count -vs- RPKM, sorted in sample with most reads')
     sample_with_most_reads = sorted_col[0]
 
     # vmin CANNOT be <=0 because of the log transformation, and then
     # this fucks up fig.savefig()
-    vmin = 0.1 #rpkm.min().min()
+    vmin = 0.1  #rpkm.min().min()
     vmax = rpkm.max().max()
 
     # print 'vmin', vmin
     # print 'vmax', vmax
 
     rpkm.sort_index(by=sample_with_most_reads, inplace=True)
-    pcolormesh = ax0.pcolormesh(rpkm.ix[:,sorted_col].values,
-                   norm=LogNorm(vmin=vmin, vmax=vmax),
-                   cmap=greys)
+    pcolormesh = ax0.pcolormesh(rpkm.ix[:, sorted_col].values,
+                                norm=LogNorm(vmin=vmin, vmax=vmax),
+                                cmap=greys)
     # plt.colorbar(pcolormesh)
 
     # --- ax1: sorted FPKM of sample with most reads --- #
@@ -898,12 +934,13 @@ def rpkm_and_mapping_stats(rpkm, mapping_stats, img_filename, sort_by_reads=Fals
                   % sorted_col[0])
     ax1.set_xscale('log')
 
-    ylim =(0, rpkm.shape[0])
+    ylim = (0, rpkm.shape[0])
     ax1.barh(bottom=range(ylim[0], ylim[1]),
-             width=rpkm.ix[:, sample_with_most_reads].values.astype(float), linewidth=0,
+             width=rpkm.ix[:, sample_with_most_reads].values.astype(float),
+             linewidth=0,
              color='grey')
     limits = ax1.axis()
-#     ax1.set_xlim(left=limits[1], right=limits[0])
+    #     ax1.set_xlim(left=limits[1], right=limits[0])
     ax1.set_ylim(0, rpkm.shape[0])
     ppl.remove_chartjunk(ax1, ['top', 'left'], grid='x')
 
@@ -913,20 +950,24 @@ def rpkm_and_mapping_stats(rpkm, mapping_stats, img_filename, sort_by_reads=Fals
     # Plot uniquely mapped reads
     ax2.set_yscale('log')
     print "mapping_stats.ix['Uniquely mapped reads number', sorted_col].values.astype(int)"
-    print mapping_stats.ix['Uniquely mapped reads number', sorted_col].values.astype(int)
-    ppl.bar(ax2, xticks, height=mapping_stats.ix['Uniquely mapped reads number', ].values.astype(int),
-           color=colors[0], label='Uniquely mapped reads')
-#     ax2.set_xlim(left=limits[1], right=limits[0])
+    print mapping_stats.ix[
+        'Uniquely mapped reads number', sorted_col].values.astype(int)
+    ppl.bar(ax2, xticks, height=mapping_stats.ix[
+        'Uniquely mapped reads number',].values.astype(int),
+            color=colors[0], label='Uniquely mapped reads')
+    #     ax2.set_xlim(left=limits[1], right=limits[0])
 
     # Plot input reads on top
-    height = mapping_stats.ix['Number of input reads', sorted_col].values.astype(int) - \
-        mapping_stats.ix['Uniquely mapped reads number', sorted_col].values.astype(int)
-
+    height = mapping_stats.ix[
+                 'Number of input reads', sorted_col].values.astype(int) - \
+             mapping_stats.ix[
+                 'Uniquely mapped reads number', sorted_col].values.astype(int)
 
     ax2.bar(xticks, height,
-           color=colors[1], linewidth=0,
-           bottom=mapping_stats.ix['Uniquely mapped reads number', sorted_col].values.astype(int),
-           label='Unmapped reads')
+            color=colors[1], linewidth=0,
+            bottom=mapping_stats.ix[
+                'Uniquely mapped reads number', sorted_col].values.astype(int),
+            label='Unmapped reads')
 
     ppl.remove_chartjunk(ax2, ['top', 'right'], grid='y')
     add_side_legend(ax2, title='Number of reads, log10')
@@ -934,29 +975,34 @@ def rpkm_and_mapping_stats(rpkm, mapping_stats, img_filename, sort_by_reads=Fals
     # --- ax3: % uniquely mapped -- #
     #label_side_axis_as_title(ax3, '% Uniquely mapped reads')
 
-    uniquely_mapped = mapping_stats.ix['Uniquely mapped reads %',sorted_col].values
+    uniquely_mapped = mapping_stats.ix[
+        'Uniquely mapped reads %', sorted_col].values
 
     # Multi-mapping percentages
-    multi_mapped_multiple_loci = mapping_stats.ix['% of reads mapped to multiple loci',sorted_col].values
-    multi_mapped_too_many_loci = mapping_stats.ix['% of reads mapped to too many loci',sorted_col].values
+    multi_mapped_multiple_loci = mapping_stats.ix[
+        '% of reads mapped to multiple loci', sorted_col].values
+    multi_mapped_too_many_loci = mapping_stats.ix[
+        '% of reads mapped to too many loci', sorted_col].values
     multi_mapped = multi_mapped_multiple_loci + multi_mapped_too_many_loci
 
     # unmapping percentages
     un_mapped_mismatches = mapping_stats.ix['% of reads unmapped: too many '
-                                            'mismatches',sorted_col].values
-    un_mapped_too_short = mapping_stats.ix['% of reads unmapped: too short',sorted_col].values
-    un_mapped_other = mapping_stats.ix['% of reads unmapped: other',sorted_col].values
+                                            'mismatches', sorted_col].values
+    un_mapped_too_short = mapping_stats.ix[
+        '% of reads unmapped: too short', sorted_col].values
+    un_mapped_other = mapping_stats.ix[
+        '% of reads unmapped: other', sorted_col].values
     un_mapped = un_mapped_mismatches + un_mapped_too_short + un_mapped_other
 
     # Plot % uniquely mapped reads
     ax3.bar(xticks, uniquely_mapped,
-           color=colors[0], linewidth=0, label='% Uniquely mapped reads')
+            color=colors[0], linewidth=0, label='% Uniquely mapped reads')
     ax3.bar(xticks, multi_mapped, bottom=uniquely_mapped,
-           color=colors[1], linewidth=0, label='% Multi-mapped reads')
+            color=colors[1], linewidth=0, label='% Multi-mapped reads')
     ax3.bar(xticks, un_mapped, bottom=uniquely_mapped + multi_mapped,
-           color=colors[2], linewidth=0, label='% Unmapped reads')
+            color=colors[2], linewidth=0, label='% Unmapped reads')
 
-    ax3.set_ylim((0,100))
+    ax3.set_ylim((0, 100))
     ppl.remove_chartjunk(ax3, ['top', 'right'], grid='y')
 
     add_side_legend(ax3, title="Read mapping stats")
@@ -965,30 +1011,34 @@ def rpkm_and_mapping_stats(rpkm, mapping_stats, img_filename, sort_by_reads=Fals
 
     # --- ax4: total # splices --- #
     # Plot % uniquely mapped reads
-    splices_total = mapping_stats.ix['Number of splices: Total',sorted_col].values.astype(float)
+    splices_total = mapping_stats.ix[
+        'Number of splices: Total', sorted_col].values.astype(float)
 
     ax4.bar(xticks, splices_total,
-           color=colors[0], edgecolor='white', log=True, label='Number of splices: Total, log10')
+            color=colors[0], edgecolor='white', log=True,
+            label='Number of splices: Total, log10')
     #ax4.legend(bbox_to_anchor=(-.1, 1), loc=1, borderaxespad=0., frameon=False)
     add_side_legend(ax4, title="Splicing")
     #ax4.set_title('Splicing stats')
     ppl.remove_chartjunk(ax4, ['top', 'right'], grid='y')
 
     # --- ax5: splices: GT/AG --- #
-    splices_gtag = mapping_stats.ix['Number of splices: GT/AG',sorted_col].values.astype(int)
+    splices_gtag = mapping_stats.ix[
+        'Number of splices: GT/AG', sorted_col].values.astype(int)
 
-    ax5.bar(xticks, 100*splices_gtag/splices_total,
-           color=colors[1], edgecolor='white', label='% splices: GT/AG')
+    ax5.bar(xticks, 100 * splices_gtag / splices_total,
+            color=colors[1], edgecolor='white', label='% splices: GT/AG')
     #ax5.legend(bbox_to_anchor=(-.1, 1), loc=1, borderaxespad=0., frameon=False)
     add_side_legend(ax5)
     ppl.remove_chartjunk(ax5, ['top', 'right'], grid='y')
 
     # --- ax6: splices: GC/AG --- #
-    splices_gcag = mapping_stats.ix['Number of splices: GC/AG',sorted_col].values.astype(int)
+    splices_gcag = mapping_stats.ix[
+        'Number of splices: GC/AG', sorted_col].values.astype(int)
 
-    ax6.bar(xticks, height=100*splices_gcag/splices_total,
-    #        bottom=star_mapping_stats.ix['Number of splices: GC/AG',sorted_col].values.astype(int),
-           color=colors[2], edgecolor='white', label='% splices: GC/AG')
+    ax6.bar(xticks, height=100 * splices_gcag / splices_total,
+            #        bottom=star_mapping_stats.ix['Number of splices: GC/AG',sorted_col].values.astype(int),
+            color=colors[2], edgecolor='white', label='% splices: GC/AG')
     #ax6.legend(bbox_to_anchor=(-.1, 1), loc=1, borderaxespad=0., frameon=False)
     add_side_legend(ax6)
     ax6.locator_params(axis='y', nbins=4)
@@ -996,10 +1046,11 @@ def rpkm_and_mapping_stats(rpkm, mapping_stats, img_filename, sort_by_reads=Fals
 
 
     # --- ax7: splices: AT/AC --- #
-    splices_atac = mapping_stats.ix['Number of splices: AT/AC',sorted_col].values.astype(int)
-    ax7.bar(xticks, height=100*splices_atac/splices_total,
-    #        bottom=star_mapping_stats.ix['Number of splices: GC/AG',sorted_col].values.astype(int),
-           color=colors[3], linewidth=0, label='% splices: AT/AC')
+    splices_atac = mapping_stats.ix[
+        'Number of splices: AT/AC', sorted_col].values.astype(int)
+    ax7.bar(xticks, height=100 * splices_atac / splices_total,
+            #        bottom=star_mapping_stats.ix['Number of splices: GC/AG',sorted_col].values.astype(int),
+            color=colors[3], linewidth=0, label='% splices: AT/AC')
     #ax6.legend(bbox_to_anchor=(-.1, 1), loc=1, borderaxespad=0., frameon=False)
     add_side_legend(ax7)
     ax7.locator_params(axis='y', nbins=4)
@@ -1007,10 +1058,11 @@ def rpkm_and_mapping_stats(rpkm, mapping_stats, img_filename, sort_by_reads=Fals
 
 
     # --- ax8: splices: Non-canonical --- #
-    splices_noncanonical = mapping_stats.ix['Number of splices: Non-canonical',sorted_col].values.astype(int)
-    ax8.bar(xticks, height=100*splices_noncanonical/splices_total,
-    #        bottom=star_mapping_stats.ix['Number of splices: GC/AG',sorted_col].values.astype(int),
-           color=colors[4], linewidth=0, label='% splices: Non-canonical')
+    splices_noncanonical = mapping_stats.ix[
+        'Number of splices: Non-canonical', sorted_col].values.astype(int)
+    ax8.bar(xticks, height=100 * splices_noncanonical / splices_total,
+            #        bottom=star_mapping_stats.ix['Number of splices: GC/AG',sorted_col].values.astype(int),
+            color=colors[4], linewidth=0, label='% splices: Non-canonical')
     #ax6.legend(bbox_to_anchor=(-.1, 1), loc=1, borderaxespad=0., frameon=False)
     add_side_legend(ax8)
     ax8.locator_params(axis='y', nbins=4)
@@ -1018,12 +1070,15 @@ def rpkm_and_mapping_stats(rpkm, mapping_stats, img_filename, sort_by_reads=Fals
 
 
     # --- ax9: mismatch rate --- #
-    mismatch_rate = mapping_stats.ix['Mismatch rate per base, %',sorted_col].values
-    deletion_rate = mapping_stats.ix['Deletion rate per base',sorted_col].values
-    insertion_rate = mapping_stats.ix['Insertion rate per base',sorted_col].values
+    mismatch_rate = mapping_stats.ix[
+        'Mismatch rate per base, %', sorted_col].values
+    deletion_rate = mapping_stats.ix[
+        'Deletion rate per base', sorted_col].values
+    insertion_rate = mapping_stats.ix[
+        'Insertion rate per base', sorted_col].values
 
-    ax9.bar(xticks, height=mismatch_rate, bottom=insertion_rate+deletion_rate,
-           color=colors[0], linewidth=0, label='Mismatch rate, % per base')
+    ax9.bar(xticks, height=mismatch_rate, bottom=insertion_rate + deletion_rate,
+            color=colors[0], linewidth=0, label='Mismatch rate, % per base')
     #ax9.set_ylim((0,1))
     #ax9.set_yscale('log')
     #ax9.set_ylim(0,1)
@@ -1034,14 +1089,14 @@ def rpkm_and_mapping_stats(rpkm, mapping_stats, img_filename, sort_by_reads=Fals
 
     # -- ax10: insertion rate --- #
     ax10.bar(xticks, height=insertion_rate,
-    #        bottom=star_mapping_stats.ix['Number of splices: GC/AG',sorted_col].values.astype(int),
-           color=colors[1], linewidth=0, label='Insertion rate, % per base')
+             #        bottom=star_mapping_stats.ix['Number of splices: GC/AG',sorted_col].values.astype(int),
+             color=colors[1], linewidth=0, label='Insertion rate, % per base')
     add_side_legend(ax10)
     ppl.remove_chartjunk(ax10, ['top', 'right'], grid='y')
 
     # --- ax11: deletion rate --- #
     ax11.bar(xticks, height=deletion_rate,
-           color=colors[2], linewidth=0, label='Deletion rate, % per base')
+             color=colors[2], linewidth=0, label='Deletion rate, % per base')
     add_side_legend(ax11)
     ppl.remove_chartjunk(ax11, ['top', 'right'], grid='y')
     ax11.locator_params(axis='y', nbins=4)
@@ -1053,12 +1108,14 @@ def rpkm_and_mapping_stats(rpkm, mapping_stats, img_filename, sort_by_reads=Fals
 
 
     # --- ax12: deletion average length --- #
-    deletion_length = mapping_stats.ix['Deletion average length',sorted_col].values
-    insertion_length = mapping_stats.ix['Insertion average length',sorted_col].values
+    deletion_length = mapping_stats.ix[
+        'Deletion average length', sorted_col].values
+    insertion_length = mapping_stats.ix[
+        'Insertion average length', sorted_col].values
 
     ax12.bar(xticks, height=insertion_length,
-    #        bottom=star_mapping_stats.ix['Number of splices: GC/AG',sorted_col].values.astype(int),
-           color=colors[0], linewidth=0, label='Insertion average length, bp')
+             #        bottom=star_mapping_stats.ix['Number of splices: GC/AG',sorted_col].values.astype(int),
+             color=colors[0], linewidth=0, label='Insertion average length, bp')
     add_side_legend(ax12, title='Indel sizes')
     ppl.remove_chartjunk(ax12, ['top', 'right'], grid='y')
     ax12.locator_params(axis='y', nbins=4)
@@ -1066,7 +1123,7 @@ def rpkm_and_mapping_stats(rpkm, mapping_stats, img_filename, sort_by_reads=Fals
 
     # --- ax13: insertion average length --- #
     ax13.bar(xticks, height=deletion_length,
-           color=colors[1],linewidth=0, label='Deletion average length, bp')
+             color=colors[1], linewidth=0, label='Deletion average length, bp')
     add_side_legend(ax13)
     ppl.remove_chartjunk(ax13, ['top', 'right'], grid='y')
     ax13.locator_params(axis='y', nbins=4)
@@ -1074,31 +1131,31 @@ def rpkm_and_mapping_stats(rpkm, mapping_stats, img_filename, sort_by_reads=Fals
 
 
     # --- ax14: multimapping reads --- #
-    ax14.bar(xticks, height=100*multi_mapped_multiple_loci/multi_mapped,
-           color=colors[0],linewidth=0, label='Multiple loci')
-    ax14.bar(xticks, height=100*multi_mapped_too_many_loci/multi_mapped,
-             bottom=100*multi_mapped_multiple_loci/multi_mapped,
-           color=colors[1],linewidth=0, label='Too many loci')
+    ax14.bar(xticks, height=100 * multi_mapped_multiple_loci / multi_mapped,
+             color=colors[0], linewidth=0, label='Multiple loci')
+    ax14.bar(xticks, height=100 * multi_mapped_too_many_loci / multi_mapped,
+             bottom=100 * multi_mapped_multiple_loci / multi_mapped,
+             color=colors[1], linewidth=0, label='Too many loci')
     add_side_legend(ax14, title='Multi-mapping reads (% of multimapping)')
     ax14.locator_params(axis='y', nbins=4)
     ppl.remove_chartjunk(ax14, ['top', 'right'], grid='y')
-    ax14.set_ylim(0,100)
+    ax14.set_ylim(0, 100)
 
 
     # --- ax14: unmapped reads --- #
-    ax15.bar(xticks, height=100*un_mapped_mismatches/un_mapped,
-           color=colors[0],linewidth=0, label='Too many mismatches')
-    ax15.bar(xticks, height=100*un_mapped_too_short/un_mapped,
-             bottom=100*un_mapped_mismatches/un_mapped,
-           color=colors[1],linewidth=0, label='Too short')
-    ax15.bar(xticks, height=100*un_mapped_other/un_mapped,
-             bottom=100*un_mapped_mismatches/un_mapped+100*un_mapped_too_short/un_mapped,
-           color=colors[2],linewidth=0, label='Other')
+    ax15.bar(xticks, height=100 * un_mapped_mismatches / un_mapped,
+             color=colors[0], linewidth=0, label='Too many mismatches')
+    ax15.bar(xticks, height=100 * un_mapped_too_short / un_mapped,
+             bottom=100 * un_mapped_mismatches / un_mapped,
+             color=colors[1], linewidth=0, label='Too short')
+    ax15.bar(xticks, height=100 * un_mapped_other / un_mapped,
+             bottom=100 * un_mapped_mismatches / un_mapped + 100 * un_mapped_too_short / un_mapped,
+             color=colors[2], linewidth=0, label='Other')
     add_side_legend(ax15, title='Unmapped reads (% of unmapped)')
     ppl.remove_chartjunk(ax15, ['top', 'right'], grid='y')
-    ax15.set_ylim(0,100)
+    ax15.set_ylim(0, 100)
 
-    xticks_labels = np.arange(0.4, mapping_stats.shape[1]+0.4)
+    xticks_labels = np.arange(0.4, mapping_stats.shape[1] + 0.4)
 
     for ax in axes:
         if ax == ax1:
@@ -1108,7 +1165,7 @@ def rpkm_and_mapping_stats(rpkm, mapping_stats, img_filename, sort_by_reads=Fals
         ax.set_xticks(xticks_labels)
         ax.set_xticklabels([x.replace('_', '\n') for x in sorted_col],
                            ha='center', fontsize=11)
-        ax.set_xlim((0,mapping_stats.shape[1]))
+        ax.set_xlim((0, mapping_stats.shape[1]))
         ppl.remove_chartjunk(ax, ['top', 'right'])
 
     # print_current_time()
@@ -1136,7 +1193,7 @@ def splicing_diagram(ax, bottom_y, highlight=None, height_multiplier=0.025):
     highlight_color = ppl.colors.set1[1]
 
     exon_kwargs = {'fill': True, 'width': width, 'height': height,
-                   'clip_on': False, 'facecolor': 'white', #ppl.almost_black,
+                   'clip_on': False, 'facecolor': 'white',  #ppl.almost_black,
                    'edgecolor': ppl.colors.almost_black, 'alpha': 0.5}
     intron_kwargs = {'fill': True, 'height': height * 0.5,
                      'clip_on': False, 'facecolor': highlight_color,
@@ -1157,19 +1214,19 @@ def splicing_diagram(ax, bottom_y, highlight=None, height_multiplier=0.025):
                         (leftmost_x + 2 * width, bottom_y + height)]
     black = ppl.colors.almost_black
     ax.add_patch(patches.PathPatch(patches.Path(left_alternative),
-                                   edgecolor= black, clip_on=False))
+                                   edgecolor=black, clip_on=False))
 
     right_alternative = [(leftmost_x + 3 * width, bottom_y + height),
                          (leftmost_x + 3.5 * width, bottom_y + 1.5 * height),
                          (leftmost_x + 4 * width, bottom_y + height)]
     ax.add_patch(patches.PathPatch(patches.Path(right_alternative),
-                                   edgecolor= black, clip_on=False))
+                                   edgecolor=black, clip_on=False))
 
     constitutive = [(leftmost_x + 1 * width, bottom_y),
                     (leftmost_x + 2.5 * width, bottom_y - 1 * height),
                     (leftmost_x + 4 * width, bottom_y)]
     ax.add_patch(patches.PathPatch(patches.Path(constitutive),
-                                   edgecolor= black, clip_on=False))
+                                   edgecolor=black, clip_on=False))
 
     first_exon_donor = (leftmost_x + 1 * width, bottom_y + 0.5 * height)
     second_exon_acceptor = (leftmost_x + 2 * width, bottom_y + 0.5 * height)
@@ -1191,17 +1248,17 @@ def splicing_diagram(ax, bottom_y, highlight=None, height_multiplier=0.025):
     constitutive_intron = {'xy': (leftmost_x + 1 * width, bottom_intron),
                            'width': 3 * width}
     first_exon_donor_downstream = {
-    'xy': (leftmost_x + 1 * width, bottom_intron),
-    'width': 0.5 * width}
+        'xy': (leftmost_x + 1 * width, bottom_intron),
+        'width': 0.5 * width}
     second_exon_acceptor_upstream = {
-    'xy': (leftmost_x + 1.5 * width, bottom_intron),
-    'width': 0.5 * width}
+        'xy': (leftmost_x + 1.5 * width, bottom_intron),
+        'width': 0.5 * width}
     second_exon_donor_downstream = {
-    'xy': (leftmost_x + 3 * width, bottom_intron),
-    'width': 0.5 * width}
+        'xy': (leftmost_x + 3 * width, bottom_intron),
+        'width': 0.5 * width}
     third_exon_acceptor_upstream = {
-    'xy': (leftmost_x + 3.5 * width, bottom_intron),
-    'width': 0.5 * width}
+        'xy': (leftmost_x + 3.5 * width, bottom_intron),
+        'width': 0.5 * width}
 
     intron_locs = {'first_alt_intron': first_alt_intron,
                    'second_alt_intron': second_alt_intron,
@@ -1228,52 +1285,52 @@ def splicing_diagram(ax, bottom_y, highlight=None, height_multiplier=0.025):
             ax.add_patch(patches.Rectangle(**kwargs))
         else:
             print highlight, 'is not a valid "highlight" argument'
-            
 
 
 def cdf(data, bins=50):
     data = np.ma.masked_array(data, np.isnan(data))
-    minimum = np.min(data)-.000001
-    maximum = np.max(data)+.000001
-    pos = np.linspace(minimum, maximum, bins+1)
-    xs = np.linspace(minimum, maximum, bins+1)[:-1]
-    ys = np.linspace(minimum, maximum, bins+1)[1:]
-    ecdf = np.ndarray(shape=(bins+1, 1))
+    minimum = np.min(data) - .000001
+    maximum = np.max(data) + .000001
+    pos = np.linspace(minimum, maximum, bins + 1)
+    xs = np.linspace(minimum, maximum, bins + 1)[:-1]
+    ys = np.linspace(minimum, maximum, bins + 1)[1:]
+    ecdf = np.ndarray(shape=(bins + 1, 1))
     ecdf[0] = 0
     cumSum = 0
     for i, (x, y) in enumerate(zip(xs, ys)):
         region = len(data[np.where((data >= x) & (data < y))])
-        cumSum += region/float(len(data))
-        ecdf[i+1] = cumSum
+        cumSum += region / float(len(data))
+        ecdf[i + 1] = cumSum
     return pos, ecdf
 
 
 def pdf(data, bins=50):
     data = np.array(data, dtype=float)
-    minimum = np.min(data)-.000001
-    maximum = np.max(data)+.000001
-    pos = np.linspace(minimum, maximum, bins+1)
-    xs = np.linspace(minimum, maximum, bins+1)[:-1]
-    ys = np.linspace(minimum, maximum, bins+1)[1:]
-    pdf = np.ndarray(shape=(bins+1, 1))
+    minimum = np.min(data) - .000001
+    maximum = np.max(data) + .000001
+    pos = np.linspace(minimum, maximum, bins + 1)
+    xs = np.linspace(minimum, maximum, bins + 1)[:-1]
+    ys = np.linspace(minimum, maximum, bins + 1)[1:]
+    pdf = np.ndarray(shape=(bins + 1, 1))
     pdf[0] = 0
     for i, (x, y) in enumerate(zip(xs, ys)):
         region = len(data[np.where((data >= x) & (data < y))])
-        prob = region/float(len(data))
-        pdf[i+1] = prob
+        prob = region / float(len(data))
+        pdf[i + 1] = prob
     return pos, pdf
 
 
 def plot_cdf(cdf_list, **kwargs):
-        cdf = sm.distributions.ECDF(cdf_list)
-        cdf_linspace = np.linspace(min(cdf_list), max(cdf_list))
-        if kwargs['ax'] is not None:
-            ax = kwargs['ax']
-            del kwargs['ax']
-            ax.plot(cdf_linspace, cdf(cdf_linspace), **kwargs)
-            ax.set_ylim((0,1))
-        else:
-            plot(cdf_linspace, cdf(cdf_linspace), **kwargs)
+    cdf = sm.distributions.ECDF(cdf_list)
+    cdf_linspace = np.linspace(min(cdf_list), max(cdf_list))
+    if kwargs['ax'] is not None:
+        ax = kwargs['ax']
+        del kwargs['ax']
+        ax.plot(cdf_linspace, cdf(cdf_linspace), **kwargs)
+        ax.set_ylim((0, 1))
+    else:
+        plot(cdf_linspace, cdf(cdf_linspace), **kwargs)
+
 
 #def plot_cdf(data, bins=50, ax=None):
 #    if ax is None:
@@ -1286,7 +1343,7 @@ def plot_pdf(data, bins=50, ax=None):
     if ax is None:
         ax = plt.gca()
     x, y = pdf(data, bins=bins)
-    ax.plot(x,y)
+    ax.plot(x, y)
 
 
 #def violinplot(ax, x, ys, bp=False, cut=False, facecolor=ppl.set2[0],

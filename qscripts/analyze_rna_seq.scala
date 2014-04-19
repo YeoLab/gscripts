@@ -273,7 +273,7 @@ def script() {
       add(new singleRPKM(input = countFile, output = RPKMFile, s = species))
 
       add(oldSplice(input = rgSortedBamFile, out = oldSpliceOut, species = species))
-      add(new Miso(inBam = rgSortedBamFile, species = species, pairedEnd = !singleEnd, output = misoOut))
+      add(new Miso(inBam = rgSortedBamFile, species = species, pairedEnd = false, output = misoOut))
       add(new RnaEditing(inBam = rgSortedBamFile, snpEffDb = species, snpDb = snpDbLocation(species), genome = genomeLocation(species), flipped=flipped, output = rnaEditingOut))
 
     }

@@ -28,8 +28,8 @@ class AnalizeCLIPSeq extends QScript {
   @Argument(doc = "adapter to trim")
   var adapter: List[String] = Nil
 
-  @Argument(doc = "flipped", required = false)
-  var flipped: String = _
+  // @Argument(doc = "flipped", required = false)
+  // var flipped: String = _
 
   @Argument(doc = "not stranded", required = false)
   var not_stranded: Boolean = false
