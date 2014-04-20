@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-from glob import glob
+from glob import iglob, glob
 from gscripts.qtools._Submitter import Submitter
 import sys
 import os
@@ -41,24 +41,31 @@ cmd_list = []
 
 pwd = os.path.abspath(os.path.curdir)
 
-for read1 in glob('*R1*gz'):
+sample_ids = set([])
+
+for read1 in iglob('*R1*gz'):
+    sample_id = '_'.join(read1.split('_')[:2])
+    if sample_id in sample_ids:
+        continue
+
+    read1 = ','.join(glob('{}*R1*gz'.format(sample_id)))
     read2 = read1.replace('R1', 'R2')
-    name = '_'.join(read1.split('_')[:2])
-    # print name
+    sample_ids.add(sample_id)
+
+    # print sample_id
     cmd_list.append('STAR \
 --runMode alignReads \
 --runThreadN 8 \
 --genomeDir /projects/ps-yeolab/genomes/{0}/star_sjdb/ \
 --genomeLoad LoadAndRemove \
 --readFilesCommand zcat \
---readFilesIn $PBS_O_WORKDIR/{2} $PBS_O_WORKDIR/{3} \
---outFileNamePrefix $PBS_O_WORKDIR/aligned/{4}. \
---outSAMunmapped Within \
+--readFilesIn {2} {3} \
+--outFileNamePrefix aligned/{4}. \
 --outReadsUnmapped Fastx \
 --outFilterMismatchNmax 5 \
 --clip5pNbases 10 \
 --clip3pNbases 10 \
---outFilterMultimapNmax 5'.format(species, pwd, read1, read2, name))
+--outFilterMultimapNmax 5'.format(species, pwd, read1, read2, sample_id))
 
 sub = Submitter(queue_type='PBS', sh_file=jobname + '.sh',
                 command_list=cmd_list,
