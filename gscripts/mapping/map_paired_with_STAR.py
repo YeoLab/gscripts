@@ -44,14 +44,15 @@ pwd = os.path.abspath(os.path.curdir)
 for read1 in glob('*R1*gz'):
     read2 = read1.replace('R1', 'R2')
     name = '_'.join(read1.split('_'[:2]))
+    print name
     cmd_list.append('STAR \
 --runMode alignReads \
 --runThreadN 8 \
 --genomeDir /projects/ps-yeolab/genomes/{0}/star_sjdb/ \
 --genomeLoad LoadAndRemove \
 --readFilesCommand zcat \
---readFilesIn {1}/{2} {1}/{3} \
---outFileNamePrefix {1}/{4}. \
+--readFilesIn {2} {3} \
+--outFileNamePrefix {4}. \
 --outSAMunmapped Within \
 --outReadsUnmapped Fastx \
 --outFilterMismatchNmax 5 \
