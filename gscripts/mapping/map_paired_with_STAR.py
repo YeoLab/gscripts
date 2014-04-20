@@ -43,7 +43,7 @@ pwd = os.path.abspath(os.path.curdir)
 
 for read1 in glob('*R1*gz'):
     read2 = read1.replace('R1', 'R2')
-    name = '_'.join(read1.split('_'[:2]))
+    name = '_'.join(read1.split('_')[:2])
     print name
     cmd_list.append('STAR \
 --runMode alignReads \
