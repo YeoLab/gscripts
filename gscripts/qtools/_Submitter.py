@@ -137,7 +137,6 @@ class Submitter:
         ret_val = 0
         chunks = 1
 
-        number_jobs = 1
 
         self.data.update(kwargs)
 
@@ -146,6 +145,11 @@ class Submitter:
                 raise ValueError("missing required key: " + str(key))
             if not self.data[key]:
                 raise ValueError("missing value for required key: " + str(key))
+
+        #print "self.data['walltime']", self.data['walltime']
+
+        if 'array' in self.data:
+            self.data['use_array'] = self.data['array']
 
         number_jobs=1
         if 'use_array' in self.data and self.data['use_array']:
@@ -160,10 +164,6 @@ class Submitter:
         #    'command_list'])))
         #sys.stderr.write("self.data['array'] {}\n".format(self.data['array']))
         #print 'use_array', use_array
-        #print "self.data['walltime']", self.data['walltime']
-
-        if 'array' in self.data:
-            self.data['use_array'] = self.data['array']
 
         if len(self.data['command_list']) > 500 and use_array:
             command_list = self.data['command_list']
