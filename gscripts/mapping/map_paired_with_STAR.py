@@ -38,23 +38,23 @@ for file in glob('*R1*norep'):
 --outSAMunmapped Within \
 --outFilterMultimapNmax 1'.format(species, file, pair, name))
 
-for file in glob('*R1*gz'):
-    pair = file.replace('R1', 'R2')
-    name = file.replace('_R1', '')
+for read1 in glob('*R1*gz'):
+    read2 = read1.replace('R1', 'R2')
+    name = '_'.join(read1.split('_'[:2]))
     cmd_list.append('STAR \
 --runMode alignReads \
 --runThreadN 8 \
---genomeDir /projects/ps-yeolab/genomes/{}/star_sjdb/ \
+--genomeDir /projects/ps-yeolab/genomes/{0}/star_sjdb/ \
 --genomeLoad LoadAndRemove \
 --readFilesCommand zcat \
---readFilesIn {} {} \
---outFileNamePrefix {}. \
+--readFilesIn {1} {2} \
+--outFileNamePrefix {3}. \
 --outSAMunmapped Within \
 --outReadsUnmapped Fastx \
 --outFilterMismatchNmax 5 \
 --clip5pNbases 10 \
 --clip3pNbases 10 \
---outFilterMultimapNmax 5'.format(species, file, pair, name))
+--outFilterMultimapNmax 5'.format(species, read1, read2, name))
 
 sub = Submitter(queue_type='PBS', sh_file=jobname + '.sh',
                 command_list=cmd_list,
