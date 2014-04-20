@@ -51,8 +51,8 @@ for read1 in glob('*R1*gz'):
 --genomeDir /projects/ps-yeolab/genomes/{0}/star_sjdb/ \
 --genomeLoad LoadAndRemove \
 --readFilesCommand zcat \
---readFilesIn {2},{3} \
---outFileNamePrefix {4}. \
+--readFilesIn $PBS_O_WORKDIR/{2},$PBS_O_WORKDIR/{3} \
+--outFileNamePrefix $PBS_O_WORKDIR/aligned/{4}. \
 --outSAMunmapped Within \
 --outReadsUnmapped Fastx \
 --outFilterMismatchNmax 5 \
