@@ -65,11 +65,13 @@ for read1 in iglob('*R1*gz'):
 --outFilterMismatchNmax 5 \
 --clip5pNbases 10 \
 --clip3pNbases 10 \
+--outFilterScoreMin 10 \
+--outSAMattributes All \
 --outFilterMultimapNmax 5'.format(species, pwd, read1, read2, sample_id))
 
 sub = Submitter(queue_type='PBS', sh_file=jobname + '.sh',
                 command_list=cmd_list,
                 job_name=jobname)
-sub.write_sh(submit=True, nodes=1, ppn=8, walltime='0:30:00', use_array=True,
+sub.write_sh(submit=True, nodes=1, ppn=8, walltime='0:20:00', use_array=True,
              array=True,
              max_running=20)

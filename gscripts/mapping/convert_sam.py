@@ -12,7 +12,7 @@ except IndexError:
 
 cmd_list = []
 for file in glob('*sam'):
-    cmd_list.append('samtools view -bS {} > {}.bam'.format(file, file))
+    cmd_list.append('samtools view -bS -q 10 {} > {}.bam'.format(file, file))
 
 sub = Submitter(queue_type='PBS', sh_file=name + '.sh', command_list=cmd_list,
                 job_name=name)
