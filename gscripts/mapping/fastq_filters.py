@@ -24,8 +24,8 @@ def submit_and_write(name, command_list):
                     command_list=command_list,
                     job_name=name)
 
-    sub.write_sh(submit=True, nodes=1, ppn=1, queue='home', array=True,
-                 max_running=20, walltime='0:30:00')
+    sub.write_sh(submit=True, nodes=1, ppn=2, queue='home', array=True,
+                 max_running=20, walltime='1:00:00')
 
 
 submit_and_write('fastx_filter', commands)
