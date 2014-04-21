@@ -150,6 +150,7 @@ class Submitter:
 
         if 'array' in self.data:
             self.data['use_array'] = self.data['array']
+        use_array = self.data['use_array']
 
         number_jobs=1
         if 'use_array' in self.data and self.data['use_array']:
