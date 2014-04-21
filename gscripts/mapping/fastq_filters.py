@@ -13,7 +13,7 @@ except OSError:
 commands = []
 for filename in iglob('*.fastq.gz'):
     #TODO: the -l argument "20" should be a % of read length
-    commands.append('echo {}; zcat {0} | fastx_artifacts_filter | '
+    commands.append('echo {0}; zcat {0} | fastx_artifacts_filter | '
                     'fastq_quality_trimmer -l 20 -t 30 | '
                     'fastq_quality_filter -q 30 -p 90 -z '
                     '> filtered/{0}'.format(filename))
