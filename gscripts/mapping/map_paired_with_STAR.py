@@ -70,8 +70,9 @@ for read1 in iglob('*R1*gz'):
 --outFileNamePrefix aligned/{4}. \
 --outReadsUnmapped Fastx \
 --outFilterMismatchNmax 5 \
---clip5pNbases 10 \
---clip3pNbases 10 \
+--outFilterMismatchNoverLmax .05 \
+--clip5pNbases 13 \
+--clip3pNbases 0 \
 --outFilterScoreMin 10 \
 --outSAMattributes All \
 --outFilterMultimapNmax 5'.format(genome, pwd, read1, read2, sample_id))
