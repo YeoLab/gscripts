@@ -5,9 +5,14 @@ from gscripts.qtools._Submitter import Submitter
 import sys
 import os
 
-os.mkdir('filtered/')
+try:
+    os.mkdir('filtered/')
+except OSError:
+    pass
+
 commands = []
 for filename in iglob('*.fastq.gz'):
+    #TODO: the -l argument "20" should be a % of read length
     commands.append('zcat {0} | fastx_artifacts_filter | '
                     'fastq_quality_trimmer -l 20 -t 30 | '
                     'fastq_quality_filter -q 30 -p 90 -z '
