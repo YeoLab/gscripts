@@ -13,6 +13,8 @@ except IndexError:
 
 cmd_list = []
 
+
+
 # for file in glob('*R1*fastq'):
 #     pair = file.replace('R1', 'R2')
 #     name = file.replace('_R1', '')
@@ -43,6 +45,11 @@ pwd = os.path.abspath(os.path.curdir)
 
 sample_ids = set([])
 
+if species == 'spikein':
+    genome = '/projects/ps-yeolab/genomes/spikein/star/'
+else:
+    genome = '/projects/ps-yeolab/genomes/{0}/star_sjdb/'.format(species)
+
 for read1 in iglob('*R1*gz'):
     sample_id = '_'.join(read1.split('_')[:2])
     if sample_id in sample_ids:
@@ -56,7 +63,7 @@ for read1 in iglob('*R1*gz'):
     cmd_list.append('STAR \
 --runMode alignReads \
 --runThreadN 8 \
---genomeDir /projects/ps-yeolab/genomes/{0}/star_sjdb/ \
+--genomeDir {0} \
 --genomeLoad LoadAndRemove \
 --readFilesCommand zcat \
 --readFilesIn {2} {3} \
@@ -67,7 +74,7 @@ for read1 in iglob('*R1*gz'):
 --clip3pNbases 10 \
 --outFilterScoreMin 10 \
 --outSAMattributes All \
---outFilterMultimapNmax 5'.format(species, pwd, read1, read2, sample_id))
+--outFilterMultimapNmax 5'.format(genome, pwd, read1, read2, sample_id))
 
 sub = Submitter(queue_type='PBS', sh_file=jobname + '.sh',
                 command_list=cmd_list,
