@@ -117,6 +117,9 @@ class CommandLine(object):
                                  'database')
         parser.add_argument('-w', '--walltime', default='0:20:00',
                             type=str, action='store')
+        parser.add_argument('--additional-STAR-args', required=False,
+                            action='store', type=str,
+                            help='')
 
         if inOpts is None:
             self.args = vars(self.parser.parse_args())
