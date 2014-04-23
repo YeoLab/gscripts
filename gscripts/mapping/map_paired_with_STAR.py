@@ -99,7 +99,7 @@ class CommandLine(object):
         parser.add_argument('species', type=str,
                             action='store',
                             help='Species to map to')
-        parser.add_argument('-n', '--jobname', required=False, action='store',
+        parser.add_argument('-n', '--jobname', action='store',
                             type=str, help="Default job name is 'map_to_'{"
                                            "species}', and this will prepend "
                                            "the job name submitted to TSCC "
