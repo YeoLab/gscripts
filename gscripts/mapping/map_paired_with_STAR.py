@@ -2,8 +2,8 @@
 
 from glob import iglob, glob
 from gscripts.qtools._Submitter import Submitter
-import sys
 import os
+import argparse
 
 # species = sys.argv[1]
 # try:
@@ -85,7 +85,6 @@ import os
 #              array=True,
 #              max_running=20)
 
-import argparse
 
 
 class CommandLine(object):
