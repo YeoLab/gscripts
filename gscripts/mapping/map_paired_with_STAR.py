@@ -67,7 +67,7 @@ for read1 in iglob('*R1*gz'):
 --genomeLoad LoadAndRemove \
 --readFilesCommand zcat \
 --readFilesIn {2} {3} \
---outFileNamePrefix aligned/{4}. \
+--outFileNamePrefix aligned_{5}/{4}. \
 --outReadsUnmapped Fastx \
 --outFilterMismatchNmax 5 \
 --outFilterMismatchNoverLmax .05 \
@@ -76,8 +76,7 @@ for read1 in iglob('*R1*gz'):
 --outFilterScoreMin 10 \
 --outSAMattributes All \
 --outFilterMultimapNmax 5 \
-'.format(genome, pwd, read1, read2, sample_id))
-
+'.format(genome, pwd, read1, read2, sample_id, species))
 
 sub = Submitter(queue_type='PBS', sh_file=jobname + '.sh',
                 command_list=cmd_list,
