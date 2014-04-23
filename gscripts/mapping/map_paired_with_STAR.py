@@ -116,8 +116,8 @@ class CommandLine(object):
                                  'database')
         parser.add_argument('-w', '--walltime', default='0:20:00',
                             type=str, action='store')
-        parser.add_arguments('-p', '--runThreadN', default=8,
-                             type=int, action='store',
+        parser.add_argument('-p', '--runThreadN', default=8,
+                            type=int, action='store',
                              help='Number of processors to use on one node.'
                                   'If 16 (the max), it may take a long time '
                                   'to schedule your jobs, so try smaller ones'
