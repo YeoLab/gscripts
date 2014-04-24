@@ -260,7 +260,7 @@ if __name__ == '__main__':
     '''.format(cl.args['runThreadN'],
                genome, read1, read2, out_dir, sample_id,
                cl.args['outReadsUnmapped'],
-               cl.args['outFilterMismatchNMax'],
+               cl.args['outFilterMismatchNmax'],
                cl.args['outFilterMismatchNoverLMax'],
                cl.args['outFilterMultimapNmax'],
                cl.args['outFilterScoreMin'],
