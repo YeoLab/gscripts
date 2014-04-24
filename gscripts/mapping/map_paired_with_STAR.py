@@ -281,4 +281,5 @@ if __name__ == '__main__':
                     job_name=jobname)
     submit = not cl.args['do_not_submit']
     sub.write_sh(submit=submit, nodes=1, ppn=cl.args['runThreadN'],
+                 array=True, max_running=20,
                  queue='home', walltime=cl.args['walltime'])
