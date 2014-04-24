@@ -219,8 +219,8 @@ if __name__ == '__main__':
         # It's already there, don't do anything
         pass
 
-    jobname = cl.args['jobname']
     species = cl.args['species']
+    jobname = '_'.join('map_to', species, cl.args['jobname'])
 
     genome = '/projects/ps-yeolab/genomes/{0}/star'.format(species)
     genome = genome + '_sjdb' if cl.args['with_sjdb'] else genome
