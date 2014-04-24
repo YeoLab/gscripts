@@ -250,15 +250,19 @@ if __name__ == '__main__':
     --outFilterMismatchNmax {7} \
     --outFilterMismatchNoverLmax {8} \
     --outFilterMultimapNmax {9} \
-    --outFilterScoreMin {11} \
-    --outFilterType {12} \
-    --outSAMattributes {13} \
-    --outSAMstrandField {
+    --outFilterScoreMin {10} \
+    --outFilterType {11} \
+    --outSAMattributes {12} \
+    --outSAMstrandField {13}
     --clip5pNbases {14} \
     --clip3pNbases {15} \
     {16}
     '''.format(cl.args['runThreadN'],
-               genome, read1, read2, out_dir, sample_id,
+               genome,
+               read1,
+               read2,
+               out_dir,
+               sample_id,
                cl.args['outReadsUnmapped'],
                cl.args['outFilterMismatchNmax'],
                cl.args['outFilterMismatchNoverLmax'],
