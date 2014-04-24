@@ -28,6 +28,11 @@ class CommandLine(object):
         sjdb.add_argument('--sjdbGTFfile', default='',
                           type=str, action='store',
                           help='A GTF file to create a splice junction database from')
+        sjdb.add_argument('--sjdbOverhang', default=100, type=str,
+                          action='store',
+                          help='Number of bases to overhang for the splice '
+                               'junctions. Ideally should be the (length of '
+                               'one read)-1')
         if inOpts is None:
             self.args = vars(self.parser.parse_args())
         else:
