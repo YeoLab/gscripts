@@ -162,7 +162,7 @@ class CommandLine(object):
                             action='store',
                             help='Which SAM attributes to output. Other '
                                  'options are "Standard" and "None"')
-        parser.add_arugment('--outSAMstrandField', default='intronMotif',
+        parser.add_argument('--outSAMstrandField', default='intronMotif',
                             type=str, action='store',
                             help='The "intronMotif" flag will tell STAR to '
                                  'make a Cufflinks-like strand field, '
