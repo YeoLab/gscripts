@@ -261,7 +261,7 @@ if __name__ == '__main__':
                genome, read1, read2, out_dir, sample_id,
                cl.args['outReadsUnmapped'],
                cl.args['outFilterMismatchNmax'],
-               cl.args['outFilterMismatchNoverLMax'],
+               cl.args['outFilterMismatchNoverLmax'],
                cl.args['outFilterMultimapNmax'],
                cl.args['outFilterScoreMin'],
                cl.args['outFilterType'],
