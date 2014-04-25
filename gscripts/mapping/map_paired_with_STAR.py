@@ -220,7 +220,10 @@ if __name__ == '__main__':
         pass
 
     species = cl.args['species']
-    jobname = '_'.join([cl.args['jobname'], 'map_to', species])
+    jobname_list = ['map_to', species]
+    if cl.args['jobname'] is not None:
+        jobname_list.insert(0, cl.args['jobname'])
+    jobname = '_'.join(jobname_list)
 
     genome = '/projects/ps-yeolab/genomes/{0}/star'.format(species)
     genome = genome + '_sjdb' if cl.args['with_sjdb'] else genome
