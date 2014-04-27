@@ -237,11 +237,11 @@ if __name__ == '__main__':
     sample_ids = set([])
 
     for read1 in iglob('*R1*'):
-        if read1.endswith('gz'):
-            compressed = True
-        else:
-            compressed = False
-        readFilesCommand = 'zcat' if compressed else 'cat'
+        # if read1.endswith('gz'):
+        #     compressed = True
+        # else:
+        #     compressed = False
+        # readFilesCommand = 'zcat' if compressed else 'cat'
 
         sample_id = '_'.join(read1.split('_')[:2])
         if sample_id in sample_ids:
@@ -258,7 +258,7 @@ if __name__ == '__main__':
     --runThreadN {0} \
     --genomeDir {1} \
     --genomeLoad LoadAndRemove \
-    --readFilesCommand {17} \
+    --readFilesCommand zcat \
     --readFilesIn {2} {3} \
     --outFileNamePrefix {4}/{5}. \
     --outReadsUnmapped {6} \
@@ -288,8 +288,7 @@ if __name__ == '__main__':
                cl.args['outSAMstrandField'],
                cl.args['clip5pNbases'],
                cl.args['clip3pNbases'],
-               cl.args['additional_STAR_args'],
-               readFilesCommand
+               cl.args['additional_STAR_args']
         ))
 
     # replace any weird slashes
