@@ -236,13 +236,19 @@ if __name__ == '__main__':
     # Set of unique sample ids for checking if we've read them all
     sample_ids = set([])
 
-    for read1 in iglob('*R1*gz'):
+    for read1 in iglob('*R1*'):
+        if read1.endswith('gz'):
+            compressed = True
+        else:
+            compressed = False
+        readFilesCommand = 'zcat' if compressed else 'cat'
+
         sample_id = '_'.join(read1.split('_')[:2])
         if sample_id in sample_ids:
             continue
         paired = os.path.isfile(read1.replace('R1', 'R2'))
 
-        read1 = ','.join(glob('{}*R1*gz'.format(sample_id)))
+        read1 = ','.join(glob('{}*R1*'.format(sample_id)))
         read2 = read1.replace('R1', 'R2') if paired else ""
         sample_ids.add(sample_id)
 
@@ -252,7 +258,7 @@ if __name__ == '__main__':
     --runThreadN {0} \
     --genomeDir {1} \
     --genomeLoad LoadAndRemove \
-    --readFilesCommand zcat \
+    --readFilesCommand {17} \
     --readFilesIn {2} {3} \
     --outFileNamePrefix {4}/{5}. \
     --outReadsUnmapped {6} \
@@ -282,7 +288,8 @@ if __name__ == '__main__':
                cl.args['outSAMstrandField'],
                cl.args['clip5pNbases'],
                cl.args['clip3pNbases'],
-               cl.args['additional_STAR_args']
+               cl.args['additional_STAR_args'],
+               readFilesCommand
         ))
 
     sub = Submitter(queue_type='PBS', sh_file=jobname + '.sh',
