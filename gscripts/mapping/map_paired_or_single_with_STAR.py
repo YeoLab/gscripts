@@ -292,6 +292,9 @@ if __name__ == '__main__':
                readFilesCommand
         ))
 
+    # replace any weird slashes
+    jobname = jobname.replace('/', '-')
+
     sub = Submitter(queue_type='PBS', sh_file=jobname + '.sh',
                     command_list=commands,
                     job_name=jobname)
