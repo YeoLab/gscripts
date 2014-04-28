@@ -271,7 +271,7 @@ if __name__ == '__main__':
     --outFilterScoreMin {10} \
     --outFilterType {11} \
     --outSAMattributes {12} \
-    --outSAMstrandField {13}
+    --outSAMstrandField {13} \
     --clip5pNbases {14} \
     --clip3pNbases {15} \
     {16}
