@@ -247,6 +247,7 @@ if __name__ == '__main__':
         if sample_id in sample_ids:
             continue
         paired = os.path.isfile(read1.replace('R1', 'R2'))
+        print sample_id, 'paired', paired
 
         read1 = ','.join(glob('{}*R1*'.format(sample_id)))
         read2 = read1.replace('R1', 'R2') if paired else ""
