@@ -236,14 +236,14 @@ if __name__ == '__main__':
     # Set of unique sample ids for checking if we've read them all
     sample_ids = set([])
 
-    for read1 in iglob('*R1*'):
+    for read1 in iglob('*R1*.gz'):
         # if read1.endswith('gz'):
         #     compressed = True
         # else:
         #     compressed = False
         # readFilesCommand = 'zcat' if compressed else 'cat'
 
-        sample_id = '_'.join(read1.split('_')[:2])
+        sample_id = '_'.join(read1.split('.')[0].split('_')[:2])
         if sample_id in sample_ids:
             continue
         paired = os.path.isfile(read1.replace('R1', 'R2'))
