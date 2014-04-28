@@ -288,8 +288,7 @@ if __name__ == '__main__':
                cl.args['outSAMstrandField'],
                cl.args['clip5pNbases'],
                cl.args['clip3pNbases'],
-               cl.args['additional_STAR_args']
-        ))
+               cl.args['additional_STAR_args']))
 
     # replace any weird slashes
     jobname = jobname.replace('/', '-')
