@@ -243,7 +243,9 @@ if __name__ == '__main__':
         #     compressed = False
         # readFilesCommand = 'zcat' if compressed else 'cat'
 
-        sample_id = '_'.join(read1.split('.')[0].split('_')[:2])
+        # Remove trailing "A" and "B" so they get merged
+        sample_id = '_'.join(read1.split('.')[0].split('_')[:2]).rstrip('A') \
+            .rstrip('B')
         if sample_id in sample_ids:
             continue
         paired = os.path.isfile(read1.replace('R1', 'R2'))
