@@ -114,7 +114,7 @@ class CommandLine(object):
                             help='Whether or not to use the genome '
                                  'created with the splice junction '
                                  'database')
-        parser.add_argument('-w', '--walltime', default='0:20:00',
+        parser.add_argument('-w', '--walltime', default='0:30:00',
                             type=str, action='store')
         parser.add_argument('-p', '--runThreadN', default=8,
                             type=int, action='store',
