@@ -130,10 +130,13 @@ class CommandLine(object):
         parser.add_argument('--outFilterMismatchNmax', default=5,
                             type=int, action='store',
                             help='Maximum number of mismatched bases per read')
-        parser.add_argument('--outFilterMismatchNoverLmax', default=0.05,
+        parser.add_argument('--outFilterMismatchNoverLmax', default=0.3,
                             type=float, action='store',
                             help='Maximum fraction of a read that can be '
-                                 'mismatched')
+                                 'mismatched (consecutive mismatches at '
+                                 'ends will be '
+                                 'soft clipped off)'
+                                 '')
         parser.add_argument('--outFilterMultimapNmax', default=5,
                             type=int, action='store',
                             help='Maximum number of places for this read to '
@@ -170,7 +173,7 @@ class CommandLine(object):
                                  'Cufflinks on the generated files. The other '
                                  'option is "None"')
         parser.add_argument('--additional-STAR-args', required=False,
-                            action='store', type=str,
+                            action='store', type=str, default='',
                             help='Additional arguments to pass to STAR that '
                                  'are not specified here')
         # parser.add_mutually_exclusive_group(required=True)
