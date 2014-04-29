@@ -71,7 +71,7 @@ if __name__ == '__main__':
                    if cl.args[k])
     commands = []
     commands.append('STAR --runMode genomeGenerate --genomeDir {0} '
-                    '--genomeFastaFiles {1} --runThreadN 16 {2}'
+                    '--genomeFastaFiles {1} --runThreadN 16 {2} '
                     '--sjdbOverhang {3}'.format(
         cl.args['genomeDir'], cl.args['genomeFastaFiles'], sjdb,
         cl.args['sjdbOverhang']
