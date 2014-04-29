@@ -145,7 +145,7 @@ class CommandLine(object):
                                  'junction reads which pass the filters '
                                  'specified by the SJ.out.tab filters. The '
                                  'only other option is "Normal"')
-        parser.add_argument('--clip5pNbases', default=14, type=int,
+        parser.add_argument('--clip5pNbases', default=0, type=int,
                             action='store',
                             help='Number of bases to clip from the 5-prime '
                                  'end of the read (the start)')
