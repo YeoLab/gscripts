@@ -126,15 +126,15 @@ class CommandLine(object):
                                     'Does not compute insert size.')
 
         samples = self.parser.add_mutually_exclusive_group(required=True)
-        samples.add_argument('--sample-info-file',
-                             type=str,
-                             default='',
-                             action='store',
-                             help='A tab-delimited sample info file with '
-                                  'the header:\n'
-                                  'Sample ID\tBam File\t Notes.\n This is'
-                                  ' the same format file as required by '
-                                  'RNA-SeQC.')
+        # samples.add_argument('--sample-info-file',
+        #                      type=str,
+        #                      default='',
+        #                      action='store',
+        #                      help='A tab-delimited sample info file with '
+        #                           'the header:\n'
+        #                           'Sample ID\tBam File\t Notes.\n This is'
+        #                           ' the same format file as required by '
+        #                           'RNA-SeQC.')
         samples.add_argument('--bam', type=str,
                              action='store', default='',
                              help='A single BAM file')
