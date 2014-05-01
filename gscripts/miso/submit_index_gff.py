@@ -121,8 +121,8 @@ def main():
         qs = qtools.Submitter(queue_tyep='PBS', sh_file=submitter_sh,
                               command_list=commands,
                               job_name='index_{}'.format(gtf_or_gff))
-        qs.submit(submit=True, nodes=1, ppn=1, queue='home',
-                  walltime='0:30:00')
+        qs.write_sh(submit=True, nodes=1, ppn=1, queue='home',
+                    walltime='0:30:00')
 
     # If not all the correct arguments are given, break the program and
     # show the usage information
