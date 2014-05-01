@@ -18,7 +18,7 @@ class MisoPipeline(object):
         """
         self.read_type = cl.args['read_type']
         #self.event_type = cl.args['event_type'].upper()
-        self.sample_info_file = cl.args['sample_info_file']
+        # self.sample_info_file = cl.args['sample_info_file']
 
         self.debug = cl.args['debug']
 
@@ -49,14 +49,14 @@ class MisoPipeline(object):
 
         self.num_processes = cl.args['num_processes']
         self.num_cores = cl.args['num_cores']
-        if self.sample_info_file:
-            self.sample_ids, self.bams, self.notes = read_sample_info_file(
-                self.sample_info_file)
-        else:
-            bam = cl.args['bam']
-            sample_id = cl.args['sample_id']
-            self.sample_ids = [sample_id]
-            self.bams = [bam]
+        # if self.sample_info_file:
+        #     self.sample_ids, self.bams, self.notes = read_sample_info_file(
+        #         self.sample_info_file)
+        # else:
+        bam = cl.args['bam']
+        sample_id = cl.args['sample_id']
+        self.sample_ids = [sample_id]
+        self.bams = [bam]
 
         self.output_sh = cl.args['output_sh']
 
