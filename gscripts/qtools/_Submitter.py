@@ -175,6 +175,7 @@ class Submitter:
             for i, commands in enumerate(command_list_list):
                 kwargs['command_list'] = commands
                 kwargs['job_name'] = '{}{}'.format(name, i + 1)
+                kwargs['sh_file'] = self.data['sh_file'] + '{}.sh'.format(i + 1)
                 kwargs['submit'] = True
                 kwargs['array'] = True
                 kwargs['walltime'] = self.data['walltime']
