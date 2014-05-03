@@ -219,7 +219,7 @@ class Submitter:
 
         sh_filename = self.data['sh_file']
         sh_file = open(sh_filename, 'w')
-        sh_file.write("#!/bin/sh\n")
+        sh_file.write("#!/bin/bash\n")
 
         # Default stdout/stderr .out/.err files to be the sh submit script file
         # plus .out or .err
