@@ -120,8 +120,8 @@ def convert_miso_ids_to_everything(miso_ids, db,
                 gene_type.update(exon.attributes['gene_type'])
                 gencode_transcript.update(exon.attributes['transcript_id'])
                 ensembl_transcript.update(
-                    map(lambda x: x.split('.')[0], exon.attributes['gene_id'])
-                )
+                    map(lambda x: x.split('.')[0], exon.attributes[
+                        'transcript_id']))
             except gffutils.FeatureNotFoundError:
                 continue
 
