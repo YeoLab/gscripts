@@ -122,7 +122,6 @@ def convert_miso_ids_to_everything(miso_ids, db,
                 ensembl_transcript.update(
                     map(lambda x: x.split('.')[0], exon.attributes[
                         'transcript_id']))
-
             except gffutils.FeatureNotFoundError:
                 try:
                     #  not an exon, look for any overlapping transcripts here
@@ -149,11 +148,8 @@ def convert_miso_ids_to_everything(miso_ids, db,
                             ensembl_transcript.update(
                                 map(lambda x: x.split('.')[0],
                                     transcript.attributes['transcript_id']))
-
-
-
-                            # continue
-
+                except:
+                    continue
         if len(gencode) > 0:
 
             for ens in ensembl:
