@@ -174,11 +174,11 @@ def convert_miso_ids_to_everything(miso_ids, db,
         df.columns = [name]
         tsv = '{}/miso_{}_to_{}.tsv'.format(out_dir, event_type, name)
         df.to_csv(tsv, sep='\t')
-        sys.stdout.write('Wrote {}'.format(tsv))
+        sys.stdout.write('Wrote {}\n'.format(tsv))
 
     for name, d in to_misos.iteritems():
         tsv = '{}/{}_to_miso_{}.tsv'.format(out_dir, name, event_type)
         with open(tsv, 'w') as f:
             for k, v in d.iteritems():
                 f.write('{}\t{}\n'.format(k, '\t'.join(v)))
-        sys.stdout.write('Wrote {}'.format(tsv))
+        sys.stdout.write('Wrote {}\n'.format(tsv))
