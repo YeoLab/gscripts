@@ -112,18 +112,47 @@ def convert_miso_ids_to_everything(miso_ids, db,
         for e in exons:
             try:
                 exon = db[e]
-
                 gencode.update(exon.attributes['gene_id'])
                 ensembl.update(
-                    map(lambda x: x.split('.')[0], exon.attributes['gene_id']))
+                    map(lambda x: x.split('.')[0],
+                        exon.attributes['gene_id']))
                 gene_name.update(exon.attributes['gene_name'])
                 gene_type.update(exon.attributes['gene_type'])
                 gencode_transcript.update(exon.attributes['transcript_id'])
                 ensembl_transcript.update(
                     map(lambda x: x.split('.')[0], exon.attributes[
                         'transcript_id']))
+
             except gffutils.FeatureNotFoundError:
-                continue
+                try:
+                    #  not an exon, look for any overlapping transcripts here
+                    prefix, chrom, startstop, strand = e.split(':')
+                    start, stop = startstop.split('-')
+                    transcripts = list(db.features_of_type('transcript',
+                                                           strand=strand,
+                                                           limit=(
+                                                           chrom, int(start),
+                                                           int(stop))))
+                    # if there are overlapping transcripts...
+                    if len(transcripts) == 0:
+                        continue
+                    else:
+                        for transcript in transcripts:
+                            gencode.update(transcript.attributes['gene_id'])
+                            ensembl.update(
+                                map(lambda x: x.split('.')[0],
+                                    transcript.attributes['gene_id']))
+                            gene_name.update(transcript.attributes['gene_name'])
+                            gene_type.update(transcript.attributes['gene_type'])
+                            gencode_transcript.update(
+                                transcript.attributes['transcript_id'])
+                            ensembl_transcript.update(
+                                map(lambda x: x.split('.')[0],
+                                    transcript.attributes['transcript_id']))
+
+
+
+                            # continue
 
         if len(gencode) > 0:
 
