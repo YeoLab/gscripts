@@ -11,7 +11,8 @@ except IndexError:
 
 command_list = []
 for file in glob('*bam'):
-    command_list.append('samtools sort -m 50000000000 {0} {0}.sorted'.format(
+    command_list.append('samtools sort -@ 8 -m 50000000000 {0} {0}.sorted'
+                        .format(
         file))
 
 
@@ -20,8 +21,8 @@ def submit_and_write(name, command_list):
                     command_list=command_list,
                     job_name=name)
 
-    sub.write_sh(submit=True, nodes=1, ppn=16, queue='home', array=True,
-                 max_running=10, walltime='18:00:00')
+    sub.write_sh(submit=True, nodes=1, ppn=8, queue='home', array=True,
+                 max_running=10, walltime='0:30:00')
 
 
 # max number of jobs in an array on TSCC is 500

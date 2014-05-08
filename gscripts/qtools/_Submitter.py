@@ -137,7 +137,6 @@ class Submitter:
         ret_val = 0
         chunks = 1
 
-        number_jobs = 1
 
         self.data.update(kwargs)
 
@@ -146,6 +145,12 @@ class Submitter:
                 raise ValueError("missing required key: " + str(key))
             if not self.data[key]:
                 raise ValueError("missing value for required key: " + str(key))
+
+        #print "self.data['walltime']", self.data['walltime']
+
+        if 'array' in self.data:
+            self.data['use_array'] = self.data['array']
+        use_array = self.data['use_array']
 
         number_jobs=1
         if 'use_array' in self.data and self.data['use_array']:
@@ -160,7 +165,7 @@ class Submitter:
         #    'command_list'])))
         #sys.stderr.write("self.data['array'] {}\n".format(self.data['array']))
         #print 'use_array', use_array
-        #print "self.data['walltime']", self.data['walltime']
+
         if len(self.data['command_list']) > 500 and use_array:
             command_list = self.data['command_list']
             name = self.data['job_name']
@@ -170,6 +175,7 @@ class Submitter:
             for i, commands in enumerate(command_list_list):
                 kwargs['command_list'] = commands
                 kwargs['job_name'] = '{}{}'.format(name, i + 1)
+                kwargs['sh_file'] = self.data['sh_file'] + '{}.sh'.format(i + 1)
                 kwargs['submit'] = True
                 kwargs['array'] = True
                 kwargs['walltime'] = self.data['walltime']
@@ -213,7 +219,7 @@ class Submitter:
 
         sh_filename = self.data['sh_file']
         sh_file = open(sh_filename, 'w')
-        sh_file.write("#!/bin/sh\n")
+        sh_file.write("#!/bin/bash\n")
 
         # Default stdout/stderr .out/.err files to be the sh submit script file
         # plus .out or .err

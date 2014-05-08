@@ -43,8 +43,7 @@ class CommandLine(object):
                                       'original GFF/GTF file is.',
                                  required=True)
         self.parser.add_argument('--miso-index-gff-py', action='store',
-                                 default='/nas3/yeolab/Software/miso/misopy-0'
-                                         '.4.9/misopy/index_gff.py',
+                                 default='index_gff.py',
                                  type=str, required=False,
                                  help="Which MISO `index_gff.py` script to "
                                       "use.")
@@ -99,26 +98,31 @@ def main():
         submitter_err = submitter_sh + '.err'
         submitter_out = submitter_sh + '.out'
 
-        qs = qtools.Submitter()
-        qs.add_Q_resource('-l', 'bigmem')
-        qs.add_Q_resource('-l', 'h_vmem=30G')
-        qs.add_Q_resource('-e', submitter_err)
-        qs.add_Q_resource('-o', submitter_out)
 
+        # qs.add_Q_resource('-l', 'bigmem')
+        # qs.add_Q_resource('-l', 'h_vmem=30G')
+        # qs.add_Q_resource('-e', submitter_err)
+        # qs.add_Q_resource('-o', submitter_out)
+
+        commands = []
 
         if gtf is not None:
             gff = gtf.replace('gtf', 'gff')
             gtf2gff = 'gtf2gff3.pl %s > %s' % (gtf, gff)
-            qs.add_command(gtf2gff)
+            commands.append(gtf2gff)
 
         index_dir = cl.args['index_dir']
         miso_index_gff_py = cl.args['miso_index_gff_py']
 
-        command = 'python %s --index %s %s' % (miso_index_gff_py, gff,
-                                               index_dir)
-        qs.add_command(command)
-        qs.submit(shFile=submitter_sh, jobName='index_%s' % gff,
-                  joinArrayOut=False)
+        command = '%s --index %s %s' % (miso_index_gff_py, gff,
+                                        index_dir)
+        commands.append(command)
+
+        qs = qtools.Submitter(queue_tyep='PBS', sh_file=submitter_sh,
+                              command_list=commands,
+                              job_name='index_{}'.format(gtf_or_gff))
+        qs.write_sh(submit=True, nodes=1, ppn=1, queue='home',
+                    walltime='0:30:00')
 
     # If not all the correct arguments are given, break the program and
     # show the usage information

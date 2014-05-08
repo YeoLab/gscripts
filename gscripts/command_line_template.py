@@ -7,6 +7,11 @@ import argparse
 
 
 class CommandLine(object):
+    """
+    Check out the argparse documentation for more awesome things you can do!
+    https://docs.python.org/2/library/argparse.html
+    """
+
     def __init__(self, inOpts=None):
         self.parser = parser = argparse.ArgumentParser(
             description='Generate a STAR genome index from fasta files')
@@ -20,19 +25,18 @@ class CommandLine(object):
         parser.add_argument('-n', '--name', default='genomeGenerate',
                             action='store', type=str,
                             help='The name of the submitted job in the queue')
+
+        # This adds a "mutually exclusive" group of parameters, where you can
+        # only
         sjdb = parser.add_mutually_exclusive_group(required=False)
         sjdb.add_argument('--sjdbFileChrStartEnd', default='',
                           type=str, action='store',
                           help='A bed-file-like splice junction file, for example the '
-                               'SJ.out.tab file produced by STAR')
+                               'SJ.out.tab file produced by STAR. The format '
+                               'must be chr<TAB>start<TAB>stop<TAB>.')
         sjdb.add_argument('--sjdbGTFfile', default='',
                           type=str, action='store',
                           help='A GTF file to create a splice junction database from')
-        parser.add_argument('--sjdbOverhang', default=100, type=str,
-                            action='store',
-                          help='Number of bases to overhang for the splice '
-                               'junctions. Ideally should be the (length of '
-                               'one read)-1')
         if inOpts is None:
             self.args = vars(self.parser.parse_args())
         else:
@@ -50,6 +54,7 @@ class CommandLine(object):
         print >> sys.stderr, str
         self.parser.print_usage()
         return 2
+
 
 # Class: Usage
 class Usage(Exception):
@@ -71,10 +76,8 @@ if __name__ == '__main__':
                    if cl.args[k])
     commands = []
     commands.append('STAR --runMode genomeGenerate --genomeDir {0} '
-                    '--genomeFastaFiles {1} --runThreadN 16 {2} '
-                    '--sjdbOverhang {3}'.format(
-        cl.args['genomeDir'], cl.args['genomeFastaFiles'], sjdb,
-        cl.args['sjdbOverhang']
+                    '--genomeFastaFiles {1} --runThreadN 16 {2}'.format(
+        cl.args['genomeDir'], cl.args['genomeFastaFiles'], sjdb
     ))
 
     name = cl.args['name']

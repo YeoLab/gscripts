@@ -29,7 +29,8 @@ def kld(P, Q):
 
 
 def jsd(P, Q):
-    """
+    """Finds the per-row JSD betwen dataframes P and Q
+
     Jensen-Shannon divergence of two probability distrubutions pandas
     dataframes, P and Q. These distributions are usually created by running
     binify() on the dataframe.

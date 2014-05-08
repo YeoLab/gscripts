@@ -114,14 +114,14 @@ class CommandLine(object):
                             help='Whether or not to use the genome '
                                  'created with the splice junction '
                                  'database')
-        parser.add_argument('-w', '--walltime', default='0:20:00',
+        parser.add_argument('-w', '--walltime', default='0:30:00',
                             type=str, action='store')
         parser.add_argument('-p', '--runThreadN', default=8,
                             type=int, action='store',
-                             help='Number of processors to use on one node.'
-                                  'If 16 (the max), it may take a long time '
-                                  'to schedule your jobs, so try smaller ones'
-                                  ' so your jobs get done faster.')
+                            help='Number of processors to use on one node.'
+                                 'If 16 (the max), it may take a long time '
+                                 'to schedule your jobs, so try smaller ones'
+                                 ' so your jobs get done faster.')
         parser.add_argument('--outReadsUnmapped', default='Fastx',
                             type=str, action='store',
                             help='Where to put the unmapped reads. '
@@ -130,10 +130,13 @@ class CommandLine(object):
         parser.add_argument('--outFilterMismatchNmax', default=5,
                             type=int, action='store',
                             help='Maximum number of mismatched bases per read')
-        parser.add_argument('--outFilterMismatchNoverLmax', default=0.05,
+        parser.add_argument('--outFilterMismatchNoverLmax', default=0.3,
                             type=float, action='store',
                             help='Maximum fraction of a read that can be '
-                                 'mismatched')
+                                 'mismatched (consecutive mismatches at '
+                                 'ends will be '
+                                 'soft clipped off)'
+                                 '')
         parser.add_argument('--outFilterMultimapNmax', default=5,
                             type=int, action='store',
                             help='Maximum number of places for this read to '
@@ -145,7 +148,7 @@ class CommandLine(object):
                                  'junction reads which pass the filters '
                                  'specified by the SJ.out.tab filters. The '
                                  'only other option is "Normal"')
-        parser.add_argument('--clip5pNbases', default=14, type=int,
+        parser.add_argument('--clip5pNbases', default=0, type=int,
                             action='store',
                             help='Number of bases to clip from the 5-prime '
                                  'end of the read (the start)')
@@ -170,9 +173,14 @@ class CommandLine(object):
                                  'Cufflinks on the generated files. The other '
                                  'option is "None"')
         parser.add_argument('--additional-STAR-args', required=False,
-                            action='store', type=str,
+                            action='store', type=str, default='',
                             help='Additional arguments to pass to STAR that '
                                  'are not specified here')
+        # parser.add_mutually_exclusive_group(required=True)
+        # parser.add_argument('--paired', action='store_true',
+        #                     help='Reads are paired-end')
+        # parser.add_argument('--single', action='store_true',
+        #                     help='Reads are single-end')
 
         if inOpts is None:
             self.args = vars(self.parser.parse_args())
@@ -231,13 +239,25 @@ if __name__ == '__main__':
     # Set of unique sample ids for checking if we've read them all
     sample_ids = set([])
 
-    for read1 in iglob('*R1*gz'):
-        sample_id = '_'.join(read1.split('_')[:2])
+    for read1 in iglob('*R1*.gz'):
+        # if read1.endswith('gz'):
+        #     compressed = True
+        # else:
+        #     compressed = False
+        # readFilesCommand = 'zcat' if compressed else 'cat'
+
+        # Remove trailing "A" and "B" so they get merged
+        sample_id = '_'.join(read1.split('.')[0].split('_')[:2]).rstrip(
+            'ABCDEFGH')
         if sample_id in sample_ids:
             continue
+        paired = os.path.isfile(read1.replace('R1', 'R2'))
+        print sample_id, 'paired', paired
 
         read1 = ','.join(glob('{}*R1*gz'.format(sample_id)))
-        read2 = read1.replace('R1', 'R2')
+        read2 = read1.replace('R1', 'R2') if paired else ""
+        print 'R1', read1
+        print 'R2', read2
         sample_ids.add(sample_id)
 
         # print sample_id
@@ -256,7 +276,7 @@ if __name__ == '__main__':
     --outFilterScoreMin {10} \
     --outFilterType {11} \
     --outSAMattributes {12} \
-    --outSAMstrandField {13}
+    --outSAMstrandField {13} \
     --clip5pNbases {14} \
     --clip3pNbases {15} \
     {16}
@@ -276,8 +296,10 @@ if __name__ == '__main__':
                cl.args['outSAMstrandField'],
                cl.args['clip5pNbases'],
                cl.args['clip3pNbases'],
-               cl.args['additional_STAR_args']
-        ))
+               cl.args['additional_STAR_args']))
+
+    # replace any weird slashes
+    jobname = jobname.replace('/', '-')
 
     sub = Submitter(queue_type='PBS', sh_file=jobname + '.sh',
                     command_list=commands,

@@ -6,15 +6,70 @@ import sys
 
 
 def miso_exon_to_gencode_exon(exon):
+    """Convert a single miso exon to gencode gffutils database exon id
+
+    >>> # Skipped exon (SE) or Mutually exclusive exon (MXE) ID
+    >>> miso_exon_to_gencode_exon('chr2:9624561:9624679:+')
+    'exon:chr2:9624561-9624679:+'
+    >>> # Alt 5' splice site (pick first of alternative)
+    >>> miso_exon_to_gencode_exon('chr15:42565276:42565087|42565161:-')
+    'exon:chr15:42565276-42565087:-'
+    >>> # Alt 3' splice site (pick first of alternative)
+    >>> miso_exon_to_gencode_exon('chr2:130914199|130914248:130914158:-')
+    'exon:chr2:130914199-130914158:-'
+    >>> # Retained intron: start, stop separated by '-' instead of ':'
+    >>> miso_exon_to_gencode_exon('chr1:906259-906386:+')
+    'exon:chr1:906259-906386:+'
+    """
     return 'exon:{}:{}-{}:{}'.format(*miso_exon_to_coords(exon))
 
 
 def miso_id_to_exon_ids(miso_id):
+    """Convert a MISO-style alternative event ID
+
+    Split on the pipe ("|") to account for Alt 5'/3' splice site events
+
+    # A skipped exon (SE) ID
+    >>> miso_id_to_exon_ids('chr2:9624561:9624679:+@chr2:9627585:9627676:+@chr2:9628276:9628591:+')
+    ['exon:chr2:9624561-9624679:+', 'exon:chr2:9627585-9627676:+', 'exon:chr2:9628276-9628591:+']
+    >>> # A mutually exclusive (MXE) ID
+    >>> miso_id_to_exon_ids('chr16:89288500:89288591:+@chr16:89289565:89289691:+@chr16:89291127:89291210:+@chr16:89291963:89292039:+')
+    ['exon:chr16:89288500-89288591:+', 'exon:chr16:89289565-89289691:+', 'exon:chr16:89291127-89291210:+', 'exon:chr16:89291963-89292039:+']
+    >>> # An Alt 5' splice site (A5SS) ID
+    >>> miso_id_to_exon_ids("chr15:42565276:42565087|42565161:-@chr15:42564261:42564321:-")
+    ['exon:chr15:42565276-42565087:-', 'exon:chr15:42564261-42564321:-']
+    >>> # An Alt 3' splice site (A3SS) ID
+    >>> miso_id_to_exon_ids('chr2:130914824:130914969:-@chr2:130914199|130914248:130914158:-')
+    ['exon:chr2:130914824-130914969:-', 'exon:chr2:130914199-130914158:-']
+    >>> # A retained intron (RI) ID
+    >>> miso_id_to_exon_ids('chr1:906066-906138:+@chr1:906259-906386:+')
+    ['exon:chr1:906066-906138:+', 'exon:chr1:906259-906386:+']
+    """
     return map(miso_exon_to_gencode_exon, miso_id.split('@'))
 
 
 def miso_exon_to_coords(exon):
-    return exon.split(':')
+    """
+
+    >>> miso_exon_to_coords('chr2:130914824:130914969:-')
+    ('chr2', '130914824', '130914969', '-')
+    >>> # Alt 5' SS - pick the first of the alternative ends
+    >>> miso_exon_to_coords('chr15:42565276:42565087|42565161:-')
+    ('chr15', '42565276', '42565087', '-')
+    >>> # Alt 3' SS - pick the first of the alternative starts
+    >>> miso_exon_to_coords('chr2:130914199|130914248:130914158:-')
+    ('chr2', '130914199', '130914158', '-')
+    >>> # Retained intron
+    >>> miso_exon_to_coords('chr1:906066-906138:+')
+    ('chr1', '906066', '906138', '+')
+    """
+    strand = exon[-1]
+    coords = map(lambda x: x.split('|')[0],
+                 exon.split(':'))
+    if '-' in coords[1]:
+        start, stop = coords[1].split('-')
+        coords = coords[0], start, stop, strand
+    return coords[0], coords[1], coords[2], strand
 
 
 def convert_miso_ids_to_everything(miso_ids, db,
@@ -57,19 +112,44 @@ def convert_miso_ids_to_everything(miso_ids, db,
         for e in exons:
             try:
                 exon = db[e]
-
                 gencode.update(exon.attributes['gene_id'])
                 ensembl.update(
-                    map(lambda x: x.split('.')[0], exon.attributes['gene_id']))
+                    map(lambda x: x.split('.')[0],
+                        exon.attributes['gene_id']))
                 gene_name.update(exon.attributes['gene_name'])
                 gene_type.update(exon.attributes['gene_type'])
-                gencode_transcript(exon.attributes['transcript_id'])
+                gencode_transcript.update(exon.attributes['transcript_id'])
                 ensembl_transcript.update(
-                    map(lambda x: x.split('.')[0], exon.attributes['gene_id'])
-                )
+                    map(lambda x: x.split('.')[0], exon.attributes[
+                        'transcript_id']))
             except gffutils.FeatureNotFoundError:
-                continue
-
+                try:
+                    #  not an exon, look for any overlapping transcripts here
+                    prefix, chrom, startstop, strand = e.split(':')
+                    start, stop = startstop.split('-')
+                    transcripts = list(db.features_of_type('transcript',
+                                                           strand=strand,
+                                                           limit=(
+                                                           chrom, int(start),
+                                                           int(stop))))
+                    # if there are overlapping transcripts...
+                    if len(transcripts) == 0:
+                        continue
+                    else:
+                        for transcript in transcripts:
+                            gencode.update(transcript.attributes['gene_id'])
+                            ensembl.update(
+                                map(lambda x: x.split('.')[0],
+                                    transcript.attributes['gene_id']))
+                            gene_name.update(transcript.attributes['gene_name'])
+                            gene_type.update(transcript.attributes['gene_type'])
+                            gencode_transcript.update(
+                                transcript.attributes['transcript_id'])
+                            ensembl_transcript.update(
+                                map(lambda x: x.split('.')[0],
+                                    transcript.attributes['transcript_id']))
+                except:
+                    continue
         if len(gencode) > 0:
 
             for ens in ensembl:
@@ -119,11 +199,11 @@ def convert_miso_ids_to_everything(miso_ids, db,
         df.columns = [name]
         tsv = '{}/miso_{}_to_{}.tsv'.format(out_dir, event_type, name)
         df.to_csv(tsv, sep='\t')
-        sys.stdout.write('Wrote {}'.format(tsv))
+        sys.stdout.write('Wrote {}\n'.format(tsv))
 
     for name, d in to_misos.iteritems():
         tsv = '{}/{}_to_miso_{}.tsv'.format(out_dir, name, event_type)
         with open(tsv, 'w') as f:
             for k, v in d.iteritems():
                 f.write('{}\t{}\n'.format(k, '\t'.join(v)))
-        sys.stdout.write('Wrote {}'.format(tsv))
+        sys.stdout.write('Wrote {}\n'.format(tsv))

@@ -59,24 +59,28 @@ class AnalyzeRNASeq extends QScript {
         this.split = true
   }
 
-  case class oldSplice(input: File, out : File, species: String) extends OldSplice {
-        this.inBam = input
-        this.out_file = out
-        this.in_species = species
-        this.splice_type = List("MXE", "SE")
-        this.flip = (flipped == "flip")
+  case class Cufflinks(input: file, output: File, species: String){
+    this.inBam = input
+    this.gtf = 
   }
-  case class singleRPKM(input: File, output: File, s: String) extends SingleRPKM {
-	this.inCount = input
-	this.outRPKM = output
-  }
+ //  case class oldSplice(input: File, out : File, species: String) extends OldSplice {
+ //        this.inBam = input
+ //        this.out_file = out
+ //        this.in_species = species
+ //        this.splice_type = List("MXE", "SE")
+ //        this.flip = (flipped == "flip")
+ //  }
+ //  case class singleRPKM(input: File, output: File, s: String) extends SingleRPKM {
+	// this.inCount = input
+	// this.outRPKM = output
+ //  }
 
-  case class countTags(input: File, index: File, output: File, species: String) extends CountTags {
-	this.inBam = input
-	this.outCount = output
-	this.tags_annotation = exonLocation(species)
-	this.flip = flipped
-  }
+ //  case class countTags(input: File, index: File, output: File, species: String) extends CountTags {
+	// this.inBam = input
+	// this.outCount = output
+	// this.tags_annotation = exonLocation(species)
+	// this.flip = flipped
+ //  }
 
   case class star(input: File, output: File, stranded : Boolean, paired : File = null, species: String) extends STAR {
        this.inFastq = input
@@ -198,8 +202,6 @@ def makeBigWig(inBam: File, species: String): (File, File) = {
 }
 
 def script() {
-
-    
     
     val fileList = QScriptUtils.createArgsFromFile(input)
     var trackHubFiles: List[File] = List()
@@ -272,7 +274,7 @@ def script() {
       add(new countTags(input = rgSortedBamFile, index = indexedBamFile, output = countFile, species = species))	
       add(new singleRPKM(input = countFile, output = RPKMFile, s = species))
 
-      add(oldSplice(input = rgSortedBamFile, out = oldSpliceOut, species = species))
+      // add(oldSplice(input = rgSortedBamFile, out = oldSpliceOut, species = species))
       add(new Miso(inBam = rgSortedBamFile, species = species, pairedEnd = false, output = misoOut))
       add(new RnaEditing(inBam = rgSortedBamFile, snpEffDb = species, snpDb = snpDbLocation(species), genome = genomeLocation(species), flipped=flipped, output = rnaEditingOut))
 
