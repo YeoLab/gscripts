@@ -87,7 +87,7 @@ snpEff.config:
 	echo >> $(SAMPLE).make.out
 
 %.var: %.bcf $(RNA_edit_bin)/vcf2eff2KO.pl
-	echo "De-compressing $< and selecting al variants" >> $(SAMPLE).make.out
+	echo "De-compressing $< and selecting all variants" >> $(SAMPLE).make.out
 	bcftools view $< | perl $(RNA_edit_bin)/vcf2eff2KO.pl - 1 > $@
 	wc $@ >> $(SAMPLE).make.out
 	echo >> $(SAMPLE).make.out
