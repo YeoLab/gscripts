@@ -1,5 +1,8 @@
+
 module load biotools
 #module load scipy
+
+alias qme="qstat -u $(whoami)"
 
 SERVER=/projects
 
