@@ -10,7 +10,7 @@ scripts = [
     'clipseq/run_ripseeker.py',
     'editing/create_rna_editing_makefile.py',
     'general/cat_files.py',
-    'general/cat_biogem.py'
+    'general/cat_biogem.py',
     'general/calculate_NRF.py',
     'general/count_aligned_from_sam.py',
     'general/make_trackhubs.py',
