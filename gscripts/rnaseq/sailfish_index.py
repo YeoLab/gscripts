@@ -88,7 +88,7 @@ if __name__ == '__main__':
         out_sh = cl.args['out_sh']
 
     command = 'sailfish index --kmerSize {0} --threads {1} --transcripts ' \
-              '{2} --out {4}'.format(cl.args['kmer_size'],
+              '{2} --out {3}'.format(cl.args['kmer_size'],
                                      cl.args['num_processors'],
                                      cl.args['fasta'],
                                      out_dir)
