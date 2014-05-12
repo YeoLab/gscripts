@@ -82,7 +82,7 @@ if __name__ == '__main__':
     else:
         out_dir = cl.args['out_dir']
 
-    if cl.args['job_name'] is None:
+    if cl.args['out_sh'] is None:
         out_sh = cl.args['job_name'] + '.sh'
     else:
         out_sh = cl.args['out_sh']
