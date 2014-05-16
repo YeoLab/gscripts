@@ -118,7 +118,8 @@ class MisoPipeline(object):
 
         insert_len_arguments = ''
 
-        event_types = ['SE', 'MXE', 'AFE', 'ALE', 'A3SS', 'A5SS', 'TANDEMUTR']
+        event_types = ['SE', 'MXE', 'AFE', 'ALE', 'A3SS', 'A5SS',
+                       'RI', 'TANDEMUTR']
 
         # Get the read length. Gonna keep this as bash because samtools
         # and less are very fast
