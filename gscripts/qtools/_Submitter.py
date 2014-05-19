@@ -101,7 +101,8 @@ class Submitter:
         #for backwards compatibility
         self.job(**kwargs)
 
-    def job(self, use_array=False, submit=False, **kwargs):
+    def job(self, queue_type, sh_file, command_list, job_name,
+            use_array=False, submit=False, **kwargs):
         """
         Create a file that is the shell script to be submitted to the
         job scheduler.
