@@ -46,7 +46,7 @@ class Submitter:
     def __init__(self, sh_filename, commands, job_name, queue_type=None,
                  array=None, nodes=1, ppn=1,
                  walltime='0:30:00', queue='home', account='yeo-group',
-                 out=None, err=None):
+                 out_filename=None, err_filename=None, submit_job=False):
         """Constructor method, will initialize class attributes to passed
         keyword arguments and values.
 
@@ -121,7 +121,7 @@ class Submitter:
 
         max_running: for array tasks, the maximum number of concurrently executed sub-jobs
         """
-        # self.data = kwargs
+        self.additional_resources = defaultdict(list)
         if ("oolite" in HOSTNAME) or ("compute" in HOSTNAME):
             self.add_resource("-l", 'bigmem')
             self.add_resource("-l", 'h_vmem=16G')
@@ -134,42 +134,33 @@ class Submitter:
         self.job_name = job_name
         self.nodes = nodes
         self.ppn = ppn
-        self.chunks = chunks
         self.walltime = walltime
         self.queue = queue
+        self.out_filename = self.sh_filename + '.out' if out_filename is None \
+            else out_filename
+        self.err_filename = self.sh_filename + '.err' if err_filename is None \
+            else err_filename
+        self.account = account
 
         # PBS/TSCC does not allow array jobs with more than 500 commands
-        #sys.stderr.write("len(self.data['command_list']) {}\n".format(len(self
-        #.data[
-        #    'command_list'])))
-        #sys.stderr.write("self.data['array'] {}\n".format(self.data['array']))
-        #print 'use_array', use_array
         if len(self.commands) > MAX_ARRAY_JOBS and self.array:
             commands = self.commands
             name = self.job_name
             commands_list = [commands[i:(i + MAX_ARRAY_JOBS)]
                              for i in xrange(0, len(commands), MAX_ARRAY_JOBS)]
-            kwargs = dict(self.data)
             for i, commands in enumerate(commands_list):
-                kwargs['command_list'] = commands
-                kwargs['job_name'] = '{}{}'.format(name, i + 1)
-                kwargs['sh_file'] = self.data['sh_file'] + '{}.sh'.format(i + 1)
-                kwargs['submit'] = True
-                kwargs['array'] = True
-                kwargs['walltime'] = self.data['walltime']
-                #sys.stderr.write('Writing to new job {}\n'.format(kwargs[
-                #    'job_name']))
-                sub = Submitter(**kwargs)
-                sub.write_sh(**kwargs)
-            return
+                job_name = '{}{}'.format(name, i + 1)
+                sh_filename = '{}{}.sh'.format(self.sh_filename.rstrip('.sh'),
+                                               i + 1)
+                sub = Submitter(commands=commands, job_name=job_name,
+                                sh_filename=sh_filename, array=True,
+                                walltime=self.walltime, ppn=self.ppn,
+                                nodes=self.nodes, queue=self.queue,
+                                queue_type=self.queue_type, submit_job=True)
+                # sub.write_sh(**kwargs)
 
-
-        # Default stdout/stderr .out/.err files to be the sh submit script file
-        # plus .out or .err
-        out_file = self.data['out'] if 'out' in self.data \
-            else sh_filename + '.out'
-        err_file = self.data['err'] if 'err' in self.data \
-            else sh_filename + '.err'
+        if submit_job:
+            self.job(submit=True)
 
     @property
     def _array(self):
@@ -195,11 +186,7 @@ class Submitter:
         """Get the number of jobs in the array
         """
         if self.array:
-            # if self.chunks != 1:
-            #     raise ValueError("only a chunk size of 1 is allowed, please fix"
-            #                      " the Submitter code if you want to do that")
-            return math.ceil(len(self.commands) /
-                             int(self.chunks))
+            return math.ceil(len(self.commands) / int(self.chunks))
         else:
             return 1
 
@@ -239,10 +226,10 @@ class Submitter:
         Add passed keyword and value to a list of attributes that
         will be passed to the scheduler
         """
-        if 'additional_resources' not in self.data:
-            self.data['additional_resources'] = defaultdict(list)
+        # if 'additional_resources' not in self.data:
+        #     self.data['additional_resources'] = defaultdict(list)
 
-        self.data['additional_resources'][kw].append(value)
+        self.additional_resources[kw].append(value)
 
     def write_sh(self, **kwargs):
         """This will soon be deprecated. See Submitter.job() docstring
