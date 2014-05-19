@@ -1,9 +1,7 @@
 from gscripts import qtools
-
-
 import pandas as pd
-
 import sys
+
 sInfo = pd.read_table(sys.argv[1])
 
 cmds = []
