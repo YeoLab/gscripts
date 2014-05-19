@@ -1,7 +1,6 @@
 import matplotlib.pyplot as plt
 import numpy as np
 import seaborn as sns
-import prettyplotlib as ppl
 
 sns.set_axes_style('nogrid', 'talk', 'Helvetica')
 import brewer2mpl
