@@ -29,6 +29,9 @@ import sys
 HOSTNAME = subprocess.Popen('HOSTNAME', stdout=subprocess.PIPE).communicate()[
     0].strip()
 
+# Maximum number of jobs in an array job
+MAX_ARRAY_JOBS = 500
+
 
 class Submitter:
     """
@@ -39,21 +42,11 @@ class Submitter:
 
     """
 
-    use_array = False
-    walltime = '0:30:00'
-    queue_type = 'PBS'
-    nodes = 1
-    ppn = 1
 
-    use_array = False  # old version
-    array = False  # please use "array=Bool" instead of "use_array"
-
-    number_jobs = 1
-
-    def __init__(self, sh_file, commands, job_name, queue_type=None,
+    def __init__(self, sh_filename, commands, job_name, queue_type=None,
                  array=None, nodes=1, ppn=1,
-                 walltime='0:30:00',
-                 chunks=None, ):
+                 walltime='0:30:00', queue='home', account='yeo-group',
+                 out=None, err=None):
         """Constructor method, will initialize class attributes to passed
         keyword arguments and values.
 
@@ -88,7 +81,8 @@ class Submitter:
             reasonable.
         queue : str
             Name of the queue, e.g. "home" for home-yeo or "glean" for glean
-        wait_for : list of int
+        wait_for : list of str
+            Job IDS to wait for until finished to start this job
 
 
         Returns
@@ -129,48 +123,20 @@ class Submitter:
         """
         # self.data = kwargs
         if ("oolite" in HOSTNAME) or ("compute" in HOSTNAME):
-            sys.stderr.write("automatically setting parameters for oolite\n")
-            # self.data['queue_type'] = "SGE"
-            self.queue_type = 'SGE'
-            # self.data['use_array'] = True
-            self.array = True
             self.add_resource("-l", 'bigmem')
             self.add_resource("-l", 'h_vmem=16G')
 
-        elif ("tscc" in HOSTNAME):
-            pass
-            # sys.stderr.write("automatically setting parameters for tscc\n")
-            # self.data['queue_type'] = "PBS"
-            # if 'use_array' not in self.data:
-            #     ar = False
-            #     # sys.stderr.write("\tuse array?: %s\n" %ar)
-            #     self.data['use_array'] = ar
-            # if 'walltime' not in self.data:
-            #     wt = "00:30:00"
-            #     # sys.stderr.write("\twalltime:%s\n" %(wt))
-            #     self.data['walltime']=wt
-            # if 'nodes' not in self.data:
-            #     nd = 1
-            #     # sys.stderr.write("\tnodes:%d\n" %nd)
-            #     self.data['nodes']=nd
-            # if 'ppn' not in self.data:
-            #     ppn = 1
-            #     # sys.stderr.write("\tppn:%d\n" %ppn)
-            #     self.data['ppn']=ppn
-        else:
-            pass
-            # self.data['use_array'] = False
-        if 'array' in self.data:
-            self.data['use_array'] = self.data['array']
-        use_array = self.data['use_array']
+        self.array = self._array if array is None else array
+        self.queue_type = self._queue_type if queue_type is None else queue_type
 
-        number_jobs = 1
-        if 'use_array' in self.data and self.data['use_array']:
-            if chunks != 1:
-                raise ValueError("only a chunk size of 1 is allowed, please fix"
-                                 " the Submitter code if you want to do that")
-            number_jobs = math.ceil(
-                len(self.data['command_list']) / int(chunks))
+        self.sh_filename = sh_filename
+        self.commands = commands
+        self.job_name = job_name
+        self.nodes = nodes
+        self.ppn = ppn
+        self.chunks = chunks
+        self.walltime = walltime
+        self.queue = queue
 
         # PBS/TSCC does not allow array jobs with more than 500 commands
         #sys.stderr.write("len(self.data['command_list']) {}\n".format(len(self
@@ -178,13 +144,13 @@ class Submitter:
         #    'command_list'])))
         #sys.stderr.write("self.data['array'] {}\n".format(self.data['array']))
         #print 'use_array', use_array
-        if len(self.data['command_list']) > 500 and use_array:
-            command_list = self.data['command_list']
-            name = self.data['job_name']
-            command_list_list = [command_list[i:(i + 500)]
-                                 for i in xrange(0, len(command_list), 500)]
+        if len(self.commands) > MAX_ARRAY_JOBS and self.array:
+            commands = self.commands
+            name = self.job_name
+            commands_list = [commands[i:(i + MAX_ARRAY_JOBS)]
+                             for i in xrange(0, len(commands), MAX_ARRAY_JOBS)]
             kwargs = dict(self.data)
-            for i, commands in enumerate(command_list_list):
+            for i, commands in enumerate(commands_list):
                 kwargs['command_list'] = commands
                 kwargs['job_name'] = '{}{}'.format(name, i + 1)
                 kwargs['sh_file'] = self.data['sh_file'] + '{}.sh'.format(i + 1)
@@ -197,37 +163,6 @@ class Submitter:
                 sub.write_sh(**kwargs)
             return
 
-        if 'chunks' in kwargs:
-            if kwargs['chunks']:
-                chunks = kwargs['chunks']
-
-        if 'submit' in kwargs:
-            submit = kwargs['submit']
-
-        if 'walltime' in kwargs:
-            walltime = kwargs['walltime']
-        else:
-            walltime = "18:00:00"
-
-        if 'nodes' in kwargs:
-            nodes = kwargs['nodes']
-        else:
-            nodes = 1
-
-        if 'ppn' in kwargs:
-            ppn = kwargs['ppn']
-        else:
-            ppn = 16
-
-        if 'account' in kwargs:
-            account = kwargs['account']
-        else:
-            account = 'yeo-group'
-
-        if 'queue' in kwargs:
-            queue = kwargs['queue']
-        else:
-            queue = 'home'
 
         # Default stdout/stderr .out/.err files to be the sh submit script file
         # plus .out or .err
@@ -235,7 +170,6 @@ class Submitter:
             else sh_filename + '.out'
         err_file = self.data['err'] if 'err' in self.data \
             else sh_filename + '.err'
-
 
     @property
     def _array(self):
@@ -247,7 +181,7 @@ class Submitter:
             return False
 
     @property
-    def queue_type(self):
+    def _queue_type(self):
         """Default value for the queue type, auto-detects if we're on oolite
         or tscc
         """
@@ -256,6 +190,32 @@ class Submitter:
         elif 'tscc' in HOSTNAME:
             return 'PBS'
 
+    @property
+    def number_jobs(self):
+        """Get the number of jobs in the array
+        """
+        if self.array:
+            # if self.chunks != 1:
+            #     raise ValueError("only a chunk size of 1 is allowed, please fix"
+            #                      " the Submitter code if you want to do that")
+            return math.ceil(len(self.commands) /
+                             int(self.chunks))
+        else:
+            return 1
+
+    @property
+    def queue_param_prefix(self):
+        if self.queue_type == 'PBS':
+            return '#PBS'
+        elif self.queue_type == 'SGE':
+            return '#$'
+
+    @property
+    def array_job_identifier(self):
+        if self.queue_type == 'PBS':
+            return "$PBS_ARRAYID"
+        elif self.queue_type == 'SGE':
+            return "$SGE_TASK_ID"
 
     # def set_value(self, **kwargs):
     #     """
@@ -291,29 +251,27 @@ class Submitter:
         self.job(**kwargs)
 
     def job(self, submit=False):
-        """
+        """Writes the sh file and submits the job (if submit=True)
+
+        Parameters
+        ----------
+        submit : bool
+            Whether or not to submit the job
+
+        Returns
+        -------
+        job_id : int
+            Identifier of the job in the queue
+
+        Raises
+        ------
 
         """
-        # required_keys = "queue_type sh_file command_list job_name"\
-        #     .split()
 
         job_id = 0
         chunks = 1
 
-        # self.data.update(kwargs)
-        #
-        # for key in required_keys:
-        #     if not key in self.data:
-        #         raise ValueError("missing required key: " + str(key))
-        #     if not self.data[key]:
-        #         raise ValueError("missing value for required key: " + str(key))
-
-        #print "self.data['walltime']", self.data['walltime']
-
-
-
-        sh_filename = self.data['sh_file']
-        sh_file = open(sh_filename, 'w')
+        sh_file = open(self.sh_filename, 'w')
         sh_file.write("#!/bin/bash\n")
 
 
@@ -322,22 +280,22 @@ class Submitter:
 
         sh_file.write("%s -N %s\n" % (queue_param_prefix,
                                       self.data['job_name']))
-        sh_file.write("%s -o %s\n" % (queue_param_prefix, out_file))
-        sh_file.write("%s -e %s\n" % (queue_param_prefix, err_file))
+        sh_file.write("%s -o %s\n" % (queue_param_prefix, self.out_file))
+        sh_file.write("%s -e %s\n" % (queue_param_prefix, self.err_file))
         sh_file.write("%s -V\n" % queue_param_prefix)
 
         if self.data['queue_type'] == 'SGE':
-            self._write_sge()
+            self._write_sge(sh_file)
 
         elif self.data['queue_type'] == 'PBS':
-            self._write_pbs()
+            self._write_pbs(sh_file)
 
         if self.array:
             sys.stderr.write("running %d tasks as an array-job.\n" % (len(
                 self.data['command_list'])))
             for i, cmd in enumerate(self.data['command_list']):
                 sh_file.write("cmd[%d]=\"%s\"\n" %((i+1), cmd))
-            sh_file.write("eval ${cmd[%s]}\n" %(array_job_identifier))
+            sh_file.write("eval ${cmd[%s]}\n" % (self.array_job_identifier))
         #    pass
         else:
             for command in self.data['command_list']:
@@ -354,19 +312,21 @@ class Submitter:
 
             return job_id
 
-    def _write_pbs(self):
+    def _write_pbs(self, sh_file):
         """PBS-queue (TSCC) specific header formatting
         """
+        queue_param_prefix = '#PBS'
         #            queue_param_prefix = '#PBS'
         sh_file.write("%s -l walltime=%s\n" % (queue_param_prefix,
-                                               walltime))
+                                               self.walltime))
         sh_file.write("%s -l nodes=%s:ppn=%s\n" % (queue_param_prefix,
-                                                   str(nodes), str(ppn)))
-        sh_file.write("%s -A %s\n" % (queue_param_prefix, account))
-        sh_file.write("%s -q %s\n" % (queue_param_prefix, queue))
+                                                   str(self.nodes),
+                                                   str(self.ppn)))
+        sh_file.write("%s -A %s\n" % (queue_param_prefix, self.account))
+        sh_file.write("%s -q %s\n" % (queue_param_prefix, self.queue))
 
         # Workaround to submit to 'glean' queue and 'condo' queue
-        if (queue == "glean") or (queue == "condo"):
+        if (self.queue == "glean") or (self.queue == "condo"):
             sh_file.write('%s -W group_list=condo-group\n' % queue_param_prefix)
 
         # First check that we even have this parameter
@@ -401,19 +361,21 @@ class Submitter:
         if 'use_array' in self.data and self.data['use_array']:
             if 'max_running' in self.data:
                 sh_file.write("%s -t 1-%d%%%d\n" % (
-                    queue_param_prefix, number_jobs, self.data['max_running']))
+                    queue_param_prefix, self.number_jobs,
+                    self.max_running))
             else:
                 sh_file.write(
-                    "%s -t 1-%d\n" % (queue_param_prefix, number_jobs))
+                    "%s -t 1-%d\n" % (queue_param_prefix, self.number_jobs))
 
         sh_file.write('\n# Go to the directory from which the script was '
                       'called\n')
         sh_file.write("cd $PBS_O_WORKDIR\n")
-        array_job_identifier = "$PBS_ARRAYID"
+        # self.array_job_identifier = "$PBS_ARRAYID"
 
-    def _write_sge(self):
+    def _write_sge(self, sh_file):
         """SGE-queue (oolit) specific header formatting
         """
+        queue_param_prefix = '#$'
         sh_file.write("%s -S /bin/bash\n" % queue_param_prefix)
         sh_file.write("%s -cwd\n" % queue_param_prefix)
 
@@ -437,4 +399,4 @@ class Submitter:
                     # for value in kwargs['additional_resources'][key]:
                     sh_file.write("%s %s %s\n" % (queue_param_prefix,
                                                   key, value))
-        array_job_identifier = "$SGE_TASK_ID"
+                    # self.array_job_identifier = "$SGE_TASK_ID"
