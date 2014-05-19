@@ -26,7 +26,8 @@ import subprocess
 from subprocess import PIPE
 import sys
 
-hostname = subprocess.Popen('hostname', stdout=subprocess.PIPE).communicate()[0].strip()
+HOSTNAME = subprocess.Popen('HOSTNAME', stdout=subprocess.PIPE).communicate()[
+    0].strip()
 
 
 class Submitter:
@@ -41,14 +42,14 @@ class Submitter:
         passed keyword arguments and values.
         """
         self.data = kwargs
-        if ("oolite" in hostname) or ("compute" in hostname):
-            sys.stderr.write("automatically setting pramaters for oolite\n")
+        if ("oolite" in HOSTNAME) or ("compute" in HOSTNAME):
+            sys.stderr.write("automatically setting parameters for oolite\n")
             self.data['queue_type'] = "SGE"
             self.data['use_array'] = True
             self.add_resource("-l", 'bigmem')
             self.add_resource("-l", 'h_vmem=16G')
 
-        elif ("tscc" in hostname):
+        elif ("tscc" in HOSTNAME):
             sys.stderr.write("automatically setting parameters for tscc\n")
             self.data['queue_type'] = "PBS"
             if 'use_array' not in self.data:
@@ -56,7 +57,7 @@ class Submitter:
                 sys.stderr.write("\tuse array?: %s\n" %ar)
                 self.data['use_array'] = ar
             if 'walltime' not in self.data:
-                wt = "00:72:00"
+                wt = "00:30:00"
                 sys.stderr.write("\twalltime:%s\n" %(wt))
                 self.data['walltime']=wt
             if 'nodes' not in self.data:
@@ -67,7 +68,8 @@ class Submitter:
                 ppn = 1
                 sys.stderr.write("\tppn:%d\n" %ppn)
                 self.data['ppn']=ppn
-
+        else:
+            self.data['use_array'] = False
 
 
     def set_value(self, **kwargs):
@@ -101,8 +103,7 @@ class Submitter:
         #for backwards compatibility
         self.job(**kwargs)
 
-    def job(self, queue_type, sh_file, command_list, job_name,
-            use_array=False, submit=False, **kwargs):
+    def job(self, submit=False, **kwargs):
         """
         Create a file that is the shell script to be submitted to the
         job scheduler.
@@ -138,7 +139,6 @@ class Submitter:
         ret_val = 0
         chunks = 1
 
-
         self.data.update(kwargs)
 
         for key in required_keys:
@@ -166,7 +166,6 @@ class Submitter:
         #    'command_list'])))
         #sys.stderr.write("self.data['array'] {}\n".format(self.data['array']))
         #print 'use_array', use_array
-
         if len(self.data['command_list']) > 500 and use_array:
             command_list = self.data['command_list']
             name = self.data['job_name']
@@ -224,10 +223,10 @@ class Submitter:
 
         # Default stdout/stderr .out/.err files to be the sh submit script file
         # plus .out or .err
-        out_file = self.data['out'] if 'out' in self.data else self.data['job_name'] + \
-                                                               '.out'
-        err_file = self.data['err'] if 'err' in self.data else self.data['job_name'] + \
-                                                               '.err'
+        out_file = self.data['out'] if 'out' in self.data \
+            else sh_filename + '.out'
+        err_file = self.data['err'] if 'err' in self.data \
+            else sh_filename + '.err'
 
         queue_param_prefixes = {'SGE': '#$', 'PBS': '#PBS'}
         queue_param_prefix = queue_param_prefixes[self.data['queue_type']]

@@ -1,7 +1,7 @@
-#!/bin/sh
+#!/bin/bash
 #PBS -N test_qtools_submitter_wait_for_pbs
-#PBS -o test_qtools_submitter_wait_for_pbs.out
-#PBS -e test_qtools_submitter_wait_for_pbs.err
+#PBS -o /Users/olga/workspace-git/YeoLab/gscripts/tests/data/test_qtools_submitter_wait_for_pbs.sh.out
+#PBS -e /Users/olga/workspace-git/YeoLab/gscripts/tests/data/test_qtools_submitter_wait_for_pbs.sh.err
 #PBS -V
 #PBS -l walltime=0:01:00
 #PBS -l nodes=1:ppn=16
