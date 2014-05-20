@@ -1,8 +1,6 @@
 from gscripts import qtools
 import pandas as pd
 import sys
-
-from gscripts.qtools import Submitter
 import argparse
 
 
