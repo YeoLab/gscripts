@@ -1,7 +1,7 @@
 __author__ = 'olga'
 
 import unittest
-from gscripts.mapping.sam_to_bam_and_sort import SamToBamAndSort
+from gscripts.mapping.sort_bam import SortBam
 import tests
 import os
 import shutil
@@ -17,25 +17,29 @@ class Test(unittest.TestCase):
     def tearDown(self):
         shutil.rmtree(self.out_dir)
 
-    def test_sam_to_bam_and_sort(self):
-        job_name = 'sam_to_bam_and_sort'
+    def test_sort_bam(self):
+        job_name = 'sort_bam'
         out_sh = '{}/{}.sh'.format(self.out_dir, job_name)
-        SamToBamAndSort(job_name=job_name, out_sh=out_sh,
-                        directory='data/', submit=False)
+        SortBam(job_name=job_name, out_sh=out_sh,
+                directory='data/', submit=False)
         true_result = """#!/bin/bash
-#PBS -N sam_to_bam_and_sort
-#PBS -o test_output/sam_to_bam_and_sort.sh.out
-#PBS -e test_output/sam_to_bam_and_sort.sh.err
+#PBS -N sort_bam
+#PBS -o test_output/sort_bam.sh.out
+#PBS -e test_output/sort_bam.sh.err
 #PBS -V
 #PBS -l walltime=0:30:00
-#PBS -l nodes=1:ppn=16
+#PBS -l nodes=1:ppn=8
 #PBS -A yeo-group
 #PBS -q home
+#PBS -t 1-4%10
 
 # Go to the directory from which the script was called
 cd $PBS_O_WORKDIR
-samtools view -bS data/test.sam > data/test.bam
-samtools sort  data/test.bam data/test.sorted
+cmd[1]="samtools sort -@ 8 -m 50000000000 data/test.bam data/test.bam.sorted"
+cmd[2]="samtools sort -@ 8 -m 50000000000 data/test.sorted.bam data/test.sorted.bam.sorted"
+cmd[3]="samtools sort -@ 8 -m 50000000000 data/test_barcode_collapse.bam data/test_barcode_collapse.bam.sorted"
+cmd[4]="samtools sort -@ 8 -m 50000000000 data/test_barcode_collapse.bc.bam data/test_barcode_collapse.bc.bam.sorted"
+eval ${cmd[$PBS_ARRAYID]}
 """
         true_result = true_result.split('\n')
         # with open(out_sh) as f:
