@@ -14,7 +14,8 @@ class CommandLine(object):
 
     def __init__(self, inOpts=None):
         self.parser = parser = argparse.ArgumentParser(
-            description='Generate a STAR genome index from fasta files')
+            description='Submit an oldsplice job for all samples in the '
+                        'sample info file')
         parser.add_argument('sample_info_file', required=True,
                             type=str, action='store',
                             help='Sample info file with bam files and sample '

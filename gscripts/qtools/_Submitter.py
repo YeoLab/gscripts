@@ -33,7 +33,7 @@ HOSTNAME = subprocess.Popen('HOSTNAME', stdout=subprocess.PIPE).communicate()[
 MAX_ARRAY_JOBS = 500
 
 
-class Submitter:
+class Submitter(object):
     """
     Class that will customize and submit shell scripts
     to the job scheduler

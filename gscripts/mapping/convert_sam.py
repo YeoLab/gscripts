@@ -15,7 +15,7 @@ for file in glob('*sam'):
     cmd_list.append('samtools view -bS -q 10 {} > {}.bam'.format(file, file))
 
 sub = Submitter(queue_type='PBS', sh_file=name + '.sh', command_list=cmd_list,
-                job_name=name)
-sub.write_sh(submit=True, nodes=1, ppn=1, queue='home', walltime='1:00:00',
-             array=True, max_running=20)
+                job_name=name, nodes=1, ppn=1, queue='home', walltime='1:00:00',
+                array=True, max_running=20)
+sub.write_sh(submit=True)
 
