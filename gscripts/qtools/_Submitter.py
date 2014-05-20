@@ -210,13 +210,6 @@ class Submitter:
         elif self.queue_type == 'SGE':
             return "$SGE_TASK_ID"
 
-    # def set_value(self, **kwargs):
-    #     """
-    #     Set class attributes by passing keyword argument and values
-    #     """
-    #     for key in kwargs:
-    #         self.data[key] = kwargs[key]
-
     def add_wait(self, wait_ID):
         """
         Add passed job ID to list of jobs for this job submission to
@@ -232,9 +225,6 @@ class Submitter:
         Add passed keyword and value to a list of attributes that
         will be passed to the scheduler
         """
-        # if 'additional_resources' not in self.data:
-        #     self.data['additional_resources'] = defaultdict(list)
-
         self.additional_resources[kw].append(value)
 
     def write_sh(self, **kwargs):
@@ -285,7 +275,7 @@ class Submitter:
             sys.stderr.write("running %d tasks as an array-job.\n" % (len(
                 self.data['command_list'])))
             for i, cmd in enumerate(self.commands):
-                sh_file.write("cmd[%d]=\"%s\"\n" %((i+1), cmd))
+                sh_file.write("cmd[%d]=\"%s\"\n" % ((i + 1), cmd))
             sh_file.write("eval ${cmd[%s]}\n" % (self.array_job_identifier))
         #    pass
         else:
@@ -321,38 +311,6 @@ class Submitter:
             sh_file.write('%s -W group_list=condo-group\n' %
                           self.queue_param_prefix)
 
-        # # First check that we even have this parameter
-        # if 'wait_for' in self.data:
-        #     # Now check that the list is nonempty
-        #     if self.data['wait_for']:
-        #         sh_file.write("%s -W depend=afterok:%s\n"
-        #                       % (self.queue_param_prefix,
-        #                          ':'.join(self.data['wait_for'])))
-        #
-        # # Wait for an array of submitted jobs
-        # if 'wait_for_array' in self.data:
-        #     if self.data['wait_for_array']:
-        #         sh_file.write("%s -W depend=afterokarray:%s\n"
-        #                       % (self.queue_param_prefix, ''.join(self.data[
-        #             'wait_for_array'])))
-
-
-        # need to write additional resources BEFORE the first commands
-        # if self.additional_resources:
-        #     # if self.data['additional_resources']:
-        #     for key, value in self.additional_resources.iteritems():
-        #         # for value in self.data['additional_resources'][key]:
-        #         for v in value:
-        #             sh_file.write("%s %s %s\n" % (self.queue_param_prefix,
-        #                                           key, v))
-        # if 'additional_resources' in kwargs:
-        #     if kwargs['additional_resources']:
-        #         for key, value in kwargs['additional_resources'].iteritems():
-        #             # for value in kwargs['additional_resources'][key]:
-        #             sh_file.write("%s %s %s\n" % (queue_param_prefix,
-        #                                           key, value))
-        # if 'use_array' in self.data and self.data['use_array']:
-
         self._write_additional_resources(sh_file)
 
         if self.array:
@@ -378,27 +336,6 @@ class Submitter:
         sh_file.write("%s -cwd\n" % self.queue_param_prefix)
         self._write_additional_resources(sh_file)
 
-        # # First check that we even have this parameter
-        # if 'wait_for' in self.data:
-        #     # Now check that the list is nonempty
-        #     if self.data['wait_for']:
-        #         sh_file.write("%s -hold_jid %s \n"
-        #                       % (self.queue_param_prefix,
-        #                          ''.join(self.data['wait_for'])))
-        # need to write additional resources BEFORE the first commands
-        # if self.additional_resources:
-        #     # if self.data['additional_resources']:
-        #     for key, value in self.additional_resources.iteritems():
-        #         # for value in self.data['additional_resources'][key]:
-        #         sh_file.write("%s %s %s\n" % (self.queue_param_prefix,
-        #                                       key, value))
-        # if 'additional_resources' in kwargs:
-        #     if kwargs['additional_resources']:
-        #         for key, value in kwargs['additional_resources'].iteritems():
-        #             # for value in kwargs['additional_resources'][key]:
-        #             sh_file.write("%s %s %s\n" % (queue_param_prefix,
-        #                                           key, value))
-        #             # self.array_job_identifier = "$SGE_TASK_ID"
 
     def _write_additional_resources(self, sh_file):
         if self.additional_resources:
