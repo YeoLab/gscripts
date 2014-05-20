@@ -17,8 +17,6 @@ class Test(unittest.TestCase):
         shutil.rmtree(self.out_dir)
 
     def test_submit_oldsplice(self):
-        """
-        """
         true_result = """#!/bin/bash
 #PBS -N oldsplice
 #PBS -o test_output/runOldsplice.sh.out

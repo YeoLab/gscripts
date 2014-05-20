@@ -19,8 +19,7 @@ class CommandLine(object):
                         'files as input')
         parser.add_argument('job_name', required=False,
                             type=str, action='store', default='convert_sam',
-                            help='Sample info file with bam files and sample '
-                                 'IDs')
+                            help='Name of submitted job to scheduler')
         parser.add_argument('--do-not-submit', required=False,
                             action='store_true',
                             help='Flag to not actually submit the job but '
@@ -93,8 +92,8 @@ if __name__ == '__main__':
     out_sh = job_name + '.sh' if cl.args['out_sh'] is None \
         else cl.args['out_sh']
     submit = not cl.args['do_not_submit']
-
     directory = cl.args['directory'].rstrip('/')
+
     ConvertSam(job_name=job_name, out_sh=out_sh,
                queue_type=cl.args['queue_type'], directory=directory,
                submit=submit)
