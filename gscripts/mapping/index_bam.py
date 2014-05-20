@@ -14,12 +14,11 @@ class CommandLine(object):
 
     def __init__(self, inOpts=None):
         self.parser = parser = argparse.ArgumentParser(
-            description='Index a *sorted* bam file (required for many '
+            description='Index sorted bam files (required by some many '
                         'programs)')
         parser.add_argument('job_name', required=False,
                             type=str, action='store', default='index_bam',
-                            help='Sample info file with bam files and sample '
-                                 'IDs')
+                            help='Name of the job submitted to the cluster')
         parser.add_argument('--do-not-submit', required=False,
                             action='store_true',
                             help='Flag to not actually submit the job but '
@@ -97,16 +96,3 @@ if __name__ == '__main__':
     directory = cl.args['directory'].rstrip('/')
 
     IndexBam(job_name, out_sh, directory, submit)
-
-
-
-    ## max number of jobs in an array on TSCC is 500
-    #if len(command_list) > 500:
-    #    command_list_list = [command_list[i:(i + 500)] for i in xrange(0,
-    #                                                                   len(
-    #                                                                       command_list),
-    #                                                                   500)]
-    #    for i, commands in enumerate(command_list_list):
-    #        submit_and_write('{}{}'.format(name, i + 1), commands)
-    #else:
-    # submit_and_write(name, command_list)
