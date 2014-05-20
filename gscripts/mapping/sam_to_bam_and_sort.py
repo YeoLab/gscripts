@@ -82,7 +82,7 @@ class Usage(Exception):
 
 class SamToBamAndSort(object):
     def __init__(self, job_name, out_sh, directory, submit,
-                 samtools_sort_args):
+                 samtools_sort_args=''):
         # samtools_sort_args = cl.args['samtools_sort_args']
         # directory = cl.args['dir']
 
