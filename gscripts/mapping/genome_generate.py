@@ -4,6 +4,7 @@ __author__ = 'olga'
 
 from gscripts.qtools import Submitter
 import argparse
+import os
 
 
 class CommandLine(object):
@@ -33,6 +34,18 @@ class CommandLine(object):
                           help='Number of bases to overhang for the splice '
                                'junctions. Ideally should be the (length of '
                                'one read)-1')
+        parser.add_argument('--out-sh', action='store', type=str,
+                            required=False,
+                            help='The sh file written and submitted to the '
+                                 'cluster')
+        parser.add_argument('--do-not-submit', required=False,
+                            action='store_true', default=False,
+                            help='Flag to not actually submit the job but '
+                                 'just write the sh file (for testing)')
+        parser.add_argument('--queue-type', required=False, type=str,
+                            action='store', default='PBS',
+                            help='Type of the queue to submit to. For testing '
+                                 'purposes on non-server devices, e.g. laptops')
         if inOpts is None:
             self.args = vars(self.parser.parse_args())
         else:
@@ -62,25 +75,42 @@ class Usage(Exception):
         self.msg = msg
 
 
+class GenomeGenerate(object):
+    def __init__(self, genomeDir, genomeFastaFiles, sjdb,
+                 sjdbOverhang, job_name, out_sh=None, submit=True):
+        """Any CamelCase here is directly copied from the STAR inputs for
+        complete compatibility
+        """
+        # Make the directory if it's not there already
+        try:
+            os.mkdir(genomeDir)
+        except OSError:
+            pass
+
+        commands = []
+        commands.append('STAR --runMode genomeGenerate --genomeDir {0} '
+                        '--genomeFastaFiles {1} --runThreadN 16 {2} '
+                        '--sjdbOverhang {3}'.format(
+            genomeDir, genomeFastaFiles, sjdb, sjdbOverhang))
+
+        sub = Submitter(queue_type='PBS', sh_filename=out_sh,
+                        commands=commands,
+                        job_name=job_name, nodes=1, ppn=16, queue='home',
+                        walltime='4:00:00')
+        sub.job(submit=submit)
+
+
 if __name__ == '__main__':
     cl = CommandLine()
+
+    job_name = cl.args['name']
+    out_sh = name = job_name + '.sh' if cl.args['out_sh'] is None \
+        else cl.args['out_sh']
+    submit = not cl.args['do_not_submit']
 
     sjdb_arguments = ['sjdbGTFfile', 'sjdbFileChrStartEnd']
 
     sjdb = ''.join('--{} {}'.format(k, cl.args[k]) for k in sjdb_arguments
                    if cl.args[k])
-    commands = []
-    commands.append('STAR --runMode genomeGenerate --genomeDir {0} '
-                    '--genomeFastaFiles {1} --runThreadN 16 {2} '
-                    '--sjdbOverhang {3}'.format(
-        cl.args['genomeDir'], cl.args['genomeFastaFiles'], sjdb,
-        cl.args['sjdbOverhang']
-    ))
-
-    name = cl.args['name']
-
-    sub = Submitter(queue_type='PBS', sh_file=name + '.sh',
-                    command_list=commands,
-                    job_name=name)
-    sub.write_sh(submit=True, nodes=1, ppn=16, queue='home',
-                 walltime='4:00:00')
+    GenomeGenerate(cl.args['genomeDir'], cl.args['genomeFastaFiles'], sjdb,
+                   cl.args['sjdbOverhang'], job_name, out_sh, submit=submit)
