@@ -107,6 +107,9 @@ class CommandLine(object):
         parser.add_argument('-o', '--out-dir', default='./',
                             action='store', type=str,
                             help='Where to output the aligned files')
+        parser.add_argument('-d', '--directory', default='./',
+                            action='store', type=str,
+                            help='Where to look for fastq.gz files')
         parser.add_argument('--do-not-submit', action='store_true',
                             help='')
         parser.add_argument('-s', '--with-sjdb', required=False,
@@ -141,6 +144,11 @@ class CommandLine(object):
                             type=int, action='store',
                             help='Maximum number of places for this read to '
                                  'multimap to before it is thrown out.')
+        parser.add_argument('--outFilterScoreMin', default=10, type=int,
+                            action='store',
+                            help='Minimum mapping quality score allowed in '
+                                 'the alignment file. With mapping score q,'
+                                 'q = -10*log_10(prob not mapping here)')
         parser.add_argument('--outFilterType', default='BySJout',
                             type=str, action='store',
                             help='How to filter the Aligned.out.sam file. '
@@ -148,19 +156,6 @@ class CommandLine(object):
                                  'junction reads which pass the filters '
                                  'specified by the SJ.out.tab filters. The '
                                  'only other option is "Normal"')
-        parser.add_argument('--clip5pNbases', default=0, type=int,
-                            action='store',
-                            help='Number of bases to clip from the 5-prime '
-                                 'end of the read (the start)')
-        parser.add_argument('--clip3pNbases', default=0, type=int,
-                            action='store',
-                            help='Number of bases to clip from the 3-prime '
-                                 'end of the read (the end)')
-        parser.add_argument('--outFilterScoreMin', default=10, type=int,
-                            action='store',
-                            help='Minimum mapping quality score allowed in '
-                                 'the alignment file. With mapping score q,'
-                                 'q = -10*log_10(prob not mapping here)')
         parser.add_argument('--outSAMattributes', default='All', type=str,
                             action='store',
                             help='Which SAM attributes to output. Other '
@@ -172,6 +167,14 @@ class CommandLine(object):
                                  'which is required to be able to perform '
                                  'Cufflinks on the generated files. The other '
                                  'option is "None"')
+        parser.add_argument('--clip5pNbases', default=0, type=int,
+                            action='store',
+                            help='Number of bases to clip from the 5-prime '
+                                 'end of the read (the start)')
+        parser.add_argument('--clip3pNbases', default=0, type=int,
+                            action='store',
+                            help='Number of bases to clip from the 3-prime '
+                                 'end of the read (the end)')
         parser.add_argument('--additional-STAR-args', required=False,
                             action='store', type=str, default='',
                             help='Additional arguments to pass to STAR that '
@@ -212,99 +215,152 @@ class Usage(Exception):
         self.msg = msg
 
 
+class MapSTAR(object):
+    def __init__(self, genome, out_dir='./', directory='./', submit=True,
+                 ppn=8, job_name='STAR', walltime='0:30:00',
+                 outReadsUnmapped='Fastx', outFilterMismatchNmax=5,
+                 outFilterMismatchNoverLmax=0.3, outFilterMultimapNmax=5,
+                 outFilterScoreMin=10, outFilterType='BySJout',
+                 outSAMattributes='All',
+                 outSAMstrandField='intronMotif',
+                 clip5pNbases=0, clip3pNbases=0, additional_STAR_args=''):
+        """Read the fastq files in a directory, assuming that the first 2
+        underscore-separated parts of a filename are the unique sample ID,
+        then running STAR. Most of these arguments are the defaults in STAR,
+        except:
+
+        outReadsUnmapped : str
+            'Fastx' instead of 'None' so the unmapped reads can be remapped
+            to the spikein genomes, for example
+        outFilterMismatchNmax : int
+            5 instead of 10
+        outFilterMultimapNmax : int
+            5 instead of 10
+        outFilterType : str
+            'BySJout' instead of 'None', so that all junction reads pass our
+            stringent filter of at least 4bp overhang for annotated and at
+            least 8bp overhang for unannotated
+        outSAMattributes : str
+            'All' instead of 'None' for more information just in case
+        outSAMstrandField : str
+            'intronMotif' instead of 'None' for compatibility with Cufflinks
+        """
+
+        commands = []
+
+
+        # Make the directory
+        try:
+            os.mkdir(out_dir)
+        except OSError:
+            # It's already there, don't do anything
+            pass
+
+        # Set of unique sample ids for checking if we've read them all
+        sample_ids = set([])
+
+        for read1 in iglob('{}/*R1*.gz'.format(directory.rstrip('/'))):
+            # if read1.endswith('gz'):
+            #     compressed = True
+            # else:
+            #     compressed = False
+            # readFilesCommand = 'zcat' if compressed else 'cat'
+
+            # Remove trailing "A" and "B" so they get merged
+            sample_id = '_'.join(os.path.basename(read1).split('.')[0].split(
+                '_')[:2]).rstrip(
+                'ABCDEFGH')
+            if sample_id in sample_ids:
+                continue
+            paired = os.path.isfile(read1.replace('R1', 'R2'))
+            print sample_id, 'paired', paired
+
+            read1 = ','.join(glob('{}*R1*gz'.format(sample_id)))
+            read2 = read1.replace('R1', 'R2') if paired else ""
+            print 'R1', read1
+            print 'R2', read2
+            sample_ids.add(sample_id)
+
+            # print sample_id
+            commands.append('''STAR \
+        --runMode alignReads \
+        --runThreadN {0} \
+        --genomeDir {1} \
+        --genomeLoad LoadAndRemove \
+        --readFilesCommand zcat \
+        --readFilesIn {2} {3} \
+        --outFileNamePrefix {4}/{5}. \
+        --outReadsUnmapped {6} \
+        --outFilterMismatchNmax {7} \
+        --outFilterMismatchNoverLmax {8} \
+        --outFilterMultimapNmax {9} \
+        --outFilterScoreMin {10} \
+        --outFilterType {11} \
+        --outSAMattributes {12} \
+        --outSAMstrandField {13} \
+        --clip5pNbases {14} \
+        --clip3pNbases {15} \
+        {16}
+        '''.format(ppn,
+                   genome,
+                   read1,
+                   read2,
+                   out_dir,
+                   sample_id,
+                   outReadsUnmapped,
+                   outFilterMismatchNmax,
+                   outFilterMismatchNoverLmax,
+                   outFilterMultimapNmax,
+                   outFilterScoreMin,
+                   outFilterType,
+                   outSAMattributes,
+                   outSAMstrandField,
+                   clip5pNbases,
+                   clip3pNbases,
+                   additional_STAR_args))
+
+        sub = Submitter(queue_type='PBS', sh_filename=job_name + '.sh',
+                        commands=commands,
+                        job_name=job_name, nodes=1, ppn=ppn,
+                        array=True, max_running=20,
+                        queue='home', walltime=walltime)
+
+        sub.write_sh(submit=submit)
+
+
 if __name__ == '__main__':
     cl = CommandLine()
 
-    commands = []
-
     # Make all input dirs consistenly not have the trailing slash
     out_dir = cl.args['out_dir'].rstrip('/')
-
-    # Make the directory
-    try:
-        os.mkdir(out_dir)
-    except OSError:
-        # It's already there, don't do anything
-        pass
 
     species = cl.args['species']
     jobname_list = ['map_to', species]
     if cl.args['jobname'] is not None:
         jobname_list.insert(0, cl.args['jobname'])
-    jobname = '_'.join(jobname_list)
+    job_name = '_'.join(jobname_list)
+    # replace any weird slashes
+    job_name = job_name.replace('/', '-')
+
+    out_sh = job_name + ".sh" if cl.args['out_sh'] is None \
+        else cl.args['out_sh']
 
     genome = '/projects/ps-yeolab/genomes/{0}/star'.format(species)
     genome = genome + '_sjdb' if cl.args['with_sjdb'] else genome
 
-    # Set of unique sample ids for checking if we've read them all
-    sample_ids = set([])
-
-    for read1 in iglob('*R1*.gz'):
-        # if read1.endswith('gz'):
-        #     compressed = True
-        # else:
-        #     compressed = False
-        # readFilesCommand = 'zcat' if compressed else 'cat'
-
-        # Remove trailing "A" and "B" so they get merged
-        sample_id = '_'.join(read1.split('.')[0].split('_')[:2]).rstrip(
-            'ABCDEFGH')
-        if sample_id in sample_ids:
-            continue
-        paired = os.path.isfile(read1.replace('R1', 'R2'))
-        print sample_id, 'paired', paired
-
-        read1 = ','.join(glob('{}*R1*gz'.format(sample_id)))
-        read2 = read1.replace('R1', 'R2') if paired else ""
-        print 'R1', read1
-        print 'R2', read2
-        sample_ids.add(sample_id)
-
-        # print sample_id
-        commands.append('''STAR \
-    --runMode alignReads \
-    --runThreadN {0} \
-    --genomeDir {1} \
-    --genomeLoad LoadAndRemove \
-    --readFilesCommand zcat \
-    --readFilesIn {2} {3} \
-    --outFileNamePrefix {4}/{5}. \
-    --outReadsUnmapped {6} \
-    --outFilterMismatchNmax {7} \
-    --outFilterMismatchNoverLmax {8} \
-    --outFilterMultimapNmax {9} \
-    --outFilterScoreMin {10} \
-    --outFilterType {11} \
-    --outSAMattributes {12} \
-    --outSAMstrandField {13} \
-    --clip5pNbases {14} \
-    --clip3pNbases {15} \
-    {16}
-    '''.format(cl.args['runThreadN'],
-               genome,
-               read1,
-               read2,
-               out_dir,
-               sample_id,
-               cl.args['outReadsUnmapped'],
-               cl.args['outFilterMismatchNmax'],
-               cl.args['outFilterMismatchNoverLmax'],
-               cl.args['outFilterMultimapNmax'],
-               cl.args['outFilterScoreMin'],
-               cl.args['outFilterType'],
-               cl.args['outSAMattributes'],
-               cl.args['outSAMstrandField'],
-               cl.args['clip5pNbases'],
-               cl.args['clip3pNbases'],
-               cl.args['additional_STAR_args']))
-
-    # replace any weird slashes
-    jobname = jobname.replace('/', '-')
-
-    sub = Submitter(queue_type='PBS', sh_file=jobname + '.sh',
-                    command_list=commands,
-                    job_name=jobname)
+    ppn = cl.args['runThreadN']
     submit = not cl.args['do_not_submit']
-    sub.write_sh(submit=submit, nodes=1, ppn=cl.args['runThreadN'],
-                 array=True, max_running=20,
-                 queue='home', walltime=cl.args['walltime'])
+
+    MapSTAR(genome, out_dir, cl.args['directory'], submit, ppn, job_name,
+            cl.args['walltime'],
+            cl.args['outReadsUnmapped'],
+            cl.args['outFilterMismatchNmax'],
+            cl.args['outFilterMismatchNoverLmax'],
+            cl.args['outFilterMultimapNmax'],
+            cl.args['outFilterScoreMin'],
+            cl.args['outFilterType'],
+            cl.args['outSAMattributes'],
+            cl.args['outSAMstrandField'],
+            cl.args['clip5pNbases'],
+            cl.args['clip3pNbases'],
+            cl.args['additional_STAR_args'])
