@@ -68,22 +68,25 @@ class Usage(Exception):
 
 
 if __name__ == '__main__':
-    cl = CommandLine()
+    try:
+        cl = CommandLine()
 
-    sjdb_arguments = ['sjdbGTFfile', 'sjdbFileChrStartEnd']
+        sjdb_arguments = ['sjdbGTFfile', 'sjdbFileChrStartEnd']
 
-    sjdb = ''.join('--{} {}'.format(k, cl.args[k]) for k in sjdb_arguments
-                   if cl.args[k])
-    commands = []
-    commands.append('STAR --runMode genomeGenerate --genomeDir {0} '
-                    '--genomeFastaFiles {1} --runThreadN 16 {2}'.format(
-        cl.args['genomeDir'], cl.args['genomeFastaFiles'], sjdb
-    ))
+        sjdb = ''.join('--{} {}'.format(k, cl.args[k]) for k in sjdb_arguments
+                       if cl.args[k])
+        commands = []
+        commands.append('STAR --runMode genomeGenerate --genomeDir {0} '
+                        '--genomeFastaFiles {1} --runThreadN 16 {2}'.format(
+            cl.args['genomeDir'], cl.args['genomeFastaFiles'], sjdb
+        ))
 
-    name = cl.args['name']
+        name = cl.args['name']
 
-    sub = Submitter(queue_type='PBS', sh_file=name + '.sh',
-                    command_list=commands,
-                    job_name=name)
-    sub.write_sh(submit=True, nodes=1, ppn=16, queue='home',
-                 walltime='4:00:00')
+        sub = Submitter(queue_type='PBS', sh_file=name + '.sh',
+                        command_list=commands,
+                        job_name=name)
+        sub.write_sh(submit=True, nodes=1, ppn=16, queue='home',
+                     walltime='4:00:00')
+    except Usage, err:
+        cl.do_usage_and_die(err.msg)

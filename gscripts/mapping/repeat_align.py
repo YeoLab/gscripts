@@ -70,7 +70,7 @@ class RepeatAlign(object):
     def __init__(self, job_name, out_sh=None,
                  directory='./', submit=True):
         cmd_list = []
-        for filename in glob('*fastq'):
+        for filename in glob('{}/*fastq'.format(directory)):
             cmd_list.append('bowtie \
         -c \
         -S \
@@ -85,7 +85,7 @@ class RepeatAlign(object):
         |  perl /home/ppliu/tscc_scripts/count_aligned_from_sam.pl \
         > {0}.repeat_counts'.format(filename))
 
-        for filename in glob('*gz'):
+        for filename in glob('{}/*gz'.format(directory)):
             cmd_list.append('gunzip -c {0} \
         |bowtie \
         -c \
@@ -101,11 +101,13 @@ class RepeatAlign(object):
         |  perl /home/ppliu/tscc_scripts/count_aligned_from_sam.pl \
         > {0}.repeat_counts'.format(filename))
 
-        sub = Submitter(queue_type='PBS', sh_filename='repeat_align.sh',
-                        commands=cmd_list, job_name='repeat_align')
-        sub.write_sh(submit=True, nodes=1, ppn=16, walltime='2:30:00',
-                     array=True,
-                     max_running=20)
+        sub = Submitter(queue_type='PBS', sh_filename=out_sh,
+                        commands=cmd_list, job_name=job_name, nodes=1,
+                        ppn=16, walltime='2:30:00',
+                        array=True,
+                        max_running=20
+        )
+        sub.write_sh(submit=submit)
 
 
 if __name__ == '__main__':
