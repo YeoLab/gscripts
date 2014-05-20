@@ -217,7 +217,7 @@ class Usage(Exception):
 
 class MapSTAR(object):
     def __init__(self, genome, out_dir='./', directory='./', submit=True,
-                 ppn=8, job_name='STAR', walltime='0:30:00',
+                 ppn=8, job_name='STAR', out_sh='STAR.sh', walltime='0:30:00',
                  outReadsUnmapped='Fastx', outFilterMismatchNmax=5,
                  outFilterMismatchNoverLmax=0.3, outFilterMultimapNmax=5,
                  outFilterScoreMin=10, outFilterType='BySJout',
@@ -300,12 +300,11 @@ class MapSTAR(object):
         --outSAMstrandField {13} \
         --clip5pNbases {14} \
         --clip3pNbases {15} \
-        {16}
-        '''.format(ppn,
-                   genome,
+        {16}'''.format(ppn,
+                       genome,
                    read1,
                    read2,
-                   out_dir,
+                   out_dir.rstrip('/'),
                    sample_id,
                    outReadsUnmapped,
                    outFilterMismatchNmax,
@@ -319,7 +318,7 @@ class MapSTAR(object):
                    clip3pNbases,
                    additional_STAR_args))
 
-        sub = Submitter(queue_type='PBS', sh_filename=job_name + '.sh',
+        sub = Submitter(queue_type='PBS', sh_filename=out_sh,
                         commands=commands,
                         job_name=job_name, nodes=1, ppn=ppn,
                         array=True, max_running=20,
@@ -352,6 +351,7 @@ if __name__ == '__main__':
     submit = not cl.args['do_not_submit']
 
     MapSTAR(genome, out_dir, cl.args['directory'], submit, ppn, job_name,
+            out_sh,
             cl.args['walltime'],
             cl.args['outReadsUnmapped'],
             cl.args['outFilterMismatchNmax'],

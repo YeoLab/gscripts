@@ -14,7 +14,8 @@ class CommandLine(object):
 
     def __init__(self, inOpts=None):
         self.parser = parser = argparse.ArgumentParser(
-            description='Filter fastq files on quality score and others')
+            description='Index a *sorted* bam file (required for many '
+                        'programs)')
         parser.add_argument('job_name', required=False,
                             type=str, action='store', default='index_bam',
                             help='Sample info file with bam files and sample '
