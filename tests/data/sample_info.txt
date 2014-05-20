@@ -1,0 +1,3 @@
+Bam File	Sample ID
+test1.bam	test1
+test2.bam	test2

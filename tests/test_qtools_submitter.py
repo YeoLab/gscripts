@@ -8,6 +8,8 @@ import unittest
 from gscripts.qtools import Submitter
 import subprocess
 from subprocess import PIPE
+import os
+import shutil
 
 import tests
 
@@ -21,12 +23,19 @@ ON_SERVER = set([HOSTNAME]) & set(['tscc', 'oolite', 'compute'])
 
 class Test(unittest.TestCase):
     commands = ['date', 'echo testing']
+    out_dir = 'test_output'
+
+    def setUp(self):
+        os.mkdir(self.out_dir)
+
+    def tearDown(self):
+        shutil.rmtree(self.out_dir)
 
     def test_pbs(self):
         """Test PBS queue (TSCC)
         """
         job_name = 'test_qtools_submitter_pbs'
-        submit_sh = '%s.sh' % (job_name)
+        submit_sh = '{}/{}.sh'.format(self.out_dir, job_name)
         sub = Submitter(queue_type='PBS', sh_filename=submit_sh,
                         commands=self.commands,
                         job_name=job_name, nodes=1, ppn=1,
@@ -35,8 +44,8 @@ class Test(unittest.TestCase):
         job_id = sub.job(submit=False)
         true_result_string = '''#!/bin/bash
 #PBS -N test_qtools_submitter_pbs
-#PBS -o test_qtools_submitter_pbs.sh.out
-#PBS -e test_qtools_submitter_pbs.sh.err
+#PBS -o {0}/test_qtools_submitter_pbs.sh.out
+#PBS -e {0}/test_qtools_submitter_pbs.sh.err
 #PBS -V
 #PBS -l walltime=0:01:00
 #PBS -l nodes=1:ppn=1
@@ -47,7 +56,7 @@ class Test(unittest.TestCase):
 cd $PBS_O_WORKDIR
 date
 echo testing
-'''
+'''.format(self.out_dir)
         true_result = true_result_string.split('\n')
 
         # with open(submit_sh) as f:
@@ -68,7 +77,7 @@ echo testing
         """Test SGE queue (oolite)
         """
         job_name = 'test_qtools_submitter_sge'
-        submit_sh = '%s.sh' % (job_name)
+        submit_sh = '{}/{}.sh'.format(self.out_dir, job_name)
         sub = Submitter(queue_type='SGE', sh_filename=submit_sh,
                         commands=self.commands,
                         job_name=job_name, nodes=1, ppn=1,
@@ -77,8 +86,8 @@ echo testing
         job_id = sub.job(submit=False)
         true_result_string = '''#!/bin/bash
 #$ -N test_qtools_submitter_sge
-#$ -o test_qtools_submitter_sge.sh.out
-#$ -e test_qtools_submitter_sge.sh.err
+#$ -o {0}/test_qtools_submitter_sge.sh.out
+#$ -e {0}/test_qtools_submitter_sge.sh.err
 #$ -V
 #$ -S /bin/bash
 #$ -cwd
@@ -86,7 +95,7 @@ echo testing
 #$ -l h_vmem=16G
 date
 echo testing
-'''
+'''.format(self.out_dir)
         true_result = true_result_string.split('\n')
 
         # with open(submit_sh) as f:

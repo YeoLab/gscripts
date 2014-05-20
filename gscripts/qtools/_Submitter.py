@@ -47,18 +47,13 @@ class Submitter:
                  array=None, nodes=1, ppn=1,
                  walltime='0:30:00', queue='home', account='yeo-group',
                  out_filename=None, err_filename=None,
-                 max_running=None, submit_job=False):
+                 max_running=None, write_and_submit=False):
         """Constructor method, will initialize class attributes to passed
         keyword arguments and values.
 
         Parameters
         ----------
-        queue_type : str
-            Type of the submission queue, either "PBS" (tscc) or "SGE" (oolite)
-        sh_filename : str
-            File to write that will be submitted to the queue. By default,
-            the job name + .sh
-        command_list : list of strings
+        commands : list of strings
             List of commands, each one will be on a separate line. If
             array=True, then each of these lines will be executed in a
             separate part of the array. Note: if there are more than 500
@@ -67,24 +62,37 @@ class Submitter:
             array jobs on TSCC.
         job_name : str
             Name of the job for the queue list
-        submit : bool
-            Whether or not to submit the script once it's written. Can be
-            convenient to set to False when testing.
-        out : str
-            Where to write stdout for the job
-        err : str
-            Where to write stderr for the job
+        queue_type : str
+            Type of the submission queue, either "PBS" (tscc) or "SGE" (oolite)
+        sh_filename : str
+            File to write that will be submitted to the queue. By default,
+            the job name + .sh
         array : bool
             Whether or not to write an array job
-        use_array : bool
-            DEPRECATED. Whether or not to write an array job.
+        nodes : int
+            Number of nodes to use on TSCC
+        ppn : int
+            Number of "processors per node" to use on TSCC. Maximum is 16.
+        walltime : str
+            String of the format hours:minutes:seconds, e.g. '1:30:24' will
+            submit a job for 1 hour, 30 minutes, and 24 seconds.
+        queue : str
+            Name of the queue, e.g. "home" for home-yeo or "glean" for glean
+        account : str
+            Account to associate with this job. Default 'yeo-group'. Usually
+            fine for most jobs. This will be auto-adjusted for the glean and
+            condo queues.
+        out_filename : str
+            Where to write stdout for the job. Defaults to sh_file.out
+        err_filename : str
+            Where to write stderr for the job. Defaults to sh_file.err
         max_running : int
             Maximum number of jobs running at once for an array job. 20 is
             reasonable.
-        queue : str
-            Name of the queue, e.g. "home" for home-yeo or "glean" for glean
-        wait_for : list of str
-            Job IDS to wait for until finished to start this job
+        write_and_submit : bool
+            Whether or not to also write and submit the script. Just
+            instantiating this object does NOT submit any job. Need to do
+            Submitter.job() afterwards
 
 
         Returns
@@ -94,34 +102,8 @@ class Submitter:
 
         Raises
         ------
+        ValueError : if more than 16 processors per node provided
 
-        Create a file that is the shell script to be submitted to the
-        job scheduler.
-
-        keyword argument attributes that can be passed:
-        array: distribute jobs to array of jobs if True
-        chunks: if array is True, Int number of commands per job
-        submit: submit to scheduler if True, only write SH file if False or None
-
-        method returns job ID assigned by scheduler for this job if submit is True,
-        returns 0 if only writing SH file.
-
-        Requires these class attributes:
-        queue_type: Scheduler type, either SGE or PBS
-        sh_file: name of shell file to write
-        command_list: list of commands to be performed for this job
-        job_name: name of this job
-        queue: the name of the queue (e.g. glean)
-
-        Optional class attributes:
-        wait_for: list of ID's that this job will wait for before starting
-        additional_resources: keyword-value pairs of scheduler attributes, set with add_resource()
-        out: the standard output (stdout) file created by the queue. Defaults
-        to [job_name].out
-        err: the standard error (stderr) file created by the queue. Defaults
-        to [job_name].err
-
-        max_running: for array tasks, the maximum number of concurrently executed sub-jobs
         """
         self.additional_resources = defaultdict(list)
 
@@ -131,6 +113,10 @@ class Submitter:
         if self.queue_type == 'SGE':
             self.add_resource("-l", 'bigmem')
             self.add_resource("-l", 'h_vmem=16G')
+
+        if self.queue_type == 'PBS' and ppn > 16:
+            raise ValueError('Cannot have more than 16 processors per node ('
+                             'ppn). Tried to provide {}'.format(ppn))
 
         self.sh_filename = job_name + '.sh' if sh_filename is None \
             else sh_filename
@@ -162,10 +148,11 @@ class Submitter:
                                 sh_filename=sh_filename, array=True,
                                 walltime=self.walltime, ppn=self.ppn,
                                 nodes=self.nodes, queue=self.queue,
-                                queue_type=self.queue_type, submit_job=True)
+                                queue_type=self.queue_type,
+                                write_and_submit=True)
                 # sub.write_sh(**kwargs)
 
-        if submit_job:
+        if write_and_submit:
             self.job(submit=True)
 
     @property
@@ -192,7 +179,7 @@ class Submitter:
         """Get the number of jobs in the array
         """
         if self.array:
-            return math.ceil(len(self.commands) / int(self.chunks))
+            return len(self.commands)
         else:
             return 1
 
@@ -250,15 +237,11 @@ class Submitter:
         ------
 
         """
-
-        job_id = 0
-        chunks = 1
-
+        # sys.stderr.write(self.sh_filename)
         sh_file = open(self.sh_filename, 'w')
         sh_file.write("#!/bin/bash\n")
 
-        sh_file.write("%s -N %s\n" % (self.queue_param_prefix,
-                                      self.job_name))
+        sh_file.write("%s -N %s\n" % (self.queue_param_prefix, self.job_name))
         sh_file.write("%s -o %s\n" % (self.queue_param_prefix,
                                       self.out_filename))
         sh_file.write("%s -e %s\n" % (self.queue_param_prefix,
@@ -273,7 +256,7 @@ class Submitter:
 
         if self.array:
             sys.stderr.write("running %d tasks as an array-job.\n" % (len(
-                self.data['command_list'])))
+                self.commands)))
             for i, cmd in enumerate(self.commands):
                 sh_file.write("cmd[%d]=\"%s\"\n" % ((i + 1), cmd))
             sh_file.write("eval ${cmd[%s]}\n" % (self.array_job_identifier))
@@ -292,6 +275,8 @@ class Submitter:
             sys.stderr.write("job ID: %s\n" % job_id)
 
             return job_id
+        else:
+            return 0
 
     def _write_pbs(self, sh_file):
         """PBS-queue (TSCC) specific header formatting
