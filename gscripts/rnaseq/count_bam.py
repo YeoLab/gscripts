@@ -22,7 +22,8 @@ for file in glob('*sorted.bam'):
         'count_tags.py --annotation_file {} -f {} -b {} -o {}.count'.format(
             annot_file, orientation, file, file))
 
-sub = Submitter(queue_type='PBS', sh_file=name + '.sh', command_list=cmd_list,
+sub = Submitter(queue_type='PBS', sh_filename=name + '.sh',
+                commands=cmd_list,
                 job_name=name)
 sub.write_sh(submit=True, nodes=1, ppn=16, queue='home', walltime='1:00:00',
              array=True, max_running=20)
