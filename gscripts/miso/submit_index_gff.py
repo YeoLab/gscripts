@@ -22,7 +22,7 @@ submit_index_gff.py --gff \
 class CommandLine(object):
     def __init__(self, inOpts=None):
         self.parser = argparse.ArgumentParser(
-            description='''Given a GTF or GFF file, submit it to the Oolite
+            description='''Given a GTF or GFF file, submit it to the TSCC
             cluster for indexing via MISO's index_gff.py
             ''',
             add_help=True, prefix_chars='-')
@@ -42,11 +42,23 @@ class CommandLine(object):
                                       'usually a subdirectory of where the '
                                       'original GFF/GTF file is.',
                                  required=True)
-        self.parser.add_argument('--miso-index-gff-py', action='store',
+        self.parser.add_argument('--index-gff-py', action='store',
                                  default='index_gff.py',
                                  type=str, required=False,
                                  help="Which MISO `index_gff.py` script to "
                                       "use.")
+        self.parser.add_argument('-n', '--job-name', required=False,
+                                 type=str, action='store', default='index_gff',
+                                 help='Name of the job submitted to the cluster')
+        self.parser.add_argument('--do-not-submit', required=False,
+                                 action='store_true',
+                                 help='Flag to not actually submit the job but '
+                                      'just write the sh file (for testing)')
+        self.parser.add_argument('-o', '--out-sh', required=False, type=str,
+                                 action='store',
+                                 help='Name of the sh file to submit to the job '
+                                      'scheduler')
+
         if inOpts is None:
             self.args = vars(self.parser.parse_args())
         else:
@@ -76,27 +88,11 @@ class Usage(Exception):
     def __init__(self, msg):
         self.msg = msg
 
-# Function: main
-def main():
-    '''
-    This function is invoked when the program is run from the command line,
-    i.e. as:
-        python program.py
-    or as:
-        ./program.py
-    If the user has executable permissions on the user (set by chmod ug+x
-    program.py or by chmod 775 program py. Just need the 4th bit set to true)
-    '''
-    cl = CommandLine()
-    try:
-        gff = cl.args['gff']
-        gtf = cl.args['gtf']
 
+class IndexGFF(object):
+    def __init__(self, gtf, gff, index_dir, job_name, out_sh, submit,
+                 index_gff_py='index_gff.py'):
         gtf_or_gff = gtf if gtf is not None else gff
-
-        submitter_sh = gtf_or_gff + '.submit_miso_index.sh'
-        submitter_err = submitter_sh + '.err'
-        submitter_out = submitter_sh + '.out'
 
 
         # qs.add_Q_resource('-l', 'bigmem')
@@ -111,28 +107,36 @@ def main():
             gtf2gff = 'gtf2gff3.pl %s > %s' % (gtf, gff)
             commands.append(gtf2gff)
 
-        index_dir = cl.args['index_dir']
-        miso_index_gff_py = cl.args['miso_index_gff_py']
-
-        command = '%s --index %s %s' % (miso_index_gff_py, gff,
+        command = '%s --index %s %s' % (index_gff_py, gff,
                                         index_dir)
         commands.append(command)
 
-        qs = qtools.Submitter(queue_tyep='PBS', sh_file=submitter_sh,
-                              command_list=commands,
-                              job_name='index_{}'.format(gtf_or_gff))
-        qs.write_sh(submit=True, nodes=1, ppn=1, queue='home',
-                    walltime='0:30:00')
-
-    # If not all the correct arguments are given, break the program and
-    # show the usage information
-    except Usage, err:
-        cl.do_usage_and_die(err.msg)
+        qs = qtools.Submitter(queue_type='PBS', sh_filename=out_sh,
+                              commands=commands,
+                              job_name=job_name, nodes=1,
+                              ppn=1, queue='home',
+                              walltime='0:30:00')
+        qs.write_sh(submit=submit)
 
 
 # ! python /nas3/yeolab/Software/miso/misopy-0.4.9/misopy/index_gff.py
 # --index /nas3/yeolab/Genome/ensembl/gtf/gencode.v17.annotation.first.two.exons.gtf /nas3/yeolab/Genome/ensembl/gtf/gencode_v17_indexed_first_two_exon_events/
 
 if __name__ == '__main__':
-    main()
+
+    try:
+        cl = CommandLine()
+
+        job_name = cl.args['job_name']
+        out_sh = job_name + '.sh' if cl.args['out_sh'] is None \
+            else cl.args['out_sh']
+        submit = not cl.args['do_not_submit']
+        directory = cl.args['directory'].rstrip('/')
+
+        IndexGFF(cl.args['gtf'], cl.args['gff'], cl.args['index_dir'],
+                 job_name, out_sh, submit, cl.args['index_gff_py'])
+
+    except Usage, err:
+        cl.do_usage_and_die(err.msg)
+
     raise SystemExit

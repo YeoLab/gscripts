@@ -27,11 +27,6 @@ class CommandLine(object):
                             action='store',
                             help='Name of the sh file to submit to the job '
                                  'scheduler')
-        parser.add_argument('--queue-type', required=False, type=str,
-                            action='store', default='PBS',
-                            help='Type of the queue to submit to. For testing '
-                                 'purposes on non-server machines (e.g. '
-                                 'laptops)')
         parser.add_argument('-d', '--directory', required=False,
                             action='store', default='./',
                             help='Directory where the bam files are. Default '
