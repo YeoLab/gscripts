@@ -14,7 +14,7 @@ import os
 class CommandLine(object):
     def __init__(self, inOpts=None):
         self.parser = parser = argparse.ArgumentParser(
-            description='Generate a STAR genome index from fasta files')
+            description='Count coverage of bam files over a bed file')
         parser.add_argument('orientation', required=True, action='store',
                             type=str,
                             help='The orientation you want to count. One of '
@@ -93,32 +93,34 @@ class CountBam(object):
 
 if __name__ == '__main__':
     cl = CommandLine()
+    try:
+        job_name = '_'.join([cl.args['name'], 'count_bam'])
 
-    job_name = '_'.join([cl.args['name'], 'count_bam'])
+        out_sh = name = job_name + '.sh' if cl.args['out_sh'] is None \
+            else cl.args['out_sh']
+        submit = not cl.args['do_not_submit']
+        directory = cl.args['directory']
 
-    out_sh = name = job_name + '.sh' if cl.args['out_sh'] is None \
-        else cl.args['out_sh']
-    submit = not cl.args['do_not_submit']
-    directory = cl.args['directory']
+        orientation = cl.args['orientation']
+        species = cl.args['species']
 
-    orientation = cl.args['orientation']
-    species = cl.args['species']
+        if species == 'hg19':
+            bed = '/projects/ps-yeolab/genomes/hg19/gencode_v17/gencode.v17' \
+                  '.annotation.exons.bed'
+        elif species == 'mm9':
+            bed = '/projects/ps-yeolab/genomes/mm9/Mus_musculus.NCBIM37.64.fixed' \
+                  '.exons.bed'
+        elif species == 'spikein':
+            bed = '/projects/ps-yeolab/genomes/spikein' \
+                  '/arraycontrol_spike_sequences.bed'
+        elif species is None:
+            if cl.args['bed'] is not None:
+                bed = cl.args['bed']
+            else:
+                raise ValueError('No known species or .bed file provided')
 
-    if species == 'hg19':
-        bed = '/projects/ps-yeolab/genomes/hg19/gencode_v17/gencode.v17' \
-              '.annotation.exons.bed'
-    elif species == 'mm9':
-        bed = '/projects/ps-yeolab/genomes/mm9/Mus_musculus.NCBIM37.64.fixed' \
-              '.exons.bed'
-    elif species == 'spikein':
-        bed = '/projects/ps-yeolab/genomes/spikein' \
-              '/arraycontrol_spike_sequences.bed'
-    elif species is None:
-        if cl.args['bed'] is not None:
-            bed = cl.args['bed']
-        else:
-            raise ValueError('No known species or .bed file provided')
-
-    CountBam(orientation, bed, job_name, out_sh, submit, directory)
+        CountBam(orientation, bed, job_name, out_sh, submit, directory)
+    except Usage, err:
+        cl.do_usage_and_die()
 
 

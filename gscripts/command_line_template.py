@@ -101,16 +101,20 @@ class GenomeGenerate(object):
 
 
 if __name__ == '__main__':
-    cl = CommandLine()
+    try:
+        cl = CommandLine()
 
-    job_name = cl.args['name']
-    out_sh = name = job_name + '.sh' if cl.args['out_sh'] is None \
-        else cl.args['out_sh']
-    submit = not cl.args['do_not_submit']
+        job_name = cl.args['name']
+        out_sh = name = job_name + '.sh' if cl.args['out_sh'] is None \
+            else cl.args['out_sh']
+        submit = not cl.args['do_not_submit']
 
-    sjdb_arguments = ['sjdbGTFfile', 'sjdbFileChrStartEnd']
+        sjdb_arguments = ['sjdbGTFfile', 'sjdbFileChrStartEnd']
 
-    sjdb = ''.join('--{} {}'.format(k, cl.args[k]) for k in sjdb_arguments
-                   if cl.args[k])
-    GenomeGenerate(cl.args['genomeDir'], cl.args['genomeFastaFiles'], sjdb,
-                   cl.args['sjdbOverhang'], job_name, out_sh, submit=submit)
+        sjdb = ''.join('--{} {}'.format(k, cl.args[k]) for k in sjdb_arguments
+                       if cl.args[k])
+        GenomeGenerate(cl.args['genomeDir'], cl.args['genomeFastaFiles'], sjdb,
+                       cl.args['sjdbOverhang'], job_name, out_sh,
+                       submit=submit)
+    except Usage, err:
+        cl.do_usage_and_die()

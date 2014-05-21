@@ -88,11 +88,13 @@ class IndexBam(object):
 
 if __name__ == '__main__':
     cl = CommandLine()
+    try:
+        job_name = cl.args['job_name']
+        out_sh = job_name + '.sh' if cl.args['out_sh'] is None \
+            else cl.args['out_sh']
+        submit = not cl.args['do_not_submit']
+        directory = cl.args['directory'].rstrip('/')
 
-    job_name = cl.args['job_name']
-    out_sh = job_name + '.sh' if cl.args['out_sh'] is None \
-        else cl.args['out_sh']
-    submit = not cl.args['do_not_submit']
-    directory = cl.args['directory'].rstrip('/')
-
-    IndexBam(job_name, out_sh, directory, submit)
+        IndexBam(job_name, out_sh, directory, submit)
+    except Usage, err:
+        cl.do_usage_and_die()

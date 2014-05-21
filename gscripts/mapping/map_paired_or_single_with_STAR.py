@@ -330,37 +330,41 @@ class MapSTAR(object):
 if __name__ == '__main__':
     cl = CommandLine()
 
-    # Make all input dirs consistenly not have the trailing slash
-    out_dir = cl.args['out_dir'].rstrip('/')
+    try:
 
-    species = cl.args['species']
-    jobname_list = ['map_to', species]
-    if cl.args['jobname'] is not None:
-        jobname_list.insert(0, cl.args['jobname'])
-    job_name = '_'.join(jobname_list)
-    # replace any weird slashes
-    job_name = job_name.replace('/', '-')
+        # Make all input dirs consistenly not have the trailing slash
+        out_dir = cl.args['out_dir'].rstrip('/')
 
-    out_sh = job_name + ".sh" if cl.args['out_sh'] is None \
-        else cl.args['out_sh']
+        species = cl.args['species']
+        jobname_list = ['map_to', species]
+        if cl.args['jobname'] is not None:
+            jobname_list.insert(0, cl.args['jobname'])
+        job_name = '_'.join(jobname_list)
+        # replace any weird slashes
+        job_name = job_name.replace('/', '-')
 
-    genome = '/projects/ps-yeolab/genomes/{0}/star'.format(species)
-    genome = genome + '_sjdb' if cl.args['with_sjdb'] else genome
+        out_sh = job_name + ".sh" if cl.args['out_sh'] is None \
+            else cl.args['out_sh']
 
-    ppn = cl.args['runThreadN']
-    submit = not cl.args['do_not_submit']
+        genome = '/projects/ps-yeolab/genomes/{0}/star'.format(species)
+        genome = genome + '_sjdb' if cl.args['with_sjdb'] else genome
 
-    MapSTAR(genome, out_dir, cl.args['directory'], submit, ppn, job_name,
-            out_sh,
-            cl.args['walltime'],
-            cl.args['outReadsUnmapped'],
-            cl.args['outFilterMismatchNmax'],
-            cl.args['outFilterMismatchNoverLmax'],
-            cl.args['outFilterMultimapNmax'],
-            cl.args['outFilterScoreMin'],
-            cl.args['outFilterType'],
-            cl.args['outSAMattributes'],
-            cl.args['outSAMstrandField'],
-            cl.args['clip5pNbases'],
-            cl.args['clip3pNbases'],
-            cl.args['additional_STAR_args'])
+        ppn = cl.args['runThreadN']
+        submit = not cl.args['do_not_submit']
+
+        MapSTAR(genome, out_dir, cl.args['directory'], submit, ppn, job_name,
+                out_sh,
+                cl.args['walltime'],
+                cl.args['outReadsUnmapped'],
+                cl.args['outFilterMismatchNmax'],
+                cl.args['outFilterMismatchNoverLmax'],
+                cl.args['outFilterMultimapNmax'],
+                cl.args['outFilterScoreMin'],
+                cl.args['outFilterType'],
+                cl.args['outSAMattributes'],
+                cl.args['outSAMstrandField'],
+                cl.args['clip5pNbases'],
+                cl.args['clip3pNbases'],
+                cl.args['additional_STAR_args'])
+    except Usage, err:
+        cl.do_usage_and_die()
