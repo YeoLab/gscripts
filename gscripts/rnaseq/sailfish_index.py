@@ -38,6 +38,10 @@ class CommandLine(object):
                             action='store',
                             help='Name of the file that is submitted to '
                                  'the PBS queue. Defaults to {job_name}.sh')
+        parser.add_argument('--do-not-submit', required=False,
+                            action='store_true', default=False,
+                            help='Flag to not actually submit the job but '
+                                 'just write the sh file (for testing)')
 
         if inOpts is None:
             self.args = vars(self.parser.parse_args())
@@ -69,32 +73,58 @@ class Usage(Exception):
         self.msg = msg
 
 
+class SailfishIndex(object):
+    def __init__(self, fasta, kmer_size, job_name='sailfish_index',
+                 num_processors=8,
+                 out_sh=None, out_dir=None, submit=False):
+        if num_processors > 16:
+            raise ValueError('At most 16 processors can be specified, '
+                             'but you '
+                             'asked for {}'.format(num_processors))
+        if kmer_size > 31:
+            raise ValueError('Maximum kmer size is 31 due to memory '
+                             'limitations but "{}" was specified'.format(
+                kmer_size))
+
+        if out_dir is None:
+            out_dir = '{}_sailfish_index_k{}'.format(fasta,
+                                                     kmer_size)
+        else:
+            out_dir = out_dir
+
+        if out_sh is None:
+            out_sh = job_name + '.sh'
+        else:
+            out_sh = out_sh
+
+        command = 'sailfish index --kmerSize {0} --threads {1} --transcripts ' \
+                  '{2} --out {3}'.format(kmer_size,
+                                         num_processors,
+                                         fasta,
+                                         out_dir)
+
+        sub = Submitter(queue_type='PBS', sh_filename=out_sh,
+                        commands=[command], job_name=job_name,
+                        nodes=1, ppn=num_processors,
+                        queue='home',
+                        walltime='0:30:00')
+        sub.write_sh(submit=submit)
+
+
 if __name__ == '__main__':
     cl = CommandLine()
+    try:
+        job_name = '_'.join([cl.args['name'], 'cufflinks'])
 
-    if cl.args['num_processors'] > 16:
-        raise Exception('At most 16 processors can be specified, but you '
-                        'asked for {}'.format(cl.args['num_processors']))
+        out_sh = name = job_name + '.sh' if cl.args['out_sh'] is None \
+            else cl.args['out_sh']
+        submit = not cl.args['do_not_submit']
+        directory = cl.args['directory']
 
-    if cl.args['out_dir'] is None:
-        out_dir = '{}_sailfish_index_k{}'.format(cl.args['fasta'],
-                                                 cl.args['kmer_size'])
-    else:
-        out_dir = cl.args['out_dir']
-
-    if cl.args['out_sh'] is None:
-        out_sh = cl.args['job_name'] + '.sh'
-    else:
-        out_sh = cl.args['out_sh']
-
-    command = 'sailfish index --kmerSize {0} --threads {1} --transcripts ' \
-              '{2} --out {3}'.format(cl.args['kmer_size'],
-                                     cl.args['num_processors'],
-                                     cl.args['fasta'],
-                                     out_dir)
-
-    sub = Submitter(queue_type='PBS', sh_file=out_sh,
-                    command_list=[command], job_name=cl.args['job_name'])
-    sub.write_sh(submit=True, nodes=1, ppn=cl.args['num_processors'],
-                 queue='home',
-                 walltime='0:30:00')
+        SailfishIndex(cl.args['fasta'], cl.args['kmer_size'],
+                      cl.args['job_name'],
+                      num_processors=cl.args['num_processors'],
+                      out_sh=cl.args['out_sh'], out_dir=cl.args['out_dir'],
+                      submit=submit)
+    except Usage, err:
+        cl.do_usage_and_die()
