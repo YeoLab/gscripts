@@ -57,60 +57,10 @@ class CommandLine(object):
     def __init__(self, inOpts=None):
         self.parser = argparse.ArgumentParser(
             description='''Write submitter scripts to perform MISO analysis
-            on many samples at once. This script assumes paired-end reads.
+            on individual samples. This script assumes paired-end reads.
             ''',
             add_help=True, prefix_chars='-')
 
-        # Which part of the pipeline do you want to run?
-        #pipeline_part = self.parser.add_mutually_exclusive_group(required=True)
-        #pipeline_part.add_argument('--insert-len-only',
-        #                           action='store_true', default=False,
-        #                           required=False,
-        #                           help='Only compute the insert lengths of the'
-        #                                ' bam files provided in the sample info'
-        #                                ' file. Need the event type for this '
-        #                                'because we will build the library of '
-        #                                'insert sizes from these events. A '
-        #                                'single job to the cluster will be '
-        #                                'submitted.')
-        #pipeline_part.add_argument('--psi-only',
-        #                           action='store_true', default=False,
-        #                           required=False,
-        #                           help='Only compute "psi" (percent-spliced-'
-        #                                'in) values for the provided samples.'
-        #                                ' Do not compute the insert lengths ('
-        #                                'assumes the insert length files are '
-        #                                'already there), '
-        #                                'and do not summarize. A single job '
-        #                                'to the cluster will be submitted.')
-        #pipeline_part.add_argument('--summary-only',
-        #                           action='store_true', default=False,
-        #                           help='Only compute the summary of all '
-        #                                '"psi" (percent-spliced-in) values '
-        #                                'for the provided samples, '
-        #                                'creating a tab-delimited file of '
-        #                                'every splicing event. Do not '
-        #                                'compute the insert lengths or the '
-        #                                'psi values themselves (assumes the '
-        #                                'psi values are already there). A '
-        #                                'single job to the cluster will be '
-        #                                'submitted.')
-        #pipeline_part.add_argument('--psi-and-summary',
-        #                           action='store_true', default=False,
-        #                           help='Compute the "psi" ('
-        #                                'percent-spliced-in) values for the '
-        #                                'provided samples, and summarize the '
-        #                                'output, which creates a '
-        #                                'tab-delimited file of every splicing'
-        #                                ' event. This is handy if you have '
-        #                                'already computed the insert lengths '
-        #                                'separately')
-        #pipeline_part.add_argument('--run-all', action='store_true',
-        #                           help='Compute the insert length mean and '
-        #                                'standard deviation, '
-        #                                'the "psi" (percent spliced-in) '
-        #                                'scores of all splicing events, '
-        #                                'and summarize the relevant events')
 
         read_type = self.parser.add_mutually_exclusive_group(required=True)
         read_type.add_argument('--paired-end', action='store_const',
@@ -126,27 +76,10 @@ class CommandLine(object):
                                     'Does not compute insert size.')
 
         samples = self.parser.add_mutually_exclusive_group(required=True)
-        # samples.add_argument('--sample-info-file',
-        #                      type=str,
-        #                      default='',
-        #                      action='store',
-        #                      help='A tab-delimited sample info file with '
-        #                           'the header:\n'
-        #                           'Sample ID\tBam File\t Notes.\n This is'
-        #                           ' the same format file as required by '
-        #                           'RNA-SeQC.')
         samples.add_argument('--bam', type=str,
                              action='store', default='',
                              help='A single BAM file')
 
-        # self.parser.add_argument('--index-base-dir',
-        #                          action='store',
-        #                          type=str,
-        #                          default='/home/obotvinnik/genomes/miso_annotations/hg19',
-        #                          help='The base directory to use for '
-        #                               'annotations. The annotation is assumed'
-        #                               ' to be (index_base_dir)/('
-        #                               'event_type)_indexed/')
         self.parser.add_argument('--annotation-index-strfmt',
                                  type=str, action='store',
                                  help='A "strfmt" type string describing '
@@ -161,7 +94,6 @@ class CommandLine(object):
                                  default='/projects/ps-yeolab/genomes/hg19/ASS_MISO')
         self.parser.add_argument('--constitutive-exon-gff', type=str,
                                  action='store',
-
                                  default='/home/obotvinnik/genomes/hg19/miso_annotations/SE_constitutive/SE.hg19.min_20.const_exons.gff',
                                  help='Location of the gff file of '
                                       'constitutive exons, generated by '
@@ -223,9 +155,6 @@ class CommandLine(object):
                                       'miso scripts. Default is the directory'
                                       ' returned from the unix command line '
                                       'command "which miso".', required=False)
-        # self.parser.add_argument('--read-len', '-l', type=int, action='store',
-        #                          help='Read lengths. Assumed to be the same '
-        #                               'for all samples', required=True)
         self.parser.add_argument('--num-processes', '-p', type=int,
                                  action='store', default=16,
                                  help='Number of subprocesses for MISO to run'
@@ -233,7 +162,6 @@ class CommandLine(object):
                                       ' with several processors on a single '
                                       'node, use the number of processors '
                                       'you are requesting')
-        #self.parser.add_argument('--num-cores')
         self.parser.add_argument('--num-cores', type=int,
                                  action='store', default=1,
                                  help='Number of cores to distribute the '
