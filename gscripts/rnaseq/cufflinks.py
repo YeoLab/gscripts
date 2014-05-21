@@ -94,7 +94,7 @@ class Cufflinks(object):
 if __name__ == '__main__':
     cl = CommandLine()
     try:
-        job_name = '_'.join([cl.args['name'], 'count_bam'])
+        job_name = '_'.join([cl.args['name'], 'cufflinks'])
 
         out_sh = name = job_name + '.sh' if cl.args['out_sh'] is None \
             else cl.args['out_sh']
