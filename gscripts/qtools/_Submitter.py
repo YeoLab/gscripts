@@ -214,11 +214,11 @@ class Submitter(object):
         """
         self.additional_resources[kw].append(value)
 
-    def write_sh(self, **kwargs):
+    def write_sh(self, submit=False):
         """This will soon be deprecated. See Submitter.job() docstring
         """
         #for backwards compatibility
-        self.job(**kwargs)
+        self.job(submit=submit)
 
     def job(self, submit=False):
         """Writes the sh file and submits the job (if submit=True)

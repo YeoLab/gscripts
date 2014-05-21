@@ -117,7 +117,7 @@ if __name__ == '__main__':
         if cl.args['bed'] is not None:
             bed = cl.args['bed']
         else:
-            raise ValueError('No species or .bed file provided')
+            raise ValueError('No known species or .bed file provided')
 
     CountBam(orientation, bed, job_name, out_sh, submit, directory)
 

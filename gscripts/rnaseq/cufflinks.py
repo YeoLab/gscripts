@@ -24,7 +24,9 @@ for bam in iglob('*.sorted.bam'):
 
 sub = Submitter(queue_type='PBS', sh_file=jobname + '.sh',
                 command_list=commands,
-                job_name=jobname)
-sub.write_sh(submit=True, nodes=1, ppn=8, walltime='0:30:00', use_array=True,
-             array=True,
-             max_running=20)
+                job_name=jobname, nodes=1, ppn=8, walltime='0:30:00',
+                use_array=True,
+                array=True,
+                max_running=20
+)
+sub.write_sh(submit=True)
