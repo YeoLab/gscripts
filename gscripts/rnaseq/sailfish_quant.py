@@ -16,20 +16,31 @@ class CommandLine(object):
         self.parser = parser = argparse.ArgumentParser(
             description='Generate a sailfish transcriptome index from fasta '
                         'files')
-        parser.add_argument('-f', '--fasta', required=True,
-                            type=str, action='store',
-                            help='Fasta files of the transcripts (+spikeins '
-                                 'if you please) you want to index using '
-                                 'STAR.')
-        parser.add_argument('-k', '--kmer-size', required=True, type=int,
+        parser.add_argument('-1', '--read1', required=True, type=str,
                             action='store',
-                            help='Size of the k-mers hashed from the '
-                                 'transcriptome')
-        parser.add_argument('-o', '--out-dir', required=False, type=str,
+                            help='Fastq.gz file for read1 of the sample. Can '
+                                 'supply multiple fastq.gz files for the same '
+                                 'sample by separating by commas. If doing '
+                                 'just one sample, this is required.')
+        parser.add_argument('-2', '--read2', required=False, type=str,
                             action='store',
-                            help='Where you want to save the index. Defaults '
-                                 'to {fasta_file}_sailfish_index_k{kmer_size}')
-        parser.add_argument('-n', '--job-name', default='sailfish_index',
+                            help='Fastq.gz file for read2 of the sample. Can '
+                                 'supply multiple fastq.gz files for the same '
+                                 'sample by separating by commas')
+        parser.add_argument('--out-dir', required=True, type=str,
+                            action='store',
+                            help='Directory where to put the output files')
+        parser.add_argument('-i', '--index', required=True, type=str,
+                            action='store',
+                            default='/projects/ps-yeolab/genomes/hg19'
+                                    '/sailfish/gencode.v19'
+                                    '.pc_lncRNA_transcripts'
+                                    '.ercc_fluidigm_spikein.gfp.fa'
+                                    '_sailfish_index_k31/',
+                            help='Sailfish Index file to use for quantifying '
+                                 'expression.')
+
+        parser.add_argument('-n', '--job-name', default='sailfish_quant',
                             action='store', type=str,
                             help='The name of the submitted job in the queue')
         parser.add_argument('-p', '--num-processors', required=False,
@@ -47,6 +58,7 @@ class CommandLine(object):
             self.args = vars(self.parser.parse_args())
         else:
             self.args = vars(self.parser.parse_args(inOpts))
+
 
     def do_usage_and_die(self, str):
         '''
@@ -73,36 +85,21 @@ class Usage(Exception):
         self.msg = msg
 
 
-class SailfishIndex(object):
-    def __init__(self, fasta, kmer_size, job_name='sailfish_index',
+class SailfishQuant(object):
+    def __init__(self, read1, read2, out_dir,
+                 index,
+                 job_name='sailfish_quant',
                  num_processors=8,
-                 out_sh=None, out_dir=None, submit=False):
-        if num_processors > 16:
-            raise ValueError('At most 16 processors can be specified, '
-                             'but you '
-                             'asked for {}'.format(num_processors))
-        if kmer_size > 31:
-            raise ValueError('Maximum kmer size is 31 due to memory '
-                             'limitations but "{}" was specified'.format(
-                kmer_size))
+                 out_sh=None, submit=False):
+        library_type = 'T=PE:O=><:S=SA' if read2 is not None else 'T=SE:S=U'
 
-        if out_dir is None:
-            out_dir = '{}_sailfish_index_k{}'.format(fasta,
-                                                     kmer_size)
-        else:
-            out_dir = out_dir
+        read1 = '-1 <(gunzip {})'.format(read1)
+        read2 = '-2 <(gunzip {})'.format(read2) if read2 is not None else ""
+        reads = '{} {}'.format(read1, read2)
 
-        if out_sh is None:
-            out_sh = job_name + '.sh'
-        else:
-            out_sh = out_sh
-
-        command = 'sailfish quant --index {0} --threads {1} --transcripts ' \
-                  '' \
-                  '{2} --out {3}'.format(kmer_size,
-                                         num_processors,
-                                         fasta,
-                                         out_dir)
+        command = 'sailfish quant --index {0} -l {1} {2} --out {3} --threads ' \
+                  '{4}'.format(index, library_type, reads, out_dir,
+                               num_processors)
 
         sub = Submitter(queue_type='PBS', sh_filename=out_sh,
                         commands=[command], job_name=job_name,
@@ -115,17 +112,19 @@ class SailfishIndex(object):
 if __name__ == '__main__':
     cl = CommandLine()
     try:
-        job_name = '_'.join([cl.args['name'], 'sailfish_index'])
 
-        out_sh = name = job_name + '.sh' if cl.args['out_sh'] is None \
+        out_sh = name = cl.args['job_name'] + '.sh' if \
+            cl.args['out_sh'] is None \
             else cl.args['out_sh']
         submit = not cl.args['do_not_submit']
-        directory = cl.args['directory']
+        print cl.args
 
-        SailfishIndex(cl.args['fasta'], cl.args['kmer_size'],
+        SailfishQuant(cl.args['read1'], cl.args['read2'],
+                      cl.args['out_dir'],
+                      cl.args['index'],
                       cl.args['job_name'],
                       num_processors=cl.args['num_processors'],
-                      out_sh=cl.args['out_sh'], out_dir=cl.args['out_dir'],
+                      out_sh=cl.args['out_sh'],
                       submit=submit)
     except Usage, err:
         cl.do_usage_and_die()

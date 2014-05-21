@@ -37,9 +37,9 @@ cd $PBS_O_WORKDIR
 sailfish index --kmerSize 31 --threads 8 --transcripts data/test.fasta --out data/test.fasta_sailfish_index_k31
 """
         true_result = true_result.split('\n')
-        with open(out_sh) as f:
-            for line in f:
-                print line,
+        # with open(out_sh) as f:
+        #     for line in f:
+        #         print line,
 
         for true, test in zip(true_result, open(out_sh)):
             self.assertEqual(true.strip().split(), test.strip().split())
