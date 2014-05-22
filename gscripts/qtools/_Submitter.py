@@ -107,8 +107,10 @@ class Submitter(object):
         """
         self.additional_resources = defaultdict(list)
 
-        self.array = self._array if array is None else array
-        self.queue_type = self._queue_type if queue_type is None else queue_type
+        self._array = array
+        self._queue_type = queue_type
+        # self.array = self._array if array is None else array
+        # self.queue_type = self._queue_type if queue_type is None else queue_type
 
         if self.queue_type == 'SGE':
             self.add_resource("-l", 'bigmem')
@@ -156,20 +158,26 @@ class Submitter(object):
             self.job(submit=True)
 
     @property
-    def _array(self):
+    def array(self):
         """Default value for whether or not to set this job as an array
         """
-        if ("oolite" in HOSTNAME) or ("compute" in HOSTNAME):
+        if self._array is not None:
+            # self._array is the user-supplied whether or not to use the array
+            return self._array
+        elif ("oolite" in HOSTNAME) or ("compute" in HOSTNAME):
             return True
         elif 'tscc' in HOSTNAME:
             return False
 
     @property
-    def _queue_type(self):
+    def queue_type(self):
         """Default value for the queue type, auto-detects if we're on oolite
         or tscc
         """
-        if ("oolite" in HOSTNAME) or ("compute" in HOSTNAME):
+        if self._queue_type is not None:
+            # self._queue_type is the user-supplied queue type
+            return self._queue_type
+        elif ("oolite" in HOSTNAME) or ("compute" in HOSTNAME):
             return 'SGE'
         elif 'tscc' in HOSTNAME:
             return 'PBS'
