@@ -689,7 +689,7 @@ class PCA_viz(PCA):
                 str(var_2)), size=axis_label_size)
         ax.set_title(title, size=title_size)
 
-        return comp_magn, ax
+        return sorted(comp_magn, key=lambda item: item[3], reverse=True), ax
 
     def plot_loadings(self, pc='pc_1', n_features=50, ax=None):
 
