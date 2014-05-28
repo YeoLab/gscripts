@@ -1339,11 +1339,11 @@ def plot_cdf(cdf_list, **kwargs):
 #    ax.plot(x,y)
 
 
-def plot_pdf(data, bins=50, ax=None):
+def plot_pdf(data, bins=50, ax=None, **kwargs):
     if ax is None:
         ax = plt.gca()
     x, y = pdf(data, bins=bins)
-    ax.plot(x, y)
+    ax.plot(x, y, **kwargs)
 
 
 #def violinplot(ax, x, ys, bp=False, cut=False, facecolor=ppl.set2[0],
