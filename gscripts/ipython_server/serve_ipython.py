@@ -12,7 +12,7 @@ except:
     print "not linking mongodb"
 
 
-b = Popen(["ipython2", "notebook", "--no-browser", "--port", "%s" %(port), "--pylab", "inline"])
+b = Popen(["ipython", "notebook", "--no-browser", "--port", "%s" %(port), "--matplotlib", "inline"])
 
 a = Popen(["ssh", "-R", ("%s:localhost:%s" %(port, port)), "oolite", "-N"])
 b.wait()
