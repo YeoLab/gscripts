@@ -79,7 +79,7 @@ class Test(unittest.TestCase):
         self.assertEqual(total, 1)
         self.assertEqual(matched, 1)
 
-    def test_randomer_match_neg(self):
+    def test_randomer_match_neg2(self):
         """
         same start same randomer neg, with the other offset
         """

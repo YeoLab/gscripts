@@ -3,12 +3,93 @@ Created on Dec 11, 2013
 
 @author: gpratt
 '''
-import os
+from collections import defaultdict, Counter
+from itertools import groupby, permutations
 from optparse import OptionParser
-from itertools import groupby
+import os
 
+import pandas as pd
 import pysam
 
+#assumes properly sorted, barcode collapsed reads, otherwise everything breaks
+def tags_to_dict(tags):
+    """
+
+    Converts the tag set to a dictionary
+
+    """
+    return {key : value for key, value in tags}
+
+def mark_overlap_for_base(reads):
+
+    """
+
+    Given a iterable of reads returns a boolean matrix of read groups by barcodes of what readgroup has what barcode
+
+    """
+
+    counts = defaultdict(dict)
+    for read in reads:
+        randomer = read.qname.split(":")[0]
+        read_group = tags_to_dict(read.tags)["RG"]
+        counts[randomer][read_group] = True
+    return pd.DataFrame(counts).fillna(False)
+
+def reads_starting_at_location(reads, loc):
+    """
+
+    given list of reads returns all reads starting a given loc (sepereated by positive and negative strand that start at a given location)
+
+    """
+    pos_reads = []
+    neg_reads = []
+    for read in reads:
+        read_start = read.positions[-1] if read.is_reverse else read.positions[0]
+        if read_start == loc:
+            if read.is_reverse:
+                neg_reads.append(read)
+            else:
+                pos_reads.append(read)
+    return pos_reads, neg_reads
+
+def count_contamination(bam_file):
+    """
+
+    Given bam file with readgroups and barcodes counts numboer of overlapping barcodes per readgroup
+    return dataframe of overlaps and series of total counts
+
+    """
+    combinations = defaultdict(Counter)
+    total = Counter()
+    with pysam.Samfile(bam_file) as bam_group:
+        #pipeup ignores multimapped reads by default, be careful
+        for base in bam_group.pileup():
+            #given a base, get all reads that start there, either on the positive or negative strands
+            read_start = base.pos
+            reads = (read.alignment for read in base.pileups)
+
+            pos_reads, neg_reads = reads_starting_at_location(reads, read_start)
+
+            for read in pos_reads:
+                read_group = tags_to_dict(read.tags)["RG"]
+                total[read_group] += 1
+
+            for read in neg_reads:
+                read_group = tags_to_dict(read.tags)["RG"]
+                total[read_group] += 1
+
+            pos_overlap = mark_overlap_for_base(pos_reads)
+            neg_overlap =  mark_overlap_for_base(neg_reads)
+
+            #Count both the negative and positive overlap
+            for randomer in pos_overlap.columns:
+                for rg1, rg2 in permutations(pos_overlap[pos_overlap[randomer]].index, 2):
+                    combinations[rg1][rg2] += 1
+
+            for randomer in neg_overlap.columns:
+                for rg1, rg2 in permutations(neg_overlap[neg_overlap[randomer]].index, 2):
+                    combinations[rg1][rg2] += 1
+    return pd.DataFrame(combinations), pd.Series(total)
 
 ##Need to write up testing code for this
 
