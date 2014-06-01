@@ -69,7 +69,6 @@ def count_contamination(bam_file):
             reads = (read.alignment for read in base.pileups)
 
             pos_reads, neg_reads = reads_starting_at_location(reads, read_start)
-            
             for read in pos_reads:
                 read_group = tags_to_dict(read.tags)["RG"]
                 total[read_group] += 1
@@ -78,25 +77,20 @@ def count_contamination(bam_file):
                 read_group = tags_to_dict(read.tags)["RG"]
                 total[read_group] += 1
 
-            #Count both the negative and positive overlap    
-            if len(pos_reads) != 0:
-                #print "foo", pos_reads
-                pos_overlap = mark_overlap_for_base(pos_reads)
-                for randomer in pos_overlap.columns:
-                    for rg1, rg2 in permutations(pos_overlap[pos_overlap[randomer]].index, 2):
-                        combinations[rg1][rg2] += 1
-                    
-            if len(neg_reads) != 0:
-                #print "foo", neg_reads
-                neg_overlap =  mark_overlap_for_base(neg_reads)
-                for randomer in neg_overlap.columns:
-                    for rg1, rg2 in permutations(neg_overlap[neg_overlap[randomer]].index, 2):
-                        combinations[rg1][rg2] += 1
-                        
+            pos_overlap = mark_overlap_for_base(pos_reads)
+            neg_overlap =  mark_overlap_for_base(neg_reads)
+
+            #Count both the negative and positive overlap
+            for randomer in pos_overlap.columns:
+                for rg1, rg2 in permutations(pos_overlap[pos_overlap[randomer]].index, 2):
+                    combinations[rg1][rg2] += 1
+
+            for randomer in neg_overlap.columns:
+                for rg1, rg2 in permutations(neg_overlap[neg_overlap[randomer]].index, 2):
+                    combinations[rg1][rg2] += 1
     return pd.DataFrame(combinations), pd.Series(total)
 
 ##Need to write up testing code for this
-
 def correlation(bam_1, bam_2, outbam):
     
     """
@@ -134,6 +128,7 @@ def correlation(bam_1, bam_2, outbam):
                     break
     outbam.close()
     return matched_count, total_count
+
 
 if __name__ == '__main__':
     usage = """  detects cross contamination between two samples demultiplexed 
