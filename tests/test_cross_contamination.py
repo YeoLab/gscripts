@@ -19,8 +19,8 @@ class Test(unittest.TestCase):
         """
 
         bam1 = tests.get_file("test_cross_contamination/positive1.bam")
-        bam2 = tests.get_file(
-            "test_cross_contamination/positive_off_by_one.bam")
+        bam2 = tests.get_file("test_cross_contamination/positive_off_by_one.bam")
+
 
         matched, total = correlation(bam1, bam2, "out.sam")
         self.assertEqual(total, 1)
@@ -32,8 +32,7 @@ class Test(unittest.TestCase):
         """
 
         bam1 = tests.get_file("test_cross_contamination/negative1.bam")
-        bam2 = tests.get_file(
-            "test_cross_contamination/negative_off_by_one.bam")
+        bam2 = tests.get_file("test_cross_contamination/negative_off_by_one.bam")
         matched, total = correlation(bam1, bam2, "out.sam")
         self.assertEqual(total, 1)
         self.assertEqual(matched, 0)

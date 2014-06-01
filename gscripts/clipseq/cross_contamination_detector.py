@@ -92,7 +92,7 @@ def count_contamination(bam_file):
     return pd.DataFrame(combinations), pd.Series(total)
 
 ##Need to write up testing code for this
-def correlation(bam_1, bam_2, outbam_name):
+def correlation(bam_1, bam_2, outbam):
     
     """
     
@@ -110,7 +110,7 @@ def correlation(bam_1, bam_2, outbam_name):
     name2 = os.path.basename(".".join(bam_2.split(".")[:2]))
     
     with pysam.Samfile(bam_1) as bam_1, pysam.Samfile(bam_2) as bam_2:
-        outbam = pysam.Samfile(outbam_name, 'wh', bam_1)
+        outbam = pysam.Samfile(outbam, 'wh', bam_1)
         
         for read in bam_1:
             total_count += 1
@@ -128,8 +128,7 @@ def correlation(bam_1, bam_2, outbam_name):
                     outbam.write(read)
                     break
     outbam.close()
-    return name1, name2, matched_count, total_count, outbam_name
-
+    return matched_count, total_count
 
 
 if __name__ == '__main__':
