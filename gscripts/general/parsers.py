@@ -51,16 +51,17 @@ def rnaseq_metrics(analysis_dir, num_seps=1, sep="."):
     combined_df = pd.merge(combined_df, nrf_df, left_index=True, right_index=True, how="outer")
 
     return combined_df 
-def clipseq_metrics(analysis_dir, iclip=False, sep="."):
+def clipseq_metrics(analysis_dir, iclip=False, num_seps=None, sep="."):
 
     """
     
     Reports all clip-seq metrics in a given analysis directory (this is fragile for now, outputs must follow gabes naming clipseq pipeline /
     naming convetions
 
+    
     """
-
-    num_seps = 2 if iclip else 1
+    if num_seps is None:
+        num_seps = 2 if iclip else 1
     
     rm_duped_files = glob.glob(os.path.join(analysis_dir, "*.rmDup.metrics"))
     peaks_files = glob.glob(os.path.join(analysis_dir, "*.rmDup.sorted.peaks.bed"))
