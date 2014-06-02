@@ -5,11 +5,14 @@ Created on Dec 11, 2013
 '''
 from collections import defaultdict, Counter
 from itertools import groupby, permutations
+from functools import partial
 from optparse import OptionParser
 import os
 
+import HTSeq
 import pandas as pd
 import pysam
+
 
 #assumes properly sorted, barcode collapsed reads, otherwise everything breaks
 def tags_to_dict(tags):
@@ -19,6 +22,41 @@ def tags_to_dict(tags):
 
     """
     return {key : value for key, value in tags}
+
+
+def append_read_group(base, read_group):
+    try:
+        base.add(read_group)
+        return base
+    except:
+        return set([read_group])
+
+def genome_count_contamination(bam_file):
+    #Load all values into dict
+    reads_at_location = defaultdict(lambda : HTSeq.GenomicArray("auto", typecode="O", stranded=True))
+    reads = HTSeq.BAM_Reader(bam_file)
+    for read in reads:
+        read.iv.length = 1
+        randomer = read.read.name.split(":")[0]
+        read_group = tags_to_dict(read.optional_fields)['RG']
+        reads_at_location[randomer][read.iv].apply(partial(append_read_group, read_group=read_group))
+
+
+    #Get them out
+    combinations = defaultdict(Counter)
+    total = Counter()
+    for randomer in reads_at_location.keys():
+        #print reads_at_location[randomer]
+        for genomic_interval, read_groups in reads_at_location[randomer].steps():
+            if not read_groups:
+                continue
+
+            for read_group in read_groups:
+                total[read_group] += 1
+            for rg1, rg2 in permutations(read_groups, 2):
+                    combinations[rg1][rg2] += 1
+
+    return pd.DataFrame(combinations), pd.Series(total)
 
 def mark_overlap_for_base(reads):
 
@@ -106,8 +144,6 @@ def correlation(bam_1, bam_2, outbam):
 
     total_count = 0
     matched_count = 0
-    name1 = os.path.basename(".".join(bam_1.split(".")[:2]))
-    name2 = os.path.basename(".".join(bam_2.split(".")[:2]))
     
     with pysam.Samfile(bam_1) as bam_1, pysam.Samfile(bam_2) as bam_2:
         outbam = pysam.Samfile(outbam, 'wh', bam_1)
@@ -149,4 +185,3 @@ if __name__ == '__main__':
     name2 = os.path.basename(".".join(options.bam_2.split(".")[:2]))
     with open(os.path.join(options.out_file), 'w') as outfile:
         outfile.write("\t".join(map(str, [name1, name2, matched_count, total_count])) + "\n")
-        
