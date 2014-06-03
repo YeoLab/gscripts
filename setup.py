@@ -19,6 +19,7 @@ scripts = [
     'general/parsers.py',
     'general/gsnap_index.py',
     'ipython_server/serve_ipython.py',
+    'mapping/convert_sam.py',
     'mapping/sort_bam.py',
     'mapping/index_bam.py',
     'mapping/map_paired_with_STAR.py',
