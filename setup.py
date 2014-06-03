@@ -25,6 +25,7 @@ scripts = [
     'mapping/sam_to_bam_and_sort.py',
     'miso/submit_index_gff.py',
     'miso/submit_miso_pipeline.py',
+    'miso/find_nan_miso_events.py',
     'output_parsers/parseMiso.py',
     'pwm/cisbp_to_meme.py',
     #'pwm/rbpdb_to_meme.py',
