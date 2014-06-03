@@ -34,6 +34,7 @@ scripts = [
     'rnaseq/oldsplice.py', 
     'rnaseq/oldsplice_gff.py',
     'rnaseq/parse_oldsplice.py',
+    'rnaseq/sailfish_index.py',
     'rnaseq/single_RPKM.py',
     'rnaseq/submit_oldsplice.py',
     'rnaseq/submit_oldsplice_gff.py',

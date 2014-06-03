@@ -33,7 +33,7 @@ def read_miso_summary(filename):
     4. The max of the two left and right confidence interval halves
        (df.ci_halves_max)
     '''
-    df = pd.read_table(filename, index_col=0)
+    df = pd.read_table(filename)
     genome_location = pd.DataFrame(
         ['%s:%d-%d' % (chrom, min_csv(starts), max_csv(stops))
          for chrom, starts, stops in zip(df.chrom,

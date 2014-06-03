@@ -28,7 +28,7 @@ class CommandLine(object):
              to bam, and sort the bam files
             ''',
             add_help=True, prefix_chars='-')
-        self.parser.add_argument('--dir', '-d', action='store',
+        self.parser.add_argument('--directory', '-d', action='store',
                                  type=str, default='',
                                  help='Where to look for sam files. Default '
                                       'is the current directory')
@@ -37,6 +37,19 @@ class CommandLine(object):
                                  help='Arguments to pass to `samtools sort`, '
                                       'e.g. "-n" (needs to be in quotes) to '
                                       'sort by read name')
+        self.parser.add_argument('job_name', required=False,
+                                 type=str, action='store',
+                                 default='repeat_align',
+                                 help='Name of the job submitted to the cluster')
+
+        self.parser.add_argument('--do-not-submit', required=False,
+                                 action='store_true',
+                                 help='Flag to not actually submit the job but '
+                                      'just write the sh file (for testing)')
+        self.parser.add_argument('-o', '--out-sh', required=False, type=str,
+                                 action='store',
+                                 help='Name of the sh file to submit to the job '
+                                      'scheduler')
         if inOpts is None:
             self.args = vars(self.parser.parse_args())
         else:
@@ -67,21 +80,11 @@ class Usage(Exception):
         self.msg = msg
 
 
-# Function: main
-def main():
-    '''
-    This function is invoked when the program is run from the command line,
-    i.e. as:
-        python program.py
-    or as:
-        ./program.py
-    If the user has executable permissions on the user (set by chmod ug+x
-    program.py or by chmod 775 program py. Just need the 4th bit set to true)
-    '''
-    cl = CommandLine()
-    try:
-        samtools_sort_args = cl.args['samtools_sort_args']
-        directory = cl.args['dir']
+class SamToBamAndSort(object):
+    def __init__(self, job_name, out_sh, directory, submit,
+                 samtools_sort_args=''):
+        # samtools_sort_args = cl.args['samtools_sort_args']
+        # directory = cl.args['dir']
 
         # add final forward slash if it's not the current directory and it's
         # not the empty string. May cause bugs if your current directory is
@@ -103,13 +106,39 @@ def main():
             qsub_commands.append('samtools sort %s %s %s' %
                                  (samtools_sort_args, bam, sorted_prefix))
 
-            submitter_prefix = 'sam2bam_sort_index_%s' % (bam)
-            submitter_sh = submitter_prefix + '.sh'
+            # submitter_prefix = 'sam2bam_sort_index_%s' % (bam)
+            # submitter_sh = submitter_prefix + '.sh'
             sub = qtools.Submitter(queue_type='PBS',
-                                   sh_file=submitter_sh,
-                                   command_list=qsub_commands,
-                                   job_name=submitter_prefix)
-            sub.write_sh(submit=True, nodes=1, ppn=16, queue='home')
+                                   sh_filename=out_sh,
+                                   commands=qsub_commands,
+                                   job_name=job_name, nodes=1, ppn=16,
+                                   queue='home')
+            sub.write_sh(submit=submit)
+
+
+# Function: main
+def main():
+    '''
+    This function is invoked when the program is run from the command line,
+    i.e. as:
+        python program.py
+    or as:
+        ./program.py
+    If the user has executable permissions on the user (set by chmod ug+x
+    program.py or by chmod 775 program py. Just need the 4th bit set to true)
+    '''
+
+    try:
+        cl = CommandLine()
+
+        job_name = cl.args['job_name']
+        out_sh = job_name + '.sh' if cl.args['out_sh'] is None \
+            else cl.args['out_sh']
+        submit = not cl.args['do_not_submit']
+        directory = cl.args['directory'].rstrip('/')
+
+        SamToBamAndSort(job_name, out_sh, directory, submit,
+                        cl.args['samtools_sort_args'])
 
     # If not all the correct arguments are given, break the program and
     # show the usage information

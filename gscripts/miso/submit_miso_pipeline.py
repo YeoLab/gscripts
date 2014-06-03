@@ -57,60 +57,10 @@ class CommandLine(object):
     def __init__(self, inOpts=None):
         self.parser = argparse.ArgumentParser(
             description='''Write submitter scripts to perform MISO analysis
-            on many samples at once. This script assumes paired-end reads.
+            on individual samples. This script assumes paired-end reads.
             ''',
             add_help=True, prefix_chars='-')
 
-        # Which part of the pipeline do you want to run?
-        #pipeline_part = self.parser.add_mutually_exclusive_group(required=True)
-        #pipeline_part.add_argument('--insert-len-only',
-        #                           action='store_true', default=False,
-        #                           required=False,
-        #                           help='Only compute the insert lengths of the'
-        #                                ' bam files provided in the sample info'
-        #                                ' file. Need the event type for this '
-        #                                'because we will build the library of '
-        #                                'insert sizes from these events. A '
-        #                                'single job to the cluster will be '
-        #                                'submitted.')
-        #pipeline_part.add_argument('--psi-only',
-        #                           action='store_true', default=False,
-        #                           required=False,
-        #                           help='Only compute "psi" (percent-spliced-'
-        #                                'in) values for the provided samples.'
-        #                                ' Do not compute the insert lengths ('
-        #                                'assumes the insert length files are '
-        #                                'already there), '
-        #                                'and do not summarize. A single job '
-        #                                'to the cluster will be submitted.')
-        #pipeline_part.add_argument('--summary-only',
-        #                           action='store_true', default=False,
-        #                           help='Only compute the summary of all '
-        #                                '"psi" (percent-spliced-in) values '
-        #                                'for the provided samples, '
-        #                                'creating a tab-delimited file of '
-        #                                'every splicing event. Do not '
-        #                                'compute the insert lengths or the '
-        #                                'psi values themselves (assumes the '
-        #                                'psi values are already there). A '
-        #                                'single job to the cluster will be '
-        #                                'submitted.')
-        #pipeline_part.add_argument('--psi-and-summary',
-        #                           action='store_true', default=False,
-        #                           help='Compute the "psi" ('
-        #                                'percent-spliced-in) values for the '
-        #                                'provided samples, and summarize the '
-        #                                'output, which creates a '
-        #                                'tab-delimited file of every splicing'
-        #                                ' event. This is handy if you have '
-        #                                'already computed the insert lengths '
-        #                                'separately')
-        #pipeline_part.add_argument('--run-all', action='store_true',
-        #                           help='Compute the insert length mean and '
-        #                                'standard deviation, '
-        #                                'the "psi" (percent spliced-in) '
-        #                                'scores of all splicing events, '
-        #                                'and summarize the relevant events')
 
         read_type = self.parser.add_mutually_exclusive_group(required=True)
         read_type.add_argument('--paired-end', action='store_const',
@@ -126,46 +76,28 @@ class CommandLine(object):
                                     'Does not compute insert size.')
 
         samples = self.parser.add_mutually_exclusive_group(required=True)
-        # samples.add_argument('--sample-info-file',
-        #                      type=str,
-        #                      default='',
-        #                      action='store',
-        #                      help='A tab-delimited sample info file with '
-        #                           'the header:\n'
-        #                           'Sample ID\tBam File\t Notes.\n This is'
-        #                           ' the same format file as required by '
-        #                           'RNA-SeQC.')
         samples.add_argument('--bam', type=str,
                              action='store', default='',
                              help='A single BAM file')
 
-        # self.parser.add_argument('--index-base-dir',
+        # self.parser.add_argument('--annotation-index-strfmt',
+        #                          type=str, action='store',
+        #                          help='A "strfmt" type string describing '
+        #                               'where the **indexed** MISO annotations'
+        #                               ' are housed, where the "%s" is where the'
+        #                               ' event type will be. The default is '
+        #                               '/projects/ps-yeolab/genomes/hg19/ASS_MISO/ASS_MISO_%s/ '
+        #                               'so if the event type is SE, '
+        #                               'then the indexed MISO annotations are '
+        #                               'in '
+        #                               '/projects/ps-yeolab/genomes/hg19/ASS_MISO/ASS_MISO_SE/',
+        #                          default='/projects/ps-yeolab/genomes/hg19/ASS_MISO')
+        # self.parser.add_argument('--constitutive-exon-gff', type=str,
         #                          action='store',
-        #                          type=str,
-        #                          default='/home/obotvinnik/genomes/miso_annotations/hg19',
-        #                          help='The base directory to use for '
-        #                               'annotations. The annotation is assumed'
-        #                               ' to be (index_base_dir)/('
-        #                               'event_type)_indexed/')
-        self.parser.add_argument('--annotation-index-strfmt',
-                                 type=str, action='store',
-                                 help='A "strfmt" type string describing '
-                                      'where the **indexed** MISO annotations'
-                                      ' are housed, where the "%s" is where the'
-                                      ' event type will be. The default is '
-                                      '/projects/ps-yeolab/genomes/hg19/ASS_MISO/ASS_MISO_%s/ '
-                                      'so if the event type is SE, '
-                                      'then the indexed MISO annotations are '
-                                      'in '
-                                      '/projects/ps-yeolab/genomes/hg19/ASS_MISO/ASS_MISO_SE/',
-                                 default='/projects/ps-yeolab/genomes/hg19/ASS_MISO')
-        self.parser.add_argument('--constitutive-exon-gff', type=str,
-                                 action='store',
-
-                                 default='/home/obotvinnik/genomes/hg19/miso_annotations/SE_constitutive/SE.hg19.min_20.const_exons.gff',
-                                 help='Location of the gff file of '
-                                      'constitutive exons, generated by '
-                                      'pe_utils.py of MISO')
+        #                          default='/home/obotvinnik/genomes/hg19/miso_annotations/SE_constitutive/SE.hg19.min_20.const_exons.gff',
+        #                          help='Location of the gff file of '
+        #                               'constitutive exons, generated by '
+        #                               'pe_utils.py of MISO')
         self.parser.add_argument('--debug', action='store_true',
                                  default=False,
                                  help="Don't make any files, just print "
@@ -223,9 +155,6 @@ class CommandLine(object):
                                       'miso scripts. Default is the directory'
                                       ' returned from the unix command line '
                                       'command "which miso".', required=False)
-        # self.parser.add_argument('--read-len', '-l', type=int, action='store',
-        #                          help='Read lengths. Assumed to be the same '
-        #                               'for all samples', required=True)
         self.parser.add_argument('--num-processes', '-p', type=int,
                                  action='store', default=16,
                                  help='Number of subprocesses for MISO to run'
@@ -233,26 +162,17 @@ class CommandLine(object):
                                       ' with several processors on a single '
                                       'node, use the number of processors '
                                       'you are requesting')
-        #self.parser.add_argument('--num-cores')
-        self.parser.add_argument('--num-cores', type=int,
-                                 action='store', default=1,
-                                 help='Number of cores to distribute the '
-                                      'computation to. The default is 1. If '
-                                      'the number of cores is greater than 1,'
-                                      ' then make the psi and summary jobs a '
-                                      'job array.')
+        # self.parser.add_argument('--num-cores', type=int,
+        #                          action='store', default=1,
+        #                          help='Number of cores to distribute the '
+        #                               'computation to. The default is 1. If '
+        #                               'the number of cores is greater than 1,'
+        #                               ' then make the psi and summary jobs a '
+        #                               'job array.')
         self.parser.add_argument('--output-sh', type=str, required=True,
                                  action='store',
                                  help="The name of the .sh script created for one-touch action")
-        self.parser.add_argument('--psi-walltime', type=str, action='store',
-                                 default='00:50:00',
-                                 help='How much time to tell the cluster to '
-                                      'allow the calculating psi score job to'
-                                      ' run')
-        self.parser.add_argument('--queue', type=str, action='store',
-                                 default='home-yeo',
-                                 help='The cluster computing queue you would '
-                                      'like to use.')
+
         self.parser.add_argument('--sample-id', type=str,
                                  action='store',
                                  help='sample ID. required if using --bam',
@@ -265,11 +185,7 @@ class CommandLine(object):
                                       'minimum of 10 reads instead of 20, '
                                       'you could say "_min_event_reads10" as '
                                       'a suffix')
-        self.parser.add_argument('--sh-scripts-dir', type=str,
-                                 action='store', default='',
-                                 help='Where to put the cluster (PBS/SGE) '
-                                      'submitter scripts. The default is the '
-                                      'directory this script was run from.')
+
         self.parser.add_argument('--submit-sh-suffix', type=str,
                                  action='store',
                                  default='',
@@ -359,7 +275,19 @@ def main():
     '''
     cl = CommandLine()
     try:
-        miso_pipeline = MisoPipeline(cl)
+        miso_pipeline = MisoPipeline(cl.args['bam'], cl.args['sample_id'],
+                                     cl.args['output_sh'], cl.args['genome'],
+                                     cl.args['annotation_index_strfrmt'],
+                                     cl.args['constitutive_exon_gff'],
+                                     read_type=cl.args['read_type'],
+                                     debug=cl.args['debug'],
+                                     num_processes=cl.args['num_processes'],
+                                     submit_sh_suffix=cl.args[
+                                         'submit_sh_suffix'],
+                                     sample_id_suffix=cl.args[
+                                         'sample_id_suffix'],
+                                     extra_miso_arguments=cl.args[
+                                         'extra_miso_arguments'])
 
         # Read the arguments to see which piece of the MISO pipeline to run
         #if cl.args['run_all']:
