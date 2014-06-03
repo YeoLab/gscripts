@@ -26,7 +26,7 @@ import subprocess
 from subprocess import PIPE
 import sys
 
-HOSTNAME = subprocess.Popen('HOSTNAME', stdout=subprocess.PIPE).communicate()[
+HOSTNAME = subprocess.Popen('hostname', stdout=subprocess.PIPE).communicate()[
     0].strip()
 
 # Maximum number of jobs in an array job
