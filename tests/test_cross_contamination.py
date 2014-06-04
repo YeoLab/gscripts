@@ -6,7 +6,6 @@ Created on Dec 11, 2013
 
 import tests
 import unittest
-
 import pysam
 
 from gscripts.clipseq.cross_contamination_detector import correlation
@@ -19,8 +18,7 @@ class Test(unittest.TestCase):
         """
 
         bam1 = tests.get_file("test_cross_contamination/positive1.bam")
-        bam2 = tests.get_file(
-            "test_cross_contamination/positive_off_by_one.bam")
+        bam2 = tests.get_file("test_cross_contamination/positive_off_by_one.bam")
 
         matched, total = correlation(bam1, bam2, "out.sam")
         self.assertEqual(total, 1)
@@ -32,8 +30,7 @@ class Test(unittest.TestCase):
         """
 
         bam1 = tests.get_file("test_cross_contamination/negative1.bam")
-        bam2 = tests.get_file(
-            "test_cross_contamination/negative_off_by_one.bam")
+        bam2 = tests.get_file("test_cross_contamination/negative_off_by_one.bam")
         matched, total = correlation(bam1, bam2, "out.sam")
         self.assertEqual(total, 1)
         self.assertEqual(matched, 0)
@@ -82,7 +79,7 @@ class Test(unittest.TestCase):
         self.assertEqual(total, 1)
         self.assertEqual(matched, 1)
 
-    def test_randomer_match_neg(self):
+    def test_randomer_match_neg2(self):
         """
         same start same randomer neg, with the other offset
         """
