@@ -3,6 +3,7 @@ import pandas as pd
 import matplotlib_venn
 import matplotlib.pyplot as plt
 import brewer2mpl
+import itertools
 
 set1 = brewer2mpl.get_map('Set1', 'qualitative', 9).mpl_colors
 red = set1[0]
