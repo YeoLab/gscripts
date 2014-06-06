@@ -33,7 +33,10 @@ class CommandLine(object):
                             action='store', type=str,
                             help='The name of the submitted job in the queue')
         parser.add_argument('-p', '--num-processors', required=False,
-                            type=int, action='store', default=8)
+                            type=int, action='store', default=8,
+                            help='Number of processors to use. Default is 8 ('
+                                 'easier to find a half-free node than a '
+                                 'fully free node)')
         parser.add_argument('--out-sh', required=False, type=str,
                             action='store',
                             help='Name of the file that is submitted to '
@@ -97,12 +100,11 @@ class SailfishIndex(object):
         else:
             out_sh = out_sh
 
-        command = 'sailfish quant --index {0} --threads {1} --transcripts ' \
-                  '' \
-                  '{2} --out {3}'.format(kmer_size,
-                                         num_processors,
-                                         fasta,
-                                         out_dir)
+        command = 'sailfish index --transcripts {0} --out {1} --kmerSize {2} ' \
+                  '--threads {3}'.format(fasta,
+                                         out_dir,
+                                         kmer_size,
+                                         num_processors)
 
         sub = Submitter(queue_type='PBS', sh_filename=out_sh,
                         commands=[command], job_name=job_name,
@@ -115,12 +117,10 @@ class SailfishIndex(object):
 if __name__ == '__main__':
     cl = CommandLine()
     try:
-        job_name = '_'.join([cl.args['name'], 'sailfish_index'])
 
-        out_sh = name = job_name + '.sh' if cl.args['out_sh'] is None \
+        out_sh = cl.args['job_name'] + '.sh' if cl.args['out_sh'] is None \
             else cl.args['out_sh']
         submit = not cl.args['do_not_submit']
-        directory = cl.args['directory']
 
         SailfishIndex(cl.args['fasta'], cl.args['kmer_size'],
                       cl.args['job_name'],

@@ -19,12 +19,14 @@ scripts = [
     'general/parsers.py',
     'general/gsnap_index.py',
     'ipython_server/serve_ipython.py',
+    'mapping/convert_sam.py',
     'mapping/sort_bam.py',
     'mapping/index_bam.py',
-    #'mapping/map_paired_with_STAR.py',
+    'mapping/map_paired_or_single_with_STAR.py',
     'mapping/sam_to_bam_and_sort.py',
     'miso/submit_index_gff.py',
     'miso/submit_miso_pipeline.py',
+    'miso/find_nan_miso_events.py',
     'output_parsers/parseMiso.py',
     'pwm/cisbp_to_meme.py',
     #'pwm/rbpdb_to_meme.py',
@@ -39,7 +41,9 @@ scripts = [
     'rnaseq/submit_oldsplice.py',
     'rnaseq/submit_oldsplice_gff.py',
     'rnaseq/submit_parse_oldsplice.py',
-           ]
+    'rnaseq/sailfish_index.py',
+    'rnaseq/sailfish_quant.py'
+]
 
 scripts = map((lambda x: "gscripts/" + x), scripts)
 
