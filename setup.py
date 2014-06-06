@@ -22,7 +22,7 @@ scripts = [
     'mapping/convert_sam.py',
     'mapping/sort_bam.py',
     'mapping/index_bam.py',
-    'mapping/map_paired_with_STAR.py',
+    'mapping/map_paired_or_single_with_STAR.py',
     'mapping/sam_to_bam_and_sort.py',
     'miso/submit_index_gff.py',
     'miso/submit_miso_pipeline.py',
