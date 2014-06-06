@@ -118,12 +118,10 @@ class SailfishIndex(object):
 if __name__ == '__main__':
     cl = CommandLine()
     try:
-        job_name = '_'.join([cl.args['job_name'], 'sailfish_index'])
 
-        out_sh = name = job_name + '.sh' if cl.args['out_sh'] is None \
+        out_sh = cl.args['job_name'] + '.sh' if cl.args['out_sh'] is None \
             else cl.args['out_sh']
         submit = not cl.args['do_not_submit']
-        directory = cl.args['directory']
 
         SailfishIndex(cl.args['fasta'], cl.args['kmer_size'],
                       cl.args['job_name'],
