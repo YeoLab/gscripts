@@ -41,7 +41,9 @@ scripts = [
     'rnaseq/submit_oldsplice.py',
     'rnaseq/submit_oldsplice_gff.py',
     'rnaseq/submit_parse_oldsplice.py',
-           ]
+    'rnaseq/sailfish_index.py',
+    'rnaseq/sailfish_quant.py'
+]
 
 scripts = map((lambda x: "gscripts/" + x), scripts)
 
