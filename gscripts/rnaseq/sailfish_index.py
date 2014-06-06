@@ -33,7 +33,10 @@ class CommandLine(object):
                             action='store', type=str,
                             help='The name of the submitted job in the queue')
         parser.add_argument('-p', '--num-processors', required=False,
-                            type=int, action='store', default=8)
+                            type=int, action='store', default=8,
+                            help='Number of processors to use. Default is 8 ('
+                                 'easier to find a half-free node than a '
+                                 'fully free node)')
         parser.add_argument('--out-sh', required=False, type=str,
                             action='store',
                             help='Name of the file that is submitted to '
@@ -115,7 +118,7 @@ class SailfishIndex(object):
 if __name__ == '__main__':
     cl = CommandLine()
     try:
-        job_name = '_'.join([cl.args['name'], 'sailfish_index'])
+        job_name = '_'.join([cl.args['job_name'], 'sailfish_index'])
 
         out_sh = name = job_name + '.sh' if cl.args['out_sh'] is None \
             else cl.args['out_sh']
