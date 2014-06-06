@@ -100,12 +100,11 @@ class SailfishIndex(object):
         else:
             out_sh = out_sh
 
-        command = 'sailfish quant --index {0} --threads {1} --transcripts ' \
-                  '' \
-                  '{2} --out {3}'.format(kmer_size,
-                                         num_processors,
-                                         fasta,
-                                         out_dir)
+        command = 'sailfish index --transcripts {0} --out {1} --kmerSize {2} ' \
+                  '--threads {3}'.format(fasta,
+                                         out_dir,
+                                         kmer_size,
+                                         num_processors)
 
         sub = Submitter(queue_type='PBS', sh_filename=out_sh,
                         commands=[command], job_name=job_name,
