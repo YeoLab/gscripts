@@ -2,10 +2,10 @@ import numpy as np
 import pandas as pd
 import matplotlib_venn
 import matplotlib.pyplot as plt
-import brewer2mpl
+from matplotlib import gridspec
 import itertools
-import seaborn as sns
 
+import seaborn as sns
 sns.set(style='ticks', context='talk')
 
 import matplotlib as mpl
@@ -15,6 +15,9 @@ mpl.rcParams['svg.fonttype'] = 'none'
 
 import collections
 import itertools
+
+# Nice colors
+import brewer2mpl
 
 set1 = brewer2mpl.get_map('Set1', 'qualitative', 9).mpl_colors
 red = set1[0]
