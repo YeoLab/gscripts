@@ -1,0 +1,11 @@
+*.pyc
+*egg-info
+build
+dist
+
+# PyCharm nonsense
+.idea*
+.idea/*
+
+# MacOS nonsense
+*DS_store

@@ -2,7 +2,11 @@
 module load biotools
 #module load scipy
 
+# What jobs am I running?
 alias qme="qstat -u $(whoami)"
+
+# what processes am I running?
+alias psme="ps -u $(whomai)"
 
 SERVER=/projects
 
@@ -56,3 +60,4 @@ export HDF5_DIR=/home/yeo-lab/software
 # added by Anaconda 1.9.1 installer
 export PATH="/projects/ps-yeolab/software/anaconda/bin:~/bin:$PATH"
 export PYTHONPATH=
+
