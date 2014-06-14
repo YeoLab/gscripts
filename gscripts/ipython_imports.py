@@ -43,6 +43,6 @@ legend = None
 # Also need to save the figure in a special way so that the legend doesn't
 # get cut off. Make sure to save the "legend" object that "ax.legend" returns
 # and then save that as "legend", then add these keyword arguments to your
-# savefig call:
+# savefig call, e.g.: fig.savefig('figure.svg', **OUTSIDE_LEGEND_SAVEFIG_KWS)
 OUTSIDE_LEGEND_SAVEFIG_KWS = dict(bbox_extra_artists=(legend,),
                                   bbox_inches='tight')
