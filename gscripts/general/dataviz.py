@@ -1439,12 +1439,12 @@ class Figure(object):
         return self.figure
 
     def __exit__(self, type, value, traceback):
-        for ax in self.figure.get_axes():
-            [tick.set_fontsize(14) for tick in ax.get_xticklabels()]
-            [tick.set_fontsize(14) for tick in ax.get_yticklabels()]
-            ax.set_xlabel(ax.get_xlabel(), fontsize=18)
-            ax.set_ylabel(ax.get_ylabel(), fontsize=18)
-            ax.set_title(ax.get_title(), fontsize=20)
+        #for ax in self.figure.get_axes():
+            #[tick.set_fontsize(14) for tick in ax.get_xticklabels()]
+            #[tick.set_fontsize(14) for tick in ax.get_yticklabels()]
+            #ax.set_xlabel(ax.get_xlabel(), fontsize=18)
+            #ax.set_ylabel(ax.get_ylabel(), fontsize=18)
+            #ax.set_title(ax.get_title(), fontsize=20)
         self.figure.tight_layout()
         self.figure.savefig(self.saveas)
         self.figure.savefig(os.path.splitext(self.saveas)[0] + ".pdf")

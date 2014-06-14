@@ -36,11 +36,13 @@ def genome_count_contamination(bam_file):
     reads_at_location = defaultdict(lambda : HTSeq.GenomicArray("auto", typecode="O", stranded=True))
     reads = HTSeq.BAM_Reader(bam_file)
     for read in reads:
-        read.iv.length = 1
-        randomer = read.read.name.split(":")[0]
-        read_group = tags_to_dict(read.optional_fields)['RG']
-        reads_at_location[randomer][read.iv].apply(partial(append_read_group, read_group=read_group))
-
+        try:
+            read.iv.length = 1
+            randomer = read.read.name.split(":")[0]
+            read_group = tags_to_dict(read.optional_fields)['RG']
+            reads_at_location[randomer][read.iv].apply(partial(append_read_group, read_group=read_group))
+        except AttributeError as e:
+            pass
 
     #Get them out
     combinations = defaultdict(Counter)
