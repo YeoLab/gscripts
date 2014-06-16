@@ -47,7 +47,6 @@ def concatenate_files(source,
     
     logfile = file(os.path.join(dest,"concatenation_log.txt"),"wb")
     logfile.write("concatenation log\n")
-    logfile.write("run: %s\n" % utils.timeStrNow())
     
     og_filenames = []
     og_filenames = list(sorted(glob(os.path.join(source,'*fastq.gz'))))
@@ -65,11 +64,6 @@ def concatenate_files(source,
         filename = filename.replace(extension, '')
         # get file information from filename
         filename_vals = filename.split('_')
-        # expect 6 tokens for patient samples
-        if len(filename_vals) != 6:
-            # do not continue if different number of tokens
-            logfile.write('Unexpected number of tokens after split, file: %s\n' % (filename+extension))
-            continue
         filename_vals = filename.split('_')
 
         # determine tokens unique to sample
@@ -78,12 +72,15 @@ def concatenate_files(source,
         
         groupby_indexes = [int(element)-1 for element in groupby_keys.split(',')]
 
-        for element in range(len(filename_vals())):
+        for element in range(len(filename_vals)):
             if element in groupby_indexes:
-                unique.append(filename_values[element])
+                unique.append(filename_vals[element])
             else:
-                non_unique.append(filename_values[element])
+                non_unique.append(filename_vals[element])
 
+
+        unique = tuple(unique)
+        non_unique = tuple(non_unique)
         #unique = (sl_id, int_id, mate_int)
         #non_unique = (d_id, s_id, gsl_id)
         to_group.append((unique, non_unique))
@@ -93,7 +90,7 @@ def concatenate_files(source,
 
     num_catted = 0
     for key, group in itertools.groupby(sorted(to_group), lambda x: x[0]):
-        destination = os.path.join(dest,'_'.join((key[0],'R'+key[2]))+extension)
+        destination = os.path.join(dest,'_'.join(key)+extension)
         logfile.write('cat to ' + destination)
         logfile.write('\n')
         logfile.write('the files:')
@@ -114,10 +111,10 @@ def concatenate_files(source,
             logfile.write(destination + ' already exists, skipping')
             logfile.write('\n')
     
-    if num_catted != len(filepath_map.keys()):
-        fout_err = file(os.path.join(dest,"ERROR.txt"))
-        fout_err.write("Error. Not all files concatenated.\n")
-        fout_err.close()
+#    if num_catted != len(filepath_map.keys()):
+#        fout_err = file(os.path.join(dest,"ERROR.txt"))
+#        fout_err.write("Error. Not all files concatenated.\n")
+#        fout_err.close()
 
     logfile.close()
     
