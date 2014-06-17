@@ -80,7 +80,7 @@ def concatenate_files(source,
         # get file information from filename
         filename_vals = filename.split(delimiter)
 
-        if expected and len(filename_vals) != int(expected)):
+        if expected and len(filename_vals) != int(expected):
             logfile.write("unexepcted number of filename elements, skipping "+abs_path)
             logfile.write('\n')
             continue
