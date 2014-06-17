@@ -14,6 +14,7 @@ def get_params():
                       dest="source",
                       default=None,
                       help="directory with unconcatenated fastq files")
+
     parser.add_option("-o","--output_dir",
                       dest="dest",
                       default=None,
@@ -23,6 +24,21 @@ def get_params():
                       dest="groupby_keys",
                       default="1",
                       help="Comma separated string describing which filename elements to group by, ex. 1,3,4")
+
+    parser.add_option("-e", "--extension", 
+                      dest="extension", 
+                      default=".fastq.gz",
+                      help="filter files to concatenate by a specific extension")
+
+    parser.add_option("-p", "--expected_elem", 
+                      dest="expected",
+                      default=None,
+                      help="the number of expected filename elements after splitting by delimiter")
+
+    parser.add_option("-d", "--delimiter", 
+                      dest="delimiter",
+                      default="_",
+                      help="the delimiter to split filename into elements by")
 
     (options,args) = parser.parse_args()
     if None in [options.source,options.dest]:
@@ -37,7 +53,7 @@ def get_params():
 # a single pair of fastqs per library
 
 def concatenate_files(source,
-                      dest, groupby_keys):
+                      dest, groupby_keys, extension, expected, delimiter):
     if not os.path.exists(source):
         print "input directory %s does not exist." % (source)
         sys.exit(-1)
@@ -49,13 +65,12 @@ def concatenate_files(source,
     logfile.write("concatenation log\n")
     
     og_filenames = []
-    og_filenames = list(sorted(glob(os.path.join(source,'*fastq.gz'))))
+    og_filenames = list(sorted(glob(os.path.join(source,'*'+extension))))
     num_og_files = len(og_filenames)
     logfile.write("Number of fastq files: %s\n" % (num_og_files))
 
     to_group = []
     filepath_map = defaultdict()
-    extension = '.fastq.gz'
         
     for abs_path in og_filenames:
         # remove directory path string
@@ -63,8 +78,12 @@ def concatenate_files(source,
         # strip extension
         filename = filename.replace(extension, '')
         # get file information from filename
-        filename_vals = filename.split('_')
-        filename_vals = filename.split('_')
+        filename_vals = filename.split(delimiter)
+
+        if expected and len(filename_vals) != int(expected)):
+            logfile.write("unexepcted number of filename elements, skipping "+abs_path)
+            logfile.write('\n')
+            continue
 
         # determine tokens unique to sample
         unique = []
@@ -81,11 +100,11 @@ def concatenate_files(source,
 
         unique = tuple(unique)
         non_unique = tuple(non_unique)
-        #unique = (sl_id, int_id, mate_int)
-        #non_unique = (d_id, s_id, gsl_id)
+
         to_group.append((unique, non_unique))
         filepath_map[(unique, non_unique)] = abs_path
-     #use itertools groupby to group to unique tokens, then map back to absolute path
+
+     # use itertools groupby to group to unique tokens, then map back to absolute path
      # of original filename
 
     num_catted = 0
@@ -110,11 +129,6 @@ def concatenate_files(source,
         else:
             logfile.write(destination + ' already exists, skipping')
             logfile.write('\n')
-    
-#    if num_catted != len(filepath_map.keys()):
-#        fout_err = file(os.path.join(dest,"ERROR.txt"))
-#        fout_err.write("Error. Not all files concatenated.\n")
-#        fout_err.close()
 
     logfile.close()
     
@@ -122,7 +136,10 @@ if __name__=='__main__':
     options, args = get_params()
     concatenate_files(options.source,
                       options.dest,
-                      options.groupby_keys)
+                      options.groupby_keys,
+                      options.extension,
+                      options.expected,
+                      options.delimiter)
         
 
 
