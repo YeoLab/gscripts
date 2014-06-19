@@ -6,6 +6,7 @@ scripts = [
 #    'clipseq/run_kasey.py',
     'clipseq/kmer_extractor.py',
     'clipseq/perform_idr.py',
+    'clipseq/remove_softclip.py',
     'clipseq/run_piranha.py',
     'clipseq/run_ripseeker.py',
     'editing/create_rna_editing_makefile.py',
