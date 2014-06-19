@@ -27,7 +27,7 @@ def remove_softclip(in_bam, out_bam):
                     if num_bases == 1 and code == 4:
                         cigar.pop(0)
                         code, num_good_bases = cigar[0]
-                        cigar[-1] = (code, num_good_bases + num_bases)
+                        cigar[0] = (code, num_good_bases + num_bases)
                         read.pos -= 1
                 else:
                     code, num_bases = cigar[-1]
@@ -37,7 +37,7 @@ def remove_softclip(in_bam, out_bam):
                         cigar[-1] = (code, num_good_bases + num_bases)
 
                 read.cigar = cigar
-            out_bam.write(read)
+                out_bam.write(read)
 
 
 if __name__ == "__main__":

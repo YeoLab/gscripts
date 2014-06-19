@@ -20,7 +20,8 @@ import pysam
 #reads are sorted by start site only, not start and stop site, so will need to use a pipeup based stragety
 #for removing reads with same start and stop, simply iterating will not work
 
-
+def  hamming(word1, word2):
+    return sum( a != b for a, b in zip(word1, word2) )
 def collapse_base(reads, outBam, randomer, total_count, removed_count):
     
     """
@@ -38,7 +39,12 @@ def collapse_base(reads, outBam, randomer, total_count, removed_count):
         if barcode in barcode_set:
             removed_count[barcode] += 1
         else:
-            outBam.write(read)
+            add_read = True
+            for cur_barcode in barcode_set:
+                if hamming(barcode, cur_barcode) <= 1:
+                    add_read = False
+            if add_read:
+                outBam.write(read)
             
         total_count[barcode] += 1
         barcode_set[barcode] += 1   
