@@ -343,7 +343,7 @@ if __name__ == '__main__':
         # replace any weird slashes
         job_name = job_name.replace('/', '-')
 
-        out_sh = job_name + ".sh" if cl.args['out_sh'] is None \
+        out_sh = job_name + ".sh" if 'out_sh' not in cl.args.keys() \
             else cl.args['out_sh']
 
         genome = '/projects/ps-yeolab/genomes/{0}/star'.format(species)
