@@ -1430,10 +1430,10 @@ def plot_pdf(data, bins=50, ax=None, **kwargs):
 #    ppl.remove_chartjunk(ax, ['top', 'right'])
 
 class Figure(object):
-    def __init__(self, saveas, **kwargs):
+    def __init__(self, saveas, tight_layout=True, **kwargs):
         self.kwargs = kwargs
         self.saveas = saveas
-
+        self.tight_layout = tight_layout
     def __enter__(self):
         self.figure = plt.figure(**self.kwargs)
         return self.figure
@@ -1445,6 +1445,7 @@ class Figure(object):
             #ax.set_xlabel(ax.get_xlabel(), fontsize=18)
             #ax.set_ylabel(ax.get_ylabel(), fontsize=18)
             #ax.set_title(ax.get_title(), fontsize=20)
-        self.figure.tight_layout()
+        if self.tight_layout:
+            self.figure.tight_layout()
         self.figure.savefig(self.saveas)
         self.figure.savefig(os.path.splitext(self.saveas)[0] + ".pdf")
