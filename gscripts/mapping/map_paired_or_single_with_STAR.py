@@ -179,6 +179,10 @@ class CommandLine(object):
                             action='store', type=str, default='',
                             help='Additional arguments to pass to STAR that '
                                  'are not specified here')
+
+        parser.add_argument('-x', '--extension', required=True,
+                            action='store', type=str, default='.gz',
+                            help='file extension to glob for')
         # parser.add_mutually_exclusive_group(required=True)
         # parser.add_argument('--paired', action='store_true',
         #                     help='Reads are paired-end')
@@ -223,7 +227,7 @@ class MapSTAR(object):
                  outFilterScoreMin=10, outFilterType='BySJout',
                  outSAMattributes='All',
                  outSAMstrandField='intronMotif',
-                 clip5pNbases=0, clip3pNbases=0, additional_STAR_args=''):
+                 clip5pNbases=0, clip3pNbases=0, additional_STAR_args='', extension='.gz'):
         """Read the fastq files in a directory, assuming that the first 2
         underscore-separated parts of a filename are the unique sample ID,
         then running STAR. Most of these arguments are the defaults in STAR,
@@ -259,7 +263,7 @@ class MapSTAR(object):
         # Set of unique sample ids for checking if we've read them all
         sample_ids = set([])
 
-        for read1 in iglob('{}/*R1*.gz'.format(directory.rstrip('/'))):
+        for read1 in iglob('{}/*R1*{}'.format(directory.rstrip('/'), extension)):
             # if read1.endswith('gz'):
             #     compressed = True
             # else:
@@ -275,7 +279,7 @@ class MapSTAR(object):
             paired = os.path.isfile(read1.replace('R1', 'R2'))
             print sample_id, 'paired', paired
 
-            read1 = ','.join(glob('{}*R1*gz'.format(sample_id)))
+            read1 = ','.join(glob('{}*R1*{}'.format(sample_id, extension)))
             read2 = read1.replace('R1', 'R2') if paired else ""
             print 'R1', read1
             print 'R2', read2
@@ -343,7 +347,7 @@ if __name__ == '__main__':
         # replace any weird slashes
         job_name = job_name.replace('/', '-')
 
-        out_sh = job_name + ".sh" if cl.args['out_sh'] is None \
+        out_sh = job_name + ".sh" if 'out_sh' not in cl.args.keys() \
             else cl.args['out_sh']
 
         genome = '/projects/ps-yeolab/genomes/{0}/star'.format(species)
@@ -365,6 +369,7 @@ if __name__ == '__main__':
                 cl.args['outSAMstrandField'],
                 cl.args['clip5pNbases'],
                 cl.args['clip3pNbases'],
-                cl.args['additional_STAR_args'])
+                cl.args['additional_STAR_args'],
+                cl.args['extension'])
     except Usage, err:
         cl.do_usage_and_die()

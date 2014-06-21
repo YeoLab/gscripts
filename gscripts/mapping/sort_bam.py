@@ -16,8 +16,8 @@ class CommandLine(object):
         self.parser = parser = argparse.ArgumentParser(
             description='Index sorted bam files (required by some many '
                         'programs)')
-        parser.add_argument('job_name', required=False,
-                            type=str, action='store', default='index_bam',
+        parser.add_argument('--job_name', required=False,
+                            type=str, action='store', default='sort_bam',
                             help='Name of the job submitted to the cluster')
         parser.add_argument('--do-not-submit', required=False,
                             action='store_true',

@@ -15,18 +15,18 @@ class CommandLine(object):
     def __init__(self, inOpts=None):
         self.parser = parser = argparse.ArgumentParser(
             description='Count coverage of bam files over a bed file')
-        parser.add_argument('orientation', required=True, action='store',
+        parser.add_argument('--orientation', required=True, action='store',
                             type=str,
                             help='The orientation you want to count. One of '
                                  '"both" (unstranded), "flip", (stranded data)')
         annotation = parser.add_mutually_exclusive_group(required=True)
-        annotation.add_argument('species', type=str, action='store',
+        annotation.add_argument('--species', type=str, action='store',
                                 help='The species you want to do count_bam on'
                                      '. This will choose a reasonable default '
                                      '.bed file to count on')
-        annotation.add_agrument('--bed', type=str, action='store',
+        annotation.add_argument('--bed', type=str, action='store',
                                 help='The .bed file you want to count over')
-        parser.add_argument('name', type=str, action='store', required=False,
+        parser.add_argument('--name', type=str, action='store', required=False,
                             help='Prefix for the name of the job to submit')
         parser.add_argument('--out-sh', action='store', type=str,
                             required=False,

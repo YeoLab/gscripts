@@ -17,7 +17,7 @@ class CommandLine(object):
             description='Convert same files to bam files (binary format, '
                         'better compression). Also most programs take .bam '
                         'files as input')
-        parser.add_argument('job_name', required=False,
+        parser.add_argument('--job_name', required=False,
                             type=str, action='store', default='convert_sam',
                             help='Name of submitted job to scheduler')
         parser.add_argument('--do-not-submit', required=False,

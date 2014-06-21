@@ -6,7 +6,7 @@ module load biotools
 alias qme="qstat -u $(whoami)"
 
 # what processes am I running?
-alias psme="ps -u $(whomai)"
+alias psme="ps -u $(whoami)"
 
 SERVER=/projects
 
