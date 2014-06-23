@@ -1319,7 +1319,18 @@ def pdf(data, bins=50):
         pdf[i + 1] = prob
     return pos, pdf
 
-
+#logged_rpkm_df = master_df[master_df.logged_rpkm != np.NINF].logged_rpkm
+def loglog_hist2d(series1, series2, ax=None, **kwargs):
+    foo = pd.concat([series1, series2], axis=1, join="inner")
+    foo = np.log10(foo)
+    foo[np.isneginf(foo) | np.isinf(foo)] = np.nan
+    foo = foo.dropna()
+    
+    if ax:
+        return ax.hist2d(foo[foo.columns[0]], foo[foo.columns[1]], bins=175, norm=mpl.colors.Normalize(), cmin=1, vmin=0, vmax=45, **kwargs)
+    else: #not as ax:
+        return hist2d(foo.one, foo.two, bins=175, norm=mpl.colors.Normalize(), cmin=1, vmin=0, vmax=45 ,**kwargs)
+        
 def plot_cdf(cdf_list, **kwargs):
     cdf = sm.distributions.ECDF(cdf_list)
     cdf_linspace = np.linspace(min(cdf_list), max(cdf_list))
@@ -1330,6 +1341,7 @@ def plot_cdf(cdf_list, **kwargs):
         ax.set_ylim((0, 1))
     else:
         plot(cdf_linspace, cdf(cdf_linspace), **kwargs)
+
 
 
 #def plot_cdf(data, bins=50, ax=None):
