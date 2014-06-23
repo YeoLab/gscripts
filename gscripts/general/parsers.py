@@ -54,7 +54,6 @@ def rnaseq_metrics(analysis_dir, num_seps=1, sep="."):
     combined_df = combined_df.rename(columns={"Processed bases" : "Input Bases",
                                               "Processed reads" : "Input Reads",
                                               "Number of input reads" : "Reads Passing Quality Filter",
-                                              "Number of input reads" : "Read Attempted to Map",
                                               "Uniquely mapped reads number" : "Uniquely Mapped Reads",
            })
 
