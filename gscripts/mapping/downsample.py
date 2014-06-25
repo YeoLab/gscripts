@@ -4,7 +4,7 @@ import argparse
 import numpy as np
 import os
 
-from ..qtools import Submitter
+from gscripts.qtools import Submitter
 
 """Original script
 from gscripts.qtools import Submitter
@@ -45,7 +45,7 @@ sub.write_sh(submit=True, nodes=1, ppn=1, queue='home', array=True, max_running=
 class CommandLine(object):
     def __init__(self, inOpts=None):
         self.parser = parser = argparse.ArgumentParser(
-            description='Downsample a bam file')
+            description='Downsample reads from a bam file')
         bam = parser.add_mutually_exclusive_group(required=True)
         bam.add_argument('--bam',
                          type=str, action='store',
