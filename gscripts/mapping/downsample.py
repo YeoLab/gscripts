@@ -68,13 +68,13 @@ class CommandLine(object):
                             help='The Java Archive from PicardTools to use')
         parser.add_argument('-t', '--iter-per-percentage',
                             type=str, action='store', default=3,
-                            help='For each % downsampling, how many '
+                            help='For each \% downsampling, how many '
                                  'iterations to perform')
         parser.add_argument('-s', '--step-size', type=float, action='store',
                             default=0.05,
                             help='Step size of downsampling, default is 0.05 '
-                                 'for downsampling every 5% of the reads in '
-                                 'the bam file, resulting in 5%, 10%, 15%, '
+                                 'for downsampling every 5\% of the reads in '
+                                 'the bam file, resulting in 5\%, 10\%, 15\%, '
                                  'etc downsampled files.')
         parser.add_argument('-r', '--random-seed-base', type=int,
                             action='store', default=2014,
