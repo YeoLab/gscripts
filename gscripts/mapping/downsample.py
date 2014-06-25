@@ -80,7 +80,7 @@ class CommandLine(object):
                                  'million reads. If not specified, then up to '
                                  'the maximum number of reads in the bam file')
 
-        parser.add_argument('--reads-multipler', type=float, action='store',
+        parser.add_argument('--reads-multiplier', type=float, action='store',
                             default=1e6,
                             help='What to multiply the read numbers by. '
                                  'Assumes that you want to downsample by '
