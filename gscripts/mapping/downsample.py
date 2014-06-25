@@ -3,6 +3,8 @@
 import argparse
 import numpy as np
 import os
+import shlex
+import subprocess
 
 from gscripts.qtools import Submitter
 
@@ -45,7 +47,7 @@ sub.write_sh(submit=True, nodes=1, ppn=1, queue='home', array=True, max_running=
 class CommandLine(object):
     def __init__(self, inOpts=None):
         self.parser = parser = argparse.ArgumentParser(
-            description='Downsample reads from a bam file')
+            description='Downsample (millions of) reads from a bam file')
         bam = parser.add_mutually_exclusive_group(required=True)
         bam.add_argument('--bam',
                          type=str, action='store',
@@ -62,28 +64,43 @@ class CommandLine(object):
                             help='Sample ID to prefix the output bam files'
                                  '. Required if providing a single bam '
                                  'file.')
-        parser.add_argument('-j', '--jar',
-                            default="/projects/ps-yeolab/software/picard-tools-1.93/DownsampleSam.jar",
-                            type=str, action='store',
-                            help='The Java Archive from PicardTools to use')
-        parser.add_argument('-t', '--iter-per-percentage',
+        parser.add_argument('-t', '--iter-per-downsample',
                             type=str, action='store', default=3,
-                            help='For each fraction downsampling, how many '
+                            help='For each downsampling level, how many '
                                  'iterations to perform')
+
+        parser.add_argument('--min-reads', type=float, action='store',
+                            default=1,
+                            help='Minimum number of reads to downsample.')
+        parser.add_argument('--max-reads', type=float, action='store',
+                            help='Maximum number of reads to downsample. '
+                                 'Helpful if you have a sample with 100 '
+                                 'million reads but you only want to '
+                                 'downsample every 1 million read up to 25 '
+                                 'million reads.')
+
+        parser.add_argument('--reads-multipler', type=float, action='store',
+                            default=1e6,
+                            help='What to multiply the read numbers by. '
+                                 'Assumes that you want to downsample by '
+                                 'millions of reads.')
         parser.add_argument('-s', '--step-size', type=float, action='store',
-                            default=0.05,
-                            help='Step size of downsampling, default is 0.05 '
-                                 'for downsampling every 0.05 fraction of the '
-                                 'reads in '
-                                 'the bam file, resulting in 0.05, 0.10, '
-                                 '0.15, '
-                                 'etc downsampled files.')
+                            default=1,
+                            help='Step size of # of reads to downsample, '
+                                 'default is 1 (million) reads, so you end up '
+                                 'with 1 million, 2 million, 3 million '
+                                 'downsampled reads')
+
         parser.add_argument('-r', '--random-seed-base', type=int,
                             action='store', default=2014,
                             help='To make sure this exact downsampling is '
                                  'reproducible but still random for different '
                                  'iterations, use this value + iteration '
                                  'number as the random seed.')
+        parser.add_argument('-j', '--jar',
+                            default="/projects/ps-yeolab/software/picard-tools-1.93/DownsampleSam.jar",
+                            type=str, action='store',
+                            help='The Java Archive from PicardTools to use')
         parser.add_argument('-o', '--out-dir', type=str,
                             action='store', default='./',
                             help='Where you want to save the downsampled bams'
@@ -136,7 +153,8 @@ class Usage(Exception):
 
 # Class: Downsample
 class Downsample(object):
-    def __init__(self, bams, sample_ids, jar, iter_per_percentage, step_size,
+    def __init__(self, bams, sample_ids, jar, iter_per_percentage,
+                 min_reads, max_reads, step_size, reads_multiplier,
                  random_seed_base, out_dir, name, out_sh=None, submit=True,
                  queue_type='PBS'):
         """Any CamelCase here is directly copied from the STAR inputs for
@@ -152,7 +170,18 @@ class Downsample(object):
 
         commands = []
         for bam, sample_id in zip(bams, sample_ids):
-            for downsample_prob in np.arange(step_size, 1, step_size):
+            flagstat = 'samtools flagstat {}'.format(bam)
+            p = subprocess.Popen(shlex.split(flagstat),
+                                 stdout=subprocess.PIPE,
+                                 stderr=subprocess.PIPE)
+            out, err = p.communicate()
+            n_read1 = float(out.split('\n')[4].split()[0]) / reads_multiplier
+
+            vmin = min_reads
+            vmax = n_read1 if max_reads is None else max_reads
+
+            for reads in np.arange(vmin, vmax, step_size):
+                downsample_prob = reads / n_read1
                 for i in range(iter_per_percentage):
                     out_bam = '{}_prob{}_iter{}.bam'.format(sample_id,
                                                             downsample_prob, i)
@@ -202,12 +231,17 @@ if __name__ == '__main__':
             bams = [bam]
             sample_ids = [sample_id]
 
+        min_reads = cl.args['min_reads']
+        max_reads = cl.args['max_reads']
+        reads_multiplier = cl.args['reads_multiplier']
+
         jar = cl.args['jar']
-        iter_per_percentage = cl.args['iter_per_percentage']
+        iter_per_percentage = cl.args['iter_per_downsample']
         step_size = cl.args['step_size']
         random_seed_base = cl.args['random_seed_base']
 
-        Downsample(bams, sample_ids, jar, iter_per_percentage, step_size,
+        Downsample(bams, sample_ids, jar, iter_per_percentage,
+                   min_reads, max_reads, step_size, reads_multiplier,
                    random_seed_base, out_dir, name, out_sh, submit, queue_type)
 
     except Usage, err:
