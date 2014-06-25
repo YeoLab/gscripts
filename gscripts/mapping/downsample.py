@@ -52,7 +52,7 @@ class CommandLine(object):
         bam.add_argument('--bam',
                          type=str, action='store',
                          help='Bam file to downsample')
-        bam.add_argument('--bam-list',
+        bam.add_argument('--sample-info',
                          type=str, action='store',
                          help='A file containing names of bam files to '
                               'downsample on separate lines, '
@@ -77,7 +77,8 @@ class CommandLine(object):
                                  'Helpful if you have a sample with 100 '
                                  'million reads but you only want to '
                                  'downsample every 1 million read up to 25 '
-                                 'million reads.')
+                                 'million reads. If not specified, then up to '
+                                 'the maximum number of reads in the bam file')
 
         parser.add_argument('--reads-multipler', type=float, action='store',
                             default=1e6,
@@ -219,7 +220,7 @@ if __name__ == '__main__':
             raise ValueError('If "--bam" is provided, "--sample-id" is also '
                              'required.')
 
-        if cl.args['bams'] is not None:
+        if cl.args['sample_info'] is not None:
             bams = []
             sample_ids = []
             with open(cl.args['bams']) as f:
