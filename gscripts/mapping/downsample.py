@@ -184,8 +184,8 @@ class Downsample(object):
             for reads in np.arange(vmin, vmax, step_size):
                 downsample_prob = reads / n_read1
                 for i in range(iter_per_percentage):
-                    out_bam = '{}_prob{}_iter{}.bam'.format(sample_id,
-                                                            downsample_prob, i)
+                    out_bam = '{}_{:.0e}reads_iter{}.bam'.format(sample_id,
+                                                                 reads, i)
                     random_seed = random_seed_base + i
                     commands.append(
                         '{} INPUT={} OUTPUT={} RANDOM_SEED={} PROBABILITY={} CREATE_INDEX=true'.format(
