@@ -223,7 +223,7 @@ if __name__ == '__main__':
         if cl.args['sample_info'] is not None:
             bams = []
             sample_ids = []
-            with open(cl.args['bams']) as f:
+            with open(cl.args['sample_info']) as f:
                 for line in f:
                     line = line.strip().split()
                     bams.append(line[0])
