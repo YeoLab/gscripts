@@ -62,7 +62,7 @@ class CommandLine(object):
                             help='Sample ID to prefix the output bam files'
                                  '. Required if providing a single bam '
                                  'file.')
-        parser.add_arbument('-j', '--jar',
+        parser.add_argument('-j', '--jar',
                             default="/projects/ps-yeolab/software/picard-tools-1.93/DownsampleSam.jar",
                             type=str, action='store',
                             help='The Java Archive from PicardTools to use')
