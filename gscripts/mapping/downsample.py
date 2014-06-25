@@ -55,9 +55,9 @@ class CommandLine(object):
                          help='A file containing names of bam files to '
                               'downsample on separate lines, '
                               'and tab-separated with sample ids (no '
-                              'header), e.g.:\n'
-                              'sample1.bam\tcontrol\n'
-                              'sample2.bam\ttreatment\n')
+                              'header), e.g.:'
+                              'sample1.bam\\tcontrol\\n'
+                              'sample2.bam\\ttreatment\\n')
         parser.add_argument('--sample-id', type=str, action='store',
                             help='Sample ID to prefix the output bam files'
                                  '. Required if providing a single bam '
