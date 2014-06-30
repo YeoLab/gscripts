@@ -68,11 +68,12 @@ class Submitter(object):
             File to write that will be submitted to the queue. By default,
             the job name + .sh
         array : bool
-            Whether or not to write an array job
+            Whether or not to write an array job. Default False.
         nodes : int
-            Number of nodes to use on TSCC
+            Number of nodes to use on TSCC. Default 1.
         ppn : int
-            Number of "processors per node" to use on TSCC. Maximum is 16.
+            Number of "processors per node" to use on TSCC. Default 1. Maximum
+            is 16.
         walltime : str
             String of the format hours:minutes:seconds, e.g. '1:30:24' will
             submit a job for 1 hour, 30 minutes, and 24 seconds.
