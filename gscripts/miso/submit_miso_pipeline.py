@@ -65,23 +65,22 @@ class CommandLine(object):
         samples.add_argument('--sample-info', type=str, action='store',
                              help='A tab-delimited file with Bam files as '
                                   'column 1 and the sample Ids as column 2 ('
-                                  'no header). In conjunction with '
-                                  '"--actually-submit", this will submit an '
+                                  'no header). If "--do-not-submit" is off, '
+                                  'this will submit an '
                                   'array job to be a nice cluster user')
 
         self.parser.add_argument('--sample-id', type=str,
                                  action='store',
                                  help='sample ID. required if using --bam',
                                  required=False)
-        self.parser.add_argument('--debug', action='store_true',
-                                 default=False,
-                                 help="Don't make any files, just print "
-                                      "everything that would have been made")
         self.parser.add_argument('--genome', type=str, action='store',
                                  required=True, help='Which genome to use')
         self.parser.add_argument('--output-sh', type=str, required=True,
                                  action='store',
-                                 help="The name of the .sh script created for one-touch action")
+                                 help="The name of the .sh script created for "
+                                      "one-touch action. Not used with "
+                                      "'--sample-info', where each sample "
+                                      "gets its own sh file.")
         self.parser.add_argument('--extra-miso-arguments', type=str,
                                  action='store',
                                  default='',
@@ -140,8 +139,6 @@ class MisoPipeline(object):
     def __init__(self, bam, sample_info_file,
                  sample_id, output_sh,
                  genome,
-
-                 debug=False,
                  extra_miso_arguments='',
                  submit=False):
         """
@@ -159,7 +156,7 @@ class MisoPipeline(object):
         self.sample_info_file = sample_info_file
 
         if self.sample_info_file is not None:
-            sample_info = pd.read_table(self.sample_info_file)
+            sample_info = pd.read_table(self.sample_info_file, header=None)
             self.bams = sample_info[0]
             self.sample_ids = sample_info[1]
             self.sh_files = ['{}.miso.sh'.format(bam) for bam in self.bams]
@@ -171,8 +168,6 @@ class MisoPipeline(object):
             self.multiple_samples = False
 
         self.genome = genome
-        self.debug = debug
-        self.extra_miso_arguments = extra_miso_arguments
         self.submit = submit
 
         all_samples_commands = []
@@ -194,7 +189,7 @@ class MisoPipeline(object):
 
         if self.multiple_samples:
             sub = Submitter(all_samples_commands, job_name='miso',
-                            sh_filename=output_sh,
+                            sh_filename='miso.qsub.sh',
                             array=True, ppn=16, walltime='1:00:00')
             sub.job(submit=self.submit)
 
@@ -293,7 +288,6 @@ def main():
                      cl.args['sample_id'],
                      cl.args['output_sh'],
                      cl.args['genome'],
-                     debug=cl.args['debug'],
                      extra_miso_arguments=cl.args['extra_miso_arguments'],
                      submit=submit)
 
