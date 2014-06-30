@@ -43,7 +43,7 @@ class Submitter(object):
     """
 
 
-    def __init__(self, commands, job_name, queue_type=None, sh_filename=None,
+    def __init__(self, commands, job_name, queue_type='PBS', sh_filename=None,
                  array=None, nodes=1, ppn=1,
                  walltime='0:30:00', queue='home', account='yeo-group',
                  out_filename=None, err_filename=None,
