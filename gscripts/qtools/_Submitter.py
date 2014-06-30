@@ -43,7 +43,7 @@ class Submitter(object):
     """
 
 
-    def __init__(self, commands, job_name, queue_type=None, sh_filename=None,
+    def __init__(self, commands, job_name, queue_type='PBS', sh_filename=None,
                  array=None, nodes=1, ppn=1,
                  walltime='0:30:00', queue='home', account='yeo-group',
                  out_filename=None, err_filename=None,
@@ -68,11 +68,12 @@ class Submitter(object):
             File to write that will be submitted to the queue. By default,
             the job name + .sh
         array : bool
-            Whether or not to write an array job
+            Whether or not to write an array job. Default False.
         nodes : int
-            Number of nodes to use on TSCC
+            Number of nodes to use on TSCC. Default 1.
         ppn : int
-            Number of "processors per node" to use on TSCC. Maximum is 16.
+            Number of "processors per node" to use on TSCC. Default 1. Maximum
+            is 16.
         walltime : str
             String of the format hours:minutes:seconds, e.g. '1:30:24' will
             submit a job for 1 hour, 30 minutes, and 24 seconds.
@@ -92,7 +93,8 @@ class Submitter(object):
         write_and_submit : bool
             Whether or not to also write and submit the script. Just
             instantiating this object does NOT submit any job. Need to do
-            Submitter.job() afterwards
+            Submitter.job() afterwards. This is a convenience method for when
+            submitting an array job with more than 500 commands.
 
 
         Returns
@@ -135,27 +137,9 @@ class Submitter(object):
         self.account = account
         self.max_running = max_running
 
-
-        # PBS/TSCC does not allow array jobs with more than 500 commands
-        if len(self.commands) > MAX_ARRAY_JOBS and self.array:
-            commands = self.commands
-            name = self.job_name
-            commands_list = [commands[i:(i + MAX_ARRAY_JOBS)]
-                             for i in xrange(0, len(commands), MAX_ARRAY_JOBS)]
-            for i, commands in enumerate(commands_list):
-                job_name = '{}{}'.format(name, i + 1)
-                sh_filename = '{}{}.sh'.format(self.sh_filename.rstrip('.sh'),
-                                               i + 1)
-                sub = Submitter(commands=commands, job_name=job_name,
-                                sh_filename=sh_filename, array=True,
-                                walltime=self.walltime, ppn=self.ppn,
-                                nodes=self.nodes, queue=self.queue,
-                                queue_type=self.queue_type,
-                                write_and_submit=True)
-                # sub.write_sh(**kwargs)
-
         if write_and_submit:
             self.job(submit=True)
+
 
     @property
     def array(self):
@@ -245,6 +229,24 @@ class Submitter(object):
         ------
 
         """
+        # PBS/TSCC does not allow array jobs with more than 500 commands
+        if len(self.commands) > MAX_ARRAY_JOBS and self.array:
+            commands = self.commands
+            name = self.job_name
+            commands_list = [commands[i:(i + MAX_ARRAY_JOBS)]
+                             for i in xrange(0, len(commands), MAX_ARRAY_JOBS)]
+            for i, commands in enumerate(commands_list):
+                job_name = '{}{}'.format(name, i + 1)
+                sh_filename = '{}{}.sh'.format(self.sh_filename.rstrip('.sh'),
+                                               i + 1)
+                sub = Submitter(commands=commands, job_name=job_name,
+                                sh_filename=sh_filename, array=True,
+                                walltime=self.walltime, ppn=self.ppn,
+                                nodes=self.nodes, queue=self.queue,
+                                queue_type=self.queue_type,
+                                write_and_submit=True)
+                # sub.write_sh(**kwargs)
+
         # sys.stderr.write(self.sh_filename)
         sh_file = open(self.sh_filename, 'w')
         sh_file.write("#!/bin/bash\n")
