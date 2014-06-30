@@ -270,7 +270,6 @@ def main():
                      cl.args['sample_id'],
                      cl.args['output_sh'],
                      cl.args['genome'],
-                     extra_miso_arguments=cl.args['extra_miso_arguments'],
                      submit=submit)
 
     # If not all the correct arguments are given, break the program and
