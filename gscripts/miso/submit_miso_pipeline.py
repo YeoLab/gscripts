@@ -8,7 +8,7 @@ import pandas as pd
 import sys
 
 # Submit jobs to the cluster
-from ..qtools import Submitter
+from gscripts.qtools import Submitter
 
 
 '''
@@ -101,8 +101,8 @@ class CommandLine(object):
                                       'quote and the first dash of the miso '
                                       'argument. For some reason this helps..'
                                       '..')
-        self.parser.add_argument('--do-not-submit', type=bool,
-                                 action='store', default=False,
+        self.parser.add_argument('--do-not-submit',
+                                 action='store_true', default=False,
                                  help='Whether or not to actually submit the '
                                       'final file.')
 
@@ -224,15 +224,15 @@ class MisoPipeline(object):
             commands.append('\n\n# calculate Psi scores for'
                             ' all {} events'.format(event_type))
             commands.append('mkdir -p {}'.format(out_dir))
-            commands.append('python /projects/ps-yeolab/software/bin/miso \
+            commands.append("python /projects/ps-yeolab/software/bin/miso \
          --run /projects/ps-yeolab/genomes/{0}/miso/{1}_index \
          {2} --output-dir {3} \
          --read-len $READ_LEN \
-         --settings-filename /projects/ps-yeolab/genomes/hg19/miso_annotations'
-                            '/miso_settings_min_event_reads10.txt \
+         --settings-filename /projects/ps-yeolab/genomes/hg19/miso_annotations"
+                            "/miso_settings_min_event_reads10.txt \
  -p 16 \
- > {6} \
- 2> {7}'.format(self.genome, event_type, bam, out_dir,
+ > {4} \
+ 2> {5}".format(self.genome, event_type, bam, out_dir,
                 psi_out, psi_err))
 
             commands.append("\n# Check that the psi calculation jobs didn't "
@@ -261,11 +261,11 @@ fi\n".format(out_dir, event_type))
             commands.append("# '-s' returns true if file size is nonzero, "
                             "and the error file should be empty.")
             commands.append("""if [ -s {0}/summary.err ] ; then
-            #rm -rf {0}\n
-            echo 'MISO psi failed on event type: {1}'
-            exit 1
-        fi
-        """.format(out_dir, event_type))
+    #rm -rf {0}\n
+    echo 'MISO psi failed on event type: {1}'
+    exit 1
+fi
+""".format(out_dir, event_type))
 
         with open(sh_file, 'w') as f:
             f.write('\n'.join(commands))
