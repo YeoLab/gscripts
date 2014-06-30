@@ -20,6 +20,7 @@ scripts = [
     'general/gsnap_index.py',
     'ipython_server/serve_ipython.py',
     'mapping/convert_sam.py',
+    'mapping/downsample.py',
     'mapping/sort_bam.py',
     'mapping/index_bam.py',
     'mapping/map_paired_or_single_with_STAR.py',
@@ -65,8 +66,7 @@ setup(
                       'matplotlib >= 1.1.0',
                       'pybedtools >= 0.5',
                       'scikit-learn >= 0.13.0',
-                      'clipper'
-    ],
+                      'clipper'],
 
     setup_requires=["setuptools_git >= 0.3", ],
 
