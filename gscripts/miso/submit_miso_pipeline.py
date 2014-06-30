@@ -78,8 +78,10 @@ class CommandLine(object):
         self.parser.add_argument('--output-sh', type=str, required=False,
                                  action='store',
                                  help="The name of the .sh script created for "
-                                      "one-touch action. Not used with "
-                                      "'--sample-info', where each sample "
+                                      "one-touch action. Required if using "
+                                      "'--bam' for a single sample."
+                                      "Not used with '--sample-info', "
+                                      "where each sample "
                                       "gets its own sh file.")
         self.parser.add_argument('--do-not-submit',
                                  action='store_true', default=False,
