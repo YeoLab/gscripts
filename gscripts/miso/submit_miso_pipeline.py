@@ -75,31 +75,12 @@ class CommandLine(object):
                                  required=False)
         self.parser.add_argument('--genome', type=str, action='store',
                                  required=True, help='Which genome to use')
-        self.parser.add_argument('--output-sh', type=str, required=True,
+        self.parser.add_argument('--output-sh', type=str, required=False,
                                  action='store',
                                  help="The name of the .sh script created for "
                                       "one-touch action. Not used with "
                                       "'--sample-info', where each sample "
                                       "gets its own sh file.")
-        self.parser.add_argument('--extra-miso-arguments', type=str,
-                                 action='store',
-                                 default='',
-                                 help='Any additional MISO "compute psi" '
-                                      'arguments you want'
-                                      ' to supply to all the samples. The '
-                                      'default is no additional arguments. '
-                                      'Protect this argument with quotes so '
-                                      'it does not get interpreted as an '
-                                      'argument to the MISO pipeline script, '
-                                      'e.g. --extra-miso-arguments " '
-                                      '--no-filter-events'
-                                      ' --settings-filename '
-                                      'miso_settings_min_event_reads5.txt". '
-                                      'If this is not working for you, '
-                                      'try adding a space between the first '
-                                      'quote and the first dash of the miso '
-                                      'argument. For some reason this helps..'
-                                      '..')
         self.parser.add_argument('--do-not-submit',
                                  action='store_true', default=False,
                                  help='Whether or not to actually submit the '
@@ -139,7 +120,6 @@ class MisoPipeline(object):
     def __init__(self, bam, sample_info_file,
                  sample_id, output_sh,
                  genome,
-                 extra_miso_arguments='',
                  submit=False):
         """
         Parameters
