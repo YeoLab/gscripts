@@ -10,6 +10,7 @@ import sys
 # Submit jobs to the cluster
 from gscripts.qtools import Submitter
 
+WALLTIME = '2:00:00'
 
 '''
 Author: olga
@@ -83,6 +84,9 @@ class CommandLine(object):
                                       "Not used with '--sample-info', "
                                       "where each sample "
                                       "gets its own sh file.")
+        self.parser.add_argument('--walltime',
+                                 action='store', default='1:00:00',
+                                 help='Walltime of each submitted job.')
         self.parser.add_argument('--do-not-submit',
                                  action='store_true', default=False,
                                  help='Whether or not to actually submit the '
@@ -121,7 +125,7 @@ class Usage(Exception):
 class MisoPipeline(object):
     def __init__(self, bam, sample_info_file,
                  sample_id, output_sh,
-                 genome,
+                 genome, walltime,
                  submit=False):
         """
         Parameters
@@ -150,6 +154,7 @@ class MisoPipeline(object):
             self.multiple_samples = False
 
         self.genome = genome
+        self.walltime = walltime
         self.submit = submit
 
         all_samples_commands = []
@@ -163,7 +168,7 @@ class MisoPipeline(object):
                 commands = [sh_command]
                 sub = Submitter(commands, job_name='miso',
                                 sh_filename='{}.qsub.sh'.format(sh_file),
-                                ppn=16, walltime='1:00:00')
+                                ppn=16, walltime=self.walltime)
                 sub.job(submit=self.submit)
 
             if self.multiple_samples:
@@ -172,7 +177,7 @@ class MisoPipeline(object):
         if self.multiple_samples:
             sub = Submitter(all_samples_commands, job_name='miso',
                             sh_filename='miso.qsub.sh',
-                            array=True, ppn=16, walltime='1:00:00')
+                            array=True, ppn=16, walltime=self.walltime)
             sub.job(submit=self.submit)
 
     def _write_single_sample(self, bam, sample_id, sh_file):
@@ -270,6 +275,7 @@ def main():
                      cl.args['sample_id'],
                      cl.args['output_sh'],
                      cl.args['genome'],
+                     cl.args['walltime'],
                      submit=submit)
 
     # If not all the correct arguments are given, break the program and
