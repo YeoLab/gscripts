@@ -210,16 +210,16 @@ class AnalizeCLIPSeq extends QScript {
 	     add(new BedToBigBed(inBed = fixed_clipper_output, genomeSize = chromSizeLocation(genome), outBigBed = bigBed_output))
 
       	     add(new ClipAnalysis(bamFile, clipper_output, genome, clipper_output_metrics, 
-	     	     		  regions_location = regionsLocation(genome), AS_Structure = asStructureLocation(genome), 
-				  genome_location = genomeLocation(genome), phastcons_location = phastconsLocation(genome), 
-				  gff_db = gffDbLocation(genome), bw_pos=bigWigFilePos, bw_neg=bigWigFileNeg))
+	    	     		  regions_location = regionsLocation(genome), AS_Structure = asStructureLocation(genome), 
+	     			  genome_location = genomeLocation(genome), phastcons_location = phastconsLocation(genome), 
+	     			  gff_db = gffDbLocation(genome), bw_pos=bigWigFilePos, bw_neg=bigWigFileNeg))
 
 	     add(new BamToBed(inBam=bamFile, outBed=rmDupedBedFile))
       	     add(new Pyicoclip(inBed = rmDupedBedFile, outBed = pyicoclipResults, regions = genicRegionsLocation(genome) ))
 
-	     var ripseeker = new RipSeeker
-	     ripseeker.inBam = bamFile
-	     ripseeker.outBed = swapExt(bamFile, ".bam", ".ripseeker.bed")
+	     //var ripseeker = new RipSeeker
+	     //ripseeker.inBam = bamFile
+	     //ripseeker.outBed = swapExt(bamFile, ".bam", ".ripseeker.bed")
      
 	     var piranha = new Piranha
 	     piranha.inBam = bamFile
@@ -229,9 +229,9 @@ class AnalizeCLIPSeq extends QScript {
 	     clipClassic.inBam = bamFile
 	     clipClassic.species = genome
 
-	     add(ripseeker, piranha, clipClassic)
+	     //add(ripseeker, piranha, clipClassic)
 
-      	     add(new IDR(inBam = bamFile, species = genome, genome = chromSizeLocation(genome), outResult = IDRResult, premRNA = premRNA))
+      	     //add(new IDR(inBam = bamFile, species = genome, genome = chromSizeLocation(genome), outResult = IDRResult, premRNA = premRNA))
 
       	     add(new countTags(input = bamFile, index = bamIndex, output = countFile, a = exonLocation(genome)))
       	     add(new singleRPKM(input = countFile, output = RPKMFile, s = genome))

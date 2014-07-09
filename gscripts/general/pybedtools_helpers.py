@@ -222,7 +222,7 @@ def convert_to_mRNA_position(interval, gene_model):
                 tmp_start = running_length + (region.stop - interval.end)
                 tmp_end = running_length + (region.stop - interval.start)
 
-            if int(tmp_start) == 0 or int(tmp_end) == 0:
+            if int(tmp_start) <= 0 or int(tmp_end) <= 0:
                 tmp_start = 1
                 tmp_end = 1
 
