@@ -13,7 +13,7 @@ class CommandLine(object):
         self.parser = parser = argparse.ArgumentParser(
             description='Search miso outputs for log_score of nan and save '
                         'them to a file for that sample')
-        parser.add_argument('job_name', required=False,
+        parser.add_argument('--name', required=False,
                             type=str, action='store',
                             default='find_nan_miso_events',
                             help='Name of the job submitted to the cluster')
