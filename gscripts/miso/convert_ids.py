@@ -1,8 +1,9 @@
+from collections import defaultdict
+import sys
+
 import numpy as np
 import gffutils
-from collections import defaultdict
 import pandas as pd
-import sys
 
 
 def miso_exon_to_gencode_exon(exon):

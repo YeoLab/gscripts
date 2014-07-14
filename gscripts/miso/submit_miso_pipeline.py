@@ -2,10 +2,12 @@
 # coding=utf-8
 
 # Parse command line arguments
-import argparse
 import os
-import pandas as pd
 import sys
+
+import argparse
+import pandas as pd
+
 
 # Submit jobs to the cluster
 from gscripts.qtools import Submitter
