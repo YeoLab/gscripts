@@ -246,6 +246,7 @@ class Submitter(object):
                                 queue_type=self.queue_type,
                                 write_and_submit=True)
                 # sub.write_sh(**kwargs)
+            return
 
         # sys.stderr.write(self.sh_filename)
         sh_file = open(self.sh_filename, 'w')
