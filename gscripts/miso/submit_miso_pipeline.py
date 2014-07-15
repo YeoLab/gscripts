@@ -25,29 +25,7 @@ analysis on a large amount of files. This script assumes paired-end reads.
 
 Example runs:
 
-submit_miso_pipeline.py --psi-only --paired-end --event-type SE \
---sample-info-file ~/projects/singlecell/singlecell/sample_info.txt \
---sh-scripts-dir ~/projects/singlecell/scripts/ \
---summary-output-dir-base ~/projects/singlecell/singlecell/analysis/ \
---psi-walltime '0:50:00' --annotation-index-strfmt \
-'/home/yeo-lab/genomes/hg19/miso_annotations/%s_index' \
---sample-id-suffix min10reads \
---extra-miso-arguments ' --settings-filename \
-~/MISO/misopy/settings/miso_settings_min_event_reads10.txt' \
---individual-jobs
 
-submit_miso_pipeline.py --psi-only --paired-end --event-type SE --sample-info-file ~/projects/singlecell/singlecell/sample_info_round2and3.txt --sh-scripts-dir ~/projects/singlecell/scripts/ --summary-output-dir-base ~/projects/singlecell/singlecell/analysis/ --psi-walltime '1:50:00' --annotation-index-strfmt '/home/yeo-lab/genomes/hg19/miso_annotations/%s_index' --sample-id-suffix min10reads --extra-miso-arguments ' --settings-filename ~/MISO/misopy/settings/miso_settings_min_event_reads10.txt' --individual-jobs
-
-submit_miso_pipeline.py --psi-only --single-end --event-type SE \
---sample-info-file ~/projects/singlecell/singlecell/sample_info.txt \
---sh-scripts-dir ~/projects/singlecell/scripts/ \
---summary-output-dir-base ~/projects/singlecell/singlecell/analysis/ \
---psi-walltime '0:50:00' \
---annotation-index-strfmt '/home/obotvinnik/genomes/hg19/miso_annotations/%s_index'
-
-
-submit_miso_pipeline.py --run-all --single-bam $BAM $SAMPLE_ID\
---num-processes 16
 
 TODO: deprecate the non-queue way of running
 '''
@@ -71,7 +49,6 @@ class CommandLine(object):
                                   'no header). If "--do-not-submit" is off, '
                                   'this will submit an '
                                   'array job to be a nice cluster user')
-
         self.parser.add_argument('--sample-id', type=str,
                                  action='store',
                                  help='sample ID. required if using --bam',
