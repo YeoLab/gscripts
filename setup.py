@@ -66,7 +66,7 @@ setup(
                       'matplotlib >= 1.1.0',
                       'pybedtools >= 0.5',
                       'scikit-learn >= 0.13.0',
-                      'matplotlib_venn'
+                      'matplotlib_venn',
                       'clipper'
     ],
 
