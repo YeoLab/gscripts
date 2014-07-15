@@ -107,13 +107,13 @@ def convert_miso_ids_to_everything(miso_ids, db,
 
     n_miso_ids = len(miso_ids)
     sys.stdout.write('Converting {} {} miso ids using {} gffutils database '
-                     'into {}.'.format(n_miso_ids, event_type, str(db),
-                                       out_dir))
+                     'into {}.\n'.format(n_miso_ids, event_type, str(db),
+                                         out_dir))
 
     for i, miso_id in enumerate(miso_ids):
         if i % 100 == 0:
-            sys.stdout.write('On {}/{} {} miso ids'.format(i, n_miso_ids,
-                                                           event_type))
+            sys.stdout.write('On {}/{} {} miso ids\n'.format(i, n_miso_ids,
+                                                             event_type))
         exons = miso_id_to_exon_ids(miso_id)
 
         gencode = set([])
