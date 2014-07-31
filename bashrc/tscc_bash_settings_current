@@ -40,7 +40,7 @@ export PATH=/home/yeo-lab/software/ghc/bin:$PATH
 #export PERL5LIB=/home/yeo-lab/software/perl/lib:/home/yeo-lab/software/perl/site/lib
 
 #making it so I can switch between different version of python quickly
-
+export PYTHONPATH='/opt/scar/lib/':$PYTHONPATH
 #export PYTHONPATH=/opt/scipy/lib64/python2.6/site-packages/:$PYTHONPATH
 #export PYTHONPATH=/home/yeo-lab/software/lib:$PYTHONPATH
 #export PYTHONPATH=/home/yeo-lab/software/lib/python2.7/site-packages:$PYTHONPATH
