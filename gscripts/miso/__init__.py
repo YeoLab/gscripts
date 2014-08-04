@@ -1,8 +1,7 @@
 __author__ = 'olga'
 
-from MisoPipeline._MisoPipeline import MisoPipeline
-
 import pandas as pd
+
 
 def max_csv(x):
     '''
@@ -11,6 +10,7 @@ def max_csv(x):
     or 75112684,75112689 would return 75112689
     '''
     return max(map(int, x.split(',')))
+
 
 def min_csv(x):
     '''
@@ -47,6 +47,6 @@ def read_miso_summary(filename):
          'ci_right_half': (df.miso_posterior_mean - df.ci_low)},
         index=df.index)
     ci_halves_max = pd.DataFrame(ci_halves.max(axis=1),
-                                        columns=['ci_halves_max'])
+                                 columns=['ci_halves_max'])
     return pd.concat([df, genome_location, ci_diff, ci_halves,
                       ci_halves_max], axis=1)

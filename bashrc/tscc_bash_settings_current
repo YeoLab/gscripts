@@ -61,3 +61,4 @@ export HDF5_DIR=/home/yeo-lab/software
 export PATH="/projects/ps-yeolab/software/anaconda/bin:~/bin:$PATH"
 export PYTHONPATH=
 
+export PYTHONPATH='/opt/scar/lib/':$PYTHONPATH

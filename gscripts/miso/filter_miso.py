@@ -1,6 +1,7 @@
 __author__ = 'olga'
-import pandas as pd
 import re
+
+import pandas as pd
 import numpy as np
 
 

@@ -21,6 +21,7 @@ scripts = [
     'ipython_server/serve_ipython.py',
     'mapping/convert_sam.py',
     'mapping/downsample.py',
+    'mapping/genome_generate.py',
     'mapping/sort_bam.py',
     'mapping/index_bam.py',
     'mapping/map_paired_or_single_with_STAR.py',
