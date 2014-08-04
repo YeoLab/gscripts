@@ -67,7 +67,7 @@ setup(
                       'pybedtools >= 0.5',
                       'scikit-learn >= 0.13.0',
                       'matplotlib_venn',
-                      'clipper'
+                      'clipper', 'HTSeq'
     ],
 
     setup_requires=["setuptools_git >= 0.3", ],
