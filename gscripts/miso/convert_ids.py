@@ -1,8 +1,9 @@
+from collections import defaultdict
+import sys
+
 import numpy as np
 import gffutils
-from collections import defaultdict
 import pandas as pd
-import sys
 
 
 def miso_exon_to_gencode_exon(exon):
@@ -49,7 +50,7 @@ def miso_id_to_exon_ids(miso_id):
 
 
 def miso_exon_to_coords(exon):
-    """
+    """Convert a miso exon to gffutils coordinates
 
     >>> miso_exon_to_coords('chr2:130914824:130914969:-')
     ('chr2', '130914824', '130914969', '-')
@@ -75,16 +76,20 @@ def miso_exon_to_coords(exon):
 def convert_miso_ids_to_everything(miso_ids, db,
                                    event_type,
                                    out_dir):
-    """
-    Given a list of miso IDs and a gffutils database, pull out the
-    ensembl/gencode/gene name/gene type/transcript names
+    """Given a list of miso IDs and a gffutils database, pull out the
+    ensembl/gencode/gene name/gene type/transcript names, and write files
+    into the out directory. Does not return a value.
 
-    @param miso_ids:
-    @type miso_ids:
-    @param db:
-    @type db:
-    @return:
-    @rtype:
+    Parameters
+    ----------
+    miso_ids : list of str
+        Miso ids to convert
+    db : gffutils.FeatureDB
+        gffutils feature database created from a gtf file
+    event_type : str
+        The type of splicing event. This is used for naming only
+    out_dir : str
+        Where to write the files to.
     """
     out_dir = out_dir.rstrip('/')
     event_type = event_type.lower()
@@ -100,7 +105,16 @@ def convert_miso_ids_to_everything(miso_ids, db,
     gencode_to_miso = defaultdict(list)
     gene_name_to_miso = defaultdict(list)
 
-    for miso_id in miso_ids:
+    n_miso_ids = len(miso_ids)
+    sys.stdout.write('Converting {} {} miso ids using {} gffutils database '
+                     'into {}.'.format(n_miso_ids, event_type, str(db),
+                                       out_dir))
+
+    for i, miso_id in enumerate(miso_ids):
+        if i % 100 == 0:
+            sys.stdout.write('On {}/{} {} miso ids'.format(i, n_miso_ids,
+                                                           event_type))
+
         exons = miso_id_to_exon_ids(miso_id)
 
         gencode = set([])
