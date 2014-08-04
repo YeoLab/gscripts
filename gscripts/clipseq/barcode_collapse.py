@@ -1,4 +1,4 @@
-""""
+"""
 
 barcode_collapse.py  read in a .bam file where the 
 first 9 nt of the read name 
