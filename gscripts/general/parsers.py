@@ -58,7 +58,10 @@ def rnaseq_metrics(analysis_dir, num_seps=1, sep="."):
            })
 
     #Make some useful stats
-    combined_df["Percent Repetative"] = 1 - (combined_df['Reads Passing Quality Filter'] / combined_df['Input Reads'].astype(float))
+    try:
+        combined_df["Percent Repetative"] = 1 - (combined_df['Reads Passing Quality Filter'] / combined_df['Input Reads'].astype(float))
+    except ZeroDivisionError:
+        pass
     #combined_df["Repetative Reads"] = (combined_df['Input Reads'] - combined_df['Reads Passing Quality Filter']).astype(int)
     #combined_df["Reads After Triming"] = (combined_df['Input Reads'] - combined_df['Too short reads']).astype(int)
 
@@ -97,10 +100,11 @@ def clipseq_metrics(analysis_dir, iclip=False, num_seps=None, sep="."):
     combined_df = pd.merge(combined_df, rm_duped_df, left_index=True, right_index=True, how="outer")
     combined_df = pd.merge(combined_df, spot_df, left_index=True, right_index=True, how="outer")
     combined_df = pd.merge(combined_df, peaks_df, left_index=True, right_index=True, how="outer")
-
-    combined_df["Percent Usable / Input"] = (combined_df['Usable Reads'] / combined_df['Uniquely Mapped Reads']) * 100
-    combined_df["Percent Usable / Mapped"] = (combined_df['Usable Reads'] / combined_df['Input Reads']) * 100
-
+    try:
+        combined_df["Percent Usable / Input"] = (combined_df['Usable Reads'] / combined_df['Uniquely Mapped Reads']) * 100
+        combined_df["Percent Usable / Mapped"] = (combined_df['Usable Reads'] / combined_df['Input Reads']) * 100
+    except ZeroDivisionError:
+        pass
     return combined_df
 
 def parse_star_file(star_file_name):
