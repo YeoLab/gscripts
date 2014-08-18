@@ -198,8 +198,10 @@ def script() {
     
     
     val fileList = QScriptUtils.createArgsFromFile(input)
-    var trackHubFiles: List[File] = List()
+    var posTrackHubFiles: List[File] = List()
+    var negTrackHubFiles: List[File] = List()
     var splicesFiles: List[File] = List()
+    var speciesList: List[File] = List()
     var bamFiles: List[File] = List()
     var singleEnd = true
 
@@ -260,6 +262,7 @@ def script() {
 
       splicesFiles = splicesFiles ++ List(oldSpliceOut)      
       bamFiles = bamFiles ++ List(rgSortedBamFile)
+      speciesList = speciesList ++ List(species)
 
       add(new sortSam(samFile, sortedBamFile, SortOrder.coordinate))
       add(addOrReplaceReadGroups(sortedBamFile, rgSortedBamFile))
@@ -268,7 +271,8 @@ def script() {
       
       add(new RiboSeqCoverage(inBam = rgSortedBamFile, outBed = bedFileAdjusted))
       val (bigWigFilePos: File, bigWigFileNeg: File) = makeBigWig(bedFileAdjusted, rgSortedBamFile, species = species)
-      trackHubFiles = trackHubFiles ++ List(bigWigFilePos, bigWigFileNeg)
+      posTrackHubFiles = posTrackHubFiles ++ List(bigWigFilePos)
+      negTrackHubFiles = negTrackHubFiles ++ List(bigWigFileNeg)
       	
       add(new countTags(input = rgSortedBamFile, index = indexedBamFile, output = countFile, species = species))
       add(new singleRPKM(input = countFile, output = RPKMFile, s = species))
@@ -277,12 +281,22 @@ def script() {
       add(new Miso(inBam = rgSortedBamFile, species = species, pairedEnd = !singleEnd, output = misoOut))
     
     }
-    //add(new MakeTrackHub(trackHubFiles, location, species))
-    //add(parseOldSplice(splicesFiles, species = species))
-    //var rnaseqc = new File("rnaseqc.txt")
-    //add(new makeRNASeQC(input = bamFiles, output = rnaseqc))
-    //add(new runRNASeQC(in = rnaseqc, out = "rnaseqc", single_end = singleEnd))
 
+    def tuple2ToList[T](t: (T,T)): List[T] = List(t._1, t._2)
+    for ((species, files) <- posTrackHubFiles zip negTrackHubFiles zip speciesList groupBy {_._2}) {
+        var trackHubFiles = files map {_._1} map tuple2ToList reduceLeft {(a,b) => a ++ b}
+        add(new MakeTrackHub(trackHubFiles, location=location + "_" + species, genome=species))
+    }
+
+    for ((species, files) <- speciesList zip splicesFiles groupBy {_._1}) {
+        add(parseOldSplice(files map {_._2}, species = species))
+    }
+
+    for ((species, files) <- speciesList zip bamFiles groupBy {_._1}) {
+        var rnaseqc = new File("rnaseqc_" + species + ".txt")
+        add(new makeRNASeQC(input = files map {_._2}, output = rnaseqc))
+        add(new runRNASeQC(in = rnaseqc, out = "rnaseqc_" + species, single_end = singleEnd, species = species))
+    }
   }
 }
 

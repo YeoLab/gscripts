@@ -243,7 +243,9 @@ class AnalizeCLIPSeq extends QScript {
   def script() {
 
     val fileList = QScriptUtils.createArgsFromFile(input)
-    var trackHubFiles: List[File] = List()
+    var posTrackHubFiles: List[File] = List()
+    var negTrackHubFiles: List[File] = List()
+   
     for ((groupName, valueList) <- (fileList groupBy (_._3))) {
     	 var combinedBams : Seq[File] = List()
 	 var genome: String = valueList(0)._2 
