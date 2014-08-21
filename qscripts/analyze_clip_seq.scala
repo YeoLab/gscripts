@@ -27,6 +27,9 @@ class AnalizeCLIPSeq extends QScript {
   @Argument(doc = "use alpha version of STAR")
   var alpha: Boolean = false
 
+  @Argument(doc = "start processing from uncollapsed bam file")
+  var fromBam: Boolean = false
+
   case class clipper(in: File, out: File, genome: String, isPremRNA: Boolean ) extends Clipper 
 {
 
@@ -265,7 +268,7 @@ class AnalizeCLIPSeq extends QScript {
 
       	     val samFile = swapExt(filteredFastq, ".fastq", ".sam")
 	     val rgBamFile = swapExt(samFile, ".sam", ".rg.bam")
-      	     val sortedrgBamFile = swapExt(rgBamFile, ".bam", ".sorted.bam")
+      	     var sortedrgBamFile = swapExt(rgBamFile, ".bam", ".sorted.bam")
 
       	     val NRFFile = swapExt(sortedrgBamFile, ".bam", ".NRF.metrics")
 
@@ -274,18 +277,20 @@ class AnalizeCLIPSeq extends QScript {
 
       	     val sortedrmDupedBamFile = swapExt(rmDupedBamFile, ".bam", ".sorted.bam")
       	     val indexedBamFile = swapExt(sortedrmDupedBamFile, "", ".bai")
-
-      	     add(new FastQC(inFastq = fastq_file))
-
-      	     //filters out adapter reads
-      	     add(cutadapt(fastq_file = fastq_file, noAdapterFastq = noAdapterFastq, adapterReport = adapterReport, adapter = adapter ) )
 	     
-	     add(filterRepetitiveRegions(noAdapterFastq, filterd_results, filteredFastq))
-      	     add(new FastQC(filteredFastq))
-      	     add(star(input = filteredFastq, output = samFile, genome_location = starGenomeLocation(genome)))
-      	     add(addOrReplaceReadGroups(samFile, rgBamFile))
-	     add(sortSam(rgBamFile, sortedrgBamFile, SortOrder.coordinate))
-      	     
+	     if(!fromBam) { 
+      	     	add(new FastQC(inFastq = fastq_file))
+		//filters out adapter reads
+	      	add(cutadapt(fastq_file = fastq_file, noAdapterFastq = noAdapterFastq, adapterReport = adapterReport, adapter = adapter ) )
+	     
+		add(filterRepetitiveRegions(noAdapterFastq, filterd_results, filteredFastq))
+      	     	add(new FastQC(filteredFastq))
+      	     	add(star(input = filteredFastq, output = samFile, genome_location = starGenomeLocation(genome)))
+      	     	add(addOrReplaceReadGroups(samFile, rgBamFile))
+	     	add(sortSam(rgBamFile, sortedrgBamFile, SortOrder.coordinate))
+      	     } else {
+	        sortedrgBamFile = fastq_file
+	     }
       	     add(new CalculateNRF(inBam = sortedrgBamFile, genomeSize = chromSizeLocation(genome), outNRF = NRFFile))
       	     add(new RemoveDuplicates(sortedrgBamFile, rmDupedBamFile, rmDupedMetricsFile))
       	     add(sortSam(rmDupedBamFile, sortedrmDupedBamFile, SortOrder.coordinate))
