@@ -1,5 +1,6 @@
 __author__ = 'olga'
 import re
+import sys
 
 import pandas as pd
 import numpy as np
@@ -37,7 +38,9 @@ def filter_miso_summary(summary, ci_diff_thresh=0.5,
     """
     # summary = summary.ix[summary.ci_halves_max <= ci_halves_max_thresh]
     # summary = summary.ix[summary.ci]
+    original_events = summary.shape[0]
     summary = summary.ix[summary.ci_diff <= ci_diff_thresh]
+    after_ci_events = summary.shape[0]
     isoform_counts = pd.DataFrame.from_dict(dict(zip(summary.index,
                                                      summary.counts.map(
                                                          counts_col_to_dict).values)),
@@ -49,8 +52,15 @@ def filter_miso_summary(summary, ci_diff_thresh=0.5,
     # Filter on at least 10 "junction reads"
     summary = summary.ix[
         specific_isoform_counts >= specific_isoform_counts_thresh]
+    after_counts_events = summary.shape[0]
 
     # Set the index as just the range now that we've filtered everything out
-    summary.index = np.arange(summary.shape[0])
+    summary.index = np.arange(after_counts_events)
+
+    sys.stdout.write('{} events removed with poor confidence (ci >{:.2f}\n'
+                     .format(after_ci_events - original_events, ci_diff_thresh))
+    sys.stdout.write('{} events removed with low read counts which are unique'
+                     ' to individual isoforms (n < {})'.format(
+        after_counts_events - after_ci_events, specific_isoform_counts_thresh))
     return summary
 
