@@ -7,6 +7,7 @@ scripts = [
     'clipseq/run_kasey.py',
     'clipseq/kmer_extractor.py',
     'clipseq/perform_idr.py',
+    'clipseq/remove_softclip.py',
     'clipseq/run_piranha.py',
     'clipseq/run_ripseeker.py',
     'clipseq/demultiplex_barcoded_fastq.py',
@@ -70,7 +71,7 @@ setup(
                       'pybedtools >= 0.5',
                       'scikit-learn >= 0.13.0',
                       'matplotlib_venn',
-                      'clipper'
+                      'clipper', 'HTSeq'
     ],
 
     setup_requires=["setuptools_git >= 0.3", ],

@@ -1,4 +1,4 @@
-""""
+"""
 
 barcode_collapse.py  read in a .bam file where the 
 first 9 nt of the read name 
@@ -20,8 +20,11 @@ import pysam
 #reads are sorted by start site only, not start and stop site, so will need to use a pipeup based stragety
 #for removing reads with same start and stop, simply iterating will not work
 
+def  hamming(word1, word2):
+    return sum( a != b for a, b in zip(word1, word2) )
 
-def collapse_base(reads, outBam, randomer, total_count, removed_count):
+
+def collapse_base(reads, outBam, randomer, total_count, removed_count, max_hamming_distance):
     
     """
     
@@ -38,12 +41,19 @@ def collapse_base(reads, outBam, randomer, total_count, removed_count):
         if barcode in barcode_set:
             removed_count[barcode] += 1
         else:
-            outBam.write(read)
+            add_read = True
+            for cur_barcode in barcode_set:
+                if hamming(barcode, cur_barcode) <= max_hamming_distance:
+                    add_read = False
+            if add_read:
+                outBam.write(read)
             
         total_count[barcode] += 1
         barcode_set[barcode] += 1   
     return barcode_set
-def barcode_collapse(inBam, outBam, randomer):
+
+
+def barcode_collapse(inBam, outBam, randomer, max_hamming_distance):
     
     """
     
@@ -92,7 +102,7 @@ def barcode_collapse(inBam, outBam, randomer):
                 if key_pos >= cur_pos:
                     break
 
-                collapse_base(reads, outBam, randomer, total_count, removed_count)
+                collapse_base(reads, outBam, randomer, total_count, removed_count, max_hamming_distance)
                 del neg_dict[(key_chrom, key_pos)]
 
 
@@ -103,13 +113,13 @@ def barcode_collapse(inBam, outBam, randomer):
                 
                 for x in neg_dict.keys():
                     
-                    collapse_base(neg_dict[x], outBam, randomer, total_count, removed_count)
+                    collapse_base(neg_dict[x], outBam, randomer, total_count, removed_count, max_hamming_distance)
                     del neg_dict[x]
 
                 assert len(neg_dict)  == 0
                 
             #this is kind of a hack, doesn't take into account negative strand barcodes, but as a general idea it works...
-            barcode_set = collapse_base(pos_list, outBam, randomer, total_count, removed_count)
+            barcode_set = collapse_base(pos_list, outBam, randomer, total_count, removed_count, max_hamming_distance)
 
             barcode_counts = np.array(barcode_set.values())
             barcode_probablity = barcode_counts / float(sum(barcode_counts))
@@ -135,10 +145,10 @@ def barcode_collapse(inBam, outBam, randomer):
         prev_chrom = cur_chrom
 
     for x in neg_dict.keys():
-        collapse_base(neg_dict[x], outBam, randomer, total_count, removed_count)
+        collapse_base(neg_dict[x], outBam, randomer, total_count, removed_count, max_hamming_distance)
         del neg_dict[x]
 
-    collapse_base(pos_list, outBam, randomer, total_count, removed_count)
+    collapse_base(pos_list, outBam, randomer, total_count, removed_count, max_hamming_distance)
     
     out_pos = prev_pos
     out_total.write("\t".join(map(str, [out_pos, cur_count])) + "\n")
@@ -150,12 +160,14 @@ def barcode_collapse(inBam, outBam, randomer):
     out_barcodes.close()
     return total_count, removed_count
 
+
 if __name__ == "__main__":
     parser = OptionParser()
     parser.add_option("-b", "--bam", dest="bam", help="bam file to barcode collapse")
     parser.add_option("-c", "--randomer", action="store_true", dest="randomer", help="bam files are iclip barcoded")
     parser.add_option("-o", "--out_file", dest="out_file")
     parser.add_option("-m", "--metrics_file", dest="metrics_file")
+    parser.add_option("-d", "--max_hamming_distance", dest="max_hamming_distance", default=2)
     
     
     (options,args) = parser.parse_args()
@@ -167,6 +179,7 @@ if __name__ == "__main__":
     total_count, removed_count = barcode_collapse(options.bam, 
                                                   options.out_file,
                                                   options.randomer,
+                                                  options.max_hamming_distance
                                                   )
 
     
