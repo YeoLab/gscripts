@@ -57,9 +57,9 @@ def filter_miso_summary(summary, ci_diff_thresh=0.5,
     # Set the index as just the range now that we've filtered everything out
     summary.index = np.arange(after_counts_events)
 
-    sys.stdout.write('{} events removed with poor confidence (ci >{:.2f}\n'
+    sys.stdout.write(' {} events removed with poor confidence (ci >{:.2f})\n'
                      .format(after_ci_events - original_events, ci_diff_thresh))
-    sys.stdout.write('{} events removed with low read counts which are unique'
+    sys.stdout.write(' {} events removed with low read counts which are unique'
                      ' to individual isoforms (n < {})\n'.format(
         after_counts_events - after_ci_events, specific_isoform_counts_thresh))
     return summary
