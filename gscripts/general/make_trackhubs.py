@@ -48,8 +48,8 @@ if __name__ == "__main__":
     if not args.long_label:
         args.long_label = args.short_label
 
-    upload_dir = os.path.join("/zfs/Hubs", args.hub)
-    URLBASE = os.path.join("http://sauron.ucsd.edu/Hubs", args.hub)
+    upload_dir = os.path.join(args.hub)
+    URLBASE = os.path.join("https://s3-us-west-1.amazonaws.com/sauron-yeo/", args.hub)
     GENOME = args.genome
 
     hub = Hub(hub=args.hub,
@@ -139,6 +139,6 @@ if __name__ == "__main__":
     result = hub.render()
     hub.remote_fn = os.path.join(upload_dir, "hub.txt")
     for track in trackdb.tracks:
-        upload_track(track=track, host=args.server, user=args.user)
+        upload_track(track=track, host=args.server, user=args.user, run_s3=True)
 
-    upload_hub(hub=hub, host=args.server, user=args.user)
+    upload_hub(hub=hub, host=args.server, user=args.user, run_s3=True)
