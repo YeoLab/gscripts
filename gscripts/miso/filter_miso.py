@@ -16,8 +16,8 @@ def counts_col_to_dict(counts):
     return dict(map(counts_pair_to_ints, re.findall('\(\d,\d\):\d+,?', counts)))
 
 
-def filter_miso_summary(summary, ci_halves_max_thresh=0.2,
-                        specific_isoform_counts_thresh=10):
+def filter_miso_summary(summary, ci_diff_thresh=0.5,
+                        specific_isoform_counts_thresh=5):
     """Filter a MISO summary dataframe created by gscripts.outputParsers
     .parseMiso.read_miso_summary on the maximum confidence interval half
     size, and number of "junction reads" (reads that are specific to one
@@ -35,14 +35,16 @@ def filter_miso_summary(summary, ci_halves_max_thresh=0.2,
     Raises
     ------
     """
-    summary = summary.ix[summary.ci_halves_max <= ci_halves_max_thresh]
+    # summary = summary.ix[summary.ci_halves_max <= ci_halves_max_thresh]
+    # summary = summary.ix[summary.ci]
+    summary = summary.ix[summary.ci_diff <= ci_diff_thresh]
     isoform_counts = pd.DataFrame.from_dict(dict(zip(summary.index,
                                                      summary.counts.map(
                                                          counts_col_to_dict).values)),
                                             orient='index')
 
     # Get counts that support only one specific isoform "junction reads"
-    specific_isoform_counts = isoform_counts.ix[:, [0, 3]].sum(axis=1)
+    specific_isoform_counts = isoform_counts.ix[:, [(0, 1), (1, 0)]].sum(axis=1)
 
     # Filter on at least 10 "junction reads"
     summary = summary.ix[
