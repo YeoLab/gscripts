@@ -65,7 +65,7 @@ class CommandLine(object):
                                  '. Required if providing a single bam '
                                  'file.')
         parser.add_argument('-t', '--iter-per-downsample',
-                            type=str, action='store', default=3,
+                            type=int, action='store', default=3,
                             help='For each downsampling level, how many '
                                  'iterations to perform')
 
