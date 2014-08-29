@@ -20,8 +20,8 @@ import pysam
 #reads are sorted by start site only, not start and stop site, so will need to use a pipeup based stragety
 #for removing reads with same start and stop, simply iterating will not work
 
-def  hamming(word1, word2):
-    return sum( a != b for a, b in zip(word1, word2) )
+def hamming(word1, word2):
+    return sum(a != b or (a == "N" or b == "N") for a, b in zip(word1, word2))
 
 
 def collapse_base(reads, outBam, randomer, total_count, removed_count, max_hamming_distance):
@@ -170,7 +170,7 @@ if __name__ == "__main__":
     parser.add_option("-d", "--max_hamming_distance", dest="max_hamming_distance", default=2)
     
     
-    (options,args) = parser.parse_args()
+    (options, args) = parser.parse_args()
     
     if not (options.bam.endswith(".bam")):
         raise TypeError("%s, not bam file" % (options.bam))
