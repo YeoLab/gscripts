@@ -91,6 +91,7 @@ def calculate_barcode_frequency(barcode, reads, p_barcode_given_read):
 
 
 def em_collapse_base(reads, outBam, randomer):
+    print "collapsing base"
     barcode_set = {}
     barcodes = []
     for read in reads:
@@ -113,6 +114,7 @@ def em_collapse_base(reads, outBam, randomer):
         if q >= 50:
             outBam.write(read)
 
+    return barcodes_count
 
 def collapse_base(reads, outBam, randomer, total_count, removed_count, max_hamming_distance, em=False):
     
@@ -208,7 +210,7 @@ def barcode_collapse(inBam, outBam, randomer, max_hamming_distance=2, em=False):
                     collapse_base(neg_dict[x], outBam, randomer, total_count, removed_count, max_hamming_distance, em)
                     del neg_dict[x]
 
-                assert len(neg_dict)  == 0
+                assert len(neg_dict) == 0
                 
             barcode_set = collapse_base(pos_list, outBam, randomer, total_count, removed_count, max_hamming_distance, em)
 
