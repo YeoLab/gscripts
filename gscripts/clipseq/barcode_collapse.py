@@ -267,10 +267,11 @@ if __name__ == "__main__":
     parser.add_option("-c", "--randomer", action="store_true", dest="randomer", help="bam files are iclip barcoded")
     parser.add_option("-o", "--out_file", dest="out_file")
     parser.add_option("-m", "--metrics_file", dest="metrics_file")
-    parser.add_option("-d", "--max_hamming_distance", dest="max_hamming_distance", default=2)
+    parser.add_option("-d", "--max_hamming_distance", dest="max_hamming_distance", default=0)
     parser.add_option("-e", "--em", action="store_true", default=False)
 
     (options, args) = parser.parse_args()
+
     
     if not (options.bam.endswith(".bam")):
         raise TypeError("%s, not bam file" % options.bam)
