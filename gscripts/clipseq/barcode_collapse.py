@@ -51,8 +51,11 @@ def memoize_p_read_given_barcode(barcodes, error_rate):
 
 def memoize_p_barcode_given_read(barcodes, p_read_given_barcode, barcodes_frequency):
     result = defaultdict(dict)
-    for barcode, read in itertools.product(barcodes, repeat=2):
-        result[barcode][read] = calculate_p_barcode_given_read(barcode, read, p_read_given_barcode, barcodes_frequency)
+    for read in barcodes:
+        denom = sum((p_read_given_barcode[read][cur_barcode] * barcodes_frequency[cur_barcode]) for cur_barcode in barcodes_frequency)
+        for barcode in barcodes:
+            numerator = (p_read_given_barcode[read][barcode] * barcodes_frequency[barcode])
+            result[barcode][read] = numerator / denom
     return result
 
 
@@ -80,10 +83,6 @@ def calculate_p_barcode_given_read(barcode, read, p_read_given_barcode, barcodes
     :param barcodes_frequency: dict Estimated frequency of read in sample
     :return:
     """
-    numerator = (p_read_given_barcode[read][barcode] * barcodes_frequency[barcode])
-    demoninator = sum((p_read_given_barcode[read][cur_barcode] * barcodes_frequency[cur_barcode]) for cur_barcode in barcodes_frequency)
-    return numerator / demoninator
-
 
 def calculate_barcode_frequency(barcode, reads, p_barcode_given_read):
     result = sum(p_barcode_given_read[barcode][read] for read in reads)
@@ -101,14 +100,14 @@ def em_collapse_base(reads, outBam, randomer):
 
     barcodes_count = Counter(barcodes)
 
-    barcodes_frequency = {barcode: float(count) / sum(barcodes_count.values()) for barcode, count in barcodes_count.items()}
+    barcodes_frequency = {barcode: float(count) / len(barcodes) for barcode, count in barcodes_count.items()}
     error_rate = .05
     p_read_given_barcode = memoize_p_read_given_barcode(barcodes_count, error_rate)
     p_barcode_given_read = memoize_p_barcode_given_read(barcodes_count, p_read_given_barcode, barcodes_frequency)
 
     #check if each tag exists:
     for barcode, bam_read in barcode_set.items():
-        q = -1 * sum(np.log10(1 - p_barcode_given_read[barcode][read]) for read in barcodes)
+        q = -1 * sum(np.log10(1 - p_barcode_given_read[barcode][read]) * count for read, count in barcodes_count.items())
         if q >= 50:
             outBam.write(bam_read)
 
