@@ -11,9 +11,8 @@ Assumes that you have passwordless ssh setup between the two servers you are tra
 '''
 
 import argparse
-import logging
+import re
 import os
-import subprocess
 from itertools import groupby
 
 from trackhub import Hub, GenomesFile, Genome, TrackDb, Track, AggregateTrack
@@ -80,7 +79,9 @@ if __name__ == "__main__":
         files = list(files)
         
         print bw_group, files
-        long_name = os.path.basename(args.sep.join(bw_group[:args.num_sep]))
+
+
+        long_name = re.sub(r'\W+', '', os.path.basename(args.sep.join(bw_group[:args.num_sep])))
         aggregate = AggregateTrack(
             name=long_name,
             tracktype='bigWig',
@@ -108,7 +109,7 @@ if __name__ == "__main__":
             
             split_track = base_track.split(args.sep)
             
-            long_name = args.sep.join(split_track[:args.num_sep] + split_track[-2:]) 
+            long_name = re.sub(r'\W+', '', args.sep.join(split_track[:args.num_sep] + split_track[-2:])) 
             track = Track(
                 name= long_name,
                 url = os.path.join(URLBASE, GENOME, base_track),
@@ -128,7 +129,7 @@ if __name__ == "__main__":
     for bigBed_file in bigBed_files:
         color = "0,100,0" if "pos" in bigBed_file else "100,0,0"
         base_track = os.path.basename(bigBed_file)
-        long_name = args.sep.join(base_track.split(args.sep)[:args.num_sep]) + ".bb"
+        long_name = re.sub(r'\W+', '', args.sep.join(base_track.split(args.sep)[:args.num_sep]) + ".bb")
         track = Track(
             name=long_name,
             url=os.path.join(URLBASE, GENOME, base_track),
