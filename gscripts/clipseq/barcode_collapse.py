@@ -7,8 +7,8 @@ are the barcode and merge reads mapped to the same position that have the same b
 """
 
 
-from collections import Counter, OrderedDict
-import gzip
+from collections import Counter, OrderedDict, defaultdict
+import itertools
 from optparse import OptionParser
 import sys
 
@@ -20,11 +20,100 @@ import pysam
 #reads are sorted by start site only, not start and stop site, so will need to use a pipeup based stragety
 #for removing reads with same start and stop, simply iterating will not work
 
-def  hamming(word1, word2):
-    return sum( a != b for a, b in zip(word1, word2) )
+def hamming(word1, word2):
+    """
+    Gets hamming distance between two words, this is an odd implementation because
+    we actually want Ns to appear similar to other barcodes as this makes the results more stringent, not less
+    :param word1:
+    :param word2:
+    :return:
+    """
+    return sum(a != b and not (a == "N" or b == "N") for a, b in zip(word1, word2))
 
 
-def collapse_base(reads, outBam, randomer, total_count, removed_count, max_hamming_distance):
+def calculate_p_read_given_barcode(read, barcode, error_rate):
+    """
+    Give a read, barcode and error rate predicts the probablity that the given read came from the given barcode
+    :param read: string
+    :param barcode: string
+    :param error_rate: float
+    :return:
+    """
+    return np.power(error_rate, hamming(read, barcode))
+
+
+def memoize_p_read_given_barcode(barcodes, error_rate):
+    result = defaultdict(dict)
+    for read, barcode in itertools.product(barcodes, repeat=2):
+        result[read][barcode] = calculate_p_read_given_barcode(read, barcode, error_rate)
+    return result
+
+
+def memoize_p_barcode_given_read(barcodes, p_read_given_barcode, barcodes_frequency):
+    result = defaultdict(dict)
+    for read in barcodes:
+        denom = sum((p_read_given_barcode[read][cur_barcode] * barcodes_frequency[cur_barcode]) for cur_barcode in barcodes_frequency)
+        for barcode in barcodes:
+            numerator = (p_read_given_barcode[read][barcode] * barcodes_frequency[barcode])
+            result[barcode][read] = numerator / denom
+    return result
+
+
+def memoize_barcodes_frequency(barcodes, reads, p_barcode_given_read):
+    return {barcode: calculate_barcode_frequency(barcode, reads, p_barcode_given_read) for barcode in barcodes}
+
+
+def calculate_p_read_given_barcode(read, barcode, error_rate):
+    """
+    Give a read, barcode and error rate predicts the probablity that the given read came from the given barcode
+    :param read: string
+    :param barcode: string
+    :param error_rate: float
+    :return:
+    """
+    return np.power(error_rate, hamming(read, barcode))
+
+
+def calculate_p_barcode_given_read(barcode, read, p_read_given_barcode, barcodes_frequency):
+    """
+    Given a barcode, read, dict of P(read|barcode) and a frequency of barcodes, predicts P(barcode|read)
+    :param barcode: string
+    :param read: string
+    :param p_read_given_barcode: defaultdict(read: {barcode: Probablity}
+    :param barcodes_frequency: dict Estimated frequency of read in sample
+    :return:
+    """
+
+def calculate_barcode_frequency(barcode, reads, p_barcode_given_read):
+    result = sum(p_barcode_given_read[barcode][read] for read in reads)
+    return result / len(reads)
+
+
+def em_collapse_base(reads, outBam, randomer):
+    barcode_set = {}
+    barcodes = []
+    for read in reads:
+        barcode = read.qname.split(":")[0] if randomer else "total"
+        barcodes.append(barcode)
+        if barcode not in barcode_set:
+            barcode_set[barcode] = read
+
+    barcodes_count = Counter(barcodes)
+
+    barcodes_frequency = {barcode: float(count) / len(barcodes) for barcode, count in barcodes_count.items()}
+    error_rate = .05
+    p_read_given_barcode = memoize_p_read_given_barcode(barcodes_count, error_rate)
+    p_barcode_given_read = memoize_p_barcode_given_read(barcodes_count, p_read_given_barcode, barcodes_frequency)
+
+    #check if each tag exists:
+    for barcode, bam_read in barcode_set.items():
+        q = -1 * sum(np.log10(1 - p_barcode_given_read[barcode][read]) * count for read, count in barcodes_count.items())
+        if q >= 50:
+            outBam.write(bam_read)
+
+    return barcodes_count
+
+def collapse_base(reads, outBam, randomer, total_count, removed_count, max_hamming_distance, em=False):
     
     """
     
@@ -33,27 +122,29 @@ def collapse_base(reads, outBam, randomer, total_count, removed_count, max_hammi
     
     Oddly can't return and add two counters together, it creates another counter and causes the entire thing to be very slow
     """
-    
-    barcode_set = Counter()
-    for read in reads:        
-        barcode = read.qname.split(":")[0] if randomer else "total" 
+    if em:
+        return em_collapse_base(reads, outBam, randomer)
+    else:
+        barcode_set = Counter()
+        for read in reads:
+            barcode = read.qname.split(":")[0] if randomer else "total"
 
-        if barcode in barcode_set:
-            removed_count[barcode] += 1
-        else:
-            add_read = True
-            for cur_barcode in barcode_set:
-                if hamming(barcode, cur_barcode) <= max_hamming_distance:
-                    add_read = False
-            if add_read:
-                outBam.write(read)
-            
-        total_count[barcode] += 1
-        barcode_set[barcode] += 1   
-    return barcode_set
+            if barcode in barcode_set:
+                removed_count[barcode] += 1
+            else:
+                add_read = True
+                for cur_barcode in barcode_set:
+                    if hamming(barcode, cur_barcode) <= max_hamming_distance:
+                        add_read = False
+                if add_read:
+                    outBam.write(read)
+
+            total_count[barcode] += 1
+            barcode_set[barcode] += 1
+        return barcode_set
 
 
-def barcode_collapse(inBam, outBam, randomer, max_hamming_distance):
+def barcode_collapse(inBam, outBam, randomer, max_hamming_distance=2, em=False):
     
     """
     
@@ -102,7 +193,7 @@ def barcode_collapse(inBam, outBam, randomer, max_hamming_distance):
                 if key_pos >= cur_pos:
                     break
 
-                collapse_base(reads, outBam, randomer, total_count, removed_count, max_hamming_distance)
+                collapse_base(reads, outBam, randomer, total_count, removed_count, max_hamming_distance, em)
                 del neg_dict[(key_chrom, key_pos)]
 
 
@@ -113,13 +204,12 @@ def barcode_collapse(inBam, outBam, randomer, max_hamming_distance):
                 
                 for x in neg_dict.keys():
                     
-                    collapse_base(neg_dict[x], outBam, randomer, total_count, removed_count, max_hamming_distance)
+                    collapse_base(neg_dict[x], outBam, randomer, total_count, removed_count, max_hamming_distance, em)
                     del neg_dict[x]
 
-                assert len(neg_dict)  == 0
+                assert len(neg_dict) == 0
                 
-            #this is kind of a hack, doesn't take into account negative strand barcodes, but as a general idea it works...
-            barcode_set = collapse_base(pos_list, outBam, randomer, total_count, removed_count, max_hamming_distance)
+            barcode_set = collapse_base(pos_list, outBam, randomer, total_count, removed_count, max_hamming_distance, em)
 
             barcode_counts = np.array(barcode_set.values())
             barcode_probablity = barcode_counts / float(sum(barcode_counts))
@@ -145,10 +235,10 @@ def barcode_collapse(inBam, outBam, randomer, max_hamming_distance):
         prev_chrom = cur_chrom
 
     for x in neg_dict.keys():
-        collapse_base(neg_dict[x], outBam, randomer, total_count, removed_count, max_hamming_distance)
+        collapse_base(neg_dict[x], outBam, randomer, total_count, removed_count, max_hamming_distance, em)
         del neg_dict[x]
 
-    collapse_base(pos_list, outBam, randomer, total_count, removed_count, max_hamming_distance)
+    collapse_base(pos_list, outBam, randomer, total_count, removed_count, max_hamming_distance, em)
     
     out_pos = prev_pos
     out_total.write("\t".join(map(str, [out_pos, cur_count])) + "\n")
@@ -161,32 +251,36 @@ def barcode_collapse(inBam, outBam, randomer, max_hamming_distance):
     return total_count, removed_count
 
 
+def output_metrics(metrics_file):
+    with open(metrics_file, 'w') as metrics:
+        metrics.write("\t".join(["randomer", "total_count", "removed_count"]) + "\n")
+        for barcode in total_count.keys():
+            metrics.write("\t".join(map(str, [barcode, total_count[barcode], removed_count[barcode]])) + "\n")
+
+
 if __name__ == "__main__":
     parser = OptionParser()
     parser.add_option("-b", "--bam", dest="bam", help="bam file to barcode collapse")
     parser.add_option("-c", "--randomer", action="store_true", dest="randomer", help="bam files are iclip barcoded")
     parser.add_option("-o", "--out_file", dest="out_file")
     parser.add_option("-m", "--metrics_file", dest="metrics_file")
-    parser.add_option("-d", "--max_hamming_distance", dest="max_hamming_distance", default=2)
-    
-    
-    (options,args) = parser.parse_args()
+    parser.add_option("-d", "--max_hamming_distance", dest="max_hamming_distance", default=0)
+    parser.add_option("-e", "--em", action="store_true", default=False)
+
+    (options, args) = parser.parse_args()
+
     
     if not (options.bam.endswith(".bam")):
-        raise TypeError("%s, not bam file" % (options.bam))
+        raise TypeError("%s, not bam file" % options.bam)
 
     pysam.index(options.bam)
     total_count, removed_count = barcode_collapse(options.bam, 
                                                   options.out_file,
                                                   options.randomer,
-                                                  options.max_hamming_distance
+                                                  options.max_hamming_distance,
+                                                  options.em
                                                   )
 
-    
-    with open(options.metrics_file, 'w') as metrics:
-        metrics.write("\t".join(["randomer", "total_count", "removed_count"]) + "\n")
-        for barcode in total_count.keys():
-            metrics.write("\t".join(map(str, [barcode, total_count[barcode], removed_count[barcode]])) + "\n")
-
+    output_metrics(options.metrics_file)
     pysam.index(options.out_file)
     sys.exit(0)
