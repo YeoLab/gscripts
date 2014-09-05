@@ -96,6 +96,7 @@ if __name__ == "__main__":
         
         for track in files:
             base_track = os.path.basename(track)
+            
             color = "0,100,0" if "pos" in track else "100,0,0"
             
             if track.endswith(".bw") or track.endswith('.bigWig'):
@@ -104,13 +105,16 @@ if __name__ == "__main__":
                 tracktype = "bigBed"
             if track.endswith(".bam"):
                 tracktype = "bam"
-
+            
+            split_track = base_track.split(args.sep)
+            
+            long_name = args.sep.join(split_track[:args.num_sep] + split_track[-2:]) 
             track = Track(
-                name= base_track,
+                name= long_name,
                 url = os.path.join(URLBASE, GENOME, base_track),
                 tracktype = tracktype,
-                short_label=base_track,
-                long_label=base_track,
+                short_label=long_name,
+                long_label=long_name,
                 color = color,
                 local_fn = track,
                 remote_fn = os.path.join(upload_dir, GENOME, base_track)
@@ -124,12 +128,13 @@ if __name__ == "__main__":
     for bigBed_file in bigBed_files:
         color = "0,100,0" if "pos" in bigBed_file else "100,0,0"
         base_track = os.path.basename(bigBed_file)
+        long_name = args.sep.join(base_track.split(args.sep)[:args.num_sep]) + ".bb"
         track = Track(
-            name=base_track,
+            name=long_name,
             url=os.path.join(URLBASE, GENOME, base_track),
             tracktype="bigBed",
-            short_label=base_track,
-            long_label=base_track,
+            short_label=long_name,
+            long_label=long_name,
             color=color,
             local_fn=bigBed_file,
             remote_fn=os.path.join(upload_dir, GENOME, base_track),
