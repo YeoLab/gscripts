@@ -18,6 +18,8 @@ from itertools import groupby
 from trackhub import Hub, GenomesFile, Genome, TrackDb, Track, AggregateTrack
 from trackhub.upload import upload_track, upload_hub
 
+def remove_special_chars(string):
+    return re.sub(r'[%+]+', '', string)
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(
@@ -81,7 +83,7 @@ if __name__ == "__main__":
         print bw_group, files
 
 
-        long_name = re.sub(r'%+', '', os.path.basename(args.sep.join(bw_group[:args.num_sep])))
+        long_name = remove_special_chars(os.path.basename(args.sep.join(bw_group[:args.num_sep])))
         aggregate = AggregateTrack(
             name=long_name,
             tracktype='bigWig',
@@ -109,7 +111,7 @@ if __name__ == "__main__":
             
             split_track = base_track.split(args.sep)
             
-            long_name = re.sub(r'%+', '', args.sep.join(split_track[:args.num_sep] + split_track[-2:]))
+            long_name = remove_special_chars(args.sep.join(split_track[:args.num_sep] + split_track[-3:]))
             track = Track(
                 name= long_name,
                 url = os.path.join(URLBASE, GENOME, base_track),
@@ -129,7 +131,7 @@ if __name__ == "__main__":
     for bigBed_file in bigBed_files:
         color = "0,100,0" if "pos" in bigBed_file else "100,0,0"
         base_track = os.path.basename(bigBed_file)
-        long_name = re.sub(r'%+', '', args.sep.join(base_track.split(args.sep)[:args.num_sep]) + ".bb")
+        long_name = remove_special_chars(args.sep.join(base_track.split(args.sep)[:args.num_sep]) + ".bb")
         track = Track(
             name=long_name,
             url=os.path.join(URLBASE, GENOME, base_track),
