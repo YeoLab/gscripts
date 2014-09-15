@@ -202,10 +202,11 @@ def script() {
     
     
     val fileList = QScriptUtils.createArgsFromFile(input)
-    var trackHubFiles: List[File] = List()
+    var posTrackHubFiles: List[File] = List()
+    var negTrackHubFiles: List[File] = List()
     var splicesFiles: List[File] = List()
     var bamFiles: List[File] = List()
-    
+    var speciesList: List[String] = List()
     for (item : Tuple3[File, String, String] <- fileList) {
       var fastqFiles = item._1.toString().split(""";""")
       var species = item._2
@@ -258,7 +259,7 @@ def script() {
 
       splicesFiles = splicesFiles ++ List(oldSpliceOut)      
       bamFiles = bamFiles ++ List(rgSortedBamFile)
-
+      speciesList = speciesList ++ List(species)
 
       
       add(new sortSam(samFile, sortedBamFile, SortOrder.coordinate))
@@ -267,7 +268,8 @@ def script() {
       add(new CalculateNRF(inBam = rgSortedBamFile, genomeSize = chromSizeLocation(species), outNRF = NRFFile))
             
       val (bigWigFilePos: File, bigWigFileNeg: File) = makeBigWig(rgSortedBamFile, species = species)
-      trackHubFiles = trackHubFiles ++ List(bigWigFilePos, bigWigFileNeg)      
+      posTrackHubFiles = posTrackHubFiles ++ List(bigWigFilePos)
+      negTrackHubFiles = negTrackHubFiles ++ List(bigWigFileNeg)
       
       add(new countTags(input = rgSortedBamFile, index = indexedBamFile, output = countFile, species = species))	
       add(new singleRPKM(input = countFile, output = RPKMFile, s = species))
@@ -277,13 +279,22 @@ def script() {
       add(new RnaEditing(inBam = rgSortedBamFile, snpEffDb = species, snpDb = snpDbLocation(species), genome = genomeLocation(species), flipped=flipped, output = rnaEditingOut))
 
     }
+    
+    def tuple2ToList[T](t: (T,T)): List[T] = List(t._1, t._2)
+    for ((species, files) <- posTrackHubFiles zip negTrackHubFiles zip speciesList groupBy {_._2}) {
+    	var trackHubFiles = files map {_._1} map tuple2ToList reduceLeft {(a,b) => a ++ b}
+	add(new MakeTrackHub(trackHubFiles, location=location + "_" + species, genome=species))	 
+    }
 
-    //Need to make multiple arrays given species for these post-processing steps
-    //add(new MakeTrackHub(trackHubFiles, location))
-    //add(parseOldSplice(splicesFiles, species = species))
-    //var rnaseqc = new File("rnaseqc.txt")
-    //add(new makeRNASeQC(input = bamFiles, output = rnaseqc))
-    //add(new runRNASeQC(in = rnaseqc, out = "rnaseqc", single_end = singleEnd, species = species))
+    for ((species, files) <- speciesList zip splicesFiles groupBy {_._1}) {
+	add(parseOldSplice(files map {_._2}, species = species))
+    }
+
+    for ((species, files) <- speciesList zip bamFiles groupBy {_._1}) {
+	var rnaseqc = new File("rnaseqc_" + species + ".txt")    
+	add(new makeRNASeQC(input = files map {_._2}, output = rnaseqc))
+    	add(new runRNASeQC(in = rnaseqc, out = "rnaseqc_" + species, single_end = singleEnd, species = species))
+    }
   }
 }
 

@@ -1,8 +1,9 @@
+from collections import defaultdict
+import sys
+
 import numpy as np
 import gffutils
-from collections import defaultdict
 import pandas as pd
-import sys
 
 
 def miso_exon_to_gencode_exon(exon):
@@ -113,6 +114,7 @@ def convert_miso_ids_to_everything(miso_ids, db,
         if i % 100 == 0:
             sys.stdout.write('On {}/{} {} miso ids'.format(i, n_miso_ids,
                                                            event_type))
+
         exons = miso_id_to_exon_ids(miso_id)
 
         gencode = set([])

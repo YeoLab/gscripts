@@ -3,12 +3,15 @@ from setuptools import setup, find_packages
 
 scripts = [
     'annotations/gencode_annotate_utrs_5p_3p.pl',
-#    'clipseq/run_kasey.py',
     'mirna/miR_splitter.py',
+    'clipseq/barcode_collapse.py',
+    'clipseq/run_kasey.py',
     'clipseq/kmer_extractor.py',
     'clipseq/perform_idr.py',
+    'clipseq/remove_softclip.py',
     'clipseq/run_piranha.py',
     'clipseq/run_ripseeker.py',
+    'clipseq/demultiplex_barcoded_fastq.py',
     'editing/create_rna_editing_makefile.py',
     'general/cat_files.py',
     'general/cat_biogem.py',
@@ -22,6 +25,7 @@ scripts = [
     'ipython_server/serve_ipython.py',
     'mapping/convert_sam.py',
     'mapping/downsample.py',
+    'mapping/genome_generate.py',
     'mapping/sort_bam.py',
     'mapping/index_bam.py',
     'mapping/map_paired_or_single_with_STAR.py',
@@ -67,7 +71,9 @@ setup(
                       'matplotlib >= 1.1.0',
                       'pybedtools >= 0.5',
                       'scikit-learn >= 0.13.0',
-                      'clipper'],
+                      'matplotlib_venn',
+                      'clipper', 'HTSeq'
+    ],
 
     setup_requires=["setuptools_git >= 0.3", ],
 
