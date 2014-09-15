@@ -90,7 +90,7 @@ class Analyze_mirli_CLIPSeq extends QScript {
                   @Argument miRNA_id: String ) extends CommandLineFunction {
 
         override def shortDescription = "SplitBy"
-        def commandLine = "python ~/software/mirli/miR_splitter.py " +
+        def commandLine = "miR_splitter.py " +
                           required("--miRNA_seq", miRNA_seq) +
                           required("--miRNA_id", miRNA_id) +
                           required("--fastq", inFastq) +
