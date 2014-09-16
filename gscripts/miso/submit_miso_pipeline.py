@@ -185,11 +185,11 @@ class MisoPipeline(object):
             commands.append('\n\n# calculate Psi scores for'
                             ' all {} events'.format(event_type))
             commands.append('mkdir -p {}'.format(out_dir))
-            commands.append("python /projects/ps-yeolab/software/bin/miso \
-         --run /projects/ps-yeolab/genomes/{0}/miso/{1}_index \
+            commands.append("python miso \
+         --run /thunderstorm/users/mlovci/Genomes/{0}/annotations/miso_annotations/index_{1} \
          {2} --output-dir {3} \
          --read-len $READ_LEN \
-         --settings-filename /projects/ps-yeolab/genomes/hg19/miso_annotations"
+         --settings-filename /thunderstorm/users/mlovci/Genomes/hg19/annotations/miso_annotations"
                             "/miso_settings_min_event_reads10.txt \
  -p 16 \
  > {4} \
@@ -214,7 +214,7 @@ fi\n".format(out_dir, event_type))
 
             commands.append('# Summarize psi scores for all {} events'
                             .format(event_type))
-            commands.append('python /home/yeo-lab/software/bin/run_miso.py '
+            commands.append('run_miso.py '
                             '--summarize-samples {0} ' \
                             '{0} >{0}/summary.out 2>{0}/summary.err'.format(
                 out_dir))

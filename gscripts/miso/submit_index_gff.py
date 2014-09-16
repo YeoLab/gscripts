@@ -43,7 +43,7 @@ class CommandLine(object):
                                       'original GFF/GTF file is.',
                                  required=True)
         self.parser.add_argument('--index-gff-py', action='store',
-                                 default='index_gff.py',
+                                 default='index_gff',
                                  type=str, required=False,
                                  help="Which MISO `index_gff.py` script to "
                                       "use.")
@@ -114,7 +114,7 @@ class IndexGFF(object):
         qs = qtools.Submitter(queue_type='PBS', sh_filename=out_sh,
                               commands=commands,
                               job_name=job_name, nodes=1,
-                              ppn=1, queue='home',
+                              ppn=1, queue='default',
                               walltime='0:30:00')
         qs.write_sh(submit=submit)
 
@@ -131,7 +131,7 @@ if __name__ == '__main__':
         out_sh = job_name + '.sh' if cl.args['out_sh'] is None \
             else cl.args['out_sh']
         submit = not cl.args['do_not_submit']
-        directory = cl.args['directory'].rstrip('/')
+        
 
         IndexGFF(cl.args['gtf'], cl.args['gff'], cl.args['index_dir'],
                  job_name, out_sh, submit, cl.args['index_gff_py'])
