@@ -190,6 +190,9 @@ def retrieve_splicing(species):
         basedir = "/projects/yeolab/Genome/ensembl/AS_STRUCTURE/" + species + "data4/"
     elif "tscc" in host:
         basedir = "/projects/ps-yeolab/lovci/AS_STRUCTURE/gencode/" + species + "data4/"
+    elif "thunder" in host:
+        basedir = "/thunderstorm/users/mlovci/Genomes/" + species + "/" + species + "data4/"
+
     else:
         print "Where am I?"
         raise Exception
