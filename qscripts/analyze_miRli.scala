@@ -250,7 +250,7 @@ class Analyze_mirli_CLIPSeq extends QScript {
 
         override def shortDescription = "maskRepeats"
         def commandLine = "bedtools window -v -header -w 50" +
-        required("-a", maskMe) +
+        required("-abam", maskMe) +
         required("-b", maskWith) +
         required(" > ", maskedOut)
 
@@ -404,7 +404,7 @@ class Analyze_mirli_CLIPSeq extends QScript {
                 val indexedBamFile = swapExt(sortedrmDupedBamFile, "", ".bai")
                 add(new samtoolsIndexFunction(sortedrmDupedBamFile, indexedBamFile))
 
-                val maskedSortedrmDupedBamFile = swapExt(sortedrmDupedBamFile, ".bam", ".masked")
+                val maskedSortedrmDupedBamFile = swapExt(sortedrmDupedBamFile, ".bam", ".bam.masked")
                 add(new maskRegions(sortedrmDupedBamFile, regionsToMask, maskedSortedrmDupedBamFile))
 
                 finished_bams_files = finished_bams_files ++ List(maskedSortedrmDupedBamFile)
@@ -441,12 +441,10 @@ class Analyze_mirli_CLIPSeq extends QScript {
                     genome_location = genomeLocation(genome), phastcons_location = phastconsLocation(genome),
                     gff_db = gffDbLocation(genome), bw_pos=bigWigFilePos, bw_neg=bigWigFileNeg))
 
-
-
                 //downstream_analysis(sortedrmDupedBamFile, indexedBamFile, genome)
             }
         }
-
+        finished_bams_files.foreach(println)
         add(new countBamToGenes(finished_bams_files, genicRegionsLocation(genome), bam_counts_file))
     }
 }
