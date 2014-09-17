@@ -19,11 +19,6 @@ class Analyze_mirli_CLIPSeq extends QScript {
     @Input(doc = "input file")
     var input: File = _
 
-    @Argument(doc = "finished bam files")
-    var finished_bams: String = "finished_bams.txt"
-
-    var finished_bams_file = new File(finished_bams)
-
     @Argument(doc = "bam_counts")
     var bam_counts: String = "bam_counts.txt"
 
@@ -250,27 +245,31 @@ class Analyze_mirli_CLIPSeq extends QScript {
         this.tags_annotation = a
     }
 
+
     case class maskRegions(@Input maskMe: File, maskWith: File, finished: File, @Output maskedOut: File) extends CommandLineFunction {
 
         override def shortDescription = "maskRepeats"
         def commandLine = "bedtools window -v -header -w 50" +
         required("-a", maskMe) +
         required("-b", maskWith) +
-        + " > " + maskedOut +
-        "; echo " + maskedOut + " >> " finished
+        + " > " + maskedOut
 
     }
 
+    case class countBamToGenes(@Input bamFiles: List[File], geneBedFile: File, @Output bamCounts: File) extends CommandLineFunction{
 
-
-
-    case class countBamToGenes(@Input bamFiles: File, geneBedFile: File, @Output bamCounts: File):
         override def shortDescription = "countBamToGenes"
-        def commandLine = "cat " + bamFiles + "perl -ne '$_ =~ s/\n//g; print "\t".$_;' > " +
-        bamCounts" +
-        "; bedtools multicov -bams `cat " + bamFiles +
-        "` -s -D -bed " + geneBedFile " >> " + bamCounts
+        def commandLine = "bedtools multicov -bams " +
+        repeat(bamFiles) +
+        " -s -D -bed " + geneBedFile " >> " + bamCounts
+    }
 
+    case class mergeBam(@Input bamFile: File, @Output mergedBed: File) extends CommandLineFunction{
+
+        override def short Description = "mergeBam"
+        def commandLine = "bamToBed -i " + bamFile + " -splitD > " + mergedBed
+
+    }
     def downstream_analysis(bamFile : File, bamIndex: File, genome : String) = {
 
         val bedGraphFilePos = swapExt(bamFile, ".bam", ".pos.bg")
@@ -344,6 +343,7 @@ class Analyze_mirli_CLIPSeq extends QScript {
         val mirbase_entries = FASTA.fromFile( mirbase )
 
         var fastq_files = QScriptUtils.createSeqFromFile(input)
+        var finished_bams_files: List[File] = List()
 
 
 
@@ -396,17 +396,29 @@ class Analyze_mirli_CLIPSeq extends QScript {
                 add(new samtoolsIndexFunction(sortedrmDupedBamFile, indexedBamFile))
 
                 val maskedSortedrmDupedBamFile = swapExt(sortedrmDupedBamFile, ".bam", ".masked")
-                add(new maskRegions(sortedrmDupedBamFile, regionsToMask, finished_bams_file, maskedSortedrmDupedBamFile))
+                add(new maskRegions(sortedrmDupedBamFile, regionsToMask, finished_bams_file,
+                                    maskedSortedrmDupedBamFile))
+
+                finished_bams_files = finished_bams_files ++ List(maskedSortedrmDupedBamFile)
 
                 val indexedMaskedBamFile = swapExt(maskedSortedrmDupedBamFile, "", ".bai")
                 add(new samtoolsIndexFunction(maskedSortedrmDupedBamFile, indexedMaskedBamFile))
+
+                val mergedMaskedBamFile = swapExt(maskedSortedrmDupedBamFile, "", ".merged.bed")
+                add(new mergeBam(maskedSortedrmDupedBamFile, mergedMaskedBamFile))
+                val mergedMaskedBamFileMetrics = swapExt(mergedMaskedBamFile, ".bed", ".metrics")
+
+
+                add(new ClipAnalysis(maskedSortedrmDupedBamFile, mergedMaskedBamFile, genome, mergedMaskedBamFileMetrics,
+                    regions_location = regionsLocation(genome), AS_Structure = asStructureLocation(genome),
+                    genome_location = genomeLocation(genome), phastcons_location = phastconsLocation(genome),
+                    gff_db = gffDbLocation(genome), bw_pos=bigWigFilePos, bw_neg=bigWigFileNeg))
 
 
 
                 //downstream_analysis(sortedrmDupedBamFile, indexedBamFile, genome)
             }
         }
-        //@Input bamFiles: File, geneBedFile: File, @Output bamCounts: File):
 
         countBamToGenes(finished_bams_file, genicRegionsLocation(genome), bam_counts_file)
     }
