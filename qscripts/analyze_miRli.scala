@@ -12,11 +12,22 @@ import org.broadinstitute.sting.queue.util.TsccUtils._
 import scala.util.parsing.combinator._
 import scala.io.Source
 
+
 class Analyze_mirli_CLIPSeq extends QScript {
 
     // Script args
     @Input(doc = "input file")
     var input: File = _
+
+    @Argument(doc = "finished bam files")
+    var finished_bams: String = "finished_bams.txt"
+
+    var finished_bams_file = new File(finished_bams)
+
+    @Argument(doc = "bam_counts")
+    var bam_counts: String = "bam_counts.txt"
+
+    var bam_counts_file = new File(bam_counts)
 
     @Argument(doc = "adapter to trim")
     var adapter: List[String] = Nil
@@ -41,6 +52,11 @@ class Analyze_mirli_CLIPSeq extends QScript {
 
     @Argument(doc = "genome", required=true)
     var genome: String = "ce10"
+
+    @Argument(doc = "regionsToMask", required=false)
+    var regionsToMask_str: String = "/home/jbrought/scratch/mirpipe/background_removal_test/20140828.WS240.background_RNA.galaxy1.bed"
+
+    var regionsToMask: File = new File(regionsToMask_str)
 
     //https://gist.github.com/paradigmatic/3437345
     object FASTA {
@@ -234,6 +250,27 @@ class Analyze_mirli_CLIPSeq extends QScript {
         this.tags_annotation = a
     }
 
+    case class maskRegions(@Input maskMe: File, maskWith: File, finished: File, @Output maskedOut: File) extends CommandLineFunction {
+
+        override def shortDescription = "maskRepeats"
+        def commandLine = "bedtools window -v -header -w 50" +
+        required("-a", maskMe) +
+        required("-b", maskWith) +
+        + " > " + maskedOut +
+        "; echo " + maskedOut + " >> " finished
+
+    }
+
+
+
+
+    case class countBamToGenes(@Input bamFiles: File, geneBedFile: File, @Output bamCounts: File):
+        override def shortDescription = "countBamToGenes"
+        def commandLine = "cat " + bamFiles + "perl -ne '$_ =~ s/\n//g; print "\t".$_;' > " +
+        bamCounts" +
+        "; bedtools multicov -bams `cat " + bamFiles +
+        "` -s -D -bed " + geneBedFile " >> " + bamCounts
+
     def downstream_analysis(bamFile : File, bamIndex: File, genome : String) = {
 
         val bedGraphFilePos = swapExt(bamFile, ".bam", ".pos.bg")
@@ -308,6 +345,8 @@ class Analyze_mirli_CLIPSeq extends QScript {
 
         var fastq_files = QScriptUtils.createSeqFromFile(input)
 
+
+
         for (fastq_filename <- fastq_files) {
 
             var fastq_file = new File(fastq_filename)
@@ -356,8 +395,19 @@ class Analyze_mirli_CLIPSeq extends QScript {
                 val indexedBamFile = swapExt(sortedrmDupedBamFile, "", ".bai")
                 add(new samtoolsIndexFunction(sortedrmDupedBamFile, indexedBamFile))
 
+                val maskedSortedrmDupedBamFile = swapExt(sortedrmDupedBamFile, ".bam", ".masked")
+                add(new maskRegions(sortedrmDupedBamFile, regionsToMask, finished_bams_file, maskedSortedrmDupedBamFile))
+
+                val indexedMaskedBamFile = swapExt(maskedSortedrmDupedBamFile, "", ".bai")
+                add(new samtoolsIndexFunction(maskedSortedrmDupedBamFile, indexedMaskedBamFile))
+
+
+
                 //downstream_analysis(sortedrmDupedBamFile, indexedBamFile, genome)
             }
         }
+        //@Input bamFiles: File, geneBedFile: File, @Output bamCounts: File):
+
+        countBamToGenes(finished_bams_file, genicRegionsLocation(genome), bam_counts_file)
     }
 }
