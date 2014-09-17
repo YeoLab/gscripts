@@ -261,12 +261,12 @@ class Analyze_mirli_CLIPSeq extends QScript {
         override def shortDescription = "countBamToGenes"
         def commandLine = "bedtools multicov -bams " +
         repeat(bamFiles) +
-        " -s -D -bed " + geneBedFile " >> " + bamCounts
+        " -s -D -bed " + geneBedFile + " >> " + bamCounts
     }
 
     case class mergeBam(@Input bamFile: File, @Output mergedBed: File) extends CommandLineFunction{
 
-        override def short Description = "mergeBam"
+        override def shortDescription = "mergeBam"
         def commandLine = "bamToBed -i " + bamFile + " -splitD > " + mergedBed
 
     }
