@@ -267,7 +267,10 @@ class Analyze_mirli_CLIPSeq extends QScript {
     case class mergeBam(@Input bamFile: File, @Output mergedBed: File) extends CommandLineFunction{
 
         override def shortDescription = "mergeBam"
-        def commandLine = "bamToBed -i " + bamFile + " -splitD |mergeBed -i stdin -nms -scores max > " + mergedBed
+        def commandLine = "bamToBed -i " +
+        required(bamFile) +
+        " -splitD |mergeBed -i stdin -nms -scores max > " +
+        required(mergedBed)
 
     }
     def downstream_analysis(bamFile : File, bamIndex: File, genome : String) = {
@@ -445,6 +448,8 @@ class Analyze_mirli_CLIPSeq extends QScript {
             }
         }
         finished_bams_files.foreach(println)
+        println(bam_counts_file)
+        println(genicRegionsLocation(genome))
         add(new countBamToGenes(finished_bams_files, genicRegionsLocation(genome), bam_counts_file))
     }
 }
