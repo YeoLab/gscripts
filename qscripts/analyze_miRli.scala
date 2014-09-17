@@ -252,7 +252,7 @@ class Analyze_mirli_CLIPSeq extends QScript {
         def commandLine = "bedtools window -v -header -w 50" +
         required("-a", maskMe) +
         required("-b", maskWith) +
-        + " > " + maskedOut
+        " > " + maskedOut
 
     }
 
@@ -396,8 +396,7 @@ class Analyze_mirli_CLIPSeq extends QScript {
                 add(new samtoolsIndexFunction(sortedrmDupedBamFile, indexedBamFile))
 
                 val maskedSortedrmDupedBamFile = swapExt(sortedrmDupedBamFile, ".bam", ".masked")
-                add(new maskRegions(sortedrmDupedBamFile, regionsToMask, finished_bams_file,
-                                    maskedSortedrmDupedBamFile))
+                add(new maskRegions(sortedrmDupedBamFile, regionsToMask, finished_bams_file, maskedSortedrmDupedBamFile))
 
                 finished_bams_files = finished_bams_files ++ List(maskedSortedrmDupedBamFile)
 
