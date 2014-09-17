@@ -447,6 +447,6 @@ class Analyze_mirli_CLIPSeq extends QScript {
             }
         }
 
-        countBamToGenes(finished_bams_files, genicRegionsLocation(genome), bam_counts_file)
+        add(new countBamToGenes(finished_bams_files, genicRegionsLocation(genome), bam_counts_file))
     }
 }
