@@ -246,13 +246,13 @@ class Analyze_mirli_CLIPSeq extends QScript {
     }
 
 
-    case class maskRegions(@Input maskMe: File, maskWith: File, finished: File, @Output maskedOut: File) extends CommandLineFunction {
+    case class maskRegions(@Input maskMe: File, maskWith: File, @Output maskedOut: File) extends CommandLineFunction {
 
         override def shortDescription = "maskRepeats"
         def commandLine = "bedtools window -v -header -w 50" +
         required("-a", maskMe) +
         required("-b", maskWith) +
-        " > " + maskedOut
+        " > " + String(maskedOut)
 
     }
 
@@ -281,6 +281,15 @@ class Analyze_mirli_CLIPSeq extends QScript {
         val bigWigFileNeg = swapExt(bedGraphFileNeg, ".bg", ".normal.bw")
         val bedGraphFileNegInverted = swapExt(bedGraphFileNegNorm, "neg.bg", "neg.t.bg")
         val bigWigFileNegInverted = swapExt(bedGraphFileNegInverted, ".t.bg", ".bw")
+        add(new genomeCoverageBed(input = bamFile, outBed = bedGraphFilePos, cur_strand = "+", genome = chromSizeLocation(genome)))
+        add(new NormalizeBedGraph(inBedGraph = bedGraphFilePos, inBam = bamFile, outBedGraph = bedGraphFilePosNorm))
+        add(new BedGraphToBigWig(bedGraphFilePosNorm, chromSizeLocation(genome), bigWigFilePos))
+
+        add(new genomeCoverageBed(input = bamFile, outBed = bedGraphFileNeg, cur_strand = "-", genome = chromSizeLocation(genome)))
+        add(new NormalizeBedGraph(inBedGraph = bedGraphFileNeg, inBam = bamFile, outBedGraph = bedGraphFileNegNorm))
+        add(new BedGraphToBigWig(bedGraphFileNegNorm, chromSizeLocation(genome), bigWigFileNeg))
+        add(new NegBedGraph(inBedGraph = bedGraphFileNegNorm, outBedGraph = bedGraphFileNegInverted))
+        add(new BedGraphToBigWig(bedGraphFileNegInverted, chromSizeLocation(genome), bigWigFileNegInverted))
 
         val clipper_output = swapExt(bamFile, ".bam", ".peaks.bed")
         val fixed_clipper_output = swapExt(clipper_output, ".bed", ".fixed.bed")
@@ -396,7 +405,7 @@ class Analyze_mirli_CLIPSeq extends QScript {
                 add(new samtoolsIndexFunction(sortedrmDupedBamFile, indexedBamFile))
 
                 val maskedSortedrmDupedBamFile = swapExt(sortedrmDupedBamFile, ".bam", ".masked")
-                add(new maskRegions(sortedrmDupedBamFile, regionsToMask, finished_bams_file, maskedSortedrmDupedBamFile))
+                add(new maskRegions(sortedrmDupedBamFile, regionsToMask, maskedSortedrmDupedBamFile))
 
                 finished_bams_files = finished_bams_files ++ List(maskedSortedrmDupedBamFile)
 
@@ -407,7 +416,25 @@ class Analyze_mirli_CLIPSeq extends QScript {
                 add(new mergeBam(maskedSortedrmDupedBamFile, mergedMaskedBamFile))
                 val mergedMaskedBamFileMetrics = swapExt(mergedMaskedBamFile, ".bed", ".metrics")
 
+                val bedGraphFilePos = swapExt(maskedSortedrmDupedBamFile, ".bam", ".pos.bg")
+                val bedGraphFilePosNorm = swapExt(bedGraphFilePos, ".pos.bg", ".norm.pos.bg")
+                val bigWigFilePos = swapExt(bedGraphFilePosNorm, ".bg", ".bw")
 
+                val bedGraphFileNeg = swapExt(maskedSortedrmDupedBamFile, ".bam", ".neg.bg")
+                val bedGraphFileNegNorm = swapExt(bedGraphFileNeg, ".neg.bg", ".norm.neg.bg")
+                val bigWigFileNeg = swapExt(bedGraphFileNeg, ".bg", ".normal.bw")
+                val bedGraphFileNegInverted = swapExt(bedGraphFileNegNorm, "neg.bg", "neg.t.bg")
+                val bigWigFileNegInverted = swapExt(bedGraphFileNegInverted, ".t.bg", ".bw")
+
+                add(new genomeCoverageBed(input = bamFile, outBed = bedGraphFilePos, cur_strand = "+", genome = chromSizeLocation(genome)))
+                add(new NormalizeBedGraph(inBedGraph = bedGraphFilePos, inBam = bamFile, outBedGraph = bedGraphFilePosNorm))
+                add(new BedGraphToBigWig(bedGraphFilePosNorm, chromSizeLocation(genome), bigWigFilePos))
+
+                add(new genomeCoverageBed(input = bamFile, outBed = bedGraphFileNeg, cur_strand = "-", genome = chromSizeLocation(genome)))
+                add(new NormalizeBedGraph(inBedGraph = bedGraphFileNeg, inBam = bamFile, outBedGraph = bedGraphFileNegNorm))
+                add(new BedGraphToBigWig(bedGraphFileNegNorm, chromSizeLocation(genome), bigWigFileNeg))
+                add(new NegBedGraph(inBedGraph = bedGraphFileNegNorm, outBedGraph = bedGraphFileNegInverted))
+                add(new BedGraphToBigWig(bedGraphFileNegInverted, chromSizeLocation(genome), bigWigFileNegInverted))
                 add(new ClipAnalysis(maskedSortedrmDupedBamFile, mergedMaskedBamFile, genome, mergedMaskedBamFileMetrics,
                     regions_location = regionsLocation(genome), AS_Structure = asStructureLocation(genome),
                     genome_location = genomeLocation(genome), phastcons_location = phastconsLocation(genome),
