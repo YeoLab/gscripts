@@ -252,7 +252,7 @@ class Analyze_mirli_CLIPSeq extends QScript {
         def commandLine = "bedtools window -v -header -w 50" +
         required("-a", maskMe) +
         required("-b", maskWith) +
-        " > " + String(maskedOut)
+        required(" > ", maskedOut)
 
     }
 
@@ -426,15 +426,16 @@ class Analyze_mirli_CLIPSeq extends QScript {
                 val bedGraphFileNegInverted = swapExt(bedGraphFileNegNorm, "neg.bg", "neg.t.bg")
                 val bigWigFileNegInverted = swapExt(bedGraphFileNegInverted, ".t.bg", ".bw")
 
-                add(new genomeCoverageBed(input = bamFile, outBed = bedGraphFilePos, cur_strand = "+", genome = chromSizeLocation(genome)))
-                add(new NormalizeBedGraph(inBedGraph = bedGraphFilePos, inBam = bamFile, outBedGraph = bedGraphFilePosNorm))
+                add(new genomeCoverageBed(input = maskedSortedrmDupedBamFile, outBed = bedGraphFilePos, cur_strand = "+", genome = chromSizeLocation(genome)))
+                add(new NormalizeBedGraph(inBedGraph = bedGraphFilePos, inBam = maskedSortedrmDupedBamFile, outBedGraph = bedGraphFilePosNorm))
                 add(new BedGraphToBigWig(bedGraphFilePosNorm, chromSizeLocation(genome), bigWigFilePos))
 
-                add(new genomeCoverageBed(input = bamFile, outBed = bedGraphFileNeg, cur_strand = "-", genome = chromSizeLocation(genome)))
-                add(new NormalizeBedGraph(inBedGraph = bedGraphFileNeg, inBam = bamFile, outBedGraph = bedGraphFileNegNorm))
+                add(new genomeCoverageBed(input = maskedSortedrmDupedBamFile, outBed = bedGraphFileNeg, cur_strand = "-", genome = chromSizeLocation(genome)))
+                add(new NormalizeBedGraph(inBedGraph = bedGraphFileNeg, inBam = maskedSortedrmDupedBamFile, outBedGraph = bedGraphFileNegNorm))
                 add(new BedGraphToBigWig(bedGraphFileNegNorm, chromSizeLocation(genome), bigWigFileNeg))
                 add(new NegBedGraph(inBedGraph = bedGraphFileNegNorm, outBedGraph = bedGraphFileNegInverted))
                 add(new BedGraphToBigWig(bedGraphFileNegInverted, chromSizeLocation(genome), bigWigFileNegInverted))
+
                 add(new ClipAnalysis(maskedSortedrmDupedBamFile, mergedMaskedBamFile, genome, mergedMaskedBamFileMetrics,
                     regions_location = regionsLocation(genome), AS_Structure = asStructureLocation(genome),
                     genome_location = genomeLocation(genome), phastcons_location = phastconsLocation(genome),
@@ -446,6 +447,6 @@ class Analyze_mirli_CLIPSeq extends QScript {
             }
         }
 
-        countBamToGenes(finished_bams_file, genicRegionsLocation(genome), bam_counts_file)
+        countBamToGenes(finished_bams_files, genicRegionsLocation(genome), bam_counts_file)
     }
 }
