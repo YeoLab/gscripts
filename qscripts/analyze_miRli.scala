@@ -252,7 +252,7 @@ class Analyze_mirli_CLIPSeq extends QScript {
         def commandLine = "bedtools window -v -header -w 50" +
         required("-abam", maskMe) +
         required("-b", maskWith) +
-        required(" > ", maskedOut)
+        " > " + maskedOut
 
     }
 
