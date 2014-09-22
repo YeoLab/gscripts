@@ -270,7 +270,7 @@ class Analyze_mirli_CLIPSeq extends QScript {
         override def shortDescription = "mergeBam"
         def commandLine = "bamToBed -i " +
         required(bamFile) +
-        " -splitD |mergeBed -i stdin -nms -scores max > " +
+        " -splitD |mergeBed -i stdin -nms -s -scores max > " +
         required(mergedBed)
 
     }
