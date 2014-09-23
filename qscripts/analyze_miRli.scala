@@ -12,11 +12,17 @@ import org.broadinstitute.sting.queue.util.TsccUtils._
 import scala.util.parsing.combinator._
 import scala.io.Source
 
+
 class Analyze_mirli_CLIPSeq extends QScript {
 
     // Script args
     @Input(doc = "input file")
     var input: File = _
+
+    @Argument(doc = "bam_counts")
+    var bam_counts: String = "bam_counts.txt"
+
+    var bam_counts_file = new File(bam_counts)
 
     @Argument(doc = "adapter to trim")
     var adapter: List[String] = Nil
@@ -41,6 +47,11 @@ class Analyze_mirli_CLIPSeq extends QScript {
 
     @Argument(doc = "genome", required=true)
     var genome: String = "ce10"
+
+    @Argument(doc = "regionsToMask", required=false)
+    var regionsToMask_str: String = "/home/jbrought/scratch/mirpipe/background_removal_test/20140828.WS240.background_RNA.galaxy1.bed"
+
+    var regionsToMask: File = new File(regionsToMask_str)
 
     //https://gist.github.com/paradigmatic/3437345
     object FASTA {
@@ -90,7 +101,7 @@ class Analyze_mirli_CLIPSeq extends QScript {
                   @Argument miRNA_id: String ) extends CommandLineFunction {
 
         override def shortDescription = "SplitBy"
-        def commandLine = "python ~/software/mirli/miR_splitter.py " +
+        def commandLine = "miR_splitter.py " +
                           required("--miRNA_seq", miRNA_seq) +
                           required("--miRNA_id", miRNA_id) +
                           required("--fastq", inFastq) +
@@ -234,6 +245,34 @@ class Analyze_mirli_CLIPSeq extends QScript {
         this.tags_annotation = a
     }
 
+
+    case class maskRegions(@Input maskMe: File, maskWith: File, @Output maskedOut: File) extends CommandLineFunction {
+
+        override def shortDescription = "maskRepeats"
+        def commandLine = "bedtools window -v -header -w 50" +
+        required("-abam", maskMe) +
+        required("-b", maskWith) +
+        required(" > ", maskedOut)
+
+    }
+
+    case class countBamToGenes(@Input bamFiles: List[File], geneBedFile: File, @Output bamCounts: File) extends CommandLineFunction{
+
+        override def shortDescription = "countBamToGenes"
+        def commandLine = "bedtools multicov -bams " +
+        repeat(bamFiles) +
+        " -s -D -bed " + geneBedFile + " >> " + bamCounts
+    }
+
+    case class mergeBam(@Input bamFile: File, @Output mergedBed: File) extends CommandLineFunction{
+
+        override def shortDescription = "mergeBam"
+        def commandLine = "bamToBed -i " +
+        required(bamFile) +
+        " -splitD |mergeBed -i stdin -nms -scores max > " +
+        required(mergedBed)
+
+    }
     def downstream_analysis(bamFile : File, bamIndex: File, genome : String) = {
 
         val bedGraphFilePos = swapExt(bamFile, ".bam", ".pos.bg")
@@ -245,6 +284,15 @@ class Analyze_mirli_CLIPSeq extends QScript {
         val bigWigFileNeg = swapExt(bedGraphFileNeg, ".bg", ".normal.bw")
         val bedGraphFileNegInverted = swapExt(bedGraphFileNegNorm, "neg.bg", "neg.t.bg")
         val bigWigFileNegInverted = swapExt(bedGraphFileNegInverted, ".t.bg", ".bw")
+        add(new genomeCoverageBed(input = bamFile, outBed = bedGraphFilePos, cur_strand = "+", genome = chromSizeLocation(genome)))
+        add(new NormalizeBedGraph(inBedGraph = bedGraphFilePos, inBam = bamFile, outBedGraph = bedGraphFilePosNorm))
+        add(new BedGraphToBigWig(bedGraphFilePosNorm, chromSizeLocation(genome), bigWigFilePos))
+
+        add(new genomeCoverageBed(input = bamFile, outBed = bedGraphFileNeg, cur_strand = "-", genome = chromSizeLocation(genome)))
+        add(new NormalizeBedGraph(inBedGraph = bedGraphFileNeg, inBam = bamFile, outBedGraph = bedGraphFileNegNorm))
+        add(new BedGraphToBigWig(bedGraphFileNegNorm, chromSizeLocation(genome), bigWigFileNeg))
+        add(new NegBedGraph(inBedGraph = bedGraphFileNegNorm, outBedGraph = bedGraphFileNegInverted))
+        add(new BedGraphToBigWig(bedGraphFileNegInverted, chromSizeLocation(genome), bigWigFileNegInverted))
 
         val clipper_output = swapExt(bamFile, ".bam", ".peaks.bed")
         val fixed_clipper_output = swapExt(clipper_output, ".bed", ".fixed.bed")
@@ -307,6 +355,9 @@ class Analyze_mirli_CLIPSeq extends QScript {
         val mirbase_entries = FASTA.fromFile( mirbase )
 
         var fastq_files = QScriptUtils.createSeqFromFile(input)
+        var finished_bams_files: List[File] = List()
+
+
 
         for (fastq_filename <- fastq_files) {
 
@@ -356,8 +407,49 @@ class Analyze_mirli_CLIPSeq extends QScript {
                 val indexedBamFile = swapExt(sortedrmDupedBamFile, "", ".bai")
                 add(new samtoolsIndexFunction(sortedrmDupedBamFile, indexedBamFile))
 
+                val maskedSortedrmDupedBamFile = swapExt(sortedrmDupedBamFile, ".bam", ".bam.masked")
+                add(new maskRegions(sortedrmDupedBamFile, regionsToMask, maskedSortedrmDupedBamFile))
+
+                finished_bams_files = finished_bams_files ++ List(maskedSortedrmDupedBamFile)
+
+                val indexedMaskedBamFile = swapExt(maskedSortedrmDupedBamFile, "", ".bai")
+                add(new samtoolsIndexFunction(maskedSortedrmDupedBamFile, indexedMaskedBamFile))
+
+                val mergedMaskedBamFile = swapExt(maskedSortedrmDupedBamFile, "", ".merged.bed")
+                add(new mergeBam(maskedSortedrmDupedBamFile, mergedMaskedBamFile))
+                val mergedMaskedBamFileMetrics = swapExt(mergedMaskedBamFile, ".bed", ".metrics")
+
+                val bedGraphFilePos = swapExt(maskedSortedrmDupedBamFile, ".bam", ".pos.bg")
+                val bedGraphFilePosNorm = swapExt(bedGraphFilePos, ".pos.bg", ".norm.pos.bg")
+                val bigWigFilePos = swapExt(bedGraphFilePosNorm, ".bg", ".bw")
+
+                val bedGraphFileNeg = swapExt(maskedSortedrmDupedBamFile, ".bam", ".neg.bg")
+                val bedGraphFileNegNorm = swapExt(bedGraphFileNeg, ".neg.bg", ".norm.neg.bg")
+                val bigWigFileNeg = swapExt(bedGraphFileNeg, ".bg", ".normal.bw")
+                val bedGraphFileNegInverted = swapExt(bedGraphFileNegNorm, "neg.bg", "neg.t.bg")
+                val bigWigFileNegInverted = swapExt(bedGraphFileNegInverted, ".t.bg", ".bw")
+
+                add(new genomeCoverageBed(input = maskedSortedrmDupedBamFile, outBed = bedGraphFilePos, cur_strand = "+", genome = chromSizeLocation(genome)))
+                add(new NormalizeBedGraph(inBedGraph = bedGraphFilePos, inBam = maskedSortedrmDupedBamFile, outBedGraph = bedGraphFilePosNorm))
+                add(new BedGraphToBigWig(bedGraphFilePosNorm, chromSizeLocation(genome), bigWigFilePos))
+
+                add(new genomeCoverageBed(input = maskedSortedrmDupedBamFile, outBed = bedGraphFileNeg, cur_strand = "-", genome = chromSizeLocation(genome)))
+                add(new NormalizeBedGraph(inBedGraph = bedGraphFileNeg, inBam = maskedSortedrmDupedBamFile, outBedGraph = bedGraphFileNegNorm))
+                add(new BedGraphToBigWig(bedGraphFileNegNorm, chromSizeLocation(genome), bigWigFileNeg))
+                add(new NegBedGraph(inBedGraph = bedGraphFileNegNorm, outBedGraph = bedGraphFileNegInverted))
+                add(new BedGraphToBigWig(bedGraphFileNegInverted, chromSizeLocation(genome), bigWigFileNegInverted))
+
+                add(new ClipAnalysis(maskedSortedrmDupedBamFile, mergedMaskedBamFile, genome, mergedMaskedBamFileMetrics,
+                    regions_location = regionsLocation(genome), AS_Structure = asStructureLocation(genome),
+                    genome_location = genomeLocation(genome), phastcons_location = phastconsLocation(genome),
+                    gff_db = gffDbLocation(genome), bw_pos=bigWigFilePos, bw_neg=bigWigFileNeg))
+
                 //downstream_analysis(sortedrmDupedBamFile, indexedBamFile, genome)
             }
         }
+        finished_bams_files.foreach(println)
+        println(bam_counts_file)
+        println(genicRegionsLocation(genome))
+        add(new countBamToGenes(finished_bams_files, genicRegionsLocation(genome), bam_counts_file))
     }
 }

@@ -7,12 +7,15 @@ import os
 def construct_cutadapt_call(miRNA_seq, miRNA_id, fastq, output, **kwargs):
     miRNA_seq = miRNA_seq.replace("U", "T")
     return " ".join(['cutadapt', '-g', miRNA_seq, '-g', 'N' + miRNA_seq, '--match-read-wildcards', '--trimmed-only',
-                     '-m', '18', '-y', '\'.' + miRNA_id + '\'', '-f', 'fastq', '-O', '20', '-e', '0.05',
+                     '-m', '18', '-y', '\'.' + miRNA_id + '\'', '-f', 'fastq', '-O', '20', '-e', '0',
                      '-o', '\'' + output + '\'', '\'' + fastq + '\''])
 
 def run_cutadapt(miRNA_seq, miRNA_id, fastq, output, **kwargs):
     call_this = construct_cutadapt_call(miRNA_seq, miRNA_id, fastq, output)
-    subprocess.call(call_this, shell=True)
+    outname = str(fastq) + "." + str(miRNA_id) + ".counts.txt"
+    with open(str(outname), 'w') as output:
+	server = subprocess.Popen(call_this, shell=True, stdout=output)
+	server.communicate()
 
 def count_lines(file_name):
     line_count = int(subprocess.check_output(['wc', '-l', file_name]).split(' ')[0])
