@@ -182,9 +182,11 @@ class AnalizeCLIPSeq extends QScript {
       	     val bigWigFileNegInverted = swapExt(bedGraphFileNegInverted, ".t.bg", ".bw")
 
       	     val clipper_output = swapExt(bamFile, ".bam", ".peaks.bed")
+	     val kasey_output = swapExt(bamFile, ".bam", ".peaks.kasey.bed")
       	     val fixed_clipper_output = swapExt(clipper_output, ".bed", ".fixed.bed")
       	     val bigBed_output = swapExt(fixed_clipper_output, ".bed", ".bb")
       	     val clipper_output_metrics = swapExt(clipper_output, ".bed", ".metrics")
+	     val kasey_output_metrics = swapExt(kasey_output, ".bed", ".metrics")
 	     
 	     val rmDupedBedFile = swapExt(bamFile, ".bam", ".bed")
       	     val pyicoclipResults = swapExt(bamFile, ".bed", ".pyicoclip.bed")
@@ -228,7 +230,12 @@ class AnalizeCLIPSeq extends QScript {
 	     var clipClassic = new ClipClassic
 	     clipClassic.inBam = bamFile
 	     clipClassic.species = genome
+	     clipClassic.out_file = kasey_output
 
+	     add(new ClipAnalysis(bamFile, kasey_output, genome, kasey_output_metrics, AS_Structure = asStructureLocation(genome), 
+	     			  genome_location = genomeLocation(genome), phastcons_location = phastconsLocation(genome), 
+	     			  gff_db = gffDbLocation(genome)))
+	     add(clipClassic)
 	     //add(ripseeker, piranha, clipClassic)
 
       	     //add(new IDR(inBam = bamFile, species = genome, genome = chromSizeLocation(genome), outResult = IDRResult, premRNA = premRNA))

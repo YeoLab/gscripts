@@ -15,7 +15,7 @@ import re
 import os
 from itertools import groupby
 
-from trackhub import Hub, GenomesFile, Genome, TrackDb, Track, AggregateTrack
+from trackhub import Hub, GenomesFile, Genome, TrackDb, Track, AggregateTrack, SuperTrack
 from trackhub.upload import upload_track, upload_hub
 
 def remove_special_chars(string):
@@ -40,6 +40,8 @@ if __name__ == "__main__":
                         help="server to SCP to")
     parser.add_argument('--user', default='gpratt',
                         help="that is uploading files")
+    parser.add_argument('--no_s3', default=True, action="store_false",
+                        help="upload to defined server instead of s3")
 
     args = parser.parse_args()
 
@@ -62,7 +64,9 @@ if __name__ == "__main__":
     genomes_file = GenomesFile()
     genome = Genome(GENOME)
     trackdb = TrackDb()
-
+    supertrack = SuperTrack(name=args.hub,
+                            short_label=args.hub,
+                            long_label=args.hub)
     genome.add_trackdb(trackdb)
     genomes_file.add_genome(genome)
     hub.add_genomes_file(genomes_file)
@@ -77,6 +81,7 @@ if __name__ == "__main__":
                        not (track.endswith(".bw") or track.endswith(".bigWig"))]
 
     key_func = lambda x: x.split(args.sep)[:args.num_sep]
+
     for bw_group, files in groupby(sorted(bw_files, key=key_func), key_func):
         files = list(files)
         
@@ -124,7 +129,8 @@ if __name__ == "__main__":
                 )
             
             aggregate.add_subtrack(track)
-        trackdb.add_tracks(aggregate)
+        supertrack.add_track(aggregate)
+        #trackdb.add_tracks(aggregate)
     
     bigBed_files = [track for track in remaining_files if track.endswith(".bb") or track.endswith(".bigBed")]
 
@@ -143,10 +149,12 @@ if __name__ == "__main__":
             remote_fn=os.path.join(upload_dir, GENOME, base_track),
             visibility="full"
         )
-        trackdb.add_tracks(track)
+        #trackdb.add_tracks(track)
+        supertrack.add_track(track)
+    trackdb.add_tracks(supertrack)
     result = hub.render()
     hub.remote_fn = os.path.join(upload_dir, "hub.txt")
     for track in trackdb.tracks:
-        upload_track(track=track, host=args.server, user=args.user, run_s3=True)
+        upload_track(track=track, host=args.server, user=args.user, run_s3=args.no_s3)
 
-    upload_hub(hub=hub, host=args.server, user=args.user, run_s3=True)
+    upload_hub(hub=hub, host=args.server, user=args.user, run_s3=args.no_s3)
