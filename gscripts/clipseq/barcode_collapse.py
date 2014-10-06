@@ -68,7 +68,7 @@ def calculate_barcode_frequency(barcode, reads, p_barcode_given_read):
     return result / len(reads)
 
 
-def em_collapse_base(reads, outBam, randomer):
+def em_collapse_base(reads, outBam, randomer, total_count, removed_count):
     barcode_set = {}
     barcodes = []
     if len(reads) == 0:
@@ -95,7 +95,10 @@ def em_collapse_base(reads, outBam, randomer):
             q = -1 * sum(np.log10(1 - p_barcode_given_read[barcode][read]) * count for read, count in barcodes_count.items())
         if q >= 50:
             outBam.write(bam_read)
-
+            removed_count[barcode] += barcodes_count[barcode] - 1
+        else:
+            removed_count[barcode] += barcodes_count[barcode]
+        total_count[barcode] += barcodes_count[barcode]
     return barcodes_count
 
 def collapse_base(reads, outBam, randomer, total_count, removed_count, max_hamming_distance, em=False):
@@ -108,7 +111,7 @@ def collapse_base(reads, outBam, randomer, total_count, removed_count, max_hammi
     Oddly can't return and add two counters together, it creates another counter and causes the entire thing to be very slow
     """
     if em:
-        return em_collapse_base(reads, outBam, randomer)
+        return em_collapse_base(reads, outBam, randomer, total_count, removed_count)
     else:
         barcode_set = Counter()
         for read in reads:
