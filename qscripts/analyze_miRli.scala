@@ -252,7 +252,8 @@ class Analyze_mirli_CLIPSeq extends QScript {
         def commandLine = "bedtools window -v -header -w 50" +
         required("-abam", maskMe) +
         required("-b", maskWith) +
-        required(" > ", maskedOut)
+        " > " +
+        required(maskedOut)
 
     }
 
@@ -269,7 +270,7 @@ class Analyze_mirli_CLIPSeq extends QScript {
         override def shortDescription = "mergeBam"
         def commandLine = "bamToBed -i " +
         required(bamFile) +
-        " -splitD |mergeBed -i stdin -nms -scores max > " +
+        " -splitD |mergeBed -i stdin -nms -s -scores max > " +
         required(mergedBed)
 
     }
