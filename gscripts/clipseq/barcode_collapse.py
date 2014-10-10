@@ -11,7 +11,7 @@ from collections import Counter, OrderedDict, defaultdict
 import itertools
 from optparse import OptionParser
 import sys
-
+import string
 import numpy as np
 import pysam
 
@@ -63,35 +63,28 @@ def memoize_barcodes_frequency(barcodes, reads, p_barcode_given_read):
     return {barcode: calculate_barcode_frequency(barcode, reads, p_barcode_given_read) for barcode in barcodes}
 
 
-def calculate_p_read_given_barcode(read, barcode, error_rate):
-    """
-    Give a read, barcode and error rate predicts the probablity that the given read came from the given barcode
-    :param read: string
-    :param barcode: string
-    :param error_rate: float
-    :return:
-    """
-    return np.power(error_rate, hamming(read, barcode))
-
-
-def calculate_p_barcode_given_read(barcode, read, p_read_given_barcode, barcodes_frequency):
-    """
-    Given a barcode, read, dict of P(read|barcode) and a frequency of barcodes, predicts P(barcode|read)
-    :param barcode: string
-    :param read: string
-    :param p_read_given_barcode: defaultdict(read: {barcode: Probablity}
-    :param barcodes_frequency: dict Estimated frequency of read in sample
-    :return:
-    """
-
 def calculate_barcode_frequency(barcode, reads, p_barcode_given_read):
     result = sum(p_barcode_given_read[barcode][read] for read in reads)
     return result / len(reads)
 
 
-def em_collapse_base(reads, outBam, randomer):
+def update_tags(bam_read, q):
+    new_tags = []
+    for tag, value in bam_read.tags:
+        if tag == "RG" and len(value) == 1:
+            value += "0"
+        if len(tag) > 0 and all([x in string.printable for x in tag]):
+            new_tags.append((tag, value))
+    new_tags.append(("QC", int(q)))
+    return new_tags
+
+
+def em_collapse_base(reads, outBam, randomer, total_count, removed_count):
     barcode_set = {}
     barcodes = []
+    if len(reads) == 0:
+        return {}
+
     for read in reads:
         barcode = read.qname.split(":")[0] if randomer else "total"
         barcodes.append(barcode)
@@ -107,10 +100,20 @@ def em_collapse_base(reads, outBam, randomer):
 
     #check if each tag exists:
     for barcode, bam_read in barcode_set.items():
-        q = -1 * sum(np.log10(1 - p_barcode_given_read[barcode][read]) * count for read, count in barcodes_count.items())
+        if len(p_barcode_given_read) == 1:
+            q = 500000
+        else:
+            q = -10 * sum(np.log10(1 - p_barcode_given_read[barcode][read]) * count for read, count in barcodes_count.items())
+
+        bam_read.tags = update_tags(bam_read, q)
+
         if q >= 50:
             outBam.write(bam_read)
-
+            removed_count[barcode] += barcodes_count[barcode] - 1
+        else:
+            #outBam.write(bam_read)
+            removed_count[barcode] += barcodes_count[barcode]
+        total_count[barcode] += barcodes_count[barcode]
     return barcodes_count
 
 def collapse_base(reads, outBam, randomer, total_count, removed_count, max_hamming_distance, em=False):
@@ -123,7 +126,7 @@ def collapse_base(reads, outBam, randomer, total_count, removed_count, max_hammi
     Oddly can't return and add two counters together, it creates another counter and causes the entire thing to be very slow
     """
     if em:
-        return em_collapse_base(reads, outBam, randomer)
+        return em_collapse_base(reads, outBam, randomer, total_count, removed_count)
     else:
         barcode_set = Counter()
         for read in reads:
@@ -265,7 +268,7 @@ if __name__ == "__main__":
     parser.add_option("-o", "--out_file", dest="out_file")
     parser.add_option("-m", "--metrics_file", dest="metrics_file")
     parser.add_option("-d", "--max_hamming_distance", dest="max_hamming_distance", default=0)
-    parser.add_option("-e", "--em", action="store_true", default=False)
+    parser.add_option("-e", "--em", action="store_true", default=True)
 
     (options, args) = parser.parse_args()
 

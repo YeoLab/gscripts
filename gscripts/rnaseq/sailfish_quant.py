@@ -97,7 +97,7 @@ class SailfishQuant(object):
         read2 = '-2 <(gunzip {})'.format(read2) if read2 is not None else ""
         reads = '{} {}'.format(read1, read2)
 
-        command = 'sailfish quant --index {0} -l {1} {2} --out {3} --threads ' \
+        command = 'sailfish quant --index {0} -l "{1}" {2} --out {3} --threads ' \
                   '{4}'.format(index, library_type, reads, out_dir,
                                num_processors)
 
