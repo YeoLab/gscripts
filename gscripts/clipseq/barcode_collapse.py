@@ -11,7 +11,7 @@ from collections import Counter, OrderedDict, defaultdict
 import itertools
 from optparse import OptionParser
 import sys
-
+import string
 import numpy as np
 import pysam
 
@@ -68,6 +68,17 @@ def calculate_barcode_frequency(barcode, reads, p_barcode_given_read):
     return result / len(reads)
 
 
+def update_tags(bam_read, q):
+    new_tags = []
+    for tag, value in bam_read.tags:
+        if tag == "RG" and len(value) == 1:
+            value += "0"
+        if len(tag) > 0 and all([x in string.printable for x in tag]):
+            new_tags.append((tag, value))
+    new_tags.append(("QC", int(q)))
+    return new_tags
+
+
 def em_collapse_base(reads, outBam, randomer, total_count, removed_count):
     barcode_set = {}
     barcodes = []
@@ -90,13 +101,17 @@ def em_collapse_base(reads, outBam, randomer, total_count, removed_count):
     #check if each tag exists:
     for barcode, bam_read in barcode_set.items():
         if len(p_barcode_given_read) == 1:
-            q = np.inf
+            q = 500000
         else:
-            q = -1 * sum(np.log10(1 - p_barcode_given_read[barcode][read]) * count for read, count in barcodes_count.items())
+            q = -10 * sum(np.log10(1 - p_barcode_given_read[barcode][read]) * count for read, count in barcodes_count.items())
+
+        bam_read.tags = update_tags(bam_read, q)
+
         if q >= 50:
             outBam.write(bam_read)
             removed_count[barcode] += barcodes_count[barcode] - 1
         else:
+            #outBam.write(bam_read)
             removed_count[barcode] += barcodes_count[barcode]
         total_count[barcode] += barcodes_count[barcode]
     return barcodes_count

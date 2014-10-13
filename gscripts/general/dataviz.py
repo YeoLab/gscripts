@@ -56,7 +56,8 @@ def clusterGram(dataFrame, distance_metric='euclidean',
                 figsize=(8, 10),
                 row_label_color_fun=lambda x: ppl.colors.almost_black,
                 col_label_color_fun=lambda x: ppl.colors.almost_black,
-                link_color_func=lambda x: ppl.colors.almost_black):
+                link_color_func=lambda x: ppl.colors.almost_black,
+                cmap=None):
     import scipy
     import pylab
     import matplotlib.gridspec as gridspec
@@ -148,10 +149,11 @@ def clusterGram(dataFrame, distance_metric='euclidean',
     else:
         norm = None
 
-    if (np.max(reordered) * np.min(reordered)) > 0:
-        cmap = pylab.cm.Reds
-    else:
-        cmap = pylab.cm.RdBu_r
+    if cmap is None:
+        if (np.max(reordered) * np.min(reordered)) > 0:
+            cmap = pylab.cm.Reds
+        else:
+            cmap = pylab.cm.RdBu_r
 
     im = axmatrix.matshow(reordered, aspect='auto', origin='lower', cmap=cmap,
                           norm=norm)
@@ -1459,5 +1461,5 @@ class Figure(object):
             #ax.set_title(ax.get_title(), fontsize=20)
         if self.tight_layout:
             self.figure.tight_layout()
-        self.figure.savefig(self.saveas)
-        self.figure.savefig(os.path.splitext(self.saveas)[0] + ".pdf")
+        self.figure.savefig(self.saveas, bbox_inches='tight')
+        self.figure.savefig(os.path.splitext(self.saveas)[0] + ".pdf", bbox_inches='tight')
