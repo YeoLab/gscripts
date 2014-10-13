@@ -102,3 +102,6 @@ export LIBRARY_PATH=${SERVER}/yeolab/Software/lib:$LIBRARY_PATH
 export LIBRARY_PATH=${SERVER}/yeolab/Software/R-3.0.0/lib:$LIBRARY_PATH
 
 export HDF5_DIR=/nas3/yeolab/Software
+
+#MOSH Paths
+export PKG_CONFIG_PATH=/nas3/yeolab/Software/lib/pkgconfig:$PKG_CONFIG_PATH
