@@ -1,5 +1,28 @@
 import argparse
 import subprocess
+import os
+
+class IDR():
+    def __init__(self, idr_dir="/home/yeo-lab/software/idrCode"):
+        self.idr_dir = idr_dir
+
+    def clipper_idr(self, peaks1, peaks2, out_file, chrom_sizes):
+        """
+        Given two peaks files performs IDR assuming clipper style output
+        """
+        subprocess.Popen("cat " + peaks1 + " |  awk '{$8=$5; $5=0; $7=-1;$9=-1;$10=-1; print $0}' > " + peaks1 + ".narrow", shell=True).wait()
+        subprocess.Popen("cat " + peaks2 + " |  awk '{$8=$5; $5=0; $7=-1;$9=-1;$10=-1; print $0}' > " + peaks2 + ".narrow", shell=True).wait()
+
+        self.idr(peaks1 + ".narrow", peaks2 + ".narrow", out_file, chrom_sizes)
+
+        subprocess.Popen("rm -rf " + peaks1 + ".narrow", shell=True)
+        subprocess.Popen("rm -rf " + peaks2 + ".narrow", shell=True)
+
+    def idr(self, peaks1, peaks2, out_file, chrom_sizes):
+        subprocess.Popen("Rscript %s %s %s -1 %s 0 F p.value %s" % (os.path.join(self.idr_dir, "batch-consistency-analysis.r"),
+                                                                 peaks1, peaks2, out_file, chrom_sizes), shell=True).wait()
+   
+
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(
@@ -50,11 +73,11 @@ if __name__ == "__main__":
         p4 = subprocess.Popen("clipper -b " + args.bam + "01.sorted.bam -s " + args.species + " -o " + args.bam + "01.sorted.peaks.bed --poisson-cutoff=.90 --superlocal --bonferroni --algorithm classic " + premRNA, shell=True)
         p3.wait()
         p4.wait()
-        
-    print "reformatting and performing IDR"
-    subprocess.Popen("cat " + args.bam + "00.sorted.peaks.bed |  awk '{$8=$5; $5=0; $7=-1;$9=-1;$10=-1; print $0}' > " + args.bam + "00.sorted.peaks.bed.narrow", shell=True).wait()
-    subprocess.Popen("cat " + args.bam + "01.sorted.peaks.bed |  awk '{$8=$5; $5=0; $7=-1;$9=-1;$10=-1; print $0}' > " + args.bam + "01.sorted.peaks.bed.narrow", shell=True).wait()
 
-    subprocess.Popen("Rscript /home/yeo-lab/software/idrCode/batch-consistency-analysis.r " + args.bam + "00.sorted.peaks.bed.narrow " + args.bam + "01.sorted.peaks.bed.narrow -1 " + args.out + " 0 F p.value " + args.genome, shell=True).wait()
-    subprocess.Popen("rm -rf " + args.bam + "00*", shell=True)
-    subprocess.Popen("rm -rf " + args.bam + "01*", shell=True)
+    idr = IDR()
+    idr.clipper_idr(args.bam + "00.sorted.peaks.bed", args.bam + "01.sorted.peaks.bed", args.out, args.genome)
+    print "reformatting and performing IDR"
+    
+
+    
+    
