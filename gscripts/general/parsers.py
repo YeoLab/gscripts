@@ -51,10 +51,10 @@ def rnaseq_metrics(analysis_dir, num_seps=1, sep="."):
     combined_df = pd.merge(combined_df, nrf_df, left_index=True, right_index=True, how="outer")
 
     #Rename columns to be useful
-    combined_df = combined_df.rename(columns={"Processed bases" : "Input Bases",
-                                              "Processed reads" : "Input Reads",
-                                              "Number of input reads" : "Reads Passing Quality Filter",
-                                              "Uniquely mapped reads number" : "Uniquely Mapped Reads",
+    combined_df = combined_df.rename(columns={"Processed bases": "Input Bases",
+                                              "Processed reads": "Input Reads",
+                                              "Number of input reads": "Reads Passing Quality Filter",
+                                              "Uniquely mapped reads number": "Uniquely Mapped Reads",
            })
 
     #Make some useful stats
@@ -73,7 +73,8 @@ def rnaseq_metrics(analysis_dir, num_seps=1, sep="."):
                   "Started mapping on"], axis=1)
 
     return combined_df 
-def clipseq_metrics(analysis_dir, iclip=False, num_seps=None, sep="."):
+def clipseq_metrics(analysis_dir, iclip=False, num_seps=None, sep=".",
+                    percent_usable=.01, number_usable=500000, frip=.05):
 
     """
     
@@ -93,18 +94,22 @@ def clipseq_metrics(analysis_dir, iclip=False, num_seps=None, sep="."):
     peaks_names = get_names(peaks_files, num_seps, sep)
     spot_names = get_names(spot_files, num_seps, sep) 
 
-    rm_duped_df = pd.DataFrame({name : parse_rm_duped_metrics_file(rm_duped_file) for name, rm_duped_file in rm_duped_names.items()}).transpose()
-    spot_df = pd.DataFrame({name : parse_peak_metrics(spot_file) for name, spot_file in spot_names.items()}).transpose()
-    peaks_df = pd.DataFrame({name : {"Num Peaks" : len(pybedtools.BedTool(peaks_file))} for name, peaks_file in peaks_names.items()}).transpose()
+    rm_duped_df = pd.DataFrame({name: parse_rm_duped_metrics_file(rm_duped_file) for name, rm_duped_file in rm_duped_names.items()}).transpose()
+    spot_df = pd.DataFrame({name: parse_peak_metrics(spot_file) for name, spot_file in spot_names.items()}).transpose()
+    peaks_df = pd.DataFrame({name: {"Num Peaks": len(pybedtools.BedTool(peaks_file))} for name, peaks_file in peaks_names.items()}).transpose()
     combined_df = rnaseq_metrics(analysis_dir, num_seps, sep)
     combined_df = pd.merge(combined_df, rm_duped_df, left_index=True, right_index=True, how="outer")
     combined_df = pd.merge(combined_df, spot_df, left_index=True, right_index=True, how="outer")
     combined_df = pd.merge(combined_df, peaks_df, left_index=True, right_index=True, how="outer")
     try:
-        combined_df["Percent Usable / Input"] = (combined_df['Usable Reads'] / combined_df['Uniquely Mapped Reads']) * 100
-        combined_df["Percent Usable / Mapped"] = (combined_df['Usable Reads'] / combined_df['Input Reads']) * 100
+        combined_df["Percent Usable / Input"] = (combined_df['Usable Reads'] / combined_df['Uniquely Mapped Reads'])
+        combined_df["Percent Usable / Mapped"] = (combined_df['Usable Reads'] / combined_df['Input Reads'])
+        combined_df['Passed QC'] = (combined_df['Usable Reads'] > number_usable) & (combined_df['Percent Usable / Mapped'] > percent_usable)
+
     except ZeroDivisionError:
         pass
+
+
     return combined_df
 
 def parse_star_file(star_file_name):
@@ -147,14 +152,14 @@ def parse_star_file(star_file_name):
 def parse_peak_metrics(fn):
     with open(fn) as file_handle:
         file_handle.next()
-        return {'spot' : float(file_handle.next())}
+        return {'spot': float(file_handle.next())}
     
 def parse_nrf_file(nrf_file):
     with open(nrf_file) as nrf_file:
         try:
             names = nrf_file.next().strip().split()
             values = nrf_file.next().strip().split()
-            return {name : float(value) for name, value in zip(names, values)} 
+            return {name: float(value) for name, value in zip(names, values)}
         except:
             return {}
     
@@ -164,14 +169,14 @@ def parse_rm_duped_metrics_file(rmDup_file):
         removed_count = 0 
         df = pd.read_csv(rmDup_file, sep="\t")
         
-        return {"total_count" : sum(df.total_count), 
-                    "removed_count" : sum(df.removed_count), 
-                    "Usable Reads" : sum(df.total_count) - sum(df.removed_count)}
+        return {"total_count": sum(df.total_count),
+                    "removed_count": sum(df.removed_count),
+                    "Usable Reads": sum(df.total_count) - sum(df.removed_count)}
     except Exception as e:
         print e
-        return {"total_count" : None, 
-                    "removed_count" : None, 
-                    "Usable Reads" : None}
+        return {"total_count": None,
+                    "removed_count": None,
+                    "Usable Reads": None}
 
 def parse_cutadapt_file(report):
     report_dir = {}

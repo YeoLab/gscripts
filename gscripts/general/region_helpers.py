@@ -184,3 +184,31 @@ def generate_region_dict(gff, region_name, transcript_gene_dict):
                 region_dict[gene].reverse()
                 
         return region_dict
+
+import gffutils
+
+#I'll eventually want to factor this into a class, probably
+def gene_id_to_name(db):
+    db = gffutils.FeatureDB(db)
+    genes = db.features_of_type('gene')
+    gene_name_dict = {}
+    for gene in genes:
+        gene_id = gene.attributes['gene_id'][0] if type(gene.attributes['gene_id']) == list else gene.attributes['gene_id']
+        try:
+            gene_name_dict[gene_id] = gene.attributes['gene_name'][0]
+        except KeyError:
+            pass
+    return gene_name_dict
+
+def gene_id_to_type(db):
+    db = gffutils.FeatureDB(db)
+    genes = db.features_of_type('gene')
+    gene_type_dict = {}
+    for gene in genes:
+        gene_id = gene.attributes['gene_id'][0] if type(gene.attributes['gene_id']) == list else gene.attributes['gene_id']
+        try:
+            gene_type_dict[gene_id] = gene.attributes['gene_type'][0]
+        except KeyError:
+            pass
+    return gene_type_dict
+

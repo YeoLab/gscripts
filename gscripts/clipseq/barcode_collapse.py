@@ -269,10 +269,12 @@ if __name__ == "__main__":
     parser.add_option("-m", "--metrics_file", dest="metrics_file")
     parser.add_option("-d", "--max_hamming_distance", dest="max_hamming_distance", default=0)
     parser.add_option("-e", "--em", action="store_true", default=True)
-
+    parser.add_option("--classic", action="store_true", default=False, help="switches back to classic barcode collapse stragegy")
     (options, args) = parser.parse_args()
 
-    
+    if options.classic:
+        options.em = False
+
     if not (options.bam.endswith(".bam")):
         raise TypeError("%s, not bam file" % options.bam)
 

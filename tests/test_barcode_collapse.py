@@ -62,14 +62,24 @@ class Test(unittest.TestCase):
             self.assertEqual(barcode_collapse.calculate_p_read_given_barcode("AAAC", "AAAC", .05), 1)
             self.assertEqual(barcode_collapse.calculate_p_read_given_barcode("AAAC", "AAAG", .05), .05)
 
-    def test_calculate_p_barcode_given_read(self):
-        p_read_given_barcode = {"AAAG": {"AAAG": 1.0, "AAAC": .1},
-                                "AAAC": {"AAAG": .1, "AAAC": 1.0, },
-                                }
-        barcodes_frequency = {"AAAG": .1, "AAAC": .9}
+    #def test_calculate_p_barcode_given_read(self):
+    #    p_read_given_barcode = {"AAAG": {"AAAG": 1.0, "AAAC": .1},
+    #                            "AAAC": {"AAAG": .1, "AAAC": 1.0, },
+    #                            }
+    #    barcodes_frequency = {"AAAG": .1, "AAAC": .9}
 
-        self.assertAlmostEqual(barcode_collapse.calculate_p_barcode_given_read("AAAC", "AAAG", p_read_given_barcode, barcodes_frequency), .47,
-                               delta=2)
+    #    self.assertAlmostEqual(barcode_collapse.calculate_p_barcode_given_read("AAAC", "AAAG", p_read_given_barcode, barcodes_frequency), .47,
+    #                           delta=2)
+
+    def test_no_alligned_reads_bc(self):
+        inBam = tests.get_file("no_mapped_reads.bam")
+        outBam = tests.get_file("test_barcode_collapse.bc.bam")
+        total_count, removed_count = barcode_collapse.barcode_collapse(inBam, outBam, True, em=True)
+
+    def test_no_alligned_reads_no_bc(self):
+        inBam = tests.get_file("no_mapped_reads.bam")
+        outBam = tests.get_file("test_barcode_collapse.bc.bam")
+        total_count, removed_count = barcode_collapse.barcode_collapse(inBam, outBam, False, em=True)
 
 if __name__ == "__main__":
     #import sys;sys.argv = ['', 'Test.testName']
