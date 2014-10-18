@@ -26,9 +26,9 @@ class CommandLine(object):
                                  'just write the sh file (for testing)')
         parser.add_argument('-d', '--directory', required=False,
                             action='store', default='./',
-                            help='Base directory, which has a "miso" directory there. This assumes '
+                            help='Base directory, which has a "<miso_subdirectory>" directory there. This assumes '
                                  'the following directory structure:'
-                                 '\n<directory>/miso/<sample_id>/<event_type>'
+                                 '\n<directory>/<miso_subdirectory>/<sample_id>/<event_type>'
                                  '\nWhere "<directory>" is the location '
                                  'specified through this '
                                  'variable. If you ran your MISO samples using the Yeo Lab '
@@ -38,6 +38,10 @@ class CommandLine(object):
                             action='store_true', default=False,
                             help='Whether this is downsampled bam file miso '
                                  'summary data')
+        parser.add_argument('--miso_subdirectory', required=False,
+                            action='store', default="miso",
+                            help="name of directory with miso results,"
+                                 "default is \"miso\"")
         if inOpts is None:
             self.args = vars(self.parser.parse_args())
         else:
@@ -69,7 +73,7 @@ class Usage(Exception):
 
 
 class ConcatenateMiso(object):
-    def __init__(self, directory='./', downsampled=False):
+    def __init__(self, directory='./', miso_subdirectory="miso", downsampled=False):
         """
         Given a base folder which has a directory called "miso" where all the
         miso output is, search for bad events in the subfolders and then
@@ -91,8 +95,9 @@ class ConcatenateMiso(object):
 
         """
         directory = directory.rstrip('/')
-        glob_command = '{}/miso/*/*/summary/*.miso_summary'.format(directory)
-        bad_events_template = directory + r'/miso/{}/{}/bad_events.txt'
+        glob_command = '{}/{}/*/*/summary/*.miso_summary'.format(directory,
+                                                                 miso_subdirectory)
+        bad_events_template = directory + miso_subdirectory + r'/{}/{}/bad_events.txt'
 
         dfs = []
 
@@ -102,14 +107,19 @@ class ConcatenateMiso(object):
                 df = read_miso_summary(filename)
 
                 splice_type = os.path.basename(filename).split('.')[0]
-                sample_id = filename.split('/')[-3]
-                fragments = sample_id.split('_')
-                real_id = '_'.join(fragments[:2])
-                probability = float(fragments[2].lstrip('prob'))
-                iteration = int(fragments[3].lstrip('iter'))
-                sys.stdout.write('\t{}\t{}\t{}\t{}'.format(i, real_id,
-                                                           probability,
-                                                           iteration))
+                sample_id = filename.split('/')[-4]
+
+                if downsampled:
+                    fragments = sample_id.split('_')
+                    real_id = '_'.join(fragments[:2])
+                    probability = float(fragments[2].lstrip('prob'))
+                    iteration = int(fragments[3].lstrip('iter'))
+                    sys.stdout.write('\t{}\t{}\t{}\t{}\n'.format(i, real_id,
+                                                               probability,
+                                                               iteration))
+                else:
+                    real_id = filename
+                    sys.stdout.write('\t{}\t{}\n'.format(i, real_id))
 
                 try:
                     with open(bad_events_template.format(sample_id,
@@ -119,10 +129,12 @@ class ConcatenateMiso(object):
                             re.findall('/.+miso', f.read()))
                     df = df.ix[~df.index.isin(bad_events)]
                 except IOError:
-                    sys.stdout.write('\t...{}\t{}\t{}\t{} no nan events file'
+                    if downsampled:
+                        sys.stdout.write('\t...{}\t{}\t{}\t{} no nan events file\n'
                                      .format(real_id, probability, iteration,
                                              splice_type))
-
+                    else:
+                        sys.stdout.write('\t{}\t{} no nan events file\n'.format(i, real_id))
                 df['sample_id'] = sample_id
                 df['splice_type'] = splice_type
 
@@ -135,8 +147,6 @@ class ConcatenateMiso(object):
         # Goes up to:
         # 6700 P9_1 0.88 0 ALE
         # 6800 P9_1 0.56 1 A3SS
-
-
         summary = pd.concat(dfs)
         summary.to_csv('{}/miso_summary_raw.csv'.format(directory))
 
@@ -170,7 +180,8 @@ if __name__ == '__main__':
     try:
         cl = CommandLine()
         directory = cl.args['directory'].rstrip('/')
-        ConcatenateMiso(directory)
+        miso_subdirectory = cl.args['miso_subdirectory'].rstrip('/')
+        ConcatenateMiso(directory, miso_subdirectory)
 
     except Usage, err:
         cl.do_usage_and_die()
