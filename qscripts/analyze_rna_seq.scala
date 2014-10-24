@@ -8,7 +8,7 @@ import org.broadinstitute.sting.commandline.Hidden
 import org.broadinstitute.sting.queue.extensions.picard.{ ReorderSam, SortSam, AddOrReplaceReadGroups, MarkDuplicates }
 import org.broadinstitute.sting.queue.extensions.samtools._
 import org.broadinstitute.sting.queue.extensions.gatk._
-import org.broadinstitute.sting.queue.util.TsccUtils._
+import org.broadinstitute.sting.queue.util.YeowareUtils._
 import org.broadinstitute.sting.queue.extensions.yeo._
 
 class AnalyzeRNASeq extends QScript {
@@ -146,10 +146,13 @@ class AnalyzeRNASeq extends QScript {
 }
   
 
-case class Sailfish(@Input fastqFile: File, @Input index: File, outputDir: String, @Output mergedBed: File) extends CommandLineFunction{
+case class Sailfish(@Input fastqFile: File, outputDir: String, @Output mergedBed: File, species: String) extends CommandLineFunction{
 
         override def shortDescription = "sailfish"
         this.nCoresRequest = Option(16)
+
+        index =SailfishGenomeIndexLocation(species)
+
         def commandLine = "sailfish_quant.py +
         required("-1", fastqFile) +
         required("--out-dir", outputDir) +
