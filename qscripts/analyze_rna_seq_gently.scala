@@ -153,7 +153,7 @@ case class Sailfish(@Input fastqFile: File, outputDir: String, @Output mergedBed
 
         index =SailfishGenomeIndexLocation(species)
 
-        def commandLine = "sailfish_quant.py +
+        def commandLine = "sailfish_quant.py" +
         required("-1", fastqFile) +
         required("--out-dir", outputDir) +
         required("--index", index) +
