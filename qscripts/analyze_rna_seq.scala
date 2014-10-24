@@ -146,6 +146,22 @@ class AnalyzeRNASeq extends QScript {
 }
   
 
+case class Sailfish(@Input fastqFile: File, @Input index: File, outputDir: String, @Output mergedBed: File) extends CommandLineFunction{
+
+        override def shortDescription = "sailfish"
+        this.nCoresRequest = Option(16)
+        def commandLine = "sailfish_quant.py +
+        required("-1", fastqFile) +
+        required("--out-dir", outputDir) +
+        required("--index", index) +
+        required("-n", fastqFile + ".sailfish") +
+        required("--out-sh", fastqFile + ".sailfish.sh") +
+        required("-i", index) +
+        "--do-not-submit"
+
+    }
+
+
  @Argument(doc="reads are single ended", shortName = "single_end", fullName = "single_end", required = false)
  var singleEnd: Boolean = true
 
