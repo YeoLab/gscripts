@@ -149,13 +149,12 @@ class AnalyzeRNASeq extends QScript {
     }
 
 
-    case class Sailfish(@Input fastqFile: File, outputDir: String, @Output output: File, species: String) extends CommandLineFunction{
+    case class Sailfish(@Input fastqFile: File, outputDir: String, sh_script: File, @Output output: File, species: String) extends CommandLineFunction{
 
         override def shortDescription = "sailfish"
         this.nCoresRequest = Option(16)
 
         var index = SailfishGenomeIndexLocation(species)
-        var sh_script = outputDir.swapExt("/", ".sailfish.sh")
 
         def commandLine = "sailfish_quant.py" +
         required("-1", fastqFile) +
@@ -236,9 +235,10 @@ class AnalyzeRNASeq extends QScript {
 
                 var sailfishOutputDir : File = swapExt(fastqFile, ".gz", "")
                 sailfishOutputDir = swapExt(sailfishOutputDir, ".fastq", ".sailfish")
+                var sailfishScript = swapExt(sailfishOutputDir, ".sailfish", ".sailfish.sh")
                 var sailfishOutputFile = swapExt(sailfishOutputDir, "", "/quant_bias_corrected.sf")
 
-                add(new Sailfish(fastqFile, sailfishOutputDir, sailfishOutputFile, species))
+                add(new Sailfish(fastqFile, sailfishOutputDir, sailfishScript, sailfishOutputFile, species))
                 add(new FastQC(inFastq = fastqFile))
 
                 var filteredFastq: File = null
