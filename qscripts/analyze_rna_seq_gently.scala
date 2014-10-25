@@ -87,7 +87,7 @@ class AnalyzeRNASeq extends QScript {
         if(paired != null) {
             this.inFastqPair = paired
         }
-        this.nCoresRequest = Option(16)
+        //this.nCoresRequest = Option(8)
         this.outSam = output
         //intron motif should be used if the data is not stranded
         this.intronMotif = stranded
