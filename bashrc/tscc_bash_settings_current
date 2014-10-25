@@ -10,6 +10,9 @@ alias psme="ps -u $(whoami)"
 
 SERVER=/projects
 
+
+export GENOME=/projects/ps-yeolab/genomes
+
 export LD_LIBRARY_PATH=/home/yeo-lab/software/lib:$LD_LIBRARY_PATH
 export LD_LIBRARY_PATH=/home/yeo-lab/software/linux/gcc/dyn/x86_64/rel/lib:$LD_LIBRARY_PATH
 
