@@ -163,7 +163,10 @@ class AnalyzeRNASeq extends QScript {
         required("-n", sh_script) +
         required("--out-sh", sh_script) +
         required("-i", index) +
-        "--do-not-submit && eval $(tail -n 2 " + sh_script + ") && touch " + output
+        "--do-not-submit && echo $(tail -n 2 " +
+        required(sh_script) +
+        ") | bash && touch " +
+        required(output)
 
     }
 
