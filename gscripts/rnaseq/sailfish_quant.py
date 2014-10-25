@@ -90,7 +90,7 @@ class SailfishQuant(object):
                  index,
                  job_name='sailfish_quant',
                  num_processors=8,
-                 out_sh=None, submit=False):
+                 out_sh=None, submit=False, queue_name='home'):
         library_type = 'T=PE:O=><:S=SA' if read2 is not None else 'T=SE:S=U'
         if read2 is not None:
             read1 = '-1 <(gunzip -c {})'.format(read1)
@@ -107,7 +107,7 @@ class SailfishQuant(object):
         sub = Submitter(queue_type='PBS', sh_filename=out_sh,
                         commands=[command], job_name=job_name,
                         nodes=1, ppn=num_processors,
-                        queue='home',
+                        queue=queue_name,
                         walltime='0:30:00')
         sub.write_sh(submit=submit)
 
