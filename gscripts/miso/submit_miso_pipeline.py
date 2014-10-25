@@ -214,7 +214,7 @@ fi\n".format(out_dir, event_type))
 
             commands.append('# Summarize psi scores for all {} events'
                             .format(event_type))
-            commands.append('python /home/yeo-lab/software/bin/run_miso.py '
+            commands.append('run_miso.py '
                             '--summarize-samples {0} ' \
                             '{0} >{0}/summary.out 2>{0}/summary.err'.format(
                 out_dir))
