@@ -87,7 +87,7 @@ class AnalyzeRNASeq extends QScript {
         if(paired != null) {
             this.inFastqPair = paired
         }
-
+        this.nCoresRequest = Option(16)
         this.outSam = output
         //intron motif should be used if the data is not stranded
         this.intronMotif = stranded
@@ -163,10 +163,10 @@ class AnalyzeRNASeq extends QScript {
         required("-n", sh_script) +
         required("--out-sh", sh_script) +
         required("-i", index) +
-        "--do-not-submit && echo $(tail -n 2 " +
+        "-p 16 --do-not-submit && echo $(tail -n 2 " +
         required(sh_script) +
-        ") | bash && touch " +
-        required(output)
+        ") | bash"
+
 
     }
 
