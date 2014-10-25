@@ -292,7 +292,7 @@ class AnalyzeRNASeq extends QScript {
 
             add(new sortSam(samFile, sortedBamFile, SortOrder.coordinate))
             add(new samtoolsIndexFunction(sortedBamFile, indexedBamFile))
-            add(new Miso(inBam = sortedBamFile, species = species, pairedEnd = false, output = misoOut))
+            add(new Miso(inBam = sortedBamFile, indexFile = indexedBamFile, species = species, pairedEnd = false, output = misoOut))
 
             //add(addOrReplaceReadGroups(sortedBamFile, rgSortedBamFile))
             //add(new samtoolsIndexFunction(rgSortedBamFile, indexedBamFile))

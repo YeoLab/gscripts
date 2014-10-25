@@ -186,10 +186,10 @@ class MisoPipeline(object):
                             ' all {} events'.format(event_type))
             commands.append('mkdir -p {}'.format(out_dir))
             commands.append("miso \
-         --run $GENOME/{0}/miso/{1}_index \
+         --run " + os.environ['GENOME'] + "/{0}/miso/{1}_index \
          {2} --output-dir {3} \
          --read-len $READ_LEN \
-         --settings-filename $GENOME/hg19/miso_annotations"
+         --settings-filename " + os.environ['GENOME'] + "/hg19/miso_annotations"
                             "/miso_settings_min_event_reads10.txt \
  -p 16 \
  > {4} \
