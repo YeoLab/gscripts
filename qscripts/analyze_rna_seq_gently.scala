@@ -155,7 +155,7 @@ class AnalyzeRNASeq extends QScript {
         this.nCoresRequest = Option(16)
 
         var index = SailfishGenomeIndexLocation(species)
-        sh_script = fastqFile.swapExt(".gz", "")
+        var sh_script = fastqFile.swapExt(".gz", "")
         sh_script = sh_script.swapExt(".fastq", ".sailfish.sh")
 
         def commandLine = "sailfish_quant.py" +
@@ -237,7 +237,7 @@ class AnalyzeRNASeq extends QScript {
 
                 var sailfishOutputDir : File = swapExt(fastqFile, ".gz", "")
                 sailfishOutputDir = swapExt(sailfishOutputDir, ".fastq", ".sailfish")
-                sailfishOutputFile = swapExt(sailfishOutputDir, "", "/quant_bias_corrected.sf")
+                var sailfishOutputFile = swapExt(sailfishOutputDir, "", "/quant_bias_corrected.sf")
 
                 add(new Sailfish(fastqFile, sailfishOutputDir, sailfishOutputFile, species))
                 add(new FastQC(inFastq = fastqFile))
@@ -276,7 +276,8 @@ class AnalyzeRNASeq extends QScript {
             //val oldSpliceOut = swapExt(rgSortedBamFile, "bam", "splices")
             //val misoOut = swapExt(rgSortedBamFile, "bam", "miso")
 
-            //val misoOut = swapExt(sortedBamFile, "bam", "miso")
+            val misoOut = swapExt(sortedBamFile, "bam", "miso")
+
             //val rnaEditingOut = swapExt(rgSortedBamFile, "bam", "editing")
 
             //add bw files to list for printing out later
@@ -303,7 +304,6 @@ class AnalyzeRNASeq extends QScript {
             //add(new singleRPKM(input = countFile, output = RPKMFile, s = species))
 
             //add(oldSplice(input = rgSortedBamFile, out = oldSpliceOut, species = species))
-            //add(new Miso(inBam = rgSortedBamFile, species = species, pairedEnd = false, output = misoOut))
             //add(new Miso(inBam = rgSortedBamFile, species = species, pairedEnd = false, output = misoOut))
             //add(new RnaEditing(inBam = rgSortedBamFile, snpEffDb = species, snpDb = snpDbLocation(species), genome = genomeLocation(species), flipped=flipped, output = rnaEditingOut))
 
