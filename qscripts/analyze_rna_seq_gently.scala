@@ -155,7 +155,7 @@ class AnalyzeRNASeq extends QScript {
         this.nCoresRequest = Option(16)
 
         var index = SailfishGenomeIndexLocation(species)
-        var sh_script = fastqFile + ".sailfish.sh"
+        var sh_script = outputDir.swapExt("/", ".sailfish.sh")
 
         def commandLine = "sailfish_quant.py" +
         required("-1", fastqFile) +
