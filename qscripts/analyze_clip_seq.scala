@@ -226,7 +226,7 @@ class AnalizeCLIPSeq extends QScript {
 	     var piranha = new Piranha
 	     piranha.inBam = bamFile
 	     piranha.outBed = swapExt(bamFile, ".bam", ".piranha.bed")
-
+	     
 	     var clipClassic = new ClipClassic
 	     clipClassic.inBam = bamFile
 	     clipClassic.species = genome
@@ -236,6 +236,11 @@ class AnalizeCLIPSeq extends QScript {
 	     			  genome_location = genomeLocation(genome), phastcons_location = phastconsLocation(genome), 
 	     			  gff_db = gffDbLocation(genome)))
 	     add(clipClassic)
+
+	      var miclip = new MiClip
+	      miclip.inBam = bamFile
+	      miclip.outBed = swapExt(bamFile, ".bam", ".miclip.bed")
+	      add(miclip)
 	     //add(ripseeker, piranha, clipClassic)
 
       	     //add(new IDR(inBam = bamFile, species = genome, genome = chromSizeLocation(genome), outResult = IDRResult, premRNA = premRNA))
@@ -292,6 +297,7 @@ class AnalizeCLIPSeq extends QScript {
       	     	add(star(input = filteredFastq, output = samFile, genome_location = starGenomeLocation(genome)))
       	     	add(addOrReplaceReadGroups(samFile, rgBamFile))
 	     	add(sortSam(rgBamFile, sortedrgBamFile, SortOrder.coordinate))
+
       	     } else {
 	        sortedrgBamFile = fastq_file
 	     }

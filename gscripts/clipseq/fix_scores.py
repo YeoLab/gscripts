@@ -12,12 +12,20 @@ import pybedtools
 
 def adjust_score(read):
     import numpy as np
+    peak_center = str((int(read[6]) + int(read[7])) / 2)
+    qValue = read.score
+    pValue = str(-1) #to fix
+    signalValue = str(-1)
     if float(read.score) != 0.0:
-        read.score = str(int(-10 * np.log10(float(read.score))))
-        if int(read.score) > 1000:
-            read.score = str(1000)
+        read.score = str(min(int(-10 * np.log10(float(read.score))), 1000))
     else:
-        read.score = str(1000)
+        read.score = "0"
+
+    read[6] = signalValue
+    read[7] = pValue
+    read.append(qValue)
+    read.append(peak_center)
+
     return read
         
 if __name__ == "__main__":

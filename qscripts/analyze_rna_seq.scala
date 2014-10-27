@@ -8,7 +8,7 @@ import org.broadinstitute.sting.commandline.Hidden
 import org.broadinstitute.sting.queue.extensions.picard.{ ReorderSam, SortSam, AddOrReplaceReadGroups, MarkDuplicates }
 import org.broadinstitute.sting.queue.extensions.samtools._
 import org.broadinstitute.sting.queue.extensions.gatk._
-import org.broadinstitute.sting.queue.util.TsccUtils._
+import org.broadinstitute.sting.queue.util.YeowareUtils._
 import org.broadinstitute.sting.queue.extensions.yeo._
 
 class AnalyzeRNASeq extends QScript {
@@ -145,6 +145,25 @@ class AnalyzeRNASeq extends QScript {
        this.singleEnd = single_end
 }
   
+
+case class Sailfish(@Input fastqFile: File, outputDir: String, @Output mergedBed: File, species: String) extends CommandLineFunction{
+
+        override def shortDescription = "sailfish"
+        this.nCoresRequest = Option(16)
+
+        index =SailfishGenomeIndexLocation(species)
+
+        def commandLine = "sailfish_quant.py +
+        required("-1", fastqFile) +
+        required("--out-dir", outputDir) +
+        required("--index", index) +
+        required("-n", fastqFile + ".sailfish") +
+        required("--out-sh", fastqFile + ".sailfish.sh") +
+        required("-i", index) +
+        "--do-not-submit"
+
+    }
+
 
  @Argument(doc="reads are single ended", shortName = "single_end", fullName = "single_end", required = false)
  var singleEnd: Boolean = true
