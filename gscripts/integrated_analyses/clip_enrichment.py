@@ -136,7 +136,6 @@ def plot_significance(significance, enrichment_axes, significance_axes, n_axes,
         p_ymax = int(
             max(np.ceil(ymax), np.ceil(hypergeometric_p.max()), p_ymax))
         p_value_ax.set_ylim(0, p_ymax)
-        p_value_ax.set_yticks(significance_cutoffs)
 
         n_ax.set_ylabel('Number of events')
         n_ax.set_title('# peaks = {}'.format(len(clip_peaks)))
@@ -146,7 +145,7 @@ def plot_significance(significance, enrichment_axes, significance_axes, n_axes,
 
     # ax.legend(loc='best')
     # for ax in significance_axes:
-    #     ax.set_ylim(0, p_ymax)
+    # ax.set_ylim(0, p_ymax)
     # for ax in enrichment_axes:
     #     ax.set_ylim(0, enrichment_max)
     sns.despine()
