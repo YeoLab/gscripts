@@ -1,7 +1,7 @@
 from scipy import stats
 
 
-def spearmanr(x, y):
+def spearmanr_series(x, y):
     """Calculate spearman r (with p-values) between two pandas series
     
     Parameters
@@ -58,5 +58,6 @@ def spearmanr_dataframe(A, B, axis=0):
     >>> spearman_r = correls.applymap(lambda x: x[0])
     >>> spearman_p = correls.applymap(lambda x: x[1])
     """
-    return A.apply(lambda x: B.apply(lambda y: spearmanr(x, y), axis=axis),
+    return A.apply(lambda x: B.apply(lambda y: spearmanr_series(x, y),
+                                     axis=axis),
                    axis=axis)

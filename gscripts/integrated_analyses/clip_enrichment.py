@@ -46,9 +46,12 @@ def calculate_hypergeometric_p(x, intersect, significance=1, less_than=True):
     return hypergeometric_p
 
 
-def plot_significance(p_values, enrichment_axes, p_value_axes, n_axes,
+def plot_significance(significance, enrichment_axes, p_value_axes, n_axes,
                       beds, clip_peaks, direction, significance_cutoffs,
                       title=""):
+    """
+
+    """
     p_ymax = 10
     enrichment_max = max(10, max(ax.get_ylim()[1] for ax in enrichment_axes))
     for enrichment_ax, p_value_ax, n_ax, (label, bed) in zip(enrichment_axes,
@@ -70,23 +73,23 @@ def plot_significance(p_values, enrichment_axes, p_value_axes, n_axes,
         intersect = intersect.groupby(level=0, axis=0).sum()
 
         percent_enrichment = 100 * significance_cutoffs.apply(lambda p:
-                                                              p_values.apply(
+                                                              significance.apply(
                                                                   count_intersect,
                                                                   significance=p,
                                                                   intersect=intersect))
         background = 100 * significance_cutoffs.apply(lambda p:
-                                                      p_values.apply(
+                                                      significance.apply(
                                                           count_intersect,
                                                           significance=p,
                                                           intersect=intersect,
                                                           opposite=True))
         hypergeometric_p = significance_cutoffs.apply(
-            lambda p: p_values.apply(calculate_hypergeometric_p,
+            lambda p: significance.apply(calculate_hypergeometric_p,
                                      significance=p, intersect=intersect))
         hypergeometric_p = -np.log10(hypergeometric_p).replace(-np.inf, 0)
 
         n_events = significance_cutoffs.apply(
-            lambda p: (p_values < 10 ** (-p)).sum())
+            lambda p: (significance < 10 ** (-p)).sum())
 
         for group, series in percent_enrichment.iteritems():
             # color = group_to_color[group]
@@ -163,7 +166,7 @@ def plot_enrichment(strength, significance, clip_peaks, regions, title='',
     ncols = len(regions)
     figsize = (6 * ncols, 4 * nrows)
     fig, axes = plt.subplots(nrows=nrows, ncols=ncols, figsize=figsize,
-                             sharex=True, sharey=False)
+                             sharex=True, sharey='row')
 
     enrichment_axes = axes[0]
     p_value_axes = axes[1]
