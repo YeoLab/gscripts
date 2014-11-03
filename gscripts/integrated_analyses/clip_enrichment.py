@@ -2,16 +2,22 @@ import os
 import sys
 from scipy import stats
 
-from ..ipython_imports import *
+import matplotlib as mpl
+import matplotlib.pyplot as plt
+import seaborn as sns
+import numpy as np
+import pandas as pd
+
+from ..ipython_imports import red, blue
 
 mpl.rcParams['svg.fonttype'] = 'path'
 
 
-def count_intersect(x, significance, intersect, opposite=False, less_than=True):
+def count_intersect(x, significance, intersect, opposite=False, p_values=True):
     if not opposite:
-        events = x[x > significance].index
+        events = get_significant(x, significance, p_values).index
     else:
-        events = x[x <= significance].index
+        events = get_not_significant(x, significance, p_values).index
 
     if events.shape[0] > 0:
         mini_intersect = intersect.ix[events].dropna()
@@ -27,12 +33,19 @@ def get_significant(significance, cutoff, p_values=True):
         return significance[significance > cutoff]
 
 
-def calculate_hypergeometric_p(x, intersect, significance=1, less_than=True):
+def get_not_significant(significance, cutoff, p_values=True):
+    if p_values:
+        return significance[significance >= cutoff]
+    else:
+        return significance[significance <= cutoff]
+
+
+def calculate_hypergeometric_p(x, intersect, significance=1, p_values=True):
     """
 
     """
     x = x.dropna()
-    significant = x[x < significance] if less_than else x[x > significance]
+    significant = get_significant(x, significance, p_values=p_values)
 
     n_population = x.shape[0]
     n_intersect = intersect.index.intersection(x.index).shape[0]
@@ -46,16 +59,16 @@ def calculate_hypergeometric_p(x, intersect, significance=1, less_than=True):
     return hypergeometric_p
 
 
-def plot_significance(significance, enrichment_axes, p_value_axes, n_axes,
+def plot_significance(significance, enrichment_axes, significance_axes, n_axes,
                       beds, clip_peaks, direction, significance_cutoffs,
-                      title=""):
-    """
+                      title="", xlabel="", p_values=True):
+    """Plot enrichment of clip peaks in different regions
 
     """
     p_ymax = 10
     enrichment_max = max(10, max(ax.get_ylim()[1] for ax in enrichment_axes))
     for enrichment_ax, p_value_ax, n_ax, (label, bed) in zip(enrichment_axes,
-                                                             p_value_axes,
+                                                             significance_axes,
                                                              n_axes, beds):
         n_ax.set_yscale('log')
         try:
@@ -67,8 +80,8 @@ def plot_significance(significance, enrichment_axes, p_value_axes, n_axes,
             continue
         # import pdb; pdb.set_trace()
         head = intersect.head()
-        miso_id_column = head[head.applymap(lambda x: ':' in x
-        if isinstance(x, str) else False)].dropna(axis=1, how='all').columns[0]
+        miso_id_column = head[head.applymap(lambda x: ':' in x if
+        isinstance(x, str) else False)].dropna(axis=1, how='all').columns[0]
         intersect = intersect.set_index(miso_id_column)
         intersect = intersect.groupby(level=0, axis=0).sum()
 
@@ -76,23 +89,25 @@ def plot_significance(significance, enrichment_axes, p_value_axes, n_axes,
                                                               significance.apply(
                                                                   count_intersect,
                                                                   significance=p,
-                                                                  intersect=intersect))
+                                                                  intersect=intersect,
+                                                                  p_values=p_values))
         background = 100 * significance_cutoffs.apply(lambda p:
                                                       significance.apply(
                                                           count_intersect,
                                                           significance=p,
                                                           intersect=intersect,
-                                                          opposite=True))
+                                                          opposite=True,
+                                                          p_values=p_values))
         hypergeometric_p = significance_cutoffs.apply(
             lambda p: significance.apply(calculate_hypergeometric_p,
-                                     significance=p, intersect=intersect))
+                                         significance=p, intersect=intersect,
+                                         p_values))
         hypergeometric_p = -np.log10(hypergeometric_p).replace(-np.inf, 0)
 
         n_events = significance_cutoffs.apply(
             lambda p: (significance < 10 ** (-p)).sum())
 
         for group, series in percent_enrichment.iteritems():
-            # color = group_to_color[group]
             color = blue if direction == 'negative' else red
             enrichment_ax.plot(series.index, series, 'o-', color=color,
                                label=direction)
@@ -107,10 +122,11 @@ def plot_significance(significance, enrichment_axes, p_value_axes, n_axes,
                       label=direction)
 
         if n_ax.is_last_row():
-            n_ax.set_xlabel('$p$-value cutoff ($p < 10^{-x}$)')
+            n_ax.set_xlabel(xlabel)
 
         # import pdb; pdb.set_trace()
-        enrichment_max = max(enrichment_max, percent_enrichment.max().values[0])
+        enrichment_max = max(enrichment_max,
+                             percent_enrichment.max().values[0])
         enrichment_ax.set_ylim(0, percent_enrichment.max().max())
         enrichment_ax.set_ylabel('% events with\n{}'.format(label))
         enrichment_ax.set_title(title)
@@ -126,7 +142,7 @@ def plot_significance(significance, enrichment_axes, p_value_axes, n_axes,
 
         n_ax.set_ylabel('Number of events')
         n_ax.set_title('# peaks = {}'.format(len(clip_peaks)))
-    for ax in p_value_axes:
+    for ax in significance_axes:
         ax.set_ylim(0, p_ymax)
     for ax in enrichment_axes:
         ax.set_ylim(0, enrichment_max)
@@ -169,16 +185,16 @@ def plot_enrichment(strength, significance, clip_peaks, regions, title='',
                              sharex=True, sharey='row')
 
     enrichment_axes = axes[0]
-    p_value_axes = axes[1]
+    significance_axes = axes[1]
     n_axes = axes[2]
 
     for direction in ('positive', 'negative'):
         sig = significance[strength < 0] if direction == 'negative' else \
             significance[strength > 0]
 
-        plot_significance(sig, enrichment_axes, p_value_axes, n_axes, regions,
-                          title=title, clip_peaks=clip_peaks,
-                          direction=direction,
+        plot_significance(sig, enrichment_axes, significance_axes, n_axes,
+                          regions, title=title, clip_peaks=clip_peaks,
+                          direction=direction, p_values=p_values,
                           significance_cutoffs=significance_cutoffs)
     fig.tight_layout()
     fig.savefig(savefig)
