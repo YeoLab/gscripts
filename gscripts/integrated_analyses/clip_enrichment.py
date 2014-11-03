@@ -132,9 +132,10 @@ def plot_significance(significance, enrichment_axes, significance_axes, n_axes,
 
         p_value_ax.set_ylabel('$-log_{10}$ hypergeometric $p$-value\n' + label)
         p_value_ax.set_xlim(0, significance_cutoffs.max())
-        # ymin, ymax = p_value_ax.get_ylim()
-        # p_ymax = int(max(np.ceil(ymax), np.ceil(hypergeometric_p.max()), p_ymax))
-        # p_value_ax.set_ylim(0, p_ymax)
+        ymin, ymax = p_value_ax.get_ylim()
+        p_ymax = int(
+            max(np.ceil(ymax), np.ceil(hypergeometric_p.max()), p_ymax))
+        p_value_ax.set_ylim(0, p_ymax)
         p_value_ax.set_yticks(significance_cutoffs)
 
         n_ax.set_ylabel('Number of events')
