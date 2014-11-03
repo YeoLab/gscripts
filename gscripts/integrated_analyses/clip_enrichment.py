@@ -108,19 +108,17 @@ def plot_significance(significance, enrichment_axes, significance_axes, n_axes,
         n_events = significance_cutoffs.apply(lambda x: len(get_significant(
             significance, x, p_values=p_values)))
 
-        for group, series in percent_enrichment.iteritems():
-            color = blue if direction == 'negative' else red
-            enrichment_ax.plot(series.index, series, 'o-', color=color,
-                               label=direction)
-            enrichment_ax.plot(series.index, background[group], 'o-',
-                               color=color,
-                               label='{} background'.format(direction),
-                               alpha=0.25)
+        color = blue if direction == 'negative' else red
+        enrichment_ax.plot(significance_cutoffs, percent_enrichment, 'o-',
+                           color=color, label=direction)
+        enrichment_ax.plot(significance_cutoffs, background, 'o-', color=color,
+                           label='{} background'.format(direction), alpha=0.25)
 
-            p_value_ax.plot(series.index, hypergeometric_p[group], 'o-',
-                            color=color, label=direction)
-            n_ax.plot(series.index, n_events[group], 'o-', color=color,
-                      label=direction)
+        p_value_ax.plot(significance_cutoffs, hypergeometric_p, 'o-',
+                        color=color,
+                        label=direction)
+        n_ax.plot(significance_cutoffs, n_events, 'o-', color=color,
+                  label=direction)
 
         if n_ax.is_last_row():
             n_ax.set_xlabel(xlabel)
