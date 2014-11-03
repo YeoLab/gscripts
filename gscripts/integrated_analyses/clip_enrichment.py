@@ -101,7 +101,7 @@ def plot_significance(significance, enrichment_axes, significance_axes, n_axes,
         hypergeometric_p = significance_cutoffs.apply(
             lambda p: significance.apply(calculate_hypergeometric_p,
                                          significance=p, intersect=intersect,
-                                         p_values))
+                                         p_values=p_values))
         hypergeometric_p = -np.log10(hypergeometric_p).replace(-np.inf, 0)
 
         n_events = significance_cutoffs.apply(
