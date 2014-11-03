@@ -153,7 +153,7 @@ def plot_significance(significance, enrichment_axes, significance_axes, n_axes,
 
 def plot_enrichment(strength, significance, clip_peaks, regions, title='',
                     savefig='enrichment.pdf', p_values=True,
-                    significance_cutoffs=pd.Series(range(6))):
+                    significance_cutoffs=pd.Series(range(6)), xlabel=''):
     """Plot the clip enrichment in the provided
 
     Parameters
@@ -197,6 +197,7 @@ def plot_enrichment(strength, significance, clip_peaks, regions, title='',
         plot_significance(sig, enrichment_axes, significance_axes, n_axes,
                           regions, title=title, clip_peaks=clip_peaks,
                           direction=direction, p_values=p_values,
-                          significance_cutoffs=significance_cutoffs)
+                          significance_cutoffs=significance_cutoffs,
+                          xlabel=xlabel)
     fig.tight_layout()
     fig.savefig(savefig)
