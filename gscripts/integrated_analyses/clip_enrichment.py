@@ -124,27 +124,30 @@ def plot_significance(significance, enrichment_axes, significance_axes, n_axes,
             n_ax.set_xlabel(xlabel)
 
         # import pdb; pdb.set_trace()
-        enrichment_max = max(enrichment_max,
-                             percent_enrichment.max().values[0])
-        enrichment_ax.set_ylim(0, percent_enrichment.max().max())
+        # enrichment_max = max(enrichment_max, percent_enrichment.max())
+        # enrichment_ax.set_ylim(0, percent_enrichment.max())
         enrichment_ax.set_ylabel('% events with\n{}'.format(label))
         enrichment_ax.set_title(title)
         enrichment_ax.legend(loc='best')
 
         p_value_ax.set_ylabel('$-log_{10}$ hypergeometric $p$-value\n' + label)
-        p_value_ax.set_xlim(0, 5)
-        ymin, ymax = p_value_ax.get_ylim()
-        p_ymax = int(
-            max(np.ceil(ymax), np.ceil(hypergeometric_p.max().max()), p_ymax))
-        p_value_ax.set_ylim(0, p_ymax)
-        p_value_ax.set_yticks(range(p_ymax))
+        p_value_ax.set_xlim(0, significance_cutoffs.max())
+        # ymin, ymax = p_value_ax.get_ylim()
+        # p_ymax = int(max(np.ceil(ymax), np.ceil(hypergeometric_p.max()), p_ymax))
+        # p_value_ax.set_ylim(0, p_ymax)
+        p_value_ax.set_yticks(significance_cutoffs)
 
         n_ax.set_ylabel('Number of events')
         n_ax.set_title('# peaks = {}'.format(len(clip_peaks)))
-    for ax in significance_axes:
-        ax.set_ylim(0, p_ymax)
-    for ax in enrichment_axes:
-        ax.set_ylim(0, enrichment_max)
+        # ymin, ymax = n_ax.get_ylim()
+        # n_ax.set_ylim(1, ymax)
+    # n_ax.set_ylim(0, 500)
+
+    # ax.legend(loc='best')
+    # for ax in significance_axes:
+    #     ax.set_ylim(0, p_ymax)
+    # for ax in enrichment_axes:
+    #     ax.set_ylim(0, enrichment_max)
     sns.despine()
 
 
