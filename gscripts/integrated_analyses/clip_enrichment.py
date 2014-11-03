@@ -85,27 +85,28 @@ def plot_significance(significance, enrichment_axes, significance_axes, n_axes,
         intersect = intersect.set_index(miso_id_column)
         intersect = intersect.groupby(level=0, axis=0).sum()
 
-        percent_enrichment = 100 * significance_cutoffs.apply(lambda p:
-                                                              significance.apply(
-                                                                  count_intersect,
-                                                                  significance=p,
-                                                                  intersect=intersect,
-                                                                  p_values=p_values))
-        background = 100 * significance_cutoffs.apply(lambda p:
-                                                      significance.apply(
-                                                          count_intersect,
-                                                          significance=p,
-                                                          intersect=intersect,
-                                                          opposite=True,
-                                                          p_values=p_values))
-        hypergeometric_p = significance_cutoffs.apply(
-            lambda p: significance.apply(calculate_hypergeometric_p,
-                                         significance=p, intersect=intersect,
-                                         p_values=p_values))
+        percent_enrichment = significance_cutoffs.apply(lambda p:
+                                                        count_intersect(
+                                                            significance, p,
+                                                            intersect,
+                                                            p_values=p_values))
+        percent_enrichment = 100 * percent_enrichment
+        background = significance_cutoffs.apply(lambda p:
+                                                count_intersect(significance,
+                                                                p,
+                                                                intersect,
+                                                                opposite=True,
+                                                                p_values=p_values))
+        background = 100 * background
+        hypergeometric_p = significance_cutoffs.apply(lambda
+                                                          p: calculate_hypergeometric_p(
+            significance,
+            significance=p, intersect=intersect,
+            p_values=p_values))
         hypergeometric_p = -np.log10(hypergeometric_p).replace(-np.inf, 0)
 
-        n_events = significance_cutoffs.apply(
-            lambda p: (significance < 10 ** (-p)).sum())
+        n_events = significance_cutoffs.apply(lambda x: len(get_significant(
+            significance, x, p_values=p_values)))
 
         for group, series in percent_enrichment.iteritems():
             color = blue if direction == 'negative' else red
