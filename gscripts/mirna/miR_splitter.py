@@ -6,8 +6,12 @@ import os
 
 def construct_cutadapt_call(miRNA_seq, miRNA_id, fastq, output, **kwargs):
     miRNA_seq = miRNA_seq.replace("U", "T")
-    return " ".join(['cutadapt', '-g', miRNA_seq, '-g', 'N' + miRNA_seq, '--match-read-wildcards', '--trimmed-only',
-                     '-m', '18', '-y', '\'.' + miRNA_id + '\'', '-f', 'fastq', '-O', '20', '-e', '0',
+    return " ".join(['cutadapt',
+                     '-g', 'N' + miRNA_seq, '-g', 'N' + miRNA_seq[1:], '-g', 'N' + miRNA_seq[2:],
+                     '-g', 'N' + miRNA_seq[3:], '-g', 'N' + miRNA_seq[1:-1], '-g', 'N' + miRNA_seq[1:-2],
+                     '-g', 'N' + miRNA_seq[:-2],
+                     '--match-read-wildcards', '--trimmed-only',
+                     '-m', '18', '-y', '\'.' + miRNA_id + '\'', '-f', 'fastq', '-O', '20', '-e', '0.05',
                      '-o', '\'' + output + '\'', '\'' + fastq + '\''])
 
 def run_cutadapt(miRNA_seq, miRNA_id, fastq, output, **kwargs):

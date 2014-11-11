@@ -44,7 +44,7 @@ seaborn.set_style({'axes.axisbelow': True,
                    'ytick.major.size': 0,
                    'ytick.minor.size': 0})
 
-seaborn.set_color_palette('deep')
+seaborn.set_palette('deep')
 
 import pylab
 

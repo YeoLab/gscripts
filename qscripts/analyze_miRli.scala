@@ -325,10 +325,10 @@ class Analyze_mirli_CLIPSeq extends QScript {
 
         add(new BedToBigBed(inBed = fixed_clipper_output, genomeSize = chromSizeLocation(genome), outBigBed = bigBed_output))
 
-        add(new ClipAnalysis(bamFile, clipper_output, genome, clipper_output_metrics,
-        regions_location = regionsLocation(genome), AS_Structure = asStructureLocation(genome),
-        genome_location = genomeLocation(genome), phastcons_location = phastconsLocation(genome),
-        gff_db = gffDbLocation(genome), bw_pos=bigWigFilePos, bw_neg=bigWigFileNeg))
+        //add(new ClipAnalysis(bamFile, clipper_output, genome, clipper_output_metrics,
+        //regions_location = regionsLocation(genome), AS_Structure = asStructureLocation(genome),
+        //genome_location = genomeLocation(genome), phastcons_location = phastconsLocation(genome),
+        //gff_db = gffDbLocation(genome), bw_pos=bigWigFilePos, bw_neg=bigWigFileNeg))
 
         add(new BamToBed(inBam=bamFile, outBed=rmDupedBedFile))
         add(new Pyicoclip(inBed = rmDupedBedFile, outBed = pyicoclipResults, regions = genicRegionsLocation(genome) ))
@@ -440,10 +440,10 @@ class Analyze_mirli_CLIPSeq extends QScript {
                 add(new NegBedGraph(inBedGraph = bedGraphFileNegNorm, outBedGraph = bedGraphFileNegInverted))
                 add(new BedGraphToBigWig(bedGraphFileNegInverted, chromSizeLocation(genome), bigWigFileNegInverted))
 
-                add(new ClipAnalysis(maskedSortedrmDupedBamFile, mergedMaskedBamFile, genome, mergedMaskedBamFileMetrics,
-                    regions_location = regionsLocation(genome), AS_Structure = asStructureLocation(genome),
-                    genome_location = genomeLocation(genome), phastcons_location = phastconsLocation(genome),
-                    gff_db = gffDbLocation(genome), bw_pos=bigWigFilePos, bw_neg=bigWigFileNeg))
+                //add(new ClipAnalysis(maskedSortedrmDupedBamFile, mergedMaskedBamFile, genome, mergedMaskedBamFileMetrics,
+                //    regions_location = regionsLocation(genome), AS_Structure = asStructureLocation(genome),
+                //    genome_location = genomeLocation(genome), phastcons_location = phastconsLocation(genome),
+                //    gff_db = gffDbLocation(genome), bw_pos=bigWigFilePos, bw_neg=bigWigFileNeg))
 
                 //downstream_analysis(sortedrmDupedBamFile, indexedBamFile, genome)
             }
