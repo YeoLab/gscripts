@@ -21,6 +21,9 @@ class AnalizeCLIPSeq extends QScript {
   @Argument(doc = "RBP binding modality is premRNA")
   var premRNA: Boolean = false
 
+  @Argument(doc = "reads are on opposite strand")
+  var reverse_strand: Boolean = false
+
   @Argument(doc = "read ids have randomers")
   var barcoded: Boolean = false
 
@@ -30,14 +33,15 @@ class AnalizeCLIPSeq extends QScript {
   @Argument(doc = "start processing from uncollapsed bam file")
   var fromBam: Boolean = false
 
-  case class clipper(in: File, out: File, genome: String, isPremRNA: Boolean ) extends Clipper 
-{
-
-       this.inBam = in
-       this.outBed = out
-       this.species = genome
-       this.premRNA = isPremRNA
-       this.superlocal = superlocal
+  case class clipper(in: File, out: File, genome: String, isPremRNA: Boolean, reverse_strand: Boolean ) extends Clipper 
+  {
+    
+    this.inBam = in
+    this.outBed = out
+    this.species = genome
+    this.premRNA = isPremRNA
+    this.superlocal = superlocal
+    this.reverse_strand = reverse_strand
   }
 
   case class cutadapt(fastq_file: File, noAdapterFastq: File, adapterReport: File, adapter: List[String]) extends Cutadapt{
@@ -206,7 +210,7 @@ class AnalizeCLIPSeq extends QScript {
 	     add(new NegBedGraph(inBedGraph = bedGraphFileNegNorm, outBedGraph = bedGraphFileNegInverted))
       	     add(new BedGraphToBigWig(bedGraphFileNegInverted, chromSizeLocation(genome), bigWigFileNegInverted))
 
-      	     add(new clipper(in = bamFile, genome = genome, out = clipper_output, isPremRNA = premRNA))
+      	     add(new clipper(in = bamFile, genome = genome, out = clipper_output, isPremRNA = premRNA, reverse_strand=reverse_strand))
 	     
       	     add(new FixScores(inBed = clipper_output, outBed = fixed_clipper_output))
 
@@ -219,9 +223,9 @@ class AnalizeCLIPSeq extends QScript {
 	     add(new BamToBed(inBam=bamFile, outBed=rmDupedBedFile))
       	     add(new Pyicoclip(inBed = rmDupedBedFile, outBed = pyicoclipResults, regions = genicRegionsLocation(genome) ))
 
-	     //var ripseeker = new RipSeeker
-	     //ripseeker.inBam = bamFile
-	     //ripseeker.outBed = swapExt(bamFile, ".bam", ".ripseeker.bed")
+	     var ripseeker = new RipSeeker
+	     ripseeker.inBam = bamFile
+	     ripseeker.outBed = swapExt(bamFile, ".bam", ".ripseeker.bed")
      
 	     var piranha = new Piranha
 	     piranha.inBam = bamFile
@@ -231,17 +235,25 @@ class AnalizeCLIPSeq extends QScript {
 	     clipClassic.inBam = bamFile
 	     clipClassic.species = genome
 	     clipClassic.out_file = kasey_output
-
+	     add(clipClassic)
 	     add(new ClipAnalysis(bamFile, kasey_output, genome, kasey_output_metrics, AS_Structure = asStructureLocation(genome), 
 	     			  genome_location = genomeLocation(genome), phastcons_location = phastconsLocation(genome), 
 	     			  gff_db = gffDbLocation(genome)))
-	     add(clipClassic)
+	     
 
-	      var miclip = new MiClip
-	      miclip.inBam = bamFile
-	      miclip.outBed = swapExt(bamFile, ".bam", ".miclip.bed")
-	      add(miclip)
-	     //add(ripseeker, piranha, clipClassic)
+	     var miclip = new MiClip
+	     miclip.inBam = bamFile
+	     miclip.genome = genomeLocation(genome)
+	     miclip.outBed = swapExt(bamFile, ".bam", ".miclip.bed")
+	     add(miclip)
+
+	     var pipeclip = new PipeClip
+	     pipeclip.inBam = bamFile
+	     pipeclip.species = genome
+	     pipeclip.outBed = swapExt(bamFile, ".bam", ".pipeclip.bed")
+	     add(pipeclip)
+
+	     add(ripseeker, piranha)
 
       	     //add(new IDR(inBam = bamFile, species = genome, genome = chromSizeLocation(genome), outResult = IDRResult, premRNA = premRNA))
 

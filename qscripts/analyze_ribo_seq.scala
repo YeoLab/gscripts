@@ -164,39 +164,69 @@ def stringentJobs(fastq_file: File) : File = {
       add(filterRepetitiveRegions(noAdapterFastq, filtered_results, filteredFastq))
       add(new FastQC(filteredFastq))
 
-      return filteredFastq
+  return filteredFastq
 }
+  
+  case class samtoolsMergeFunction(inBams: Seq[File], outBam: File) extends SamtoolsMergeFunction {
+    override def shortDescription = "samtoolsMerge"
+    this.inputBams = inBams
+    this.outputBam = outBam
+  }
+  
+  def makeBigWig(inBed: File, inBam: File, species: String): (File, File) = {
 
-def makeBigWig(inBed: File, inBam: File, species: String): (File, File) = {
-
-      val bedGraphFilePos = swapExt(inBed, ".bed", ".pos.bg")
-      val bedGraphFilePosNorm = swapExt(bedGraphFilePos, ".bg", ".norm.bg")
-      val bigWigFilePosNorm = swapExt(bedGraphFilePosNorm, ".bg", ".bw")
-      val bigWigFilePos = swapExt(bedGraphFilePos, ".bg", ".bw")
-
-      val bedGraphFileNeg = swapExt(inBed, ".bed", ".neg.bg")
-      val bedGraphFileNegInverted = swapExt(bedGraphFileNeg, ".bg", ".t.bg")
-      val bedGraphFileNegInvertedNorm = swapExt(bedGraphFileNegInverted, ".bg", ".norm.bg")
-      val bigWigFileNegNorm = swapExt(bedGraphFileNegInvertedNorm, ".bg", ".bw")
-      val bigWigFileNeg = swapExt(bedGraphFileNegInverted, ".bg", ".bw")
-
-      add(new genomeCoverageBed(input = inBed, outBed = bedGraphFilePos, cur_strand = "+", species = species))
-      add(new NormalizeBedGraph(inBedGraph = bedGraphFilePos, inBam = inBam, outBedGraph = bedGraphFilePosNorm))
-      add(new BedGraphToBigWig(bedGraphFilePosNorm, chromSizeLocation(species), bigWigFilePosNorm))
-      add(new BedGraphToBigWig(bedGraphFilePos, chromSizeLocation(species), bigWigFilePos))
-
-      add(new genomeCoverageBed(input = inBed, outBed = bedGraphFileNeg, cur_strand = "-", species = species))
-      add(new NegBedGraph(inBedGraph = bedGraphFileNeg, outBedGraph = bedGraphFileNegInverted))
-      add(new NormalizeBedGraph(inBedGraph = bedGraphFileNegInverted, inBam = inBam, outBedGraph = bedGraphFileNegInvertedNorm))
-      add(new BedGraphToBigWig(bedGraphFileNegInvertedNorm, chromSizeLocation(species), bigWigFileNegNorm))
-      add(new BedGraphToBigWig(bedGraphFileNegInverted, chromSizeLocation(species), bigWigFileNeg))
-      return (bigWigFileNegNorm, bigWigFilePosNorm)
-
-}
-
-def script() {
+    val bedGraphFilePos = swapExt(inBed, ".bed", ".pos.bg")
+    val bedGraphFilePosNorm = swapExt(bedGraphFilePos, ".bg", ".norm.bg")
+    val bigWigFilePosNorm = swapExt(bedGraphFilePosNorm, ".bg", ".bw")
+    val bigWigFilePos = swapExt(bedGraphFilePos, ".bg", ".bw")
     
+    val bedGraphFileNeg = swapExt(inBed, ".bed", ".neg.bg")
+    val bedGraphFileNegInverted = swapExt(bedGraphFileNeg, ".bg", ".t.bg")
+    val bedGraphFileNegInvertedNorm = swapExt(bedGraphFileNegInverted, ".bg", ".norm.bg")
+    val bigWigFileNegNorm = swapExt(bedGraphFileNegInvertedNorm, ".bg", ".bw")
+    val bigWigFileNeg = swapExt(bedGraphFileNegInverted, ".bg", ".bw")
     
+    add(new genomeCoverageBed(input = inBed, outBed = bedGraphFilePos, cur_strand = "+", species = species))
+    add(new NormalizeBedGraph(inBedGraph = bedGraphFilePos, inBam = inBam, outBedGraph = bedGraphFilePosNorm))
+    add(new BedGraphToBigWig(bedGraphFilePosNorm, chromSizeLocation(species), bigWigFilePosNorm))
+    add(new BedGraphToBigWig(bedGraphFilePos, chromSizeLocation(species), bigWigFilePos))
+    
+    add(new genomeCoverageBed(input = inBed, outBed = bedGraphFileNeg, cur_strand = "-", species = species))
+    add(new NegBedGraph(inBedGraph = bedGraphFileNeg, outBedGraph = bedGraphFileNegInverted))
+    add(new NormalizeBedGraph(inBedGraph = bedGraphFileNegInverted, inBam = inBam, outBedGraph = bedGraphFileNegInvertedNorm))
+    add(new BedGraphToBigWig(bedGraphFileNegInvertedNorm, chromSizeLocation(species), bigWigFileNegNorm))
+    add(new BedGraphToBigWig(bedGraphFileNegInverted, chromSizeLocation(species), bigWigFileNeg))
+    return (bigWigFileNegNorm, bigWigFilePosNorm)
+
+  }
+
+  def downstream_analysis(bamFile: File, bamIndex: File, singleEnd: Boolean, species: String) : File = {
+    val bedFileAdjusted = swapExt(bamFile, ".bam", ".adj.bed")
+    val NRFFile = swapExt(bamFile, ".bam", ".NRF.metrics")
+    
+    val countFile = swapExt(bamFile, "bam", "count")
+    val RPKMFile = swapExt(bamFile, "count", "rpkm")
+    
+    val oldSpliceOut = swapExt(bamFile, "bam", "splices")
+    val misoOut = swapExt(bamFile, "bam", "miso")
+
+    add(new CalculateNRF(inBam = bamFile, genomeSize = chromSizeLocation(species), outNRF = NRFFile))
+    
+    add(new RiboSeqCoverage(inBam = bamFile, outBed = bedFileAdjusted))
+    val (bigWigFilePos: File, bigWigFileNeg: File) = makeBigWig(bedFileAdjusted, bamFile, species = species)
+    //posTrackHubFiles = posTrackHubFiles ++ List(bigWigFilePos)
+    //negTrackHubFiles = negTrackHubFiles ++ List(bigWigFileNeg)
+    
+    add(new countTags(input = bamFile, index = bamIndex, output = countFile, species = species))
+    add(new singleRPKM(input = countFile, output = RPKMFile, s = species))
+    
+    add(oldSplice(input = bamFile, out = oldSpliceOut, species = species))
+    add(new Miso(inBam = bamFile, indexFile= bamIndex, species = species, pairedEnd = !singleEnd, output = misoOut))
+
+    return oldSpliceOut
+  }
+
+  def script() {
     val fileList = QScriptUtils.createArgsFromFile(input)
     var posTrackHubFiles: List[File] = List()
     var negTrackHubFiles: List[File] = List()
@@ -204,98 +234,92 @@ def script() {
     var speciesList: List[File] = List()
     var bamFiles: List[File] = List()
     var singleEnd = true
+    for ((groupName, valueList) <- (fileList groupBy (_._3))) {
+      var combinedBams : Seq[File] = List()
+      var genome: String = valueList(0)._2
 
-    for (item : Tuple3[File, String, String] <- fileList) {
-    	
-      var fastq_files = item._1.toString().split(""";""")
-      var species = item._2
-      var chr_sizes = chromSizeLocation(species)
-      var samFile: File = null
-      if(!fromBam) {
-      	var fastq_file: File = new File(fastq_files(0))
-      	var fastqPair: File = null
-      	var singleEnd = true
-
-      	if (fastq_files.length == 2){
-           singleEnd = false
-           fastqPair = new File(fastq_files(1))
-           add(new FastQC(inFastq = fastqPair))
-      	}
-      
-	add(new FastQC(inFastq = fastq_file))
-
-      	var filteredFastq: File = null
-      	if(strict && fastqPair == null) {
-		filteredFastq = stringentJobs(fastq_file)
-     	} else {
-	    	filteredFastq = fastq_file
-      	}
-
-
-	// run regardless of stringency
-      	samFile = swapExt(filteredFastq, ".fastq", ".sam")
+      for (item : Tuple3[File, String, String] <- valueList) {
 	
-	if(item._2 != "null") { //if paired	
-       	  add(new star(filteredFastq, samFile, not_stranded, fastqPair, species = species))
-        } else { //unpaired
-          add(new star(filteredFastq, samFile, not_stranded, species = species))
-      	}
-
-      } else {
-        samFile = new File(fastq_files(0))
+	var fastq_files = item._1.toString().split(""";""")
+	var species = item._2
+	var replicate: String = item._3
+	var samFile: File = null
+	if(!fromBam) {
+      	  var fastq_file: File = new File(fastq_files(0))
+      	  var fastqPair: File = null
+      	  var singleEnd = true
+	  
+     	  if (fastq_files.length == 2){
+            singleEnd = false
+            fastqPair = new File(fastq_files(1))
+            add(new FastQC(inFastq = fastqPair))
+      	  }
+	  
+	  add(new FastQC(inFastq = fastq_file))
+	  
+      	  var filteredFastq: File = null
+      	  if(strict && fastqPair == null) {
+	    filteredFastq = stringentJobs(fastq_file)
+     	  } else {
+	    filteredFastq = fastq_file
+      	  }
+	  
+	
+	  // run regardless of stringency
+      	  samFile = swapExt(filteredFastq, ".fastq", ".sam")
+	
+	  if(item._2 != "null") { //if paired	
+       	    add(new star(filteredFastq, samFile, not_stranded, fastqPair, species = species))
+          } else { //unpaired
+            add(new star(filteredFastq, samFile, not_stranded, species = species))
+      	  }
+	  
+	} else {
+          samFile = new File(fastq_files(0))
+	}
+	
+	val sortedBamFile = swapExt(samFile, ".sam", ".sorted.bam")
+	val rgSortedBamFile = swapExt(sortedBamFile, ".bam", ".rg.bam")
+	val indexedBamFile = swapExt(rgSortedBamFile, "", ".bai")      
+	//add bw files to list for printing out later
+	
+	
+	bamFiles = bamFiles ++ List(rgSortedBamFile)
+	speciesList = speciesList ++ List(species)
+      
+	add(new sortSam(samFile, sortedBamFile, SortOrder.coordinate))
+	add(addOrReplaceReadGroups(sortedBamFile, rgSortedBamFile))
+	add(new samtoolsIndexFunction(rgSortedBamFile, indexedBamFile))
+	combinedBams = combinedBams ++ List(rgSortedBamFile)
+	var oldSpliceOut = downstream_analysis(rgSortedBamFile, indexedBamFile, singleEnd, genome)
+	splicesFiles = splicesFiles ++ List(oldSpliceOut)      
+      }  
+      
+      if(groupName != "null") {
+	var mergedBams = new File(groupName + ".bam")
+	val mergedIndex = swapExt(mergedBams, "", ".bai")
+	add(new samtoolsIndexFunction(mergedBams, mergedIndex))
+	add(samtoolsMergeFunction(combinedBams, mergedBams))
+	var oldSpliceOut = downstream_analysis(mergedBams, mergedIndex, singleEnd, genome)
+	splicesFiles = splicesFiles ++ List(oldSpliceOut)   
       }
-
       
-      val sortedBamFile = swapExt(samFile, ".sam", ".sorted.bam")
-      val rgSortedBamFile = swapExt(sortedBamFile, ".bam", ".rg.bam")
-      val indexedBamFile = swapExt(rgSortedBamFile, "", ".bai")
-      val bedFileAdjusted = swapExt(rgSortedBamFile, ".bam", ".adj.bed")
-      val NRFFile = swapExt(rgSortedBamFile, ".bam", ".NRF.metrics")
-
-      val countFile = swapExt(rgSortedBamFile, "bam", "count")
-      val RPKMFile = swapExt(countFile, "count", "rpkm")
-
-      val oldSpliceOut = swapExt(rgSortedBamFile, "bam", "splices")
-      val misoOut = swapExt(rgSortedBamFile, "bam", "miso")
-      
-      //add bw files to list for printing out later
-
-      splicesFiles = splicesFiles ++ List(oldSpliceOut)      
-      bamFiles = bamFiles ++ List(rgSortedBamFile)
-      speciesList = speciesList ++ List(species)
-
-      add(new sortSam(samFile, sortedBamFile, SortOrder.coordinate))
-      add(addOrReplaceReadGroups(sortedBamFile, rgSortedBamFile))
-      add(new samtoolsIndexFunction(rgSortedBamFile, indexedBamFile))
-      add(new CalculateNRF(inBam = rgSortedBamFile, genomeSize = chr_sizes, outNRF = NRFFile))
-      
-      add(new RiboSeqCoverage(inBam = rgSortedBamFile, outBed = bedFileAdjusted))
-      val (bigWigFilePos: File, bigWigFileNeg: File) = makeBigWig(bedFileAdjusted, rgSortedBamFile, species = species)
-      posTrackHubFiles = posTrackHubFiles ++ List(bigWigFilePos)
-      negTrackHubFiles = negTrackHubFiles ++ List(bigWigFileNeg)
-      	
-      add(new countTags(input = rgSortedBamFile, index = indexedBamFile, output = countFile, species = species))
-      add(new singleRPKM(input = countFile, output = RPKMFile, s = species))
-
-      add(oldSplice(input = rgSortedBamFile, out = oldSpliceOut, species = species))
-      add(new Miso(inBam = rgSortedBamFile, species = species, pairedEnd = !singleEnd, output = misoOut))
-    
     }
-
+  
     def tuple2ToList[T](t: (T,T)): List[T] = List(t._1, t._2)
     for ((species, files) <- posTrackHubFiles zip negTrackHubFiles zip speciesList groupBy {_._2}) {
-        var trackHubFiles = files map {_._1} map tuple2ToList reduceLeft {(a,b) => a ++ b}
-        add(new MakeTrackHub(trackHubFiles, location=location + "_" + species, genome=species))
+      var trackHubFiles = files map {_._1} map tuple2ToList reduceLeft {(a,b) => a ++ b}
+      add(new MakeTrackHub(trackHubFiles, location=location + "_" + species, genome=species))
     }
-
+    
     for ((species, files) <- speciesList zip splicesFiles groupBy {_._1}) {
-        add(parseOldSplice(files map {_._2}, species = species))
+      add(parseOldSplice(files map {_._2}, species = species))
     }
-
+  
     for ((species, files) <- speciesList zip bamFiles groupBy {_._1}) {
-        var rnaseqc = new File("rnaseqc_" + species + ".txt")
-        add(new makeRNASeQC(input = files map {_._2}, output = rnaseqc))
-        add(new runRNASeQC(in = rnaseqc, out = "rnaseqc_" + species, single_end = singleEnd, species = species))
+      var rnaseqc = new File("rnaseqc_" + species + ".txt")
+      add(new makeRNASeQC(input = files map {_._2}, output = rnaseqc))
+      add(new runRNASeQC(in = rnaseqc, out = "rnaseqc_" + species, single_end = singleEnd, species = species))
     }
   }
 }
