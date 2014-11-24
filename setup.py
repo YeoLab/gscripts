@@ -38,6 +38,7 @@ scripts = [
     'pwm/cisbp_to_meme.py',
     #'pwm/rbpdb_to_meme.py',
     'riboseq/riboseq_coverage.py',
+    'riboseq/read_filter.py',
     'rnaseq/count_tags.py',
     'rnaseq/make_rnaseqc.py',
     'rnaseq/oldsplice.py', 
