@@ -1329,9 +1329,9 @@ def loglog_hist2d(series1, series2, ax=None, **kwargs):
     foo = foo.dropna()
     
     if ax:
-        return ax.hist2d(foo[foo.columns[0]], foo[foo.columns[1]], bins=175, norm=mpl.colors.Normalize(), cmin=1, vmin=0, vmax=45, **kwargs)
+        return ax.hist2d(foo.ix[:,0], foo.ix[:,1], bins=175, norm=mpl.colors.Normalize(), cmin=1, vmin=0, vmax=45, **kwargs)
     else: #not as ax:
-        return hist2d(foo.one, foo.two, bins=175, norm=mpl.colors.Normalize(), cmin=1, vmin=0, vmax=45 ,**kwargs)
+        return hist2d(foo.ix[:,0], foo.ix[:,1], bins=175, norm=mpl.colors.Normalize(), cmin=1, vmin=0, vmax=45 ,**kwargs)
         
 def plot_cdf(cdf_list, **kwargs):
     cdf = sm.distributions.ECDF(cdf_list)
