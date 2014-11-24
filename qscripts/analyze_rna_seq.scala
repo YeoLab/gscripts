@@ -154,7 +154,7 @@ case class Sailfish(@Input fastqFile: File, outputDir: String, @Output mergedBed
         override def shortDescription = "sailfish"
         this.nCoresRequest = Option(16)
 
-        index =SailfishGenomeIndexLocation(species)
+        var index = SailfishGenomeIndexLocation(species)
 
         def commandLine = "sailfish_quant.py" +
         required("-1", fastqFile) +
