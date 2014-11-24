@@ -33,15 +33,16 @@ class AnalizeCLIPSeq extends QScript {
   @Argument(doc = "start processing from uncollapsed bam file")
   var fromBam: Boolean = false
 
-  case class clipper(in: File, out: File, genome: String, isPremRNA: Boolean, reverse_strand: Boolean ) extends Clipper 
+  case class clipper(in: File, out: File, genome: String, isPremRNA: Boolean, reverse: Boolean) extends Clipper 
   {
+    
     
     this.inBam = in
     this.outBed = out
     this.species = genome
     this.premRNA = isPremRNA
     this.superlocal = superlocal
-    this.reverse_strand = reverse_strand
+    this.reverse_strand = reverse
   }
 
   case class cutadapt(fastq_file: File, noAdapterFastq: File, adapterReport: File, adapter: List[String]) extends Cutadapt{
@@ -209,8 +210,8 @@ class AnalizeCLIPSeq extends QScript {
       	     add(new NormalizeBedGraph(inBedGraph = bedGraphFileNeg, inBam = bamFile, outBedGraph = bedGraphFileNegNorm))
 	     add(new NegBedGraph(inBedGraph = bedGraphFileNegNorm, outBedGraph = bedGraphFileNegInverted))
       	     add(new BedGraphToBigWig(bedGraphFileNegInverted, chromSizeLocation(genome), bigWigFileNegInverted))
-
-      	     add(new clipper(in = bamFile, genome = genome, out = clipper_output, isPremRNA = premRNA, reverse_strand=reverse_strand))
+	     
+      	     add(new clipper(in = bamFile, genome = genome, out = clipper_output, isPremRNA = premRNA, reverse=reverse_strand))
 	     
       	     add(new FixScores(inBed = clipper_output, outBed = fixed_clipper_output))
 
