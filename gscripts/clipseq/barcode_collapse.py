@@ -103,7 +103,6 @@ def em_collapse_base(reads, outBam, randomer, total_count, removed_count):
         if len(p_barcode_given_read) == 1:
             q = 5000
         else:
-            print "here"
             q = -10 * sum(np.log10(1 - p_barcode_given_read[barcode][read]) * count for read, count in barcodes_count.items())
         try:
             #bam_read.tags = update_tags(bam_read, q)
