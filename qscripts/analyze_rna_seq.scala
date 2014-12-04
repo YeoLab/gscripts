@@ -138,7 +138,7 @@ class AnalyzeRNASeq extends QScript {
     this.inBam = input
     this.out = output
     
-}
+  }
   case class runRNASeQC(in : File, out : String, single_end : Boolean, species: String) extends RunRNASeQC { 
     this.input = in
     this.gc = gcLocation(species)
@@ -148,24 +148,6 @@ class AnalyzeRNASeq extends QScript {
     this.singleEnd = single_end
   }
   
-
-case class Sailfish(@Input fastqFile: File, outputDir: String, @Output mergedBed: File, species: String) extends CommandLineFunction{
-
-        override def shortDescription = "sailfish"
-        this.nCoresRequest = Option(16)
-
-        var index = SailfishGenomeIndexLocation(species)
-
-        def commandLine = "sailfish_quant.py" +
-        required("-1", fastqFile) +
-        required("--out-dir", outputDir) +
-        required("--index", index) +
-        required("-n", fastqFile + ".sailfish") +
-        required("--out-sh", fastqFile + ".sailfish.sh") +
-        required("-i", index) +
-        "--do-not-submit"
-
-    }
 
   
   def stringentJobs(fastqFile: File) : File = {
@@ -277,11 +259,19 @@ case class Sailfish(@Input fastqFile: File, outputDir: String, @Output mergedBed
             filteredFastq = fastqFile
       	  }
 	  samFile = swapExt(filteredFastq, ".fastq", ".sam")
-      	  if(fastqPair != null) { //if paired	
+      	 
+	  if(fastqPair != null) { //if paired	
             add(new star(filteredFastq, samFile, not_stranded, fastqPair, species = species))
       	  } else { //unpaired
             add(new star(filteredFastq, samFile, not_stranded, species = species))
-      	  }
+      
+	    var sailfish = new Sailfish
+	    sailfish.inFastq = fastqFile
+	    sailfish.outDir = swapExt(swapExt(fastqFile, ".gz", ""), ".fastq", ".sailfish") 
+	    sailfish.index = SailfishGenomeIndexLocation(species)
+	    sailfish.shScript = swapExt(sailfish.outDir, ".sailfish", ".sailfish.sh")
+	    add(sailfish)
+	  }
 	  
 	  // run regardless of stringency
       	  
@@ -296,11 +286,12 @@ case class Sailfish(@Input fastqFile: File, outputDir: String, @Output mergedBed
 	bamFiles = bamFiles ++ List(rgSortedBamFile)
 	speciesList = speciesList ++ List(species)
 	
-      
+	
 	add(new sortSam(samFile, sortedBamFile, SortOrder.coordinate))
 	add(addOrReplaceReadGroups(sortedBamFile, rgSortedBamFile))
 	add(new samtoolsIndexFunction(rgSortedBamFile, indexedBamFile))
-
+	
+	
 	combinedBams = combinedBams ++ List(rgSortedBamFile)
 
 	var oldSpliceOut = downstream_analysis(rgSortedBamFile, indexedBamFile, singleEnd, genome)
