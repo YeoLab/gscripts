@@ -281,10 +281,12 @@ class AnalizeCLIPSeq extends QScript {
     
     for ((groupName, valueList) <- (fileList groupBy (_._3))) {
       var combinedBams : Seq[File] = List()
-      var genome: String = valueList(0)._2 
+    
       for (item : Tuple3[File, String, String] <- valueList) {
-	var fastq_file: File = item._1
 	
+	
+	var fastq_file: File = item._1
+	var genome: String = item._2 
       	var replicate: String = item._3
 	
       	val noPolyAFastq = swapExt(swapExt(fastq_file, ".gz", ""), ".fastq", ".polyATrim.fastq")
@@ -296,7 +298,7 @@ class AnalizeCLIPSeq extends QScript {
       	val filteredFastq = swapExt(outRep, "", "Unmapped.out.mate1")
 
       	val filterd_results = swapExt(filteredFastq, ".rep.bamUnmapped.out.mate1", ".rmRep.metrics")
-      	var bamFile = swapExt(filteredFastq, ".rep.bamUnmapped.out.mate1", ".bam")
+      	var bamFile = swapExt(filteredFastq, ".rep.bamUnmapped.out.mate1", ".rmRep.bam")
 	
       	val NRFFile = swapExt(bamFile, ".bam", ".NRF.metrics")
 	
@@ -349,6 +351,7 @@ class AnalizeCLIPSeq extends QScript {
 	val mergedIndex = swapExt(mergedBams, "", ".bai")
 	add(new samtoolsIndexFunction(mergedBams, mergedIndex))
 	add(samtoolsMergeFunction(combinedBams, mergedBams))
+	var genome: String = valueList(0)._2 
 	downstream_analysis(mergedBams, mergedIndex, genome)
       }
     }
