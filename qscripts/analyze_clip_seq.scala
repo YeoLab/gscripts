@@ -84,8 +84,9 @@ class AnalizeCLIPSeq extends QScript {
   }
 
   class RemoveDuplicates(@Input inBam: File, @Output outResult: File, @Argument metrics_file: String) extends CommandLineFunction {
-  override def shortDescription = "RemoveDuplicates"
-  def commandLine = "barcode_collapse.py " +
+    override def shortDescription = "RemoveDuplicates"
+    this.wallTime = Option((4 * 60 * 60).toLong)
+    def commandLine = "barcode_collapse.py " +
     required("--bam", inBam) +
     required("--out_file", outResult) +
     conditional(barcoded, "--randomer") +
