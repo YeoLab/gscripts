@@ -260,17 +260,28 @@ class AnalyzeRNASeq extends QScript {
       	  }
 	  samFile = swapExt(filteredFastq, ".fastq", ".sam")
       	 
-	  if(fastqPair != null) { //if paired	
+	  if(fastqPair != null) {
+	        //if paired
+            var sailfish = new Sailfish
+            sailfish.inFastq = fastqFile
+            sailfish.outDir = swapExt(swapExt(fastqFile, ".gz", ""), ".fastq", ".sailfish")
+            sailfish.index = SailfishGenomeIndexLocation(species)
+            sailfish.shScript = swapExt(sailfish.outDir, ".sailfish", ".sailfish.sh")
+            sailfish.inFastqPair
+            add(sailfish)
+
             add(new star(filteredFastq, samFile, not_stranded, fastqPair, species = species))
       	  } else { //unpaired
+      	    var sailfish = new Sailfish
+            sailfish.inFastq = fastqFile
+            sailfish.outDir = swapExt(swapExt(fastqFile, ".gz", ""), ".fastq", ".sailfish")
+            sailfish.index = SailfishGenomeIndexLocation(species)
+            sailfish.shScript = swapExt(sailfish.outDir, ".sailfish", ".sailfish.sh")
+            add(sailfish)
+
             add(new star(filteredFastq, samFile, not_stranded, species = species))
       
-	    var sailfish = new Sailfish
-	    sailfish.inFastq = fastqFile
-	    sailfish.outDir = swapExt(swapExt(fastqFile, ".gz", ""), ".fastq", ".sailfish") 
-	    sailfish.index = SailfishGenomeIndexLocation(species)
-	    sailfish.shScript = swapExt(sailfish.outDir, ".sailfish", ".sailfish.sh")
-	    add(sailfish)
+
 	  }
 	  
 	  // run regardless of stringency
