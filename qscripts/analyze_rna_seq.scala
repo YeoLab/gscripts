@@ -267,7 +267,7 @@ class AnalyzeRNASeq extends QScript {
             sailfish.outDir = swapExt(swapExt(fastqFile, ".gz", ""), ".fastq", ".sailfish")
             sailfish.index = SailfishGenomeIndexLocation(species)
             sailfish.shScript = swapExt(sailfish.outDir, ".sailfish", ".sailfish.sh")
-            sailfish.inFastqPair
+            sailfish.inFastqPair = fastqPair
             add(sailfish)
 
             add(new star(filteredFastq, samFile, not_stranded, fastqPair, species = species))
