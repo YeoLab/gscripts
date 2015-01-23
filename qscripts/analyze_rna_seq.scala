@@ -80,6 +80,18 @@ class AnalyzeRNASeq extends QScript {
     this.tags_annotation = exonLocation(species)
     this.flip = flipped
   }
+
+  case class sailfish(input: File, stranded: Boolean, paired: File = null, species: String) extends STAR{
+    this.inFastq = input
+
+    if (paired != null){
+      this.inFastqPair = paired
+    }
+    this.outDir = swapExt(swapExt(this.inFastq, ".gz", ""), ".fastq", ".sailfish")
+    this.shScript = swapExt(this.outDir, ".sailfish", ".sailfish.sh")
+    this.index = SailfishGenomeIndexLocation(species)
+
+  }
   
   case class star(input: File, output: File, stranded : Boolean, paired : File = null, species: String) extends STAR {
     this.inFastq = input
@@ -259,22 +271,13 @@ class AnalyzeRNASeq extends QScript {
             filteredFastq = fastqFile
       	  }
 	  samFile = swapExt(filteredFastq, ".fastq", ".sam")
-      	 
-    sailfishOutDir = swapExt(swapExt(fastqFile, ".gz", ""), ".fastq", ".sailfish")
-    sailfishShScript = swapExt(sailfishOutDir, ".sailfish", ".sailfish.sh")
-    sailfishIndex = SailfishGenomeIndexLocation(species)
 
 	  if(fastqPair != null) {
 	        //if paired
-            add(new sailfish(inFastq=filteredFastq, index=sailfishIndex,
-              outDir=sailfishOutDir, stranded=!not_stranded, shScript=sailfishShScript, 
-              inFastqPair=fastqPair))
-
+            add(new sailfish(filteredFastq, species, !not_stranded, fastqPair))
             add(new star(filteredFastq, samFile, not_stranded, fastqPair, species = species))
       	  } else { //unpaired
-            add(new sailfish(inFastq=filteredFastq, index=sailfishIndex,
-              outDir=sailfishOutDir, stranded=!not_stranded, shScript=sailfishShScript))
-
+            add(new sailfish(filteredFastq, sspecies, !not_stranded, sailfishShScript))
             add(new star(filteredFastq, samFile, not_stranded, species = species))
 
 	  }
