@@ -177,7 +177,7 @@ class AnalyzeRNASeq extends QScript {
 		 adapter = adapter))
     
     
-    add(filterRepetitiveRegions(noAdapterFastq, filtered_results, filteredFastq))
+    add(mapRepetitiveRegions(noAdapterFastq, filtered_results, filteredFastq))
     add(new FastQC(filteredFastq))
     
     return filteredFastq
