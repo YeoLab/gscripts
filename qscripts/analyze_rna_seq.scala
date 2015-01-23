@@ -8,7 +8,6 @@ import org.broadinstitute.sting.commandline.Hidden
 import org.broadinstitute.sting.queue.extensions.picard.{ ReorderSam, SortSam, AddOrReplaceReadGroups, MarkDuplicates }
 import org.broadinstitute.sting.queue.extensions.samtools._
 import org.broadinstitute.sting.queue.extensions.gatk._
-import org.broadinstitute.sting.queue.util.YeowareUtils._
 import org.broadinstitute.sting.queue.extensions.yeo._
 import org.broadinstitute.sting.queue.util.TsccUtils._
 
