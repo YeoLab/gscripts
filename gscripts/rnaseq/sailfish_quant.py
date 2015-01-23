@@ -143,7 +143,7 @@ if __name__ == '__main__':
         SailfishQuant(cl.args['read1'], cl.args['read2'],
                       cl.args['out_dir'],
                       cl.args['index'],
-                      cl.args['job_name'],
+                      job_name=cl.args['job_name'],
                       stranded=cl.args['stranded'],
                       num_processors=cl.args['num_processors'],
                       out_sh=cl.args['out_sh'],
