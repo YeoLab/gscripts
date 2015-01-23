@@ -277,7 +277,7 @@ class AnalyzeRNASeq extends QScript {
             add(new sailfish(filteredFastq, species, !not_stranded, fastqPair))
             add(new star(filteredFastq, samFile, not_stranded, fastqPair, species = species))
       	  } else { //unpaired
-            add(new sailfish(filteredFastq, species, !not_stranded, sailfishShScript))
+            add(new sailfish(filteredFastq, species, !not_stranded))
             add(new star(filteredFastq, samFile, not_stranded, species = species))
 
 	  }
