@@ -45,11 +45,11 @@ class AnalyzeRNASeq extends QScript {
     this.createIndex = true
   }
 
-  case class filterRepetitiveRegions(noAdapterFastq: File, filteredResults: File, filteredFastq: File) extends FilterRepetitiveRegions {
+  case class mapRepetitiveRegions(noAdapterFastq: File, filteredResults: File, filteredFastq: File) extends MapRepetitiveRegions {
        override def shortDescription = "FilterRepetitiveRegions"
 
        this.inFastq = noAdapterFastq
-       this.outCounts = filteredResults
+       this.outRep = filteredResults
        this.outNoRep = filteredFastq
        this.isIntermediate = true
   }
