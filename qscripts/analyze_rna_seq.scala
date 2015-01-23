@@ -260,27 +260,22 @@ class AnalyzeRNASeq extends QScript {
       	  }
 	  samFile = swapExt(filteredFastq, ".fastq", ".sam")
       	 
+    sailfishOutDir = swapExt(swapExt(fastqFile, ".gz", ""), ".fastq", ".sailfish")
+    sailfishShScript = swapExt(sailfishOutDir, ".sailfish", ".sailfish.sh")
+    sailfishIndex = SailfishGenomeIndexLocation(species)
+
 	  if(fastqPair != null) {
 	        //if paired
-            var sailfish = new Sailfish
-            sailfish.inFastq = fastqFile
-            sailfish.outDir = swapExt(swapExt(fastqFile, ".gz", ""), ".fastq", ".sailfish")
-            sailfish.index = SailfishGenomeIndexLocation(species)
-            sailfish.shScript = swapExt(sailfish.outDir, ".sailfish", ".sailfish.sh")
-            sailfish.inFastqPair = fastqPair
-            add(sailfish)
+            add(new sailfish(inFastq=filteredFastq, index=sailfishIndex,
+              outDir=sailfishOutDir, stranded=!not_stranded, shScript=sailfishShScript, 
+              inFastqPair=fastqPair)
 
             add(new star(filteredFastq, samFile, not_stranded, fastqPair, species = species))
       	  } else { //unpaired
-      	    var sailfish = new Sailfish
-            sailfish.inFastq = fastqFile
-            sailfish.outDir = swapExt(swapExt(fastqFile, ".gz", ""), ".fastq", ".sailfish")
-            sailfish.index = SailfishGenomeIndexLocation(species)
-            sailfish.shScript = swapExt(sailfish.outDir, ".sailfish", ".sailfish.sh")
-            add(sailfish)
+            add(new sailfish(inFastq=filteredFastq, index=sailfishIndex,
+              outDir=sailfishOutDir, stranded=!not_stranded, shScript=sailfishShScript)
 
             add(new star(filteredFastq, samFile, not_stranded, species = species))
-      
 
 	  }
 	  
