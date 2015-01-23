@@ -81,7 +81,7 @@ class AnalyzeRNASeq extends QScript {
     this.flip = flipped
   }
 
-  case class sailfish(input: File, stranded: Boolean, paired: File = null, species: String) extends STAR{
+  case class sailfish(input: File, stranded: Boolean, paired: File = null, species: String) extends Sailfish{
     this.inFastq = input
 
     if (paired != null){
@@ -277,7 +277,7 @@ class AnalyzeRNASeq extends QScript {
             add(new sailfish(filteredFastq, species, !not_stranded, fastqPair))
             add(new star(filteredFastq, samFile, not_stranded, fastqPair, species = species))
       	  } else { //unpaired
-            add(new sailfish(filteredFastq, sspecies, !not_stranded, sailfishShScript))
+            add(new sailfish(filteredFastq, species, !not_stranded, sailfishShScript))
             add(new star(filteredFastq, samFile, not_stranded, species = species))
 
 	  }
