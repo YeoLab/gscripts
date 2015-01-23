@@ -268,12 +268,12 @@ class AnalyzeRNASeq extends QScript {
 	        //if paired
             add(new sailfish(inFastq=filteredFastq, index=sailfishIndex,
               outDir=sailfishOutDir, stranded=!not_stranded, shScript=sailfishShScript, 
-              inFastqPair=fastqPair)
+              inFastqPair=fastqPair))
 
             add(new star(filteredFastq, samFile, not_stranded, fastqPair, species = species))
       	  } else { //unpaired
             add(new sailfish(inFastq=filteredFastq, index=sailfishIndex,
-              outDir=sailfishOutDir, stranded=!not_stranded, shScript=sailfishShScript)
+              outDir=sailfishOutDir, stranded=!not_stranded, shScript=sailfishShScript))
 
             add(new star(filteredFastq, samFile, not_stranded, species = species))
 
