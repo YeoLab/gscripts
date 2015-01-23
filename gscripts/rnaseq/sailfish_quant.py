@@ -26,7 +26,13 @@ class CommandLine(object):
                             action='store',
                             help='Fastq.gz file for read2 of the sample. Can '
                                  'supply multiple fastq.gz files for the same '
-                                 'sample by separating by commas')
+                                 'sample by separating by commas. If not '
+                                 'specified, then the reads are assumed to be '
+                                 'single-end')
+        parser.add_argument('-s', '--stranded', required=False,
+                            action='store_true',
+                            help='If specified, then the reads are '
+                                 'strand-specific')
         parser.add_argument('--out-dir', required=True, type=str,
                             action='store',
                             help='Directory where to put the output files')
@@ -87,11 +93,23 @@ class Usage(Exception):
 
 class SailfishQuant(object):
     def __init__(self, read1, read2, out_dir,
-                 index,
+                 index, stranded=False,
                  job_name='sailfish_quant',
                  num_processors=8,
                  out_sh=None, submit=False, queue_name='home'):
-        library_type = 'T=PE:O=><:S=SA' if read2 is not None else 'T=SE:S=U'
+        paired_end = True if read2 is not None else False
+        library_parameters = ['TYPE=PE', 'ORIENTATION=><'] if paired_end \
+            else ['TYPE=SE']
+        if stranded:
+            if paired_end:
+                strand = 'STRAND=AS'
+            else:
+                strand = 'STRAND=A'
+        else:
+            strand = 'STRAND=U'
+
+        library_parameters.append(strand)
+        library_string = ':'.join(library_parameters)
         if read2 is not None:
             read1 = '-1 <(gunzip -c {})'.format(read1)
             read2 = '-2 <(gunzip -c {})'.format(read2)
@@ -101,7 +119,7 @@ class SailfishQuant(object):
             reads = '-r <(gunzip -c {})'.format(read1)
 
         command = 'sailfish quant --index {0} -l "{1}" {2} --out {3} --threads ' \
-                  '{4}'.format(index, library_type, reads, out_dir,
+                  '{4}'.format(index, library_string, reads, out_dir,
                                num_processors)
 
         sub = Submitter(queue_type='PBS', sh_filename=out_sh,
@@ -126,6 +144,7 @@ if __name__ == '__main__':
                       cl.args['out_dir'],
                       cl.args['index'],
                       cl.args['job_name'],
+                      stranded=cl.args['stranded'],
                       num_processors=cl.args['num_processors'],
                       out_sh=cl.args['out_sh'],
                       submit=submit)
