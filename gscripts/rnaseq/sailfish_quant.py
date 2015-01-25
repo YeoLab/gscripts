@@ -46,7 +46,7 @@ class CommandLine(object):
                             help='Sailfish Index file to use for quantifying '
                                  'expression.')
         parser.add_argument('-z', '--not-gzipped', required=False,
-                            action='store_false',
+                            action='store_true',
                             help='If specified, then the read files are not '
                                  'gzipped, meaning they are uncompressed and '
                                  'are "fastq" rather than "fastq.gz" files')
