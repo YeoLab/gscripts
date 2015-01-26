@@ -3,6 +3,12 @@
 
 It is mostly development code, bugs and inefficiencies are likely, please report any problems to the gscripts issues page.
 
+## How to install gscripts
+
+```
+cd path/to/gscripts; easy_install . 
+```
+(NOT pip)
 
 ## How to import `qtools`
 
