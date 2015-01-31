@@ -258,10 +258,20 @@ class AnalyzeRNASeq extends QScript {
           add(new FastQC(inFastq = fastqFile))
 
           var filteredFastq: File = null
-          if (strict && fastqPair == null) {
-            filteredFastq = stringentJobs(fastqFile)
+          if (fastqPair == null){
+            if (strict) {
+              filteredFastq = stringentJobs(fastqFile)
+            } else {
+              filteredFastq = fastqFile
+            }
           } else {
-            filteredFastq = fastqFile
+            if (strict) {
+              filteredFastq = stringentJobs(fastqFile)
+              fastqPair = stringentJobs(fastqPair)
+            } else {
+              filteredFastq = fastqFile
+              fastqPair = fastqPair
+            }
           }
           samFile = swapExt(filteredFastq, ".fastq", ".sam")
 
