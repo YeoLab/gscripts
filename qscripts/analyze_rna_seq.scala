@@ -37,6 +37,17 @@ class AnalyzeRNASeq extends QScript {
   @Argument(doc = "reads are single ended", shortName = "single_end", fullName = "single_end", required = false)
   var singleEnd: Boolean = true
 
+  @Argument(doc = "Use trim_galore instead of cutadapt (required if '--strict'"
+   "is provided and '--single_end' is not, i.e. for strict processing of paired-end reads)", 
+    shortName = "trim_galore", fullName = "trim_galore", required = false)
+  var trimGalore: Boolean = true
+
+  if ((trimGalore && strict) && (singleEnd == false)){
+    println("If the reads are paired-end and run with '--strict', then '--trim_galore' must be provided!\n"
+      "Otherwise your trimmed paired end reads won't retain their paired-end-ness and you'll have a bad time :(")
+    System.exit(1)
+  }
+
   case class sortSam(inSam: File, outBam: File, sortOrderP: SortOrder) extends SortSam {
     override def shortDescription = "sortSam"
     this.input :+= inSam
@@ -142,6 +153,23 @@ class AnalyzeRNASeq extends QScript {
       "TTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTT")
     this.overlap = 5
     this.length = 18
+    this.quality_cutoff = 6
+    this.isIntermediate = true
+  }
+
+
+  case class trimgalore(fastqFile: File, noAdapterFastq: File, 
+    fastqPair: File, outDir: File,
+    adapterReport: File, adapter: List[String]) extends TrimGalore {
+    override def shortDescription = "trim_galore"
+
+    this.inFastq = fastqFile
+    this.inFastqPair = fastqPair
+    this.outDir = outDir
+    this.anywhere = adapter ++ List("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+      "TTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTT")
+    this.stringency = 5
+    this.minimum_length = 18
     this.quality_cutoff = 6
     this.isIntermediate = true
   }
