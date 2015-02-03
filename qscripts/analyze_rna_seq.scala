@@ -37,9 +37,22 @@ class AnalyzeRNASeq extends QScript {
   @Argument(doc = "reads are single ended", shortName = "single_end", fullName = "single_end", required = false)
   var singleEnd: Boolean = true
 
+<<<<<<< HEAD
   @Argument(doc = "Use trim_galore instead of cutadapt (required if '--strict' is provided and '--single_end' is not, i.e. for strict processing of paired-end reads)", 
     shortName = "yes_trim_galore", fullName = "yes_trim_galore", required = false)
   var yesTrimGalore: Boolean = true
+=======
+  @Argument(doc = "Use trim_galore instead of cutadapt (required if '--strict'"
+   "is provided and '--single_end' is not, i.e. for strict processing of paired-end reads)", 
+    shortName = "trim_galore", fullName = "trim_galore", required = false)
+  var trimGalore: Boolean = true
+
+  if ((trimGalore && strict) && (singleEnd == false)){
+    println("If the reads are paired-end and run with '--strict', then '--trim_galore' must be provided!\n"
+      "Otherwise your trimmed paired end reads won't retain their paired-end-ness and you'll have a bad time :(")
+    System.exit(1)
+  }
+>>>>>>> Add trimgalore
 
   case class sortSam(inSam: File, outBam: File, sortOrderP: SortOrder) extends SortSam {
     override def shortDescription = "sortSam"
