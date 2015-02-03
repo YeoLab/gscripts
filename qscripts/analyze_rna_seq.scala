@@ -37,22 +37,9 @@ class AnalyzeRNASeq extends QScript {
   @Argument(doc = "reads are single ended", shortName = "single_end", fullName = "single_end", required = false)
   var singleEnd: Boolean = true
 
-<<<<<<< HEAD
   @Argument(doc = "Use trim_galore instead of cutadapt (required if '--strict' is provided and '--single_end' is not, i.e. for strict processing of paired-end reads)", 
     shortName = "yes_trim_galore", fullName = "yes_trim_galore", required = false)
   var yesTrimGalore: Boolean = true
-=======
-  @Argument(doc = "Use trim_galore instead of cutadapt (required if '--strict'"
-   "is provided and '--single_end' is not, i.e. for strict processing of paired-end reads)", 
-    shortName = "trim_galore", fullName = "trim_galore", required = false)
-  var trimGalore: Boolean = true
-
-  if ((trimGalore && strict) && (singleEnd == false)){
-    println("If the reads are paired-end and run with '--strict', then '--trim_galore' must be provided!\n"
-      "Otherwise your trimmed paired end reads won't retain their paired-end-ness and you'll have a bad time :(")
-    System.exit(1)
-  }
->>>>>>> Add trimgalore
 
   case class sortSam(inSam: File, outBam: File, sortOrderP: SortOrder) extends SortSam {
     override def shortDescription = "sortSam"
@@ -227,12 +214,14 @@ class AnalyzeRNASeq extends QScript {
   }
 
 
-  def stringentJobsTrimGalore(fastqFile: File, fastqPair: File = null, paired: Boolean = false): (File, File) = {
+  def stringentJobsTrimGalore(fastqFile: File, fastqPair: File = null): (File, File) = {
 
     // run if stringent
 
-    val trimmedFastq = swapExt(fastqFile, ".fastq.gz", "_val_1.fq")
-    val trimmedFastqPair = swapExt(fastqPair, ".fastq.gz", "_val_2.fq")
+    val outDir = swapExt(fastqFile, ".fastq", "_trim_galore")
+
+    val trimmedFastq = outDir + "/" + swapExt(fastqFile, ".fastq", "._val_1.fq")
+    val trimmedFastqPair = outDir + "/" + swapExt(fastqPair, ".fastq", "._val_2.fq")
 
     val filteredFastq = swapExt(fastqFile, ".fastq", ".polyATrim.adapterTrim.rmRep.fastq")
     val filteredFastqPair = swapExt(fastqPair, ".fastq", ".polyATrim.adapterTrim.rmRep.fastq")
@@ -253,6 +242,7 @@ class AnalyzeRNASeq extends QScript {
 
 
     return (filteredFastq, filteredFastqPair)
+
   }
 
   def makeBigWig(inBam: File, species: String): (File, File) = {
