@@ -25,7 +25,7 @@ class AnalyzeRNASeq extends QScript {
   @Argument(doc = "not stranded", required = false)
   var not_stranded: Boolean = false
 
-  @Argument(doc = "strict triming run")
+  @Argument(doc = "Strict trimming run. Remove adapters, remove reads mapping to repetitive regions, and run FastQC")
   var strict: Boolean = false
 
   @Argument(doc = "start processing run from bam file")
@@ -39,11 +39,11 @@ class AnalyzeRNASeq extends QScript {
 
   @Argument(doc = "Use trim_galore instead of cutadapt (required if '--strict'"
    "is provided and '--single_end' is not, i.e. for strict processing of paired-end reads)", 
-    shortName = "trim_galore", fullName = "trim_galore", required = false)
-  var trimGalore: Boolean = true
+    shortName = "yes_trim_galore", fullName = "yes_trim_galore", required = false)
+  var yesTrimGalore: Boolean = true
 
-  if ((trimGalore && strict) && (singleEnd == false)){
-    println("If the reads are paired-end and run with '--strict', then '--trim_galore' must be provided!\n"
+  if ((yesTrimGalore && strict) && (singleEnd == false)){
+    println("If the reads are paired-end and run with '--strict', then '--yes_trim_galore' must be provided!\n"
       "Otherwise your trimmed paired end reads won't retain their paired-end-ness and you'll have a bad time :(")
     System.exit(1)
   }
@@ -206,6 +206,34 @@ class AnalyzeRNASeq extends QScript {
     add(new FastQC(filteredFastq))
 
     return filteredFastq
+  }
+
+
+  def stringentJobsTrimGalore(fastqFile: File, fastqPair: File = null): (File, File) = {
+
+    // run if stringent
+
+    val outDir = swapExt(fastqFile, ".fastq", "_trim_galore")
+
+    val trimmedFastq = outDir + "/" + swapExt(fastqFile, ".fastq", "._val_1.fq")
+    val trimmedFastqPair = outDir + "/" + swapExt(fastqPair, ".fastq", "._val_2.fq")
+
+    val filteredFastq = swapExt(fastqFile, ".fastq", ".polyATrim.adapterTrim.rmRep.fastq")
+    val filteredFastqPair = swapExt(fastqPair, ".fastq", ".polyATrim.adapterTrim.rmRep.fastq")
+
+    val filtered_results = swapExt(filteredFastq, ".fastq", ".metrics")
+    //filters out adapter reads
+    add(trimGalore(fastqFile = fastqFile, fastqPair=fastqPair, outDir = outDir,
+      adapter = adapter))
+
+
+    // TODO: add a version of mapRepetitiveRegions which deals with paired end reads
+    add(mapRepetitiveRegions(noAdapterFastq, filtered_results, filteredFastq))
+
+    // Question: trim_galore can run fastqc on the 
+    add(new FastQC(filteredFastq))
+
+    return filteredFastq, filteredFastqPair
   }
 
   def makeBigWig(inBam: File, species: String): (File, File) = {
