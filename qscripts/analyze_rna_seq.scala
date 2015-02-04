@@ -49,6 +49,7 @@ class AnalyzeRNASeq extends QScript {
     this.createIndex = true
   }
 
+<<<<<<< HEAD
   case class mapRepetitiveRegions(trimmedFastq: File, filteredResults: File, filteredFastq: File, 
     trimmedFastqPair: File = null, filteredFastqPair: File = null, dummy : File, isPaired: Boolean) extends MapRepetitiveRegions2 {
     override def shortDescription = "MapRepetitiveRegions"
@@ -66,6 +67,17 @@ class AnalyzeRNASeq extends QScript {
     this.isIntermediate = false
     this.fakeVariable = dummy
     this.paired = isPaired
+=======
+  case class mapRepetitiveRegions(noAdapterFastq: File, filteredResults: File, filteredFastq: File, 
+    fastqPair: File = null) extends MapRepetitiveRegions2 {
+    override def shortDescription = "MapRepetitiveRegions"
+
+    this.inFastq = noAdapterFastq
+    this.inFastqPair = fastqPair
+    this.outRep = filteredResults
+    this.outNoRep = filteredFastq
+    this.isIntermediate = true
+>>>>>>> MapRepetitiveRegions --> MapRepetitiveRegions2
   }
 
   case class genomeCoverageBed(input: File, outBed: File, cur_strand: String, species: String) extends GenomeCoverageBed {
@@ -196,7 +208,7 @@ class AnalyzeRNASeq extends QScript {
     val noPolyAFastq = swapExt(fastqFile, ".fastq", ".polyATrim.fastq")
     val noPolyAReport = swapExt(noPolyAFastq, ".fastq", ".metrics")
     val noAdapterFastq = swapExt(noPolyAFastq, ".fastq", ".adapterTrim.fastq")
-    val filteredFastq = swapExt(noAdapterFastq, ".fastq", ".rmRep.fastq")
+    val filteredFastq = swapExt(noAdapterFastq, ".fastq", ".rmRep.fastq").replace("R1", "R%")
     val adapterReport = swapExt(noAdapterFastq, ".fastq", ".metrics")
     val filtered_results = swapExt(filteredFastq, ".fastq", ".metrics")
     //filters out adapter reads
@@ -223,8 +235,8 @@ class AnalyzeRNASeq extends QScript {
     val trimmedFastq = outDir + "/" + swapExt(fastqFile, ".fastq", "._val_1.fq")
     val trimmedFastqPair = outDir + "/" + swapExt(fastqPair, ".fastq", "._val_2.fq")
 
-    val filteredFastq = swapExt(fastqFile, ".fastq", ".polyATrim.adapterTrim.rmRep.fastq")
-    val filteredFastqPair = swapExt(fastqPair, ".fastq", ".polyATrim.adapterTrim.rmRep.fastq")
+    val filteredFastq = swapExt(fastqFile, ".fastq", ".polyATrim.adapterTrim.rmRep.fastq").replace("R1", "R%")
+    val filteredFastqPair = swapExt(fastqFile, ".fastq", ".polyATrim.adapterTrim.rmRep.fastq").replace("R2", "R%")
 
     val filteredResults = swapExt(filteredFastq, ".fastq", ".metrics")
     val dummy: File = swapExt(fastqFile, ".fastq", ".dummy")
