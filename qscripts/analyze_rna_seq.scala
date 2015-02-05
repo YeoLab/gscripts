@@ -158,9 +158,7 @@ class AnalyzeRNASeq extends QScript {
   }
 
 
-  case class trimGalore(fastqFile: File, noAdapterFastq: File, 
-    fastqPair: File, outDir: File, paired: Boolean,
-    adapterReport: File, adapter: List[String]) extends TrimGalore {
+  case class trimGalore(fastqFile: File, fastqPair: File, paired: Boolean, adapter: List[String]) extends TrimGalore {
     override def shortDescription = "trim_galore"
 
     this.inFastq = fastqFile
