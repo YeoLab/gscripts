@@ -206,7 +206,7 @@ class AnalyzeRNASeq extends QScript {
   }
 
 
-  def stringentJobsTrimGalore(fastqFile: File, fastqPair: File = null adapter: List[String] = Nil): (File, File) = {
+  def stringentJobsTrimGalore(fastqFile: File, fastqPair: File = null, adapter: List[String] = Nil): (File, File) = {
 
     // run if stringent
 
