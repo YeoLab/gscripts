@@ -314,15 +314,17 @@ class AnalyzeRNASeq extends QScript {
           add(new FastQC(inFastq = fastqFile))
 
           var filteredFastq: File = null
+          var filteredFastqPair: File = null
           if (fastqPair == null){
             if (strict) {
               if (yesTrimGalore){
-                 filteredFastq = stringentJobsTrimGalore(fastqFile, paired=!singleEnd)
+                 (filteredFastq, filteredFastqPair) = stringentJobsTrimGalore(fastqFile, fastqPair, paired=!singleEnd)
                 } else{
                  filteredFastq = stringentJobs(fastqFile)
                 }
             } else {
               filteredFastq = fastqFile
+              filteredFastqPair = fastqPair
             }
           } else {
             if (strict) {
