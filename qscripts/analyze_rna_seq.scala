@@ -234,7 +234,6 @@ class AnalyzeRNASeq extends QScript {
 
 
     return (filteredFastq, filteredFastqPair)
-
   }
 
   def makeBigWig(inBam: File, species: String): (File, File) = {
