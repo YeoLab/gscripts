@@ -163,7 +163,7 @@ class AnalyzeRNASeq extends QScript {
 
     this.inFastq = fastqFile
     this.inFastqPair = fastqPair
-    this.adapter = adapter ++ List("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+    this.adapterList = adapter ++ List("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
       "TTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTT")
     this.stringency = 5
     this.minimum_length = 18
