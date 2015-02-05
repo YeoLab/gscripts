@@ -159,13 +159,13 @@ class AnalyzeRNASeq extends QScript {
 
 
   case class trimGalore(fastqFile: File, noAdapterFastq: File, 
-    fastqPair: File, outDir: File,
+    fastqPair: File, outDir: File, paired: Boolean,
     adapterReport: File, adapter: List[String]) extends TrimGalore {
     override def shortDescription = "trim_galore"
 
     this.inFastq = fastqFile
     this.inFastqPair = fastqPair
-    this.outDir = outDir
+    this.paired = paired
     this.adapter = adapter ++ List("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
       "TTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTT")
     this.stringency = 5
@@ -209,7 +209,7 @@ class AnalyzeRNASeq extends QScript {
   }
 
 
-  def stringentJobsTrimGalore(fastqFile: File, fastqPair: File = null): (File, File) = {
+  def stringentJobsTrimGalore(fastqFile: File, fastqPair: File = null, paired: Boolean): (File, File) = {
 
     // run if stringent
 
@@ -223,7 +223,7 @@ class AnalyzeRNASeq extends QScript {
 
     val filtered_results = swapExt(filteredFastq, ".fastq", ".metrics")
     //filters out adapter reads
-    add(trimGalore(fastqFile = fastqFile, fastqPair=fastqPair, 
+    add(trimGalore(fastqFile = fastqFile, fastqPair=fastqPair, paired=paired,
       adapter = adapter))
 
 
@@ -316,25 +316,28 @@ class AnalyzeRNASeq extends QScript {
           var filteredFastq: File = null
           if (fastqPair == null){
             if (strict) {
-              filteredFastq = stringentJobs(fastqFile)
+              if (yesTrimGalore){
+                 filteredFastq = stringentJobsTrimGalore(fastqFile, paired=!singleEnd)
+                } else{
+                 filteredFastq = stringentJobs(fastqFile)
+                }
             } else {
               filteredFastq = fastqFile
             }
           } else {
             if (strict) {
-              filteredFastq = stringentJobs(fastqFile)
-              fastqPair = stringentJobs(fastqPair)
+              filteredFastq, filteredFastqPair = stringentJobsTrimGalore(fastqFile, fastqPair, paired=!singleEnd)
             } else {
               filteredFastq = fastqFile
-              fastqPair = fastqPair
+              filteredFastqPair = fastqPair
             }
           }
           samFile = swapExt(filteredFastq, ".fastq", ".sam")
 
           if (fastqPair != null) {
             //if paired
-            add(new sailfish(filteredFastq, species, !not_stranded, fastqPair))
-            add(new star(filteredFastq, samFile, not_stranded, fastqPair, species = species))
+            add(new sailfish(filteredFastq, species, !not_stranded, filteredFastqPair))
+            add(new star(filteredFastq, samFile, not_stranded, filteredFastqPair, species = species))
           } else { //unpaired
             add(new sailfish(filteredFastq, species, !not_stranded))
             add(new star(filteredFastq, samFile, not_stranded, species = species))
