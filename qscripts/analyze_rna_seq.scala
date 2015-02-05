@@ -316,25 +316,27 @@ class AnalyzeRNASeq extends QScript {
           // Have to do this weird non-assignment stuff because Scala won't let you return a tuple
           // if the values have already been assigned, e.g. if you've already declared "var filteredFastq: File = null"
           // http://stackoverflow.com/questions/3348751/scala-multiple-assignment-to-existing-variable
+          var filteredFastq: File = null
+          var filteredFastqPair: File = null
           if (fastqPair == null){
             if (strict) {
               if (yesTrimGalore){
-                 (filteredFastq, filteredFastqPair) = stringentJobsTrimGalore(fastqFile, fastqPair, paired=!singleEnd)
+                 var filteredFiles = stringentJobsTrimGalore(fastqFile, fastqPair, paired=!singleEnd)
+                 filteredFastq = filteredFiles._1
                 } else{
-                 var filteredFastq: File = stringentJobs(fastqFile)
-                 var filteredFastqPair: File = null
-
+                 filteredFastq = stringentJobs(fastqFile)
                 }
             } else {
-              var filteredFastq: File = fastqFile
-              var filteredFastqPair: File = null
+              filteredFastq = fastqFile
             }
           } else {
             if (strict) {
-              (filteredFastq, filteredFastqPair) = stringentJobsTrimGalore(fastqFile, fastqPair, paired=!singleEnd)
+              var filteredFiles = stringentJobsTrimGalore(fastqFile, fastqPair, paired=!singleEnd)
+              filteredFastq = filteredFiles._1
+              filteredFastqPair = filteredFiles._2
             } else {
-              var filteredFastq: File = fastqFile
-              var filteredFastqPair: File = fastqPair
+              filteredFastq = fastqFile
+              filteredFastqPair = fastqPair
             }
           }
           samFile = swapExt(filteredFastq, ".fastq", ".sam")
