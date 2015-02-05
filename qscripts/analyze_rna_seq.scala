@@ -153,7 +153,11 @@ class AnalyzeRNASeq extends QScript {
   }
 
 
+<<<<<<< HEAD
   case class trimGalore(fastqFile: File, fastqPair: File, adapter: List[String], dummy: File, isPaired: Boolean) extends TrimGalore {
+=======
+  case class trimGalore(fastqFile: File, fastqPair: File, paired: Boolean, adapter: List[String]) extends TrimGalore {
+>>>>>>> fix up calls to trimGalore
     override def shortDescription = "trim_galore"
 
     this.inFastq = fastqFile
@@ -324,27 +328,6 @@ class AnalyzeRNASeq extends QScript {
           // http://stackoverflow.com/questions/3348751/scala-multiple-assignment-to-existing-variable
           var filteredFastq: File = null
           var filteredFastqPair: File = null
-<<<<<<< HEAD
-          if (fastqPair != null){
-            if (strict) {
-              var filteredFiles = stringentJobsTrimGalore(fastqFile, fastqPair, !singleEnd)
-              filteredFastq = filteredFiles._1
-              filteredFastqPair = filteredFiles._2
-            } else {
-              filteredFastq = fastqFile
-              filteredFastqPair = fastqPair
-            }
-          } else {
-            if (strict) {
-              if (yesTrimGalore){
-                 var filteredFiles = stringentJobsTrimGalore(fastqFile, paired=false)
-                 filteredFastq = filteredFiles._1
-                } else{
-                 filteredFastq = stringentJobs(fastqFile)
-                }
-            } else {
-              filteredFastq = fastqFile
-=======
           if (fastqPair == null){
             if (strict) {
               if (yesTrimGalore){
@@ -364,7 +347,6 @@ class AnalyzeRNASeq extends QScript {
             } else {
               filteredFastq = fastqFile
               filteredFastqPair = fastqPair
->>>>>>> do tuple gymnastics so scala is happy
             }
           }
           samFile = swapExt(filteredFastq, ".fastq", ".sam")
