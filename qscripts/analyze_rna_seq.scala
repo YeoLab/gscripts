@@ -207,7 +207,7 @@ class AnalyzeRNASeq extends QScript {
   }
 
 
-  def stringentJobsTrimGalore(fastqFile: File, fastqPair: File = null, paired: Boolean): (File, File) = {
+  def stringentJobsTrimGalore(fastqFile: File, fastqPair: File = null, paired: Boolean = false): (File, File) = {
 
     // run if stringent
 
@@ -319,7 +319,7 @@ class AnalyzeRNASeq extends QScript {
           if (fastqPair == null){
             if (strict) {
               if (yesTrimGalore){
-                 var filteredFiles = stringentJobsTrimGalore(fastqFile, fastqPair, paired=!singleEnd)
+                 var filteredFiles = stringentJobsTrimGalore(fastqFile, paired=!singleEnd)
                  filteredFastq = filteredFiles._1
                 } else{
                  filteredFastq = stringentJobs(fastqFile)
