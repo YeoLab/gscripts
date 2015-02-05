@@ -313,13 +313,15 @@ class AnalyzeRNASeq extends QScript {
 
           add(new FastQC(inFastq = fastqFile))
 
-
+          // Have to do this weird non-assignment stuff because Scala won't let you return a tuple
+          // if the values have already been assigned, e.g. if you've already declared "var filteredFastq: File = null"
+          // http://stackoverflow.com/questions/3348751/scala-multiple-assignment-to-existing-variable
           if (fastqPair == null){
             if (strict) {
               if (yesTrimGalore){
                  (filteredFastq, filteredFastqPair) = stringentJobsTrimGalore(fastqFile, fastqPair, paired=!singleEnd)
                 } else{
-                 var filteredFastq = stringentJobs(fastqFile)
+                 var filteredFastq: File = stringentJobs(fastqFile)
                  var filteredFastqPair: File = null
 
                 }
