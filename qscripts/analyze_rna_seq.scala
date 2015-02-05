@@ -206,7 +206,7 @@ class AnalyzeRNASeq extends QScript {
   }
 
 
-  def stringentJobsTrimGalore(fastqFile: File, fastqPair: File = null, adapter: List[String] = Nil): (File, File) = {
+  def stringentJobsTrimGalore(fastqFile: File, fastqPair: File = null): (File, File) = {
 
     // run if stringent
 
@@ -220,7 +220,7 @@ class AnalyzeRNASeq extends QScript {
 
     val filtered_results = swapExt(filteredFastq, ".fastq", ".metrics")
     //filters out adapter reads
-    add(trimGalore(fastqFile = fastqFile, fastqPair=fastqPair, adapter = adapter))
+    add(trimGalore(fastqFile, fastqPair, adapter))
 
 
     // TODO: add a version of mapRepetitiveRegions which deals with paired end reads
@@ -317,7 +317,7 @@ class AnalyzeRNASeq extends QScript {
           if (fastqPair == null){
             if (strict) {
               if (yesTrimGalore){
-                 var filteredFiles = stringentJobsTrimGalore(fastqFile, adapter=adapter)
+                 var filteredFiles = stringentJobsTrimGalore(fastqFile)
                  filteredFastq = filteredFiles._1
                 } else{
                  filteredFastq = stringentJobs(fastqFile)
@@ -327,7 +327,7 @@ class AnalyzeRNASeq extends QScript {
             }
           } else {
             if (strict) {
-              var filteredFiles = stringentJobsTrimGalore(fastqFile, fastqPair, adapter=adapter)
+              var filteredFiles = stringentJobsTrimGalore(fastqFile, fastqPair)
               filteredFastq = filteredFiles._1
               filteredFastqPair = filteredFiles._2
             } else {
