@@ -41,11 +41,6 @@ class AnalyzeRNASeq extends QScript {
     shortName = "yes_trim_galore", fullName = "yes_trim_galore", required = false)
   var yesTrimGalore: Boolean = true
 
-  if ((yesTrimGalore && strict) && (singleEnd == false)){
-    println("If the reads are paired-end and run with '--strict', then '--yes_trim_galore' must be provided!\nOtherwise your trimmed paired end reads won't retain their paired-end-ness and you'll have a bad time :(")
-    System.exit(1)
-  }
-
   case class sortSam(inSam: File, outBam: File, sortOrderP: SortOrder) extends SortSam {
     override def shortDescription = "sortSam"
     this.input :+= inSam
@@ -305,6 +300,12 @@ class AnalyzeRNASeq extends QScript {
             singleEnd = false
             fastqPair = new File(fastqFiles(1))
             add(new FastQC(inFastq = fastqPair))
+          }
+
+          
+          if ((yesTrimGalore && strict) && (singleEnd == false)){
+            println("If the reads are paired-end and run with '--strict', then '--yes_trim_galore' must be provided!\nOtherwise your trimmed paired end reads won't retain their paired-end-ness and you'll have a bad time :(")
+            System.exit(1)
           }
 
           add(new FastQC(inFastq = fastqFile))
