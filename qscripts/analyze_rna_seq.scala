@@ -153,11 +153,7 @@ class AnalyzeRNASeq extends QScript {
   }
 
 
-<<<<<<< HEAD
   case class trimGalore(fastqFile: File, fastqPair: File, adapter: List[String], dummy: File, isPaired: Boolean) extends TrimGalore {
-=======
-  case class trimGalore(fastqFile: File, fastqPair: File, paired: Boolean, adapter: List[String]) extends TrimGalore {
->>>>>>> fix up calls to trimGalore
     override def shortDescription = "trim_galore"
 
     this.inFastq = fastqFile
@@ -210,7 +206,7 @@ class AnalyzeRNASeq extends QScript {
   }
 
 
-  def stringentJobsTrimGalore(fastqFile: File, fastqPair: File = null, paired: Boolean = false): (File, File) = {
+  def stringentJobsTrimGalore(fastqFile: File, fastqPair: File = null adapter: List[String] = Nil): (File, File) = {
 
     // run if stringent
 
@@ -222,8 +218,14 @@ class AnalyzeRNASeq extends QScript {
     val filteredFastq = swapExt(fastqFile, ".fastq", ".polyATrim.adapterTrim.rmRep.fastq").replace("R1", "R%")
     val filteredFastqPair = swapExt(fastqFile, ".fastq", ".polyATrim.adapterTrim.rmRep.fastq").replace("R2", "R%")
 
+<<<<<<< HEAD
     val filteredResults = swapExt(filteredFastq, ".fastq", ".metrics")
     val dummy: File = swapExt(fastqFile, ".fastq", ".dummy")
+=======
+    val filtered_results = swapExt(filteredFastq, ".fastq", ".metrics")
+    //filters out adapter reads
+    add(trimGalore(fastqFile = fastqFile, fastqPair=fastqPair, adapter = adapter))
+>>>>>>> fix up call to trimgalore
 
     //filters out adapter reads
     add(trimGalore(fastqFile, fastqPair, adapter, dummy, isPaired=paired))
@@ -331,7 +333,7 @@ class AnalyzeRNASeq extends QScript {
           if (fastqPair == null){
             if (strict) {
               if (yesTrimGalore){
-                 var filteredFiles = stringentJobsTrimGalore(fastqFile, paired=!singleEnd)
+                 var filteredFiles = stringentJobsTrimGalore(fastqFile, adapter=adapter)
                  filteredFastq = filteredFiles._1
                 } else{
                  filteredFastq = stringentJobs(fastqFile)
@@ -341,7 +343,7 @@ class AnalyzeRNASeq extends QScript {
             }
           } else {
             if (strict) {
-              var filteredFiles = stringentJobsTrimGalore(fastqFile, fastqPair, paired=!singleEnd)
+              var filteredFiles = stringentJobsTrimGalore(fastqFile, fastqPair, adapter=adapter)
               filteredFastq = filteredFiles._1
               filteredFastqPair = filteredFiles._2
             } else {
