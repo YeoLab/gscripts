@@ -158,12 +158,11 @@ class AnalyzeRNASeq extends QScript {
   }
 
 
-  case class trimGalore(fastqFile: File, fastqPair: File, paired: Boolean, adapter: List[String]) extends TrimGalore {
+  case class trimGalore(fastqFile: File, fastqPair: File, adapter: List[String]) extends TrimGalore {
     override def shortDescription = "trim_galore"
 
     this.inFastq = fastqFile
     this.inFastqPair = fastqPair
-    this.paired = paired
     this.adapter = adapter ++ List("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
       "TTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTT")
     this.stringency = 5
@@ -207,7 +206,7 @@ class AnalyzeRNASeq extends QScript {
   }
 
 
-  def stringentJobsTrimGalore(fastqFile: File, fastqPair: File = null, paired: Boolean = false): (File, File) = {
+  def stringentJobsTrimGalore(fastqFile: File, fastqPair: File = null adapter: List[String] = Nil): (File, File) = {
 
     // run if stringent
 
@@ -221,8 +220,7 @@ class AnalyzeRNASeq extends QScript {
 
     val filtered_results = swapExt(filteredFastq, ".fastq", ".metrics")
     //filters out adapter reads
-    add(trimGalore(fastqFile = fastqFile, fastqPair=fastqPair, paired=paired,
-      adapter = adapter))
+    add(trimGalore(fastqFile = fastqFile, fastqPair=fastqPair, adapter = adapter))
 
 
     // TODO: add a version of mapRepetitiveRegions which deals with paired end reads
@@ -319,7 +317,7 @@ class AnalyzeRNASeq extends QScript {
           if (fastqPair == null){
             if (strict) {
               if (yesTrimGalore){
-                 var filteredFiles = stringentJobsTrimGalore(fastqFile, paired=!singleEnd)
+                 var filteredFiles = stringentJobsTrimGalore(fastqFile, adapter=adapter)
                  filteredFastq = filteredFiles._1
                 } else{
                  filteredFastq = stringentJobs(fastqFile)
@@ -329,7 +327,7 @@ class AnalyzeRNASeq extends QScript {
             }
           } else {
             if (strict) {
-              var filteredFiles = stringentJobsTrimGalore(fastqFile, fastqPair, paired=!singleEnd)
+              var filteredFiles = stringentJobsTrimGalore(fastqFile, fastqPair, adapter=adapter)
               filteredFastq = filteredFiles._1
               filteredFastqPair = filteredFiles._2
             } else {
