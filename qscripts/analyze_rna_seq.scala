@@ -233,7 +233,7 @@ class AnalyzeRNASeq extends QScript {
     // Question: trim_galore can run fastqc on the 
     add(new FastQC(filteredFastq))
 
-    return filteredFastq, filteredFastqPair
+    return (filteredFastq, filteredFastqPair)
   }
 
   def makeBigWig(inBam: File, species: String): (File, File) = {
