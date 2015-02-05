@@ -324,6 +324,7 @@ class AnalyzeRNASeq extends QScript {
           // http://stackoverflow.com/questions/3348751/scala-multiple-assignment-to-existing-variable
           var filteredFastq: File = null
           var filteredFastqPair: File = null
+<<<<<<< HEAD
           if (fastqPair != null){
             if (strict) {
               var filteredFiles = stringentJobsTrimGalore(fastqFile, fastqPair, !singleEnd)
@@ -343,6 +344,27 @@ class AnalyzeRNASeq extends QScript {
                 }
             } else {
               filteredFastq = fastqFile
+=======
+          if (fastqPair == null){
+            if (strict) {
+              if (yesTrimGalore){
+                 var filteredFiles = stringentJobsTrimGalore(fastqFile, fastqPair, paired=!singleEnd)
+                 filteredFastq = filteredFiles._1
+                } else{
+                 filteredFastq = stringentJobs(fastqFile)
+                }
+            } else {
+              filteredFastq = fastqFile
+            }
+          } else {
+            if (strict) {
+              var filteredFiles = stringentJobsTrimGalore(fastqFile, fastqPair, paired=!singleEnd)
+              filteredFastq = filteredFiles._1
+              filteredFastqPair = filteredFiles._2
+            } else {
+              filteredFastq = fastqFile
+              filteredFastqPair = fastqPair
+>>>>>>> do tuple gymnastics so scala is happy
             }
           }
           samFile = swapExt(filteredFastq, ".fastq", ".sam")
