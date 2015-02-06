@@ -50,7 +50,7 @@ class AnalyzeRNASeq extends QScript {
   }
 
   case class mapRepetitiveRegions(noAdapterFastq: File, filteredResults: File, filteredFastq: File, 
-    fastqPair: File = null, originalFastq: File, originalFastqPair: File = null) extends MapRepetitiveRegions2 {
+    fastqPair: File = null, originalFastq: File, originalFastqPair: File = null, dummy : File) extends MapRepetitiveRegions2 {
     override def shortDescription = "MapRepetitiveRegions"
 
     this.inFastq = noAdapterFastq
@@ -58,6 +58,7 @@ class AnalyzeRNASeq extends QScript {
     this.outRepetitive = filteredResults
     this.outNoRepetitive = filteredFastq
     this.isIntermediate = true
+    this.dummy = dummy
   }
 
   case class genomeCoverageBed(input: File, outBed: File, cur_strand: String, species: String) extends GenomeCoverageBed {
@@ -153,7 +154,7 @@ class AnalyzeRNASeq extends QScript {
   }
 
 
-  case class trimGalore(fastqFile: File, fastqPair: File, adapter: List[String]) extends TrimGalore {
+  case class trimGalore(fastqFile: File, fastqPair: File, adapter: List[String], dummy: File) extends TrimGalore {
     override def shortDescription = "trim_galore"
 
     this.inFastq = fastqFile
@@ -164,6 +165,7 @@ class AnalyzeRNASeq extends QScript {
     this.minimum_length = 18
     this.quality_cutoff = 6
     this.isIntermediate = true
+    this.dummy = dummy
   }
 
   case class makeRNASeQC(input: List[File], output: File) extends MakeRNASeQC {
@@ -194,7 +196,8 @@ class AnalyzeRNASeq extends QScript {
       adapterReport = adapterReport,
       adapter = adapter))
 
-    add(mapRepetitiveRegions(noAdapterFastq, filtered_results, filteredFastq, originalFastq=fastqFile))
+    var dummy: File = _ 
+    add(mapRepetitiveRegions(noAdapterFastq, filtered_results, filteredFastq, originalFastq=fastqFile, dummy=dummy))
     add(new FastQC(filteredFastq))
 
     return filteredFastq
@@ -215,9 +218,10 @@ class AnalyzeRNASeq extends QScript {
 
     val filtered_results = swapExt(filteredFastq, ".fastq", ".metrics")
     //filters out adapter reads
-    add(trimGalore(fastqFile, fastqPair, adapter))
+    var dummy: File = _
+    add(trimGalore(fastqFile, fastqPair, adapter, dummy))
 
-    add(mapRepetitiveRegions(trimmedFastq, filtered_results, filteredFastq, trimmedFastqPair, fastqFile, fastqPair))
+    add(mapRepetitiveRegions(trimmedFastq, filtered_results, filteredFastq, trimmedFastqPair, fastqFile, fastqPair, dummy=dummy))
 
     // Question: trim_galore can run fastqc on the 
     add(new FastQC(filteredFastq))
