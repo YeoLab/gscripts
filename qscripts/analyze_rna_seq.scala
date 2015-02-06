@@ -199,7 +199,6 @@ class AnalyzeRNASeq extends QScript {
       adapterReport = adapterReport,
       adapter = adapter))
 
-
     add(mapRepetitiveRegions(noAdapterFastq, filtered_results, filteredFastq, originalFastq=fastqFile, dummy=dummy))
     add(new FastQC(filteredFastq))
 
@@ -224,7 +223,6 @@ class AnalyzeRNASeq extends QScript {
 
     //filters out adapter reads
     add(trimGalore(fastqFile, fastqPair, adapter, dummy, isPaired=paired))
-
 
     add(mapRepetitiveRegions(trimmedFastq=trimmedFastq, filteredResults=filteredResults, filteredFastq=filteredFastq, 
     trimmedFastqPair=trimmedFastqPair, filteredFastqPair=filteredFastqPair,
