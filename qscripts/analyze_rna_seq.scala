@@ -199,13 +199,8 @@ class AnalyzeRNASeq extends QScript {
       adapterReport = adapterReport,
       adapter = adapter))
 
-<<<<<<< HEAD
-    add(mapRepetitiveRegions(noAdapterFastq, filtered_results, filteredFastq, dummy=dummy, 
-      isPaired=false))
-=======
-    var dummy: File = _ 
+
     add(mapRepetitiveRegions(noAdapterFastq, filtered_results, filteredFastq, originalFastq=fastqFile, dummy=dummy))
->>>>>>> add dummy variables which force dependency between trimGalore and mapRepetitiveRegions
     add(new FastQC(filteredFastq))
 
     return filteredFastq
@@ -229,6 +224,7 @@ class AnalyzeRNASeq extends QScript {
 
     //filters out adapter reads
     add(trimGalore(fastqFile, fastqPair, adapter, dummy, isPaired=paired))
+
 
     add(mapRepetitiveRegions(trimmedFastq=trimmedFastq, filteredResults=filteredResults, filteredFastq=filteredFastq, 
     trimmedFastqPair=trimmedFastqPair, filteredFastqPair=filteredFastqPair,
