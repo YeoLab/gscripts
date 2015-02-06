@@ -58,7 +58,7 @@ class AnalyzeRNASeq extends QScript {
     this.outRepetitive = filteredResults
     this.outNoRepetitive = filteredFastq
     this.isIntermediate = true
-    this.dummy = dummy
+    this.fakeVariable = dummy
   }
 
   case class genomeCoverageBed(input: File, outBed: File, cur_strand: String, species: String) extends GenomeCoverageBed {
@@ -165,7 +165,7 @@ class AnalyzeRNASeq extends QScript {
     this.minimum_length = 18
     this.quality_cutoff = 6
     this.isIntermediate = true
-    this.dummy = dummy
+    this.fakeVariable = dummy
   }
 
   case class makeRNASeQC(input: List[File], output: File) extends MakeRNASeQC {
