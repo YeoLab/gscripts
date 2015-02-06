@@ -301,7 +301,7 @@ class AnalyzeRNASeq extends QScript {
           }
 
           
-          if ((yesTrimGalore && strict) && (singleEnd == false)){
+          if (!(yesTrimGalore && strict) && (singleEnd == false)){
             println("If the reads are paired-end and run with '--strict', then '--yes_trim_galore' must be provided!\nOtherwise your trimmed paired end reads won't retain their paired-end-ness and you'll have a bad time :(")
             System.exit(1)
           }
