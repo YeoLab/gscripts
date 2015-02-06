@@ -50,7 +50,7 @@ class AnalyzeRNASeq extends QScript {
   }
 
   case class mapRepetitiveRegions(noAdapterFastq: File, filteredResults: File, filteredFastq: File, 
-    fastqPair: File = null, originalFastq: File, originalFastqPair: File = null) extends MapRepetitiveRegions2 {
+    fastqPair: File = null, originalFastq: File, originalFastqPair: File = null, dummy : File) extends MapRepetitiveRegions2 {
     override def shortDescription = "MapRepetitiveRegions"
 
     this.inFastq = noAdapterFastq
@@ -58,6 +58,7 @@ class AnalyzeRNASeq extends QScript {
     this.outRepetitive = filteredResults
     this.outNoRepetitive = filteredFastq
     this.isIntermediate = true
+    this.dummy = dummy
   }
 
   case class genomeCoverageBed(input: File, outBed: File, cur_strand: String, species: String) extends GenomeCoverageBed {
@@ -198,8 +199,13 @@ class AnalyzeRNASeq extends QScript {
       adapterReport = adapterReport,
       adapter = adapter))
 
+<<<<<<< HEAD
     add(mapRepetitiveRegions(noAdapterFastq, filtered_results, filteredFastq, dummy=dummy, 
       isPaired=false))
+=======
+    var dummy: File = _ 
+    add(mapRepetitiveRegions(noAdapterFastq, filtered_results, filteredFastq, originalFastq=fastqFile, dummy=dummy))
+>>>>>>> add dummy variables which force dependency between trimGalore and mapRepetitiveRegions
     add(new FastQC(filteredFastq))
 
     return filteredFastq
