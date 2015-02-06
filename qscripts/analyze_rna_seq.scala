@@ -50,7 +50,7 @@ class AnalyzeRNASeq extends QScript {
   }
 
   case class mapRepetitiveRegions(noAdapterFastq: File, filteredResults: File, filteredFastq: File, 
-    fastqPair: File = null, originalFastq: File, originalFastqPair: File) extends MapRepetitiveRegions2 {
+    fastqPair: File = null, originalFastqPair) extends MapRepetitiveRegions2 {
     override def shortDescription = "MapRepetitiveRegions"
 
     this.inFastq = noAdapterFastq
@@ -194,7 +194,7 @@ class AnalyzeRNASeq extends QScript {
       adapterReport = adapterReport,
       adapter = adapter))
 
-    add(mapRepetitiveRegions(noAdapterFastq, filtered_results, filteredFastq))
+    add(mapRepetitiveRegions(noAdapterFastq, filtered_results, filteredFastq, fastqFile, fastqPair))
     add(new FastQC(filteredFastq))
 
     return filteredFastq
@@ -210,8 +210,8 @@ class AnalyzeRNASeq extends QScript {
     val trimmedFastq = outDir + "/" + swapExt(fastqFile, ".fastq", "._val_1.fq")
     val trimmedFastqPair = outDir + "/" + swapExt(fastqPair, ".fastq", "._val_2.fq")
 
-    val filteredFastq = swapExt(fastqFile, ".fastq", ".polyATrim.adapterTrim.rmRep.fastq").replace("R1", "R%")
-    val filteredFastqPair = swapExt(fastqFile, ".fastq", ".polyATrim.adapterTrim.rmRep.fastq").replace("R2", "R%")
+    val filteredFastq = swapExt(fastqFile, ".fastq", ".polyATrim.adapterTrim.rmRep.fastq")
+    val filteredFastqPair = swapExt(fastqFile, ".fastq", ".polyATrim.adapterTrim.rmRep.fastq")
 
     val filtered_results = swapExt(filteredFastq, ".fastq", ".metrics")
     //filters out adapter reads
