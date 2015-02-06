@@ -50,7 +50,7 @@ class AnalyzeRNASeq extends QScript {
   }
 
   case class mapRepetitiveRegions(noAdapterFastq: File, filteredResults: File, filteredFastq: File, 
-    fastqPair: File = null, originalFastq: File = null, originalFastqPair: File = null) extends MapRepetitiveRegions2 {
+    fastqPair: File = null, originalFastq: File, originalFastqPair: File = null) extends MapRepetitiveRegions2 {
     override def shortDescription = "MapRepetitiveRegions"
 
     this.inFastq = noAdapterFastq
@@ -194,7 +194,7 @@ class AnalyzeRNASeq extends QScript {
       adapterReport = adapterReport,
       adapter = adapter))
 
-    add(mapRepetitiveRegions(noAdapterFastq, filtered_results, filteredFastq, fastqFile, fastqPair))
+    add(mapRepetitiveRegions(noAdapterFastq, filtered_results, filteredFastq, fastqFile))
     add(new FastQC(filteredFastq))
 
     return filteredFastq
