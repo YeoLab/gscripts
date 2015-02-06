@@ -196,7 +196,7 @@ class AnalyzeRNASeq extends QScript {
       adapterReport = adapterReport,
       adapter = adapter))
 
-    var dummy: File = _ 
+    val dummy: File = _ 
     add(mapRepetitiveRegions(noAdapterFastq, filtered_results, filteredFastq, originalFastq=fastqFile, dummy=dummy))
     add(new FastQC(filteredFastq))
 
@@ -218,7 +218,7 @@ class AnalyzeRNASeq extends QScript {
 
     val filtered_results = swapExt(filteredFastq, ".fastq", ".metrics")
     //filters out adapter reads
-    var dummy: File = _
+    val dummy: File = _
     add(trimGalore(fastqFile, fastqPair, adapter, dummy))
 
     add(mapRepetitiveRegions(trimmedFastq, filtered_results, filteredFastq, trimmedFastqPair, fastqFile, fastqPair, dummy=dummy))
