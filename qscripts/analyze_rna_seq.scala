@@ -63,7 +63,7 @@ class AnalyzeRNASeq extends QScript {
     this.inFastqPair = fastqPair
     this.outRepetitive = filteredResults
     this.outNoRepetitive = filteredFastq
-    this.outnoRepetitivePair = filteredFastqPair
+    this.outNoRepetitivePair = filteredFastqPair
     this.isIntermediate = false
     this.fakeVariable = dummy
   }
