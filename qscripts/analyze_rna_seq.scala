@@ -50,14 +50,16 @@ class AnalyzeRNASeq extends QScript {
   }
 
   case class mapRepetitiveRegions(noAdapterFastq: File, filteredResults: File, filteredFastq: File, 
-    fastqPair: File = null, originalFastq: File, originalFastqPair: File = null, dummy : File) extends MapRepetitiveRegions2 {
+    fastqPair: File = null, filteredFastqPair: File = null, originalFastq: File, 
+    originalFastqPair: File = null, dummy : File) extends MapRepetitiveRegions2 {
     override def shortDescription = "MapRepetitiveRegions"
 
     this.inFastq = noAdapterFastq
     this.inFastqPair = fastqPair
     this.outRepetitive = filteredResults
     this.outNoRepetitive = filteredFastq
-    this.isIntermediate = true
+    this.outnoRepetitivePair = filteredFastqPair
+    this.isIntermediate = false
     this.fakeVariable = dummy
   }
 
@@ -188,7 +190,7 @@ class AnalyzeRNASeq extends QScript {
     val noPolyAFastq = swapExt(fastqFile, ".fastq", ".polyATrim.fastq")
     val noPolyAReport = swapExt(noPolyAFastq, ".fastq", ".metrics")
     val noAdapterFastq = swapExt(noPolyAFastq, ".fastq", ".adapterTrim.fastq")
-    val filteredFastq = swapExt(noAdapterFastq, ".fastq", ".rmRep.fastq").replace("R1", "R%")
+    val filteredFastq = swapExt(noAdapterFastq, ".fastq", ".rmRep.fastq")
     val adapterReport = swapExt(noAdapterFastq, ".fastq", ".metrics")
     val filtered_results = swapExt(filteredFastq, ".fastq", ".metrics")
     //filters out adapter reads
@@ -223,7 +225,8 @@ class AnalyzeRNASeq extends QScript {
     //filters out adapter reads
     add(trimGalore(fastqFile, fastqPair, adapter, dummy))
 
-    add(mapRepetitiveRegions(trimmedFastq, filtered_results, filteredFastq, trimmedFastqPair, fastqFile, fastqPair, dummy=dummy))
+    add(mapRepetitiveRegions(trimmedFastq, filtered_results, filteredFastq, trimmedFastqPair, fastqFile, fastqPair, 
+      dummy=dummy, filteredFastqPair=filteredFastqPair))
 
     // Question: trim_galore can run fastqc on the 
     add(new FastQC(filteredFastq))
