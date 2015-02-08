@@ -212,8 +212,8 @@ class AnalyzeRNASeq extends QScript {
 
     val outDir = swapExt(fastqFile, ".fastq", "_trim_galore")
 
-    val trimmedFastq = outDir + "/" + swapExt(fastqFile, ".fastq", "._val_1.fq")
-    val trimmedFastqPair = outDir + "/" + swapExt(fastqPair, ".fastq", "._val_2.fq")
+    val trimmedFastq = outDir + "/" + swapExt(fastqFile, ".fastq", "_trimmed.fastq")
+    val trimmedFastqPair = outDir + "/" + swapExt(fastqPair, ".fastq", "_trimmed.fastq")
 
     val filteredFastq = swapExt(fastqFile, ".fastq", ".polyATrim.adapterTrim.rmRep.fastq").replace("R1", "R%")
     val filteredFastqPair = swapExt(fastqFile, ".fastq", ".polyATrim.adapterTrim.rmRep.fastq").replace("R2", "R%")
