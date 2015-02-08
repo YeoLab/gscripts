@@ -54,6 +54,11 @@ class AnalyzeRNASeq extends QScript {
     originalFastqPair: File = null, dummy : File) extends MapRepetitiveRegions2 {
     override def shortDescription = "MapRepetitiveRegions"
 
+    var paired = inFastqPair != null
+    if (paired){
+      filteredFastq = swapExt(filteredFastq, ".fastq", ".fastq").replace("1", "%")
+    }
+
     this.inFastq = noAdapterFastq
     this.inFastqPair = fastqPair
     this.outRepetitive = filteredResults
