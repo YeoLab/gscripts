@@ -56,9 +56,9 @@ class AnalyzeRNASeq extends QScript {
 
     var paired = noAdapterFastq != null
     if (paired){
-      outFastq = swapExt(filteredFastq, ".fastq", ".fastq").replace("1", "%")
+      val outFastq = swapExt(filteredFastq, ".fastq", ".fastq").replace("1", "%")
     } else{
-      outFastq = filteredFastq
+      val outFastq = filteredFastq
     }
 
     this.inFastq = noAdapterFastq
