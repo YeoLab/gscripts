@@ -56,14 +56,15 @@ class AnalyzeRNASeq extends QScript {
 
     var paired = noAdapterFastq != null
     if (paired){
-      filteredFastq = swapExt(filteredFastq, ".fastq", ".fastq").replace("1", "%")
+      outFastq = swapExt(filteredFastq, ".fastq", ".fastq").replace("1", "%")
+    } else{
+      outFastq = filteredFastq
     }
 
     this.inFastq = noAdapterFastq
     this.inFastqPair = fastqPair
     this.outRepetitive = filteredResults
-    this.outNoRepetitive = filteredFastq
-    this.outNoRepetitivePair = filteredFastqPair
+    this.outNoRepetitive = outFastq
     this.isIntermediate = false
     this.fakeVariable = dummy
   }
