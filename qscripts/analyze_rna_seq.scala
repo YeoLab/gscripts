@@ -51,12 +51,10 @@ class AnalyzeRNASeq extends QScript {
 
   case class mapRepetitiveRegions(noAdapterFastq: File, filteredResults: File, filteredFastq: File, 
     fastqPair: File = null, filteredFastqPair: File = null, originalFastq: File, 
-    originalFastqPair: File = null, dummy : File) extends MapRepetitiveRegions2 {
+    originalFastqPair: File = null, dummy : File, paired: Boolean) extends MapRepetitiveRegions2 {
     override def shortDescription = "MapRepetitiveRegions"
 
-    var isPaired = noAdapterFastq != null
-    var outFastq = filteredFastq
-    if (isPaired){
+    if (paired){
       outFastq = swapExt(filteredFastq, ".fastq", ".fastq").replace("1", "%")
     } 
 
@@ -64,8 +62,10 @@ class AnalyzeRNASeq extends QScript {
     this.inFastqPair = fastqPair
     this.outRepetitive = filteredResults
     this.outNoRepetitive = outFastq
+    this.outNoRepetitivePair = filteredFastqPair
     this.isIntermediate = false
     this.fakeVariable = dummy
+    this.paired = paired
   }
 
   case class genomeCoverageBed(input: File, outBed: File, cur_strand: String, species: String) extends GenomeCoverageBed {
@@ -161,7 +161,11 @@ class AnalyzeRNASeq extends QScript {
   }
 
 
+<<<<<<< HEAD
   case class trimGalore(fastqFile: File, fastqPair: File, adapter: List[String], dummy: File, isPaired: Boolean) extends TrimGalore {
+=======
+  case class trimGalore(fastqFile: File, fastqPair: File, adapter: List[String], dummy: File, paired: Boolean) extends TrimGalore {
+>>>>>>> check for paired-endness within this script and not within the TrimGalore or MapRepetitiveRegions2 scripts
     override def shortDescription = "trim_galore"
 
     this.inFastq = fastqFile
@@ -173,7 +177,11 @@ class AnalyzeRNASeq extends QScript {
     this.quality_cutoff = 6
     this.isIntermediate = true
     this.fakeVariable = dummy
+<<<<<<< HEAD
     this.paired = isPaired
+=======
+    this.paired = paired
+>>>>>>> check for paired-endness within this script and not within the TrimGalore or MapRepetitiveRegions2 scripts
   }
 
   case class makeRNASeQC(input: List[File], output: File) extends MakeRNASeQC {
@@ -206,14 +214,15 @@ class AnalyzeRNASeq extends QScript {
       adapterReport = adapterReport,
       adapter = adapter))
 
-    add(mapRepetitiveRegions(noAdapterFastq, filtered_results, filteredFastq, originalFastq=fastqFile, dummy=dummy))
+    add(mapRepetitiveRegions(noAdapterFastq, filtered_results, filteredFastq, originalFastq=fastqFile, dummy=dummy, 
+      paired=false))
     add(new FastQC(filteredFastq))
 
     return filteredFastq
   }
 
 
-  def stringentJobsTrimGalore(fastqFile: File, fastqPair: File = null): (File, File) = {
+  def stringentJobsTrimGalore(fastqFile: File, fastqPair: File = null, paired: Boolean): (File, File) = {
 
     // run if stringent
 
@@ -227,11 +236,18 @@ class AnalyzeRNASeq extends QScript {
     add(trimGalore(fastqFile = fastqFile, fastqPair=fastqPair, adapter = adapter))
 
     //filters out adapter reads
+<<<<<<< HEAD
     add(trimGalore(fastqFile, fastqPair, adapter, dummy, isPaired=paired))
 
     add(mapRepetitiveRegions(trimmedFastq=trimmedFastq, filteredResults=filteredResults, filteredFastq=filteredFastq, 
     trimmedFastqPair=trimmedFastqPair, filteredFastqPair=filteredFastqPair,
       dummy=dummy, isPaired=paired))
+=======
+    add(trimGalore(fastqFile, fastqPair, adapter, dummy, paired))
+
+    add(mapRepetitiveRegions(trimmedFastq, filtered_results, filteredFastq, trimmedFastqPair, fastqFile, fastqPair, 
+      dummy=dummy, paired))
+>>>>>>> check for paired-endness within this script and not within the TrimGalore or MapRepetitiveRegions2 scripts
 
     // Question: trim_galore can run fastqc on the 
     add(new FastQC(filteredFastq))
@@ -342,7 +358,7 @@ class AnalyzeRNASeq extends QScript {
             }
           } else {
             if (strict) {
-              var filteredFiles = stringentJobsTrimGalore(fastqFile, fastqPair)
+              var filteredFiles = stringentJobsTrimGalore(fastqFile, fastqPair, !singleEnd)
               filteredFastq = filteredFiles._1
               filteredFastqPair = filteredFiles._2
             } else {
