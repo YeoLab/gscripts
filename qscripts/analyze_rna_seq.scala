@@ -236,18 +236,11 @@ class AnalyzeRNASeq extends QScript {
     add(trimGalore(fastqFile = fastqFile, fastqPair=fastqPair, adapter = adapter))
 
     //filters out adapter reads
-<<<<<<< HEAD
     add(trimGalore(fastqFile, fastqPair, adapter, dummy, isPaired=paired))
 
     add(mapRepetitiveRegions(trimmedFastq=trimmedFastq, filteredResults=filteredResults, filteredFastq=filteredFastq, 
     trimmedFastqPair=trimmedFastqPair, filteredFastqPair=filteredFastqPair,
       dummy=dummy, isPaired=paired))
-=======
-    add(trimGalore(fastqFile, fastqPair, adapter, dummy, paired))
-
-    add(mapRepetitiveRegions(trimmedFastq, filtered_results, filteredFastq, trimmedFastqPair, fastqFile, fastqPair, 
-      dummy=dummy, paired))
->>>>>>> check for paired-endness within this script and not within the TrimGalore or MapRepetitiveRegions2 scripts
 
     // Question: trim_galore can run fastqc on the 
     add(new FastQC(filteredFastq))
