@@ -50,8 +50,7 @@ class AnalyzeRNASeq extends QScript {
   }
 
   case class mapRepetitiveRegions(trimmedFastq: File, filteredResults: File, filteredFastq: File, 
-    trimmedFastqPair: File = null, filteredFastqPair: File = null, originalFastq: File, 
-    originalFastqPair: File = null, dummy : File, isPaired: Boolean) extends MapRepetitiveRegions2 {
+    trimmedFastqPair: File = null, filteredFastqPair: File = null, dummy : File, isPaired: Boolean) extends MapRepetitiveRegions2 {
     override def shortDescription = "MapRepetitiveRegions"
 
     if (isPaired){
