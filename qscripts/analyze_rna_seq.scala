@@ -65,7 +65,6 @@ class AnalyzeRNASeq extends QScript {
     this.outNoRepetitivePair = filteredFastqPair
     this.isIntermediate = false
     this.fakeVariable = dummy
-    this.paired = paired
   }
 
   case class genomeCoverageBed(input: File, outBed: File, cur_strand: String, species: String) extends GenomeCoverageBed {
@@ -161,7 +160,7 @@ class AnalyzeRNASeq extends QScript {
   }
 
 
-  case class trimGalore(fastqFile: File, fastqPair: File, adapter: List[String], dummy: File, paired: Boolean) extends TrimGalore {
+  case class trimGalore(fastqFile: File, fastqPair: File, adapter: List[String], dummy: File) extends TrimGalore {
     override def shortDescription = "trim_galore"
 
     this.inFastq = fastqFile
@@ -173,7 +172,6 @@ class AnalyzeRNASeq extends QScript {
     this.quality_cutoff = 6
     this.isIntermediate = true
     this.fakeVariable = dummy
-    this.paired = paired
   }
 
   case class makeRNASeQC(input: List[File], output: File) extends MakeRNASeQC {
@@ -341,7 +339,7 @@ class AnalyzeRNASeq extends QScript {
           } else {
             if (strict) {
               if (yesTrimGalore){
-                 var filteredFiles = stringentJobsTrimGalore(fastqFile)
+                 var filteredFiles = stringentJobsTrimGalore(fastqFile, paired=false)
                  filteredFastq = filteredFiles._1
                 } else{
                  filteredFastq = stringentJobs(fastqFile)
