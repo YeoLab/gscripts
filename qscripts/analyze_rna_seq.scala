@@ -51,10 +51,10 @@ class AnalyzeRNASeq extends QScript {
 
   case class mapRepetitiveRegions(noAdapterFastq: File, filteredResults: File, filteredFastq: File, 
     fastqPair: File = null, filteredFastqPair: File = null, originalFastq: File, 
-    originalFastqPair: File = null, dummy : File, paired: Boolean) extends MapRepetitiveRegions2 {
+    originalFastqPair: File = null, dummy : File, isPaired: Boolean) extends MapRepetitiveRegions2 {
     override def shortDescription = "MapRepetitiveRegions"
 
-    if (paired){
+    if (isPaired){
       outFastq = swapExt(filteredFastq, ".fastq", ".fastq").replace("1", "%")
     } 
 
@@ -65,6 +65,7 @@ class AnalyzeRNASeq extends QScript {
     this.outNoRepetitivePair = filteredFastqPair
     this.isIntermediate = false
     this.fakeVariable = dummy
+    this.paired = isPaired
   }
 
   case class genomeCoverageBed(input: File, outBed: File, cur_strand: String, species: String) extends GenomeCoverageBed {
@@ -160,7 +161,7 @@ class AnalyzeRNASeq extends QScript {
   }
 
 
-  case class trimGalore(fastqFile: File, fastqPair: File, adapter: List[String], dummy: File) extends TrimGalore {
+  case class trimGalore(fastqFile: File, fastqPair: File, adapter: List[String], dummy: File, isPaired: Boolean) extends TrimGalore {
     override def shortDescription = "trim_galore"
 
     this.inFastq = fastqFile
@@ -172,6 +173,7 @@ class AnalyzeRNASeq extends QScript {
     this.quality_cutoff = 6
     this.isIntermediate = true
     this.fakeVariable = dummy
+    this.paired = isPaired
   }
 
   case class makeRNASeQC(input: List[File], output: File) extends MakeRNASeQC {
@@ -205,14 +207,14 @@ class AnalyzeRNASeq extends QScript {
       adapter = adapter))
 
     add(mapRepetitiveRegions(noAdapterFastq, filtered_results, filteredFastq, originalFastq=fastqFile, dummy=dummy, 
-      paired=false))
+      isPaired=false))
     add(new FastQC(filteredFastq))
 
     return filteredFastq
   }
 
 
-  def stringentJobsTrimGalore(fastqFile: File, fastqPair: File = null, paired: Boolean): (File, File) = {
+  def stringentJobsTrimGalore(fastqFile: File, fastqPair: File = null, paired: Boolean = false): (File, File) = {
 
     // run if stringent
 
@@ -226,10 +228,10 @@ class AnalyzeRNASeq extends QScript {
     val dummy: File = swapExt(fastqFile, ".fastq", ".dummy")
 
     //filters out adapter reads
-    add(trimGalore(fastqFile, fastqPair, adapter, dummy, paired))
+    add(trimGalore(fastqFile, fastqPair, adapter, dummy, isPaired=paired))
 
     add(mapRepetitiveRegions(trimmedFastq, filtered_results, filteredFastq, trimmedFastqPair, fastqFile, fastqPair, 
-      dummy=dummy, paired))
+      dummy=dummy, isPaired=paired))
 
     // Question: trim_galore can run fastqc on the 
     add(new FastQC(filteredFastq))
