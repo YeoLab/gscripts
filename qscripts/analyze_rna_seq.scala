@@ -49,19 +49,19 @@ class AnalyzeRNASeq extends QScript {
     this.createIndex = true
   }
 
-  case class mapRepetitiveRegions(noAdapterFastq: File, filteredResults: File, filteredFastq: File, 
-    fastqPair: File = null, filteredFastqPair: File = null, originalFastq: File, 
+  case class mapRepetitiveRegions(trimmedFastq: File, filteredResults: File, filteredFastq: File, 
+    trimmedFastqPair: File = null, filteredFastqPair: File = null, originalFastq: File, 
     originalFastqPair: File = null, dummy : File, isPaired: Boolean) extends MapRepetitiveRegions2 {
     override def shortDescription = "MapRepetitiveRegions"
 
     if (isPaired){
-      this.outNoRepetitive = swapExt(filteredFastq, ".fastq", ".fastq").replace("1", "%")
+      this.outNoRepetitive = swapExt(filteredFastq, ".fastq", ".fastq").replace("_R1", "_R%")
     } else{
       this.outNoRepetitive = filteredFastq
     }
 
-    this.inFastq = noAdapterFastq
-    this.inFastqPair = fastqPair
+    this.inFastq = trimmedFastq
+    this.inFastqPair = trimmedFastqPair
     this.outRepetitive = filteredResults
     this.outNoRepetitivePair = filteredFastqPair
     this.isIntermediate = false
