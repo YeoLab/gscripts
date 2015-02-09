@@ -50,8 +50,7 @@ class AnalyzeRNASeq extends QScript {
   }
 
   case class mapRepetitiveRegions(trimmedFastq: File, filteredResults: File, filteredFastq: File, 
-    trimmedFastqPair: File = null, filteredFastqPair: File = null, originalFastq: File, 
-    originalFastqPair: File = null, dummy : File, isPaired: Boolean) extends MapRepetitiveRegions2 {
+    trimmedFastqPair: File = null, filteredFastqPair: File = null, dummy : File, isPaired: Boolean) extends MapRepetitiveRegions2 {
     override def shortDescription = "MapRepetitiveRegions"
 
     if (isPaired){
@@ -231,7 +230,8 @@ class AnalyzeRNASeq extends QScript {
     //filters out adapter reads
     add(trimGalore(fastqFile, fastqPair, adapter, dummy, isPaired=paired))
 
-    add(mapRepetitiveRegions(trimmedFastq, filteredResults, filteredFastq, trimmedFastqPair, fastqFile, fastqPair, 
+    add(mapRepetitiveRegions(trimmedFastq=trimmedFastq, filteredResults=filteredResults, filteredFastq=filteredFastq, 
+    trimmedFastqPair=trimmedFastqPair, filteredFastqPair=filteredFastqPair,
       dummy=dummy, isPaired=paired))
 
     // Question: trim_galore can run fastqc on the 
