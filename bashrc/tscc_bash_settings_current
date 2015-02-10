@@ -22,7 +22,7 @@ export LD_RUN_PATH=/home/yeo-lab/software/lib:$LD_RUN_PATH
 export GNUPLOT_DEFAULT_GDFONT=LiberationSans-Regular
 
 export BOWTIE_INDEXES=/projects/ps-yeolab/genomes/bowtie_index
-export BOWTIE2_INDEXES=/projects/ps-yeolab/genomes/bowtie_index
+export BOWTIE2_INDEXES=/projects/ps-yeolab/genomes/bowtie2_indexes
 
 #GHC
 export LD_RUN_PATH=/home/yeo-lab/software/ghc/lib:$LD_RUN_PATH 
