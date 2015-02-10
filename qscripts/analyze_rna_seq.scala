@@ -198,7 +198,8 @@ class AnalyzeRNASeq extends QScript {
     val noAdapterFastq = swapExt(noPolyAFastq, ".fastq", ".adapterTrim.fastq")
     val filteredFastq = swapExt(noAdapterFastq, ".fastq", ".rmRep.fastq")
     val adapterReport = swapExt(noAdapterFastq, ".fastq", ".metrics")
-    val filtered_results = swapExt(filteredFastq, ".fastq", ".metrics")
+    val repetitiveAligned = swapExt(filteredFastq, ".fastq", ".sam")
+    val repetitiveCounts = swapExt(filteredFastq, ".fastq", ".metrics")
     //filters out adapter reads
     val dummy: File = swapExt(fastqFile, ".fastq", ".dummy")
 
@@ -206,8 +207,9 @@ class AnalyzeRNASeq extends QScript {
       adapterReport = adapterReport,
       adapter = adapter))
 
-    add(mapRepetitiveRegions(noAdapterFastq, filtered_results, filteredFastq, dummy=dummy, 
+    add(mapRepetitiveRegions(noAdapterFastq, repetitiveAligned, filteredFastq, dummy=dummy, 
       isPaired=false))
+    add(CountRepetitiveRegions(inBam=repetitiveAligned, outFile=repetitiveCounts))
     add(new FastQC(filteredFastq))
 
     return filteredFastq
@@ -221,18 +223,21 @@ class AnalyzeRNASeq extends QScript {
     val trimmedFastq = swapExt(fastqFile, ".fastq.gz", "_val_1.fq")
     val trimmedFastqPair = swapExt(fastqPair, ".fastq.gz", "_val_2.fq")
 
-    val filteredFastq = swapExt(fastqFile, ".fastq", ".polyATrim.adapterTrim.rmRep.fastq").replace("R1", "R%")
-    val filteredFastqPair = swapExt(fastqFile, ".fastq", ".polyATrim.adapterTrim.rmRep.fastq").replace("R2", "R%")
-    val filteredResults = swapExt(filteredFastq, ".fastq", ".metrics")
+    val filteredFastq = swapExt(fastqFile, ".fastq", ".polyATrim.adapterTrim.rmRep.fastq")
+    val filteredFastqPair = swapExt(fastqPair, ".fastq", ".polyATrim.adapterTrim.rmRep.fastq")
+
+    val repetitiveAligned = swapExt(filteredFastq, ".fastq", ".sam")
+    val repetitiveCounts = swapExt(filteredResults, ".sam", ".metrics")
     val dummy: File = swapExt(fastqFile, ".fastq", ".dummy")
     add(trimGalore(fastqFile = fastqFile, fastqPair=fastqPair, adapter = adapter))
 
     //filters out adapter reads
     add(trimGalore(fastqFile, fastqPair, adapter, dummy, isPaired=paired))
 
-    add(mapRepetitiveRegions(trimmedFastq=trimmedFastq, filteredResults=filteredResults, filteredFastq=filteredFastq, 
+    add(mapRepetitiveRegions(trimmedFastq=trimmedFastq, filteredResults=repetitiveAligned, filteredFastq=filteredFastq, 
     trimmedFastqPair=trimmedFastqPair, filteredFastqPair=filteredFastqPair,
       dummy=dummy, isPaired=paired))
+    add(CountRepetitiveRegions(inBam=repetitiveAligned, outFile=repetitiveCounts))
 
     // Question: trim_galore can run fastqc on the 
     add(new FastQC(filteredFastq))
