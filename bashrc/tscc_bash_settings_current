@@ -17,6 +17,7 @@ export LD_LIBRARY_PATH=/home/yeo-lab/software/lib:$LD_LIBRARY_PATH
 export LD_LIBRARY_PATH=/home/yeo-lab/software/linux/gcc/dyn/x86_64/rel/lib:$LD_LIBRARY_PATH
 
 export LD_RUN_PATH=/home/yeo-lab/software/lib:$LD_RUN_PATH 
+export PATH=/home/yeo-lab/software/STAR/source:$PATH
 
 #export GDFONTPATH=${SERVER}/yeolab/Software/liberation-fonts-ttf-1.06.0.20100721
 export GNUPLOT_DEFAULT_GDFONT=LiberationSans-Regular
