@@ -214,7 +214,7 @@ class AnalyzeRNASeq extends QScript {
 
     add(mapRepetitiveRegions(noAdapterFastq, repetitiveAligned, filteredFastq, dummy=dummy, 
       isPaired=false))
-    add(countRepetitiveRegions(inBam=repetitiveAligned, outFile=repetitiveCounts))
+    add(countRepetitiveRegions(bam=repetitiveAligned, metrics=repetitiveCounts))
     add(new FastQC(filteredFastq))
 
     return filteredFastq
@@ -242,7 +242,7 @@ class AnalyzeRNASeq extends QScript {
     add(mapRepetitiveRegions(trimmedFastq=trimmedFastq, filteredResults=repetitiveAligned, filteredFastq=filteredFastq, 
     trimmedFastqPair=trimmedFastqPair, filteredFastqPair=filteredFastqPair,
       dummy=dummy, isPaired=paired))
-    add(countRepetitiveRegions(inBam=repetitiveAligned, outFile=repetitiveCounts))
+    add(countRepetitiveRegions(bam=repetitiveAligned, metrics=repetitiveCounts))
 
     // Question: trim_galore can run fastqc on the 
     add(new FastQC(filteredFastq))
