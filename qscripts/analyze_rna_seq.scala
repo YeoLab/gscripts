@@ -68,6 +68,11 @@ class AnalyzeRNASeq extends QScript {
     this.paired = isPaired
   }
 
+  case class countRepetitiveRegions(bam: File, metrics: File) extends CountRepetitiveRegions{
+    this.inBam = bam
+    this.outFile = metrics
+  }
+
   case class genomeCoverageBed(input: File, outBed: File, cur_strand: String, species: String) extends GenomeCoverageBed {
     this.inBam = input
     this.genomeSize = chromSizeLocation(species)
@@ -209,7 +214,7 @@ class AnalyzeRNASeq extends QScript {
 
     add(mapRepetitiveRegions(noAdapterFastq, repetitiveAligned, filteredFastq, dummy=dummy, 
       isPaired=false))
-    add(CountRepetitiveRegions(inBam=repetitiveAligned, outFile=repetitiveCounts))
+    add(countRepetitiveRegions(inBam=repetitiveAligned, outFile=repetitiveCounts))
     add(new FastQC(filteredFastq))
 
     return filteredFastq
@@ -237,7 +242,7 @@ class AnalyzeRNASeq extends QScript {
     add(mapRepetitiveRegions(trimmedFastq=trimmedFastq, filteredResults=repetitiveAligned, filteredFastq=filteredFastq, 
     trimmedFastqPair=trimmedFastqPair, filteredFastqPair=filteredFastqPair,
       dummy=dummy, isPaired=paired))
-    add(CountRepetitiveRegions(inBam=repetitiveAligned, outFile=repetitiveCounts))
+    add(countRepetitiveRegions(inBam=repetitiveAligned, outFile=repetitiveCounts))
 
     // Question: trim_galore can run fastqc on the 
     add(new FastQC(filteredFastq))
