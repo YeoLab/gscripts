@@ -37,8 +37,14 @@ class AnalyzeRNASeq extends QScript {
   @Argument(doc = "reads are single ended", shortName = "single_end", fullName = "single_end", required = false)
   var singleEnd: Boolean = true
 
+  class mv(@Input inBam: File, @Output outBam: File) extends CommandLineFunction {
+  override def shortDescription = "SortSam"
+  def commandLine = "cp " +
+    required(inBam) + required(outBam)
+  }
   case class sortSam(inSam: File, outBam: File, sortOrderP: SortOrder) extends SortSam {
     override def shortDescription = "sortSam"
+    this.wallTime = Option((2 * 60 * 60).toLong)
     this.input :+= inSam
     this.output = outBam
     this.sortOrder = sortOrderP
@@ -94,7 +100,14 @@ class AnalyzeRNASeq extends QScript {
 
   }
 
-  case class star(input: File, output: File, stranded: Boolean, paired: File = null, species: String) extends STAR {
+  case class star(input: File, 
+		  output: File, 
+		  stranded: Boolean, 
+		  genome_location: String,
+		  paired: File = null,
+		  fastq_out: File = null
+		  ) extends STAR {
+    
     this.inFastq = input
 
     if (paired != null) {
@@ -104,11 +117,13 @@ class AnalyzeRNASeq extends QScript {
     this.outSam = output
     //intron motif should be used if the data is not stranded
     this.intronMotif = stranded
-    this.genome = starGenomeLocation(species)
+    this.genome = genome_location
+    this.outFastq = fastq_out
   }
 
   case class addOrReplaceReadGroups(inBam: File, outBam: File) extends AddOrReplaceReadGroups {
     override def shortDescription = "AddOrReplaceReadGroups"
+    this.wallTime = Option((2 * 60 * 60).toLong)
     this.input = List(inBam)
     this.output = outBam
     this.RGLB = "foo" //should record library id
@@ -163,18 +178,33 @@ class AnalyzeRNASeq extends QScript {
   def stringentJobs(fastqFile: File): File = {
 
     // run if stringent
-    val noPolyAFastq = swapExt(fastqFile, ".fastq", ".polyATrim.fastq")
+
+    var noPolyAFastq = swapExt(fastqFile, ".gz", "")
+    noPolyAFastq = swapExt(noPolyAFastq, ".fastq", ".polyATrim.fastq")
     val noPolyAReport = swapExt(noPolyAFastq, ".fastq", ".metrics")
     val noAdapterFastq = swapExt(noPolyAFastq, ".fastq", ".adapterTrim.fastq")
+    val outRep = swapExt(noAdapterFastq, ".fastq", ".rep.bam")
     val adapterReport = swapExt(noAdapterFastq, ".fastq", ".metrics")
-    val filteredFastq = swapExt(noAdapterFastq, ".fastq", ".rmRep.fastq")
-    val filtered_results = swapExt(filteredFastq, ".fastq", ".metrics")
+    val filteredFastq = swapExt(outRep, "", "Unmapped.out.mate1")
+    
     //filters out adapter reads
+    
     add(cutadapt(fastqFile = fastqFile, noAdapterFastq = noAdapterFastq,
       adapterReport = adapterReport,
       adapter = adapter))
+    
+    add(star(input = noAdapterFastq,
+             output = outRep,
+	     stranded = not_stranded,
+	     paired = null,
+             genome_location = "/projects/ps-yeolab/genomes/RepBase18.05.fasta/STAR",
+             fastq_out = filteredFastq))
 
-    add(mapRepetitiveRegions(noAdapterFastq, filtered_results, filteredFastq))
+    var countRepetitiveRegions = new CountRepetitiveRegions
+    countRepetitiveRegions.inBam = outRep
+    countRepetitiveRegions.outFile = swapExt(outRep, ".rep.bam", ".rmRep.metrics")
+    add(countRepetitiveRegions)
+
     add(new FastQC(filteredFastq))
 
     return filteredFastq
@@ -183,11 +213,11 @@ class AnalyzeRNASeq extends QScript {
   def makeBigWig(inBam: File, species: String): (File, File) = {
 
     val bedGraphFilePos = swapExt(inBam, ".bam", ".pos.bg")
-    val bedGraphFilePosNorm = swapExt(bedGraphFilePos, "pos.bg", ".norm.pos.bg")
+    val bedGraphFilePosNorm = swapExt(bedGraphFilePos, ".pos.bg", ".norm.pos.bg")
     val bigWigFilePosNorm = swapExt(bedGraphFilePosNorm, ".bg", ".bw")
 
     val bedGraphFileNeg = swapExt(inBam, ".bam", ".neg.bg")
-    val bedGraphFileNegNorm = swapExt(bedGraphFileNeg, "neg.bg", ".norm.neg.bg")
+    val bedGraphFileNegNorm = swapExt(bedGraphFileNeg, ".neg.bg", ".norm.neg.bg")
     val bedGraphFileNegNormInverted = swapExt(bedGraphFileNegNorm, ".bg", ".t.bg")
     val bigWigFileNegNormInverted = swapExt(bedGraphFileNegNormInverted, ".t.bg", ".bw")
 
@@ -226,7 +256,7 @@ class AnalyzeRNASeq extends QScript {
 
     add(oldSplice(input = bamFile, out = oldSpliceOut, species = species))
     add(new Miso(inBam = bamFile, indexFile = bamIndex, species = species, pairedEnd = false, output = misoOut))
-    add(new RnaEditing(inBam = bamFile, snpEffDb = species, snpDb = snpDbLocation(species), genome = genomeLocation(species), flipped = flipped, output = rnaEditingOut))
+    //add(new RnaEditing(inBam = bamFile, snpEffDb = species, snpDb = snpDbLocation(species), genome = genomeLocation(species), flipped = flipped, output = rnaEditingOut))
     return oldSpliceOut
   }
 
@@ -245,6 +275,7 @@ class AnalyzeRNASeq extends QScript {
         var fastqFiles = item._1.toString().split(""";""")
         var species = item._2
         var fastqFile: File = new File(fastqFiles(0))
+	
         var fastqPair: File = null
         var singleEnd = true
         var samFile: File = null
@@ -258,20 +289,22 @@ class AnalyzeRNASeq extends QScript {
           add(new FastQC(inFastq = fastqFile))
 
           var filteredFastq: File = null
-          if (strict && fastqPair == null) {
+         
+	  if (strict && fastqPair == null) {
             filteredFastq = stringentJobs(fastqFile)
-          } else {
+	  } else {
             filteredFastq = fastqFile
+	    
           }
-          samFile = swapExt(filteredFastq, ".fastq", ".sam")
+          samFile = swapExt(filteredFastq, ".rep.bamUnmapped.out.mate1", ".bam")
 
           if (fastqPair != null) {
             //if paired
             add(new sailfish(filteredFastq, species, !not_stranded, fastqPair))
-            add(new star(filteredFastq, samFile, not_stranded, fastqPair, species = species))
+            add(new star(input=filteredFastq, output=samFile, stranded=not_stranded, paired=fastqPair, genome_location = starGenomeLocation(species)))
           } else { //unpaired
             add(new sailfish(filteredFastq, species, !not_stranded))
-            add(new star(filteredFastq, samFile, not_stranded, species = species))
+            add(new star(input=filteredFastq, output=samFile, stranded=not_stranded, paired=null, genome_location = starGenomeLocation(species)))
           }
 
           // run regardless of stringency
@@ -280,7 +313,7 @@ class AnalyzeRNASeq extends QScript {
           samFile = new File(fastqFiles(0))
         }
 
-        val sortedBamFile = swapExt(samFile, ".sam", ".sorted.bam")
+        val sortedBamFile = swapExt(samFile, ".bam", ".sorted.bam")
         val rgSortedBamFile = swapExt(sortedBamFile, ".bam", ".rg.bam")
         val indexedBamFile = swapExt(rgSortedBamFile, "", ".bai")
 
@@ -300,8 +333,13 @@ class AnalyzeRNASeq extends QScript {
       if (groupName != "null") {
         var mergedBams = new File(groupName + ".bam")
         val mergedIndex = swapExt(mergedBams, "", ".bai")
-        add(new samtoolsIndexFunction(mergedBams, mergedIndex))
-        add(samtoolsMergeFunction(combinedBams, mergedBams))
+        if (combinedBams.length > 1) {
+	  add(samtoolsMergeFunction(combinedBams, mergedBams))
+	} else {
+	  add(new mv(combinedBams(0), mergedBams))
+	}
+	add(new samtoolsIndexFunction(mergedBams, mergedIndex))
+        
         var oldSpliceOut = downstream_analysis(mergedBams, mergedIndex, singleEnd, genome)
         splicesFiles = splicesFiles ++ List(oldSpliceOut)
       }
