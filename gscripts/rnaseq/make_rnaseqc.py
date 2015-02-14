@@ -4,4 +4,5 @@ import sys
 import os
 
 for sample in sys.argv[1:]:
+    print "\t".join(["Sample ID", "Bam File",    "Notes"])
     print "\t".join([os.path.basename(sample).split(".")[0], os.path.abspath(sample), "foo"])
