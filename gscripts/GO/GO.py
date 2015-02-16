@@ -27,6 +27,8 @@ def generateOntology(df):
     return ontology, allGenesInOntologies
    
 def GO_enrichment(geneList, ontology, expressedGenes = None, printIt=False, pCut = 1000000, xRef = {}):
+    geneList = list(geneList)
+    expressedGenes = list(expressedGenes)
 
     lenAllGenes, lenTheseGenes =  len(expressedGenes), len(geneList)
     pValues = defaultdict()
