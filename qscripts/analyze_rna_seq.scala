@@ -296,7 +296,7 @@ class AnalyzeRNASeq extends QScript {
             filteredFastq = fastqFile
 	    
           }
-          samFile = swapExt(filteredFastq, ".rep.bamUnmapped.out.mate1", ".bam")
+          samFile = swapExt(filteredFastq, ".rep.bamUnmapped.out.mate1", ".rmRep.bam")
 
           if (fastqPair != null) {
             //if paired
