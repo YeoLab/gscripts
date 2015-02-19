@@ -7,6 +7,6 @@ args = parser.parse_args()
 with open(args.bg) as bg:
 	for line in bg:
 		line = line.strip().split()
-		line[3] = str(int(float(line[3])) * -1)
+		line[3] = str(float(line[3]) * -1)
 		print "\t".join(line)
         
