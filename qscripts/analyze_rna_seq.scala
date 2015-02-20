@@ -58,11 +58,11 @@ class AnalyzeRNASeq extends QScript {
     } else{
       this.outNoRepetitive = filteredFastq
     }
+    this.outNoRepetitivePair = filteredFastqPair
 
     this.inFastq = trimmedFastq
     this.inFastqPair = trimmedFastqPair
     this.outRepetitive = filteredResults
-    this.outNoRepetitivePair = filteredFastqPair
     this.isIntermediate = false
     this.fakeVariable = dummy
     this.paired = isPaired
@@ -231,8 +231,8 @@ class AnalyzeRNASeq extends QScript {
     val filteredFastq = swapExt(fastqFile, ".fastq", ".polyATrim.adapterTrim.rmRep.fastq")
     val filteredFastqPair = swapExt(fastqPair, ".fastq", ".polyATrim.adapterTrim.rmRep.fastq")
 
-    val repetitiveAligned = swapExt(filteredFastq, ".fastq", ".sam")
-    val repetitiveCounts = swapExt(repetitiveAligned, ".sam", ".metrics")
+    val repetitiveAligned = swapExt(filteredFastq, ".fastq", ".bam")
+    val repetitiveCounts = swapExt(repetitiveAligned, ".bam", ".metrics")
     val dummy: File = swapExt(fastqFile, ".fastq", ".dummy")
     add(trimGalore(fastqFile = fastqFile, fastqPair=fastqPair, adapter = adapter))
 
@@ -289,16 +289,16 @@ class AnalyzeRNASeq extends QScript {
     val misoOut = swapExt(bamFile, "bam", "miso")
     val rnaEditingOut = swapExt(bamFile, "bam", "editing")
 
-    add(new CalculateNRF(inBam = bamFile, genomeSize = chromSizeLocation(species), outNRF = NRFFile))
+    // add(new CalculateNRF(inBam = bamFile, genomeSize = chromSizeLocation(species), outNRF = NRFFile))
 
     val (bigWigFilePos: File, bigWigFileNeg: File) = makeBigWig(bamFile, species = species)
 
-    add(new countTags(input = bamFile, index = bamIndex, output = countFile, species = species))
-    add(new singleRPKM(input = countFile, output = RPKMFile, s = species))
+    // add(new countTags(input = bamFile, index = bamIndex, output = countFile, species = species))
+    // add(new singleRPKM(input = countFile, output = RPKMFile, s = species))
 
     add(oldSplice(input = bamFile, out = oldSpliceOut, species = species))
     add(new Miso(inBam = bamFile, indexFile = bamIndex, species = species, pairedEnd = false, output = misoOut))
-    add(new RnaEditing(inBam = bamFile, snpEffDb = species, snpDb = snpDbLocation(species), genome = genomeLocation(species), flipped = flipped, output = rnaEditingOut))
+    // add(new RnaEditing(inBam = bamFile, snpEffDb = species, snpDb = snpDbLocation(species), genome = genomeLocation(species), flipped = flipped, output = rnaEditingOut))
     return oldSpliceOut
   }
 
