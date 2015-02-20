@@ -231,7 +231,7 @@ class AnalyzeRNASeq extends QScript {
     val filteredFastq = swapExt(fastqFile, ".fastq", ".polyATrim.adapterTrim.rmRep.fastq")
     val filteredFastqPair = swapExt(fastqPair, ".fastq", ".polyATrim.adapterTrim.rmRep.fastq")
 
-    val repetitiveAligned = swapExt(filteredFastq, ".fastq", ".bam")
+    val repetitiveAligned = swapExt(filteredFastq, ".fastq", "repetitiveAligned.bam")
     val repetitiveCounts = swapExt(repetitiveAligned, ".bam", ".metrics")
     val dummy: File = swapExt(fastqFile, ".fastq", ".dummy")
     add(trimGalore(fastqFile = fastqFile, fastqPair=fastqPair, adapter = adapter))
