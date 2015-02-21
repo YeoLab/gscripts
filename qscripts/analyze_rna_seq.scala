@@ -234,6 +234,7 @@ class AnalyzeRNASeq extends QScript {
     add(trimGalore(fastqFile, fastqPair, adapter, dummy, isPaired=paired))
 
     // filter out adapter reads
+    var filteredFastqPair = swapExt(fastqFile, ".fastq.gz", ".fake_fastq_pair.fastq.gz")
     if (paired){
       val trimmedFastq = swapExt(fastqFile, ".fastq.gz", "_val_1.fq")
       val trimmedFastqPair = swapExt(fastqPair, ".fastq.gz", "_val_2.fq")
@@ -242,13 +243,12 @@ class AnalyzeRNASeq extends QScript {
     trimmedFastqPair=trimmedFastqPair, filteredFastqPair=filteredFastqPair,
       dummy=dummy, isPaired=paired))
       add(new FastQC(filteredFastqPair))
-
     } else {
       val trimmedFastq = swapExt(fastqFile, ".fastq.gz", "_trimmed.fq")
       add(mapRepetitiveRegions(trimmedFastq=trimmedFastq, filteredResults=repetitiveAligned, filteredFastq=filteredFastq, 
       dummy=dummy, isPaired=paired))
       add(new FastQC(filteredFastq))
-      val filteredFastqPair = swapExt(fastqFile, ".fastq.gz", ".fake_fastq_pair.fastq.gz")
+      
     }
 
     add(countRepetitiveRegions(bam=repetitiveAligned, metrics=repetitiveCounts))
