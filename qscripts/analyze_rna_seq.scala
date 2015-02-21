@@ -233,7 +233,8 @@ class AnalyzeRNASeq extends QScript {
 
     add(trimGalore(fastqFile, fastqPair, adapter, dummy, isPaired=paired))
 
-    if (fastqPair != null){
+    // filter out adapter reads
+    if (paired){
       val trimmedFastq = swapExt(fastqFile, ".fastq.gz", "_val_1.fq")
       val trimmedFastqPair = swapExt(fastqPair, ".fastq.gz", "_val_2.fq")
       val filteredFastqPair = swapExt(fastqPair, ".fastq", ".polyATrim.adapterTrim.rmRep.fastq")
@@ -250,13 +251,7 @@ class AnalyzeRNASeq extends QScript {
       val filteredFastqPair = swapExt(fastqFile, ".fastq.gz", ".fake_fastq_pair.fastq.gz")
     }
 
-
-    //filters out adapter reads
-
     add(countRepetitiveRegions(bam=repetitiveAligned, metrics=repetitiveCounts))
-
-    // Question: trim_galore can run fastqc on the 
-
     return (filteredFastq, filteredFastqPair)
   }
 
