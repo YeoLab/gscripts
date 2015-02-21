@@ -247,8 +247,7 @@ class AnalyzeRNASeq extends QScript {
       add(mapRepetitiveRegions(trimmedFastq=trimmedFastq, filteredResults=repetitiveAligned, filteredFastq=filteredFastq, 
       dummy=dummy, isPaired=paired))
       add(new FastQC(filteredFastq))
-      val filteredFastq: File = _
-
+      val filteredFastq: File = null
     }
 
 
