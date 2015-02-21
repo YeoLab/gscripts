@@ -225,33 +225,38 @@ class AnalyzeRNASeq extends QScript {
 
     // run if stringent
 
-    val trimmedFastq = swapExt(fastqFile, ".fastq.gz", "_val_1.fq")
-    if (fastqPair != null){
-      val trimmedFastqPair = swapExt(fastqPair, ".fastq.gz", "_val_2.fq")
-    } else {
-      val trimmedFastqPair = fastqPair
-    }
-
     val filteredFastq = swapExt(fastqFile, ".fastq", ".polyATrim.adapterTrim.rmRep.fastq")
-    val filteredFastqPair = swapExt(fastqPair, ".fastq", ".polyATrim.adapterTrim.rmRep.fastq")
-
     val repetitiveAligned = swapExt(filteredFastq, ".fastq", "repetitiveAligned.bam")
     val repetitiveCounts = swapExt(repetitiveAligned, ".bam", ".metrics")
     val dummy: File = swapExt(fastqFile, ".fastq", ".dummy")
     add(trimGalore(fastqFile = fastqFile, fastqPair=fastqPair, adapter = adapter))
 
-    //filters out adapter reads
     add(trimGalore(fastqFile, fastqPair, adapter, dummy, isPaired=paired))
 
-    add(mapRepetitiveRegions(trimmedFastq=trimmedFastq, filteredResults=repetitiveAligned, filteredFastq=filteredFastq, 
+    if (fastqPair != null){
+      val trimmedFastq = swapExt(fastqFile, ".fastq.gz", "_val_1.fq")
+      val trimmedFastqPair = swapExt(fastqPair, ".fastq.gz", "_val_2.fq")
+      val filteredFastqPair = swapExt(fastqPair, ".fastq", ".polyATrim.adapterTrim.rmRep.fastq")
+      add(mapRepetitiveRegions(trimmedFastq=trimmedFastq, filteredResults=repetitiveAligned, filteredFastq=filteredFastq, 
     trimmedFastqPair=trimmedFastqPair, filteredFastqPair=filteredFastqPair,
       dummy=dummy, isPaired=paired))
+      add(new FastQC(filteredFastqPair))
+
+    } else {
+      val trimmedFastq = swapExt(fastqFile, ".fastq.gz", "_trimmed.fq")
+      add(mapRepetitiveRegions(trimmedFastq=trimmedFastq, filteredResults=repetitiveAligned, filteredFastq=filteredFastq, 
+      dummy=dummy, isPaired=paired))
+      add(new FastQC(filteredFastq))
+      val filteredFastq: File = _
+
+    }
+
+
+    //filters out adapter reads
+
     add(countRepetitiveRegions(bam=repetitiveAligned, metrics=repetitiveCounts))
 
     // Question: trim_galore can run fastqc on the 
-    add(new FastQC(filteredFastq))
-    add(new FastQC(filteredFastqPair))
-
 
     return (filteredFastq, filteredFastqPair)
   }
