@@ -63,7 +63,6 @@ if __name__ == '__main__':
     parser.add_argument("-r", "--recurse", action="store_true")
     parser.add_argument("-d", "--directory", dest="directory", default=".")
     parser.add_argument("-e", "--extension", dest="extension", default=".fastq.gz")
-    parser.add_argument("")
     args = parser.parse_args()
 
     if not args.recurse:
