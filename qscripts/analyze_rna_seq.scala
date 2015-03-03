@@ -47,6 +47,7 @@ class AnalyzeRNASeq extends QScript {
     this.output = outBam
     this.sortOrder = sortOrderP
     this.createIndex = true
+    this.wallTime = Option((2 * 60 * 60).toLong)
   }
 
   case class mapRepetitiveRegions(trimmedFastq: File, filteredResults: File, filteredFastq: File, 
@@ -234,7 +235,6 @@ class AnalyzeRNASeq extends QScript {
     add(trimGalore(fastqFile, fastqPair, adapter, dummy, isPaired=paired))
 
     // filter out adapter reads
-    var filteredFastqPair = swapExt(fastqFile, ".fastq.gz", ".fake_fastq_pair.fastq.gz")
     if (paired){
       val trimmedFastq = swapExt(fastqFile, ".fastq.gz", "_val_1.fq")
       val trimmedFastqPair = swapExt(fastqPair, ".fastq.gz", "_val_2.fq")
@@ -242,17 +242,19 @@ class AnalyzeRNASeq extends QScript {
       add(mapRepetitiveRegions(trimmedFastq=trimmedFastq, filteredResults=repetitiveAligned, filteredFastq=filteredFastq, 
     trimmedFastqPair=trimmedFastqPair, filteredFastqPair=filteredFastqPair,
       dummy=dummy, isPaired=paired))
+      add(new FastQC(filteredFastq))
       add(new FastQC(filteredFastqPair))
+      add(countRepetitiveRegions(bam=repetitiveAligned, metrics=repetitiveCounts))
+      return (filteredFastq, filteredFastqPair)
     } else {
       val trimmedFastq = swapExt(fastqFile, ".fastq.gz", "_trimmed.fq")
+      val filteredFastqPair = swapExt(fastqFile, ".fastq.gz", ".fake_fastq_pair.fastq.gz")
       add(mapRepetitiveRegions(trimmedFastq=trimmedFastq, filteredResults=repetitiveAligned, filteredFastq=filteredFastq, 
       dummy=dummy, isPaired=paired))
       add(new FastQC(filteredFastq))
-      
+      add(countRepetitiveRegions(bam=repetitiveAligned, metrics=repetitiveCounts))
+      return (filteredFastq, filteredFastqPair)
     }
-
-    add(countRepetitiveRegions(bam=repetitiveAligned, metrics=repetitiveCounts))
-    return (filteredFastq, filteredFastqPair)
   }
 
   def makeBigWig(inBam: File, species: String): (File, File) = {
