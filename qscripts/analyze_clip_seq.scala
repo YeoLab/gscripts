@@ -59,15 +59,6 @@ class AnalizeCLIPSeq extends QScript {
        this.isIntermediate = true
   }
 
-  case class filterRepetitiveRegions(noAdapterFastq: File, filteredResults: File, filteredFastq: File) extends FilterRepetitiveRegions {
-       override def shortDescription = "FilterRepetitiveRegions"
-       
-       this.inFastq = noAdapterFastq
-       this.outCounts = filteredResults
-       this.outNoRep = filteredFastq
-       this.isIntermediate = true
-  }
-
   case class sortSam(inSam: File, outBam: File, sortOrderP: SortOrder) extends SortSam {
     override def shortDescription = "sortSam"
     this.input :+= inSam
@@ -78,9 +69,9 @@ class AnalizeCLIPSeq extends QScript {
 
   class SamtoolsSortSam(@Input inBam: File, @Output outBam: File) extends CommandLineFunction {
   override def shortDescription = "SortSam"
-  def commandLine = "samtools sort -f " +
+  def commandLine = "samtools sort -o " +
     required(inBam) +
-    required(outBam) 
+    required("foo") + " > " + required(outBam) 
   }
 
   class RemoveDuplicates(@Input inBam: File, @Output outResult: File, @Argument metrics_file: String) extends CommandLineFunction {
@@ -207,7 +198,7 @@ class AnalizeCLIPSeq extends QScript {
       	     val IDRResult = swapExt(bamFile, "", ".IDR")
 	     
       	     val countFile = swapExt(bamFile, "bam", "count")
-      	     val RPKMFile = swapExt(countFile, "count", "RPKM")
+      	     val RPKMFile = swapExt(countFile, "count", "rpkm")
 
 	     //add bw files to list for printing out later
 
@@ -231,7 +222,7 @@ class AnalizeCLIPSeq extends QScript {
 	     			  gff_db = gffDbLocation(genome)))
 
 	     add(new BamToBed(inBam=bamFile, outBed=rmDupedBedFile))
-      	     add(new Pyicoclip(inBed = rmDupedBedFile, outBed = pyicoclipResults, regions = genicRegionsLocation(genome) ))
+      	     //add(new Pyicoclip(inBed = rmDupedBedFile, outBed = pyicoclipResults, regions = genicRegionsLocation(genome) ))
 
 	     var ripseeker = new RipSeeker
 	     ripseeker.inBam = bamFile
@@ -255,15 +246,15 @@ class AnalizeCLIPSeq extends QScript {
 	     miclip.inBam = bamFile
 	     miclip.genome = genomeLocation(genome)
 	     miclip.outBed = swapExt(bamFile, ".bam", ".miclip.bed")
-	     add(miclip)
+	     //add(miclip)
 
 	     var pipeclip = new PipeClip
 	     pipeclip.inBam = bamFile
 	     pipeclip.species = genome
 	     pipeclip.outBed = swapExt(bamFile, ".bam", ".pipeclip.bed")
-	     add(pipeclip)
+	     //add(pipeclip)
 
-	     add(ripseeker, piranha)
+	     //add(ripseeker, piranha)
 
       	     //add(new IDR(inBam = bamFile, species = genome, genome = chromSizeLocation(genome), outResult = IDRResult, premRNA = premRNA))
 
@@ -300,7 +291,7 @@ class AnalizeCLIPSeq extends QScript {
 
       	val filterd_results = swapExt(filteredFastq, ".rep.bamUnmapped.out.mate1", ".rmRep.metrics")
       	var bamFile = swapExt(filteredFastq, ".rep.bamUnmapped.out.mate1", ".rmRep.bam")
-	
+	var sortedBamFile = swapExt(bamFile, ".bam", ".sorted.bam")
       	val NRFFile = swapExt(bamFile, ".bam", ".NRF.metrics")
 	
       	val rmDupedBamFile = swapExt(bamFile, ".bam", ".rmDup.bam")
@@ -325,21 +316,25 @@ class AnalizeCLIPSeq extends QScript {
           countRepetitiveRegions.outFile = swapExt(filteredFastq, ".rep.bamUnmapped.out.mate1", ".rmRep.metrics")
           add(countRepetitiveRegions)
 	  
-          var rmDupRepSorted = swapExt(outRep, ".bam", ".rmDup.bam")
-          var rmDupRep = new RemoveDuplicates(outRep,
-                                              rmDupRepSorted,
-                                              swapExt(rmDupRepSorted, ".bam", ".metrics"))	  
-	  add(rmDupRep)
-	  add(new SamtoolsSortSam(rmDupRepSorted, swapExt(rmDupRepSorted, ".bam", ".sorted.bam"))) 
+          
+          var outRepSorted = swapExt(outRep, ".bam", ".sorted.bam")
+	  add(new SamtoolsSortSam(outRep, outRepSorted)) 
+
+	  var rmDupRep = swapExt(outRepSorted, ".bam", ".rmDup.bam")
+	  add(new RemoveDuplicates(outRepSorted,
+                                   rmDupRep,
+                                   swapExt(rmDupRep, ".bam", ".metrics")))	  
+	  
+	  add(new SamtoolsSortSam(rmDupRep, swapExt(rmDupRep, ".bam", ".sorted.bam"))) 
 
       	  add(new FastQC(filteredFastq))
       	  add(star(input = filteredFastq, output = bamFile, genome_location = starGenomeLocation(genome)))
-      	  
+      	  add(sortSam(bamFile, sortedBamFile, SortOrder.coordinate))
       	} else {
 	  bamFile = fastq_file
 	}
-      	add(new CalculateNRF(inBam = bamFile, genomeSize = chromSizeLocation(genome), outNRF = NRFFile))
-      	add(new RemoveDuplicates(bamFile, rmDupedBamFile, rmDupedMetricsFile))
+      	add(new CalculateNRF(inBam = sortedBamFile, genomeSize = chromSizeLocation(genome), outNRF = NRFFile))
+      	add(new RemoveDuplicates(sortedBamFile, rmDupedBamFile, rmDupedMetricsFile))
       	add(sortSam(rmDupedBamFile, sortedrmDupedBamFile, SortOrder.coordinate))
       	add(new samtoolsIndexFunction(sortedrmDupedBamFile, indexedBamFile))
 	combinedBams = combinedBams ++ List(sortedrmDupedBamFile)
