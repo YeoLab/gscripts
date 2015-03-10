@@ -312,17 +312,13 @@ class AnalyzeRNASeq extends QScript {
           val (filteredFastq, filteredPair) = stringentJobs(fastqFile, fastqPair)
 	
           samFile = swapExt(filteredFastq, ".rep.bamUnmapped.out.mate1", ".rmRep.bam")
+	  add(new sailfish(filteredFastq, species, !not_stranded, fastqPair))
+          add(new star(input=filteredFastq, 
+		       output=samFile, 
+		       stranded=not_stranded, 
+		       paired=filteredPair, 
+		       genome_location = starGenomeLocation(species)))
 
-          if (fastqPair != null) {
-            //if paired
-            add(new sailfish(filteredFastq, species, !not_stranded, fastqPair))
-            add(new star(input=filteredFastq, output=samFile, stranded=not_stranded, paired=filteredPair, genome_location = starGenomeLocation(species)))
-          } else { //unpaired
-            add(new sailfish(filteredFastq, species, !not_stranded))
-            add(new star(input=filteredFastq, output=samFile, stranded=not_stranded, paired=null, genome_location = starGenomeLocation(species)))
-          }
-
-          // run regardless of stringency
 
         } else {
           samFile = new File(fastqFiles(0))
