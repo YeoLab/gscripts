@@ -147,11 +147,17 @@ class AnalyzeRNASeq extends QScript {
     this.bamFileIndex = output
   }
 
-  case class cutadapt(fastqFile: File, noAdapterFastq: File, adapterReport: File, adapter: List[String]) extends Cutadapt {
+  case class cutadapt(fastqFile: File, noAdapterFastq: File, adapterReport: File, adapter: List[String], pairedFile: File = null, pairedOut: File = null) extends Cutadapt {
     override def shortDescription = "cutadapt"
 
     this.inFastq = fastqFile
     this.outFastq = noAdapterFastq
+    
+    if(pairedFile != null) { 
+      this.inPair = pairedFile
+      this.outPair = pairedOut
+    }
+
     this.report = adapterReport
     this.anywhere = adapter ++ List("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
       "TTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTT")
@@ -175,28 +181,38 @@ class AnalyzeRNASeq extends QScript {
     this.singleEnd = single_end
   }
 
-  def stringentJobs(fastqFile: File): File = {
+  def stringentJobs(fastqFile: File, pairedFile: File = null): (File, File) = {
 
     // run if stringent
-
-    var noPolyAFastq = swapExt(fastqFile, ".gz", "")
-    noPolyAFastq = swapExt(noPolyAFastq, ".fastq", ".polyATrim.fastq")
-    val noPolyAReport = swapExt(noPolyAFastq, ".fastq", ".metrics")
-    val noAdapterFastq = swapExt(noPolyAFastq, ".fastq", ".adapterTrim.fastq")
+    val noGzFastq = swapExt(fastqFile, ".gz", "")
+    val noAdapterFastq = swapExt(noGzFastq, ".fastq", ".polyATrim.adapterTrim.fastq")
     val outRep = swapExt(noAdapterFastq, ".fastq", ".rep.bam")
-    val adapterReport = swapExt(noAdapterFastq, ".fastq", ".metrics")
+   
     val filteredFastq = swapExt(outRep, "", "Unmapped.out.mate1")
+    val adapterReport = swapExt(noAdapterFastq, ".fastq", ".metrics")
     
+    var noGzPair: File = null
+    var noAdapterPair: File = null
+    var filteredPair: File = null
+    
+    if (pairedFile != null) {        
+     noGzPair = swapExt(pairedFile, ".gz", "")
+     noAdapterPair = swapExt(noGzPair, ".fastq", ".polyATrim.adapterTrim.fastq")
+     filteredPair = swapExt(outRep, "", "Unmapped.out.mate2")
+    }
+        
     //filters out adapter reads
-    
-    add(cutadapt(fastqFile = fastqFile, noAdapterFastq = noAdapterFastq,
-      adapterReport = adapterReport,
-      adapter = adapter))
+    add(cutadapt(fastqFile = fastqFile, 
+		 noAdapterFastq = noAdapterFastq,
+		 adapterReport = adapterReport,
+		 adapter = adapter, 
+		 pairedFile = pairedFile, 
+		 pairedOut = noAdapterPair))
     
     add(star(input = noAdapterFastq,
+	     paired = noAdapterPair,
              output = outRep,
 	     stranded = not_stranded,
-	     paired = null,
              genome_location = "/projects/ps-yeolab/genomes/RepBase18.05.fasta/STAR",
              fastq_out = filteredFastq))
 
@@ -207,7 +223,11 @@ class AnalyzeRNASeq extends QScript {
 
     add(new FastQC(filteredFastq))
 
-    return filteredFastq
+    if (filteredPair != null) {
+      add(new FastQC(filteredPair))
+    }
+    
+    return (filteredFastq, filteredPair)
   }
 
   def makeBigWig(inBam: File, species: String): (File, File) = {
@@ -285,23 +305,18 @@ class AnalyzeRNASeq extends QScript {
             fastqPair = new File(fastqFiles(1))
             add(new FastQC(inFastq = fastqPair))
           }
-
+	
           add(new FastQC(inFastq = fastqFile))
 
-          var filteredFastq: File = null
-         
-	  if (strict && fastqPair == null) {
-            filteredFastq = stringentJobs(fastqFile)
-	  } else {
-            filteredFastq = fastqFile
-	    
-          }
+          
+          val (filteredFastq, filteredPair) = stringentJobs(fastqFile, fastqPair)
+	
           samFile = swapExt(filteredFastq, ".rep.bamUnmapped.out.mate1", ".rmRep.bam")
 
           if (fastqPair != null) {
             //if paired
             add(new sailfish(filteredFastq, species, !not_stranded, fastqPair))
-            add(new star(input=filteredFastq, output=samFile, stranded=not_stranded, paired=fastqPair, genome_location = starGenomeLocation(species)))
+            add(new star(input=filteredFastq, output=samFile, stranded=not_stranded, paired=filteredPair, genome_location = starGenomeLocation(species)))
           } else { //unpaired
             add(new sailfish(filteredFastq, species, !not_stranded))
             add(new star(input=filteredFastq, output=samFile, stranded=not_stranded, paired=null, genome_location = starGenomeLocation(species)))
