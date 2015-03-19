@@ -49,7 +49,7 @@ class Analyze_mirli_CLIPSeq extends QScript {
     var genome: String = "ce10"
 
     @Argument(doc = "regionsToMask", required=false)
-    var regionsToMask_str: String = "/home/jbrought/scratch/mirpipe/background_removal_test/20140828.WS240.background_RNA.galaxy1.bed"
+    var regionsToMask_str: String = "/home/jbrought/annotations/20140828.WS240.background_RNA.galaxy1.bed"
 
     var regionsToMask: File = new File(regionsToMask_str)
 

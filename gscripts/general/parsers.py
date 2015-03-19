@@ -35,19 +35,24 @@ def rnaseq_metrics(analysis_dir, num_seps=1, sep="."):
     
     nrf_files = glob.glob(os.path.join(analysis_dir, "*.NRF.metrics"))
     cutadapt_files = glob.glob(os.path.join(analysis_dir, "*.adapterTrim.metrics"))
+    rmrep_files = glob.glob(os.path.join(analysis_dir, "*.rmRep.metrics"))
+
     star_files = glob.glob(os.path.join(analysis_dir, "*.final.out"))
     
 
     
     nrf_names = get_names(nrf_files, num_seps, sep) 
     cutadapt_names = get_names(cutadapt_files, num_seps, sep)
+    rmrep_names = get_names(rmrep_files, num_seps, sep)
     star_names = get_names(star_files, num_seps, sep) 
     
     nrf_df = pd.DataFrame({name : parse_nrf_file(nrf_file) for name, nrf_file in nrf_names.items()}).transpose()
     cutadapt_df = pd.DataFrame({name : parse_cutadapt_file(cutadapt_file) for name, cutadapt_file in cutadapt_names.items()}).transpose()
+    rmrep_df = pd.DataFrame({name : parse_rmrep_file(rmrep_file) for name, rmrep_file in rmrep_names.items()}).transpose()
     star_df = pd.DataFrame({name : parse_star_file(star_file) for name, star_file in star_names.items()}).transpose()
     
     combined_df = pd.merge(cutadapt_df, star_df, left_index=True, right_index=True, how="outer")
+    combined_df = pd.merge(combined_df, rmrep_df, left_index=True, right_index=True, how="outer")
     combined_df = pd.merge(combined_df, nrf_df, left_index=True, right_index=True, how="outer")
 
     #Rename columns to be useful
@@ -111,6 +116,11 @@ def clipseq_metrics(analysis_dir, iclip=False, num_seps=None, sep=".",
 
 
     return combined_df
+
+def parse_rmrep_file(rmrep_file):
+    df = pd.read_table(rmrep_file, header=None, sep=" ", index_col=0, names=["element", "repetitive_count"])
+    return df.sum().to_dict()
+
 
 def parse_star_file(star_file_name):
     with open(star_file_name) as star_file:

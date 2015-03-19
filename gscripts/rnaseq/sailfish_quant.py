@@ -26,7 +26,13 @@ class CommandLine(object):
                             action='store',
                             help='Fastq.gz file for read2 of the sample. Can '
                                  'supply multiple fastq.gz files for the same '
-                                 'sample by separating by commas')
+                                 'sample by separating by commas. If not '
+                                 'specified, then the reads are assumed to be '
+                                 'single-end')
+        parser.add_argument('-s', '--stranded', required=False,
+                            action='store_true',
+                            help='If specified, then the reads are '
+                                 'strand-specific')
         parser.add_argument('--out-dir', required=True, type=str,
                             action='store',
                             help='Directory where to put the output files')
@@ -39,7 +45,11 @@ class CommandLine(object):
                                     '_sailfish_index_k31/',
                             help='Sailfish Index file to use for quantifying '
                                  'expression.')
-
+        parser.add_argument('-z', '--not-gzipped', required=False,
+                            action='store_true',
+                            help='If specified, then the read files are not '
+                                 'gzipped, meaning they are uncompressed and '
+                                 'are "fastq" rather than "fastq.gz" files')
         parser.add_argument('-n', '--job-name', default='sailfish_quant',
                             action='store', type=str,
                             help='The name of the submitted job in the queue')
@@ -87,21 +97,39 @@ class Usage(Exception):
 
 class SailfishQuant(object):
     def __init__(self, read1, read2, out_dir,
-                 index,
+                 index, stranded=False,
+                 not_gzipped=False,
                  job_name='sailfish_quant',
                  num_processors=8,
                  out_sh=None, submit=False, queue_name='home'):
-        library_type = 'T=PE:O=><:S=SA' if read2 is not None else 'T=SE:S=U'
+        paired_end = True if read2 is not None else False
+        library_parameters = ['TYPE=PE', 'ORIENTATION=><'] if paired_end \
+            else ['TYPE=SE']
+        if stranded:
+            if paired_end:
+                strand = 'STRAND=AS'
+            else:
+                strand = 'STRAND=A'
+        else:
+            strand = 'STRAND=U'
+
+        library_parameters.append(strand)
+        library_string = ':'.join(library_parameters)
+        if not_gzipped:
+            read_template = r'{}'
+        else:
+            read_template = r'<(gunzip -c {})'
+
         if read2 is not None:
-            read1 = '-1 <(gunzip -c {})'.format(read1)
-            read2 = '-2 <(gunzip -c {})'.format(read2)
+            read1 = '-1 {}'.format(read_template.format(read1))
+            read2 = '-2 {}'.format(read_template.format(read2))
             reads = '{} {}'.format(read1, read2)
 
         else:
-            reads = '-r <(gunzip -c {})'.format(read1)
+            reads = '-r {}'.format(read_template.format(read1))
 
         command = 'sailfish quant --index {0} -l "{1}" {2} --out {3} --threads ' \
-                  '{4}'.format(index, library_type, reads, out_dir,
+                  '{4}'.format(index, library_string, reads, out_dir,
                                num_processors)
 
         sub = Submitter(queue_type='PBS', sh_filename=out_sh,
@@ -125,7 +153,9 @@ if __name__ == '__main__':
         SailfishQuant(cl.args['read1'], cl.args['read2'],
                       cl.args['out_dir'],
                       cl.args['index'],
-                      cl.args['job_name'],
+                      not_gzipped=cl.args['not_gzipped'],
+                      job_name=cl.args['job_name'],
+                      stranded=cl.args['stranded'],
                       num_processors=cl.args['num_processors'],
                       out_sh=cl.args['out_sh'],
                       submit=submit)

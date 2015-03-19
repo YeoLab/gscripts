@@ -34,5 +34,6 @@ def get_closest(bam, regions, half_window_width = 50):
                 read_loc = almnt.iv.start - tss.pos
             else:
                 read_loc = tss.pos - almnt.iv.end
-            profile[almnt.read.name] = {'dist': read_loc, "length": almnt.iv.length}
+            length = sum(cigar.size for cigar in almnt.cigar if cigar.type == "M")
+            profile[almnt.read.name] = {'dist': read_loc, "length": length}
     return pd.DataFrame(profile)

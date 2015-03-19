@@ -101,19 +101,23 @@ def em_collapse_base(reads, outBam, randomer, total_count, removed_count):
     #check if each tag exists:
     for barcode, bam_read in barcode_set.items():
         if len(p_barcode_given_read) == 1:
-            q = 500000
+            q = 5000
         else:
             q = -10 * sum(np.log10(1 - p_barcode_given_read[barcode][read]) * count for read, count in barcodes_count.items())
+        try:
+            #bam_read.tags = update_tags(bam_read, q)
 
-        bam_read.tags = update_tags(bam_read, q)
-
-        if q >= 50:
-            outBam.write(bam_read)
-            removed_count[barcode] += barcodes_count[barcode] - 1
-        else:
+            if q >= 50:
+                outBam.write(bam_read)
+                removed_count[barcode] += barcodes_count[barcode] - 1
+            else:
             #outBam.write(bam_read)
-            removed_count[barcode] += barcodes_count[barcode]
-        total_count[barcode] += barcodes_count[barcode]
+                removed_count[barcode] += barcodes_count[barcode]
+            total_count[barcode] += barcodes_count[barcode]
+        except IndexError as e:
+            print bam_read,
+            print e, update_tags(bam_read, q)
+            pass
     return barcodes_count
 
 def collapse_base(reads, outBam, randomer, total_count, removed_count, max_hamming_distance, em=False):
