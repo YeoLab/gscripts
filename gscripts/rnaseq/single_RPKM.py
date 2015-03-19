@@ -23,6 +23,14 @@ import os
 from argparse import ArgumentParser
 from argparse import RawDescriptionHelpFormatter
 from collections import defaultdict
+
+def counts_to_rpkm(featureCountsTable):
+    counts = featureCountsTable.ix[:,5:]
+    lengths = featureCountsTable['Length']
+    mapped_reads = counts.sum()
+    return (counts * pow(10,9)).div(mapped_reads, axis=1).div(lengths, axis=0)
+
+            
 def main(counts, outfile): # IGNORE:C0111
     
     total_reads = 0
