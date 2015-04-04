@@ -23,18 +23,16 @@ def construct_cutadapt_call(miRNA_seq, miRNA_id, output, **kwargs):
                      '-g', 'N' + miRNA_seq[:-2],
                      '--match-read-wildcards', '--trimmed-only',
                      '-m', '18', '-y', '\'.' + miRNA_id + '\'', '-f', 'fastq', '-O', '20', '-e', '0.05',
-                     '-o', '\'' + output + '\'', 'stdin'])
+                     '-o', '\'' + output + '\'', '-'])
 
 
 def run_cutadapt(miRNA_seq, miRNA_id, fastq, output, **kwargs):
     call_quality = quality_processing_call(fastq)
     call_cutadapt = construct_cutadapt_call(miRNA_seq, miRNA_id, output)
-    outname = str(fastq).replace('fastq', str(miRNA_id) + '.counts.txt')
-    with open(str(outname), 'w') as out_report:
-        server1 = subprocess.Popen(call_quality, shell=True, stdout=subprocess.PIPE)
-        server2 = subprocess.Popen(call_cutadapt, shell=True, stdin=subprocess.PIPE, stdout=out_report)
-        server1.stdout.close()
-        server2.communicate()
+    server1 = subprocess.Popen(call_quality, shell=True, stdout=subprocess.PIPE)
+    server2 = subprocess.Popen(call_cutadapt, shell=True, stdin=server1.stdout)
+    server1.wait()
+    server2.wait()
 
 
 def count_lines(file_name):
