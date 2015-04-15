@@ -49,7 +49,7 @@ class Analyze_mirli_CLIPSeq extends QScript {
     var genome: String = "ce10"
 
     @Argument(doc = "regionsToMask", required=false)
-    var regionsToMask_str: String = "/home/jbrought/scratch/mirpipe/background_removal_test/20140828.WS240.background_RNA.galaxy1.bed"
+    var regionsToMask_str: String = "/home/jbrought/annotations/20140828.WS240.background_RNA.galaxy1.bed"
 
     var regionsToMask: File = new File(regionsToMask_str)
 
@@ -270,7 +270,7 @@ class Analyze_mirli_CLIPSeq extends QScript {
         override def shortDescription = "mergeBam"
         def commandLine = "bamToBed -i " +
         required(bamFile) +
-        " -splitD |mergeBed -i stdin -nms -s -scores max > " +
+        " -splitD |mergeBed -i stdin -s -c 4,5,6 -o distinct,max,distinct > " +
         required(mergedBed)
 
     }
