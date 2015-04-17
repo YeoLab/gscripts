@@ -52,7 +52,10 @@ if __name__ == "__main__":
         args.long_label = args.short_label
 
     upload_dir = os.path.join(args.upload_dir, args.hub)
-    URLBASE = os.path.join("https://s3-us-west-1.amazonaws.com/sauron-yeo/", args.hub)
+    if no_s3:
+        URLBASE = os.path.join("http://sauron.ucsd.edu/Hubs", args.hub)
+    else:
+        URLBASE = os.path.join("https://s3-us-west-1.amazonaws.com/sauron-yeo/", args.hub)
     GENOME = args.genome
 
     hub = Hub(hub=args.hub,
