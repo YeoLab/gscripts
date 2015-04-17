@@ -42,7 +42,7 @@ if __name__ == "__main__":
                         help="that is uploading files")
     parser.add_argument('--no_s3', default=True, action="store_false",
                         help="upload to defined server instead of s3")
-
+    parser.add_argument('--upload_dir', default='', help="directory to upload files to if not uploading to aws")
     args = parser.parse_args()
 
     #default setting
@@ -51,7 +51,7 @@ if __name__ == "__main__":
     if not args.long_label:
         args.long_label = args.short_label
 
-    upload_dir = os.path.join(args.hub)
+    upload_dir = os.path.join(args.upload_dir, args.hub)
     URLBASE = os.path.join("https://s3-us-west-1.amazonaws.com/sauron-yeo/", args.hub)
     GENOME = args.genome
 
@@ -154,6 +154,7 @@ if __name__ == "__main__":
     trackdb.add_tracks(supertrack)
     result = hub.render()
     hub.remote_fn = os.path.join(upload_dir, "hub.txt")
+
     for track in trackdb.tracks:
         upload_track(track=track, host=args.server, user=args.user, run_s3=args.no_s3)
 
