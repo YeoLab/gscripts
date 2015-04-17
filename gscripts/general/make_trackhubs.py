@@ -52,10 +52,12 @@ if __name__ == "__main__":
         args.long_label = args.short_label
 
     upload_dir = os.path.join(args.upload_dir, args.hub)
+    #THIS IS REALLY BAD AND NOT INUITITVE
     if args.no_s3:
-        URLBASE = os.path.join("http://sauron.ucsd.edu/Hubs", args.hub)
+        URLBASE = os.path.join("https://s3-us-west-1.amazonaws.com/sauron-yeo/", args.hub) 
     else:
-        URLBASE = os.path.join("https://s3-us-west-1.amazonaws.com/sauron-yeo/", args.hub)
+        URLBASE = os.path.join("http://sauron.ucsd.edu/Hubs", args.hub)
+       
     GENOME = args.genome
 
     hub = Hub(hub=args.hub,
