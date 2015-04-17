@@ -57,8 +57,8 @@ def reformat_read(name_1, seq_1, plus_1, quality_1,
 if __name__ == "__main__":
     usage = """ takes raw fastq files and demultiplex inline randomer + adapter sequences  """
     parser = OptionParser(usage)
-    parser.add_option("-f", "--fastq_1", dest="fastq", help="fastq file to barcode seperate")
-    parser.add_option("-f", "--fastq_2", dest="fastq", help="fastq file to barcode seperate")
+    parser.add_option("--fastq_1", dest="fastq_1", help="fastq file to barcode seperate")
+    parser.add_option("--fastq_2", dest="fastq_2", help="fastq file to barcode seperate")
 
     parser.add_option("-b", "--barcodes", dest="barcodes", help="file of barcode / barcode id (tab sepearted, one barcode / barcode id on each line")
     parser.add_option("--out_file_1", dest="out_file_1")
@@ -71,7 +71,7 @@ if __name__ == "__main__":
 
     #if a gziped file then we reassign open to be the gzip open and continue using that for the rest of the
     #program
-    my_open = gzip.open if os.path.splitext(options.fastq)[1] == ".gz" else open
+    my_open = gzip.open if os.path.splitext(options.fastq_1)[1] == ".gz" else open
     #creates different barcode files to assign reads to
 
     RANDOMER_LENGTH = options.length
@@ -80,23 +80,27 @@ if __name__ == "__main__":
     randomer_counts = {}
     with open(options.barcodes) as barcodes_file:
         for line in barcodes_file:
-            line = line.strip("\n").split("\t")
+            line = line.strip().split("\t")
             split_file_1 = options.out_file_1.split(".")
             split_file_1.insert(-1, line[1])
 
             split_file_2 = options.out_file_2.split(".")
             split_file_2.insert(-1, line[1])
 
-            barcodes[line[0]] = [open(".".join(split_file_1), 'w'),
-                                 open(".".join(split_file_2), 'w'),
+            barcodes[line[0]] = [gzip.open(".".join(split_file_1), 'w'),
+                                 gzip.open(".".join(split_file_2), 'w'),
                                  ]
 
             randomer_counts[line[0]] = Counter()
 
-    split_file = options.out_file.split(".")
-    split_file.insert(-1, "unassigned")
-    barcodes['unassigned'] = [open(".".join(split_file_1), 'w'),
-                              open(".".join(split_file_1), 'w'),
+    split_file_1 = options.out_file_1.split(".")
+    split_file_1.insert(-1, "unassigned")
+
+    split_file_2 = options.out_file_2.split(".")
+    split_file_2.insert(-1, "unassigned")
+
+    barcodes['unassigned'] = [gzip.open(".".join(split_file_1), 'w'),
+                              gzip.open(".".join(split_file_2), 'w'),
                               ]
     randomer_counts['unassigned'] = Counter()
 
@@ -137,6 +141,7 @@ if __name__ == "__main__":
                 metrics_file.write("%s\t%s\t%s\n" % (barcode, randomer, count))
 
     #cleans up at the end
-    for fn in barcodes.values():
-        fn.close()
+    for lst in barcodes.values():
+        for fn in lst:
+            fn.close()
 
