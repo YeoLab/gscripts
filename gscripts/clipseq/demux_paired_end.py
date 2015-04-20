@@ -8,14 +8,52 @@ Converts randomer + barcoded fastq files into something that can be barcode coll
 """
 
 from collections import Counter
+from itertools import izip
 import gzip
 import os
 from optparse import OptionParser
 
 
+def hamming(word1, word2):
+    """
+    Gets hamming distance between two words, this is an odd implementation because
+    we actually want Ns to appear similar to other barcodes as this makes the results more stringent, not less
+    :param word1:
+    :param word2:
+    :return:
+    """
+    return sum(a != b and not (a == "N" or b == "N") for a, b in izip(word1, word2))
+
+
+def read_has_barcode(barcodes, read, max_hamming_distance=0):
+    """
+    Checks if read has one of the barcodes listed in barcodes list and returns back that barcode
+
+    :param barcodes: list of barcode sequence
+    :param read: str, read to check if barcode exists in
+    :param hamming: max hamming distance between given barcode and barcode in read
+    :return: returns best barcode match in read, none if none found
+    """
+
+    barcode_lengths = {len(barcode) for barcode in barcodes}
+    closest_barcode = None
+    #assumes larger barcodes are less likely, and searches for them first
+    #for each barcode length see if known barcodes appear
+    for barcode_length in sorted(barcode_lengths, reverse=True):
+        #Gets min hamming distance between barcode in read and barcode in list, behavior undefined if tie
+        read_barcode = read[:barcode_length]
+        cur_length_barcodes = [barcode for barcode in barcodes if len(barcode) == barcode_length]
+        hamming_distances = {barcode: hamming(barcode, read_barcode) for barcode in cur_length_barcodes}
+        min_barcode = min(hamming_distances, key=hamming_distances.get)
+        if hamming_distances[min_barcode] <= max_hamming_distance:
+            closest_barcode = min_barcode
+            break
+    return closest_barcode
+
+
 def reformat_read(name_1, seq_1, plus_1, quality_1,
                   name_2, seq_2, plus_2, quality_2, barcodes,
-                  RANDOMER_LENGTH=2):
+                  RANDOMER_LENGTH=2, max_hamming_distance=0):
     """ reformats read to have correct barcode attached
         name - read name
         seq - read sequence
@@ -25,17 +63,12 @@ def reformat_read(name_1, seq_1, plus_1, quality_1,
 
         returns str - barcode barcode found, str - randomer identified, str - reformateed read
     """
-    barcode_lengths = {len(barcode) for barcode in barcodes.keys()}
-    barcode = None
 
-    #assumes larger barcodes are less likely, and searches for them first
-    #for each barcode length see if known barcodes appear
-    for barcode_length in sorted(barcode_lengths, reverse=True):
-        cur_barcode = seq_1[:barcode_length]
-        randomer = seq_2[:RANDOMER_LENGTH]
-        if cur_barcode in barcodes:
-            barcode = cur_barcode
-            break
+
+    barcode = read_has_barcode(barcodes.keys(), seq_1, max_hamming_distance)
+    barcode_length = len(barcode)
+
+    randomer = seq_2[:RANDOMER_LENGTH]
 
     name_1 = name_1[0] + randomer + ":" + name_1[1:]
     seq_1 = seq_1[barcode_length:]
@@ -45,7 +78,7 @@ def reformat_read(name_1, seq_1, plus_1, quality_1,
     seq_2 = seq_2[RANDOMER_LENGTH:]
     quality_2 = quality_2[RANDOMER_LENGTH:]
 
-    #if none appear the barcode is unassigne
+    #if none appear the barcode is unassigned
     if barcode is None:
         barcode = "unassigned"
 
@@ -64,6 +97,7 @@ if __name__ == "__main__":
     parser.add_option("--out_file_1", dest="out_file_1")
     parser.add_option("--out_file_2", dest="out_file_2")
     parser.add_option("--length", type=int, dest="length", help="Number of randomers on the front of the second read", default=3)
+    parser.add_option("--max_hamming_distance", type=int, dest="max_hamming_distance", help="Max Hamming distance between read barcode and given barcodes to assign a read to a given barcode", default=1)
 
     parser.add_option("-m", "--metrics_file", dest="metrics_file")
 
@@ -120,17 +154,10 @@ if __name__ == "__main__":
                 plus = "+\n" #sometimes the descriptor is here, don't want it
                 quality_2 = fastq_file_2.next()
 
-                barcode, randomer, result_1, result_2 = reformat_read(name_1,
-                                                          seq_1,
-                                                          plus,
-                                                          quality_1,
-                                                          name_2,
-                                                          seq_2,
-                                                          plus,
-                                                          quality_2,
-                                                          barcodes,
-                                                          RANDOMER_LENGTH
-                                                          )
+                barcode, randomer, result_1, result_2 = reformat_read(name_1, seq_1, plus, quality_1,
+                                                                      name_2, seq_2, plus, quality_2,
+                                                                      barcodes, RANDOMER_LENGTH,
+                                                                      max_hamming_distance=args.max_hamming_distance)
                 randomer_counts[barcode][randomer] += 1
                 barcodes[barcode][0].write(result_1)
                 barcodes[barcode][1].write(result_2)
