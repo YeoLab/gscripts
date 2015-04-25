@@ -82,10 +82,10 @@ if __name__ == "__main__":
         for line in barcodes_file:
             line = line.strip().split("\t")
             split_file_1 = options.out_file_1.split(".")
-            split_file_1.insert(-1, line[1])
+            split_file_1.insert(-2, line[1])
 
             split_file_2 = options.out_file_2.split(".")
-            split_file_2.insert(-1, line[1])
+            split_file_2.insert(-2, line[1])
 
             barcodes[line[0]] = [gzip.open(".".join(split_file_1), 'w'),
                                  gzip.open(".".join(split_file_2), 'w'),
@@ -94,10 +94,10 @@ if __name__ == "__main__":
             randomer_counts[line[0]] = Counter()
 
     split_file_1 = options.out_file_1.split(".")
-    split_file_1.insert(-1, "unassigned")
+    split_file_1.insert(-2, "unassigned")
 
     split_file_2 = options.out_file_2.split(".")
-    split_file_2.insert(-1, "unassigned")
+    split_file_2.insert(-2, "unassigned")
 
     barcodes['unassigned'] = [gzip.open(".".join(split_file_1), 'w'),
                               gzip.open(".".join(split_file_2), 'w'),
