@@ -81,7 +81,7 @@ def bedtools_count_contamination(bam_file):
         total[read_group] += 1
         prev_base = interval.start
 
-        return pd.DataFrame(combinations), pd.Series(total)
+    return pd.DataFrame(combinations), pd.Series(total)
 
 
 def genome_count_contamination(bam_file):
