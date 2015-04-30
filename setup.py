@@ -13,6 +13,7 @@ scripts = [
     'clipseq/run_piranha.py',
     'clipseq/run_ripseeker.py',
     'clipseq/demultiplex_barcoded_fastq.py',
+    'clipseq/demux_paired_end.py',
     'editing/create_rna_editing_makefile.py',
     'general/cat_files.py',
     'general/cat_biogem.py',
