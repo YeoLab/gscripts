@@ -35,12 +35,13 @@ def rnaseq_metrics(analysis_dir, num_seps=1, sep="."):
     
     nrf_files = glob.glob(os.path.join(analysis_dir, "*.NRF.metrics"))
     cutadapt_files = glob.glob(os.path.join(analysis_dir, "*.adapterTrim.metrics"))
-    rmrep_files = glob.glob(os.path.join(analysis_dir, "*.rmRep.metrics"))
-
-    star_files = glob.glob(os.path.join(analysis_dir, "*.final.out"))
+    rmrep_files = glob.glob(os.path.join(analysis_dir, "*rmRep.metrics"))
     
-
-    
+    star_files = glob.glob(os.path.join(analysis_dir, "*rmRep.bamLog.final.out"))
+    if len(star_files) == 0: #hack for old data
+        star_files = glob.glob(os.path.join(analysis_dir, "*rmRep.samLog.final.out"))
+    if len(star_files) == 0: #Hack for new data
+        star_files = glob.glob(os.path.join(analysis_dir, "*.bamLog.final.out"))
     nrf_names = get_names(nrf_files, num_seps, sep) 
     cutadapt_names = get_names(cutadapt_files, num_seps, sep)
     rmrep_names = get_names(rmrep_files, num_seps, sep)
@@ -67,13 +68,16 @@ def rnaseq_metrics(analysis_dir, num_seps=1, sep="."):
         combined_df["Percent Repetative"] = 1 - (combined_df['Reads Passing Quality Filter'] / combined_df['Input Reads'].astype(float))
     except ZeroDivisionError:
         pass
+    except KeyError:
+        print "cutadapt file maybe be broken, ignoring calculation"
+        pass
     #combined_df["Repetative Reads"] = (combined_df['Input Reads'] - combined_df['Reads Passing Quality Filter']).astype(int)
     #combined_df["Reads After Triming"] = (combined_df['Input Reads'] - combined_df['Too short reads']).astype(int)
 
     #Get Rid of worthless metrics
     combined_df = combined_df.drop(["Finished on",
                   "Mapping speed, Million of reads per hour",
-                  "Trimmed bases",
+                  #"Trimmed bases",
                   "Started job on",
                   "Started mapping on"], axis=1)
 
@@ -91,8 +95,10 @@ def clipseq_metrics(analysis_dir, iclip=False, num_seps=None, sep=".",
     if num_seps is None:
         num_seps = 2 if iclip else 1
     
-    rm_duped_files = glob.glob(os.path.join(analysis_dir, "*.rmDup.metrics"))
-    peaks_files = glob.glob(os.path.join(analysis_dir, "*.rmDup.sorted.peaks.bed"))
+    rm_duped_files = glob.glob(os.path.join(analysis_dir, "*rmRep.rmDup.metrics"))
+    if len(rm_duped_files) == 0:
+        rm_duped_files = glob.glob(os.path.join(analysis_dir, "*.rmDup.metrics"))
+    peaks_files = glob.glob(os.path.join(analysis_dir, "*.peaks.bed"))
     spot_files = glob.glob(os.path.join(analysis_dir, "*peaks.metrics"))
 
     rm_duped_names = get_names(rm_duped_files, num_seps, sep)
@@ -106,6 +112,8 @@ def clipseq_metrics(analysis_dir, iclip=False, num_seps=None, sep=".",
     combined_df = pd.merge(combined_df, rm_duped_df, left_index=True, right_index=True, how="outer")
     combined_df = pd.merge(combined_df, spot_df, left_index=True, right_index=True, how="outer")
     combined_df = pd.merge(combined_df, peaks_df, left_index=True, right_index=True, how="outer")
+
+    combined_df['Uniquely Mapped Reads'] = combined_df['Uniquely Mapped Reads'].astype(float)
     try:
         combined_df["Percent Usable / Input"] = (combined_df['Usable Reads'] / combined_df['Uniquely Mapped Reads'])
         combined_df["Percent Usable / Mapped"] = (combined_df['Usable Reads'] / combined_df['Input Reads'])
@@ -118,7 +126,11 @@ def clipseq_metrics(analysis_dir, iclip=False, num_seps=None, sep=".",
     return combined_df
 
 def parse_rmrep_file(rmrep_file):
-    df = pd.read_table(rmrep_file, header=None, sep=" ", index_col=0, names=["element", "repetitive_count"])
+    try:
+        df = pd.read_table(rmrep_file, header=None, sep=" ", index_col=0, names=["element", "repetitive_count"])
+    except Exception as e:
+        print rmrep_file
+        raise e
     return df.sum().to_dict()
 
 
