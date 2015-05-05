@@ -13,6 +13,19 @@ import HTSeq
 import pandas as pd
 import pysam
 
+import tempfile
+import pysam
+import pybedtools
+from collections import defaultdict, Counter
+from itertools import permutations
+import pandas as pd
+
+def editor(read):
+    if read.strand == "-":
+        read.start = read.stop - 1
+    else:
+        read.stop = read.start + 1
+    return read
 
 #assumes properly sorted, barcode collapsed reads, otherwise everything breaks
 def tags_to_dict(tags):
@@ -21,7 +34,7 @@ def tags_to_dict(tags):
     Converts the tag set to a dictionary
 
     """
-    return {key : value for key, value in tags}
+    return {key: value for key, value in tags}
 
 
 def append_read_group(base, read_group):
@@ -31,13 +44,52 @@ def append_read_group(base, read_group):
     except:
         return set([read_group])
 
+
+def bedtools_count_contamination(bam_file):
+    #Hopefully a faster way of doing this...
+    handle, fn = tempfile.mkstemp()
+    with pysam.AlignmentFile(bam_file, 'rb') as reads:
+        with pysam.AlignmentFile(fn, 'wb', template=reads) as writer:
+            for x, read in enumerate(reads):
+                read.qname = read.qname + ":" + read.tags[-1][1]
+                writer.write(read)
+
+    bedtool = pybedtools.BedTool(fn).bam_to_bed()
+    bedtool = bedtool.each(editor).sort().saveas()
+
+    #can be a bit sloppy because I'm processing base by base
+    #should build in strandedness, but this should be good enough, probablbity is still low...
+    total = Counter()
+    combinations = defaultdict(Counter)
+
+    prev_base = 0
+    base_dict = defaultdict(list)
+    for x, interval in enumerate(bedtool):
+        #reset counter, and process
+        if interval.start != prev_base:
+            for randomer, read_groups in base_dict.items():
+                for rg1, rg2 in permutations(read_groups, 2):
+                    combinations[rg1][rg2] += 1
+            #processing code goes here
+            base_dict = defaultdict(list)
+
+        name = interval.name.split(":")
+
+        randomer, read_group = name[0], name[-1]
+        base_dict[randomer].append(read_group)
+
+        total[read_group] += 1
+        prev_base = interval.start
+
+    return pd.DataFrame(combinations), pd.Series(total)
+
+
 def genome_count_contamination(bam_file):
     #Load all values into dict
-    reads_at_location = defaultdict(lambda : HTSeq.GenomicArray("auto", typecode="O", stranded=True))
+    reads_at_location = defaultdict(lambda: HTSeq.GenomicArray("auto", typecode="O", stranded=True))
     reads = HTSeq.BAM_Reader(bam_file)
     for read in reads:
         try:
-            read.iv.length = 1
             randomer = read.read.name.split(":")[0]
             read_group = tags_to_dict(read.optional_fields)['RG']
             reads_at_location[randomer][read.iv].apply(partial(append_read_group, read_group=read_group))
