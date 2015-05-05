@@ -51,14 +51,14 @@ class AnalyzeRNASeq extends QScript {
     this.createIndex = true
   }
 
-  case class mapRepetitiveRegions(noAdapterFastq: File, filteredResults: File, filteredFastq: File) extends MapRepetitiveRegions {
-    override def shortDescription = "MapRepetitiveRegions"
+//  case class mapRepetitiveRegions(noAdapterFastq: File, filteredResults: File, filteredFastq: File) extends MapRepetitiveRegions {
+//    override def shortDescription = "MapRepetitiveRegions"
 
-    this.inFastq = noAdapterFastq
-    this.outRep = filteredResults
-    this.outNoRep = filteredFastq
-    this.isIntermediate = true
-  }
+//    this.inFastq = noAdapterFastq
+//    this.outRep = filteredResults
+//    this.outNoRep = filteredFastq
+//    this.isIntermediate = true
+//  }
 
   case class genomeCoverageBed(input: File, outBed: File, cur_strand: String, species: String) extends GenomeCoverageBed {
     this.inBam = input
