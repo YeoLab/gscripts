@@ -44,7 +44,7 @@ class AnalyzeRNASeq extends QScript {
   }
   case class sortSam(inSam: File, outBam: File, sortOrderP: SortOrder) extends SortSam {
     override def shortDescription = "sortSam"
-    this.wallTime = Option((2 * 60 * 60).toLong)
+    this.wallTime = Option((8 * 60 * 60).toLong)
     this.input :+= inSam
     this.output = outBam
     this.sortOrder = sortOrderP
@@ -123,7 +123,7 @@ class AnalyzeRNASeq extends QScript {
 
   case class addOrReplaceReadGroups(inBam: File, outBam: File) extends AddOrReplaceReadGroups {
     override def shortDescription = "AddOrReplaceReadGroups"
-    this.wallTime = Option((2 * 60 * 60).toLong)
+    this.wallTime = Option((4 * 60 * 60).toLong)
     this.input = List(inBam)
     this.output = outBam
     this.RGLB = "foo" //should record library id
@@ -143,6 +143,7 @@ class AnalyzeRNASeq extends QScript {
 
   case class samtoolsIndexFunction(input: File, output: File) extends SamtoolsIndexFunction {
     override def shortDescription = "indexBam"
+    this.wallTime = Option((2 * 60 * 60).toLong)
     this.bamFile = input
     this.bamFileIndex = output
   }
@@ -213,7 +214,7 @@ class AnalyzeRNASeq extends QScript {
 	     paired = noAdapterPair,
              output = outRep,
 	     stranded = not_stranded,
-             genome_location = "/projects/ps-yeolab/genomes/RepBase18.05.fasta/STAR",
+             genome_location = "/projects/ps-yeolab/genomes/RepBase18.05.fasta/STAR_fixed",
              fastq_out = filteredFastq))
 
     var countRepetitiveRegions = new CountRepetitiveRegions
