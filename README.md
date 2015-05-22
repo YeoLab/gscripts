@@ -25,8 +25,7 @@ exon_seqs = '/projects/ps-yeolab/obotvinnik/miso_helpers/hg19/se_exon2.fasta'
 mirna_seqs = '/projects/ps-yeolab/genomes/mirbase/release_21/human_mature_17bp.fa'
 rnahybrid_results = '/projects/ps-yeolab/obotvinnik/miso_helpers/hg19/se_exon2_RNAhybrid_mirbase_human_mature_17bp.txt'
 command = 'RNAhybrid -c -s 3utr_human -q {} -t {} > {}'.format(mirna_seqs, exon_seqs, rnahybrid_results)
-sub = Submitter([command], 'RNAhybrid', walltime='120:00:00', 
-    write_and_submit=True, nodes=1, ppn=1)
+sub = Submitter([command], 'RNAhybrid', walltime='120:00:00', write_and_submit=True, nodes=1, ppn=1)
 ```
 
 Which will write a file called `RNAhybrid.sh` which has these contents:
