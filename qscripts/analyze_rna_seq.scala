@@ -25,7 +25,7 @@ class AnalyzeRNASeq extends QScript {
   @Argument(doc = "not stranded", required = false)
   var not_stranded: Boolean = false
 
-  @Argument(doc = "Strict trimming run. Remove adapters, remove reads mapping to repetitive regions, and run FastQC")
+  @Argument(doc = "strict triming run")
   var strict: Boolean = false
 
   @Argument(doc = "start processing run from bam file")
@@ -42,44 +42,23 @@ class AnalyzeRNASeq extends QScript {
   def commandLine = "cp " +
     required(inBam) + required(outBam)
   }
-
-  @Argument(doc = "Use trim_galore instead of cutadapt (required if '--strict' is provided and '--single_end' is not, i.e. for strict processing of paired-end reads)", 
-    shortName = "yes_trim_galore", fullName = "yes_trim_galore", required = false)
-  var yesTrimGalore: Boolean = true
-
   case class sortSam(inSam: File, outBam: File, sortOrderP: SortOrder) extends SortSam {
     override def shortDescription = "sortSam"
-    this.wallTime = Option((2 * 60 * 60).toLong)
+    this.wallTime = Option((8 * 60 * 60).toLong)
     this.input :+= inSam
     this.output = outBam
     this.sortOrder = sortOrderP
     this.createIndex = true
-    this.wallTime = Option((2 * 60 * 60).toLong)
   }
 
-  case class mapRepetitiveRegions(trimmedFastq: File, filteredResults: File, filteredFastq: File, 
-    trimmedFastqPair: File = null, filteredFastqPair: File = null, dummy : File, isPaired: Boolean) extends MapRepetitiveRegions2 {
-    override def shortDescription = "MapRepetitiveRegions"
+//  case class mapRepetitiveRegions(noAdapterFastq: File, filteredResults: File, filteredFastq: File) extends MapRepetitiveRegions {
+//    override def shortDescription = "MapRepetitiveRegions"
 
-    if (isPaired){
-      this.outNoRepetitive = swapExt(filteredFastq, ".fastq", ".fastq").replace("_R1", "_R%")
-    } else{
-      this.outNoRepetitive = filteredFastq
-    }
-    this.outNoRepetitivePair = filteredFastqPair
-
-    this.inFastq = trimmedFastq
-    this.inFastqPair = trimmedFastqPair
-    this.outRepetitive = filteredResults
-    this.isIntermediate = false
-    this.fakeVariable = dummy
-    this.paired = isPaired
-  }
-
-  case class countRepetitiveRegions(bam: File, metrics: File) extends CountRepetitiveRegions{
-    this.inBam = bam
-    this.outFile = metrics
-  }
+//    this.inFastq = noAdapterFastq
+//    this.outRep = filteredResults
+//    this.outNoRep = filteredFastq
+//    this.isIntermediate = true
+//  }
 
   case class genomeCoverageBed(input: File, outBed: File, cur_strand: String, species: String) extends GenomeCoverageBed {
     this.inBam = input
@@ -144,7 +123,7 @@ class AnalyzeRNASeq extends QScript {
 
   case class addOrReplaceReadGroups(inBam: File, outBam: File) extends AddOrReplaceReadGroups {
     override def shortDescription = "AddOrReplaceReadGroups"
-    this.wallTime = Option((2 * 60 * 60).toLong)
+    this.wallTime = Option((4 * 60 * 60).toLong)
     this.input = List(inBam)
     this.output = outBam
     this.RGLB = "foo" //should record library id
@@ -164,15 +143,22 @@ class AnalyzeRNASeq extends QScript {
 
   case class samtoolsIndexFunction(input: File, output: File) extends SamtoolsIndexFunction {
     override def shortDescription = "indexBam"
+    this.wallTime = Option((2 * 60 * 60).toLong)
     this.bamFile = input
     this.bamFileIndex = output
   }
 
-  case class cutadapt(fastqFile: File, noAdapterFastq: File, adapterReport: File, adapter: List[String]) extends Cutadapt {
+  case class cutadapt(fastqFile: File, noAdapterFastq: File, adapterReport: File, adapter: List[String], pairedFile: File = null, pairedOut: File = null) extends Cutadapt {
     override def shortDescription = "cutadapt"
 
     this.inFastq = fastqFile
     this.outFastq = noAdapterFastq
+    
+    if(pairedFile != null) { 
+      this.inPair = pairedFile
+      this.outPair = pairedOut
+    }
+
     this.report = adapterReport
     this.anywhere = adapter ++ List("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
       "TTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTT")
@@ -180,22 +166,6 @@ class AnalyzeRNASeq extends QScript {
     this.length = 18
     this.quality_cutoff = 6
     this.isIntermediate = true
-  }
-
-
-  case class trimGalore(fastqFile: File, fastqPair: File, adapter: List[String], dummy: File, isPaired: Boolean) extends TrimGalore {
-    override def shortDescription = "trim_galore"
-
-    this.inFastq = fastqFile
-    this.inFastqPair = fastqPair
-    this.adapterList = adapter ++ List("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
-      "TTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTT")
-    this.stringency = 5
-    this.minimum_length = 18
-    this.quality_cutoff = 6
-    this.isIntermediate = true
-    this.fakeVariable = dummy
-    this.paired = isPaired
   }
 
   case class makeRNASeQC(input: List[File], output: File) extends MakeRNASeQC {
@@ -212,31 +182,39 @@ class AnalyzeRNASeq extends QScript {
     this.singleEnd = single_end
   }
 
-  def stringentJobs(fastqFile: File): File = {
+  def stringentJobs(fastqFile: File, pairedFile: File = null): (File, File) = {
 
     // run if stringent
-
-    var noPolyAFastq = swapExt(fastqFile, ".gz", "")
-    noPolyAFastq = swapExt(noPolyAFastq, ".fastq", ".polyATrim.fastq")
-    val noPolyAReport = swapExt(noPolyAFastq, ".fastq", ".metrics")
-    val noAdapterFastq = swapExt(noPolyAFastq, ".fastq", ".adapterTrim.fastq")
-
-    val filteredFastq = swapExt(noAdapterFastq, ".fastq", ".rmRep.fastq")
+    val noGzFastq = swapExt(fastqFile, ".gz", "")
+    val noAdapterFastq = swapExt(noGzFastq, ".fastq", ".polyATrim.adapterTrim.fastq")
+    val outRep = swapExt(noAdapterFastq, ".fastq", ".rep.bam")
+   
+    val filteredFastq = swapExt(outRep, "", "Unmapped.out.mate1")
     val adapterReport = swapExt(noAdapterFastq, ".fastq", ".metrics")
-    val repetitiveAligned = swapExt(filteredFastq, ".fastq", ".sam")
-    val repetitiveCounts = swapExt(filteredFastq, ".fastq", ".metrics")
+    
+    var noGzPair: File = null
+    var noAdapterPair: File = null
+    var filteredPair: File = null
+    
+    if (pairedFile != null) {        
+     noGzPair = swapExt(pairedFile, ".gz", "")
+     noAdapterPair = swapExt(noGzPair, ".fastq", ".polyATrim.adapterTrim.fastq")
+     filteredPair = swapExt(outRep, "", "Unmapped.out.mate2")
+    }
+        
     //filters out adapter reads
-    val dummy: File = swapExt(fastqFile, ".fastq", ".dummy")
-
-    add(cutadapt(fastqFile = fastqFile, noAdapterFastq = noAdapterFastq,
-      adapterReport = adapterReport,
-      adapter = adapter))
+    add(cutadapt(fastqFile = fastqFile, 
+		 noAdapterFastq = noAdapterFastq,
+		 adapterReport = adapterReport,
+		 adapter = adapter, 
+		 pairedFile = pairedFile, 
+		 pairedOut = noAdapterPair))
     
     add(star(input = noAdapterFastq,
+	     paired = noAdapterPair,
              output = outRep,
 	     stranded = not_stranded,
-	     paired = null,
-             genome_location = "/projects/ps-yeolab/genomes/RepBase18.05.fasta/STAR",
+             genome_location = "/projects/ps-yeolab/genomes/RepBase18.05.fasta/STAR_fixed",
              fastq_out = filteredFastq))
 
     var countRepetitiveRegions = new CountRepetitiveRegions
@@ -246,43 +224,11 @@ class AnalyzeRNASeq extends QScript {
 
     add(new FastQC(filteredFastq))
 
-    return filteredFastq
-  }
-
-
-  def stringentJobsTrimGalore(fastqFile: File, fastqPair: File = null, paired: Boolean = false): (File, File) = {
-
-    // run if stringent
-
-    val filteredFastq = swapExt(fastqFile, ".fastq", ".polyATrim.adapterTrim.rmRep.fastq")
-    val repetitiveAligned = swapExt(filteredFastq, ".fastq", "repetitiveAligned.bam")
-    val repetitiveCounts = swapExt(repetitiveAligned, ".bam", ".metrics")
-    val dummy: File = swapExt(fastqFile, ".fastq", ".dummy")
-    add(trimGalore(fastqFile = fastqFile, fastqPair=fastqPair, adapter = adapter))
-
-    add(trimGalore(fastqFile, fastqPair, adapter, dummy, isPaired=paired))
-
-    // filter out adapter reads
-    if (paired){
-      val trimmedFastq = swapExt(fastqFile, ".fastq.gz", "_val_1.fq")
-      val trimmedFastqPair = swapExt(fastqPair, ".fastq.gz", "_val_2.fq")
-      val filteredFastqPair = swapExt(fastqPair, ".fastq", ".polyATrim.adapterTrim.rmRep.fastq")
-      add(mapRepetitiveRegions(trimmedFastq=trimmedFastq, filteredResults=repetitiveAligned, filteredFastq=filteredFastq, 
-    trimmedFastqPair=trimmedFastqPair, filteredFastqPair=filteredFastqPair,
-      dummy=dummy, isPaired=paired))
-      add(new FastQC(filteredFastq))
-      add(new FastQC(filteredFastqPair))
-      add(countRepetitiveRegions(bam=repetitiveAligned, metrics=repetitiveCounts))
-      return (filteredFastq, filteredFastqPair)
-    } else {
-      val trimmedFastq = swapExt(fastqFile, ".fastq.gz", "_trimmed.fq")
-      val filteredFastqPair = swapExt(fastqFile, ".fastq.gz", ".fake_fastq_pair.fastq.gz")
-      add(mapRepetitiveRegions(trimmedFastq=trimmedFastq, filteredResults=repetitiveAligned, filteredFastq=filteredFastq, 
-      dummy=dummy, isPaired=paired))
-      add(new FastQC(filteredFastq))
-      add(countRepetitiveRegions(bam=repetitiveAligned, metrics=repetitiveCounts))
-      return (filteredFastq, filteredFastqPair)
+    if (filteredPair != null) {
+      add(new FastQC(filteredPair))
     }
+    
+    return (filteredFastq, filteredPair)
   }
 
   def makeBigWig(inBam: File, species: String): (File, File) = {
@@ -322,16 +268,16 @@ class AnalyzeRNASeq extends QScript {
     val misoOut = swapExt(bamFile, "bam", "miso")
     val rnaEditingOut = swapExt(bamFile, "bam", "editing")
 
-    // add(new CalculateNRF(inBam = bamFile, genomeSize = chromSizeLocation(species), outNRF = NRFFile))
+    add(new CalculateNRF(inBam = bamFile, genomeSize = chromSizeLocation(species), outNRF = NRFFile))
 
     val (bigWigFilePos: File, bigWigFileNeg: File) = makeBigWig(bamFile, species = species)
 
-    // add(new countTags(input = bamFile, index = bamIndex, output = countFile, species = species))
-    // add(new singleRPKM(input = countFile, output = RPKMFile, s = species))
+    add(new countTags(input = bamFile, index = bamIndex, output = countFile, species = species))
+    add(new singleRPKM(input = countFile, output = RPKMFile, s = species))
 
     add(oldSplice(input = bamFile, out = oldSpliceOut, species = species))
     add(new Miso(inBam = bamFile, indexFile = bamIndex, species = species, pairedEnd = false, output = misoOut))
-    // add(new RnaEditing(inBam = bamFile, snpEffDb = species, snpDb = snpDbLocation(species), genome = genomeLocation(species), flipped = flipped, output = rnaEditingOut))
+    //add(new RnaEditing(inBam = bamFile, snpEffDb = species, snpDb = snpDbLocation(species), genome = genomeLocation(species), flipped = flipped, output = rnaEditingOut))
     return oldSpliceOut
   }
 
@@ -360,53 +306,20 @@ class AnalyzeRNASeq extends QScript {
             fastqPair = new File(fastqFiles(1))
             add(new FastQC(inFastq = fastqPair))
           }
-
-          
-          if (!(yesTrimGalore && strict) && (singleEnd == false)){
-            println("If the reads are paired-end and run with '--strict', then '--yes_trim_galore' must be provided!\nOtherwise your trimmed paired end reads won't retain their paired-end-ness and you'll have a bad time :(")
-            System.exit(1)
-          }
-
+	
           add(new FastQC(inFastq = fastqFile))
 
-          // Have to do this weird non-assignment stuff because Scala won't let you return a tuple
-          // if the values have already been assigned, e.g. if you've already declared "var filteredFastq: File = null"
-          // http://stackoverflow.com/questions/3348751/scala-multiple-assignment-to-existing-variable
-          var filteredFastq: File = null
-          var filteredFastqPair: File = null
-          if (fastqPair != null){
-            if (strict) {
-              var filteredFiles = stringentJobsTrimGalore(fastqFile, fastqPair, !singleEnd)
-              filteredFastq = filteredFiles._1
-              filteredFastqPair = filteredFiles._2
-            } else {
-              filteredFastq = fastqFile
-              filteredFastqPair = fastqPair
-            }
-          } else {
-            if (strict) {
-              if (yesTrimGalore){
-                 var filteredFiles = stringentJobsTrimGalore(fastqFile, paired=false)
-                 filteredFastq = filteredFiles._1
-                } else{
-                 filteredFastq = stringentJobs(fastqFile)
-                }
-            } else {
-              filteredFastq = fastqFile
-            }
-          }
+          
+          val (filteredFastq, filteredPair) = stringentJobs(fastqFile, fastqPair)
+	
           samFile = swapExt(filteredFastq, ".rep.bamUnmapped.out.mate1", ".rmRep.bam")
+	  add(new sailfish(filteredFastq, species, !not_stranded, fastqPair))
+          add(new star(input=filteredFastq, 
+		       output=samFile, 
+		       stranded=not_stranded, 
+		       paired=filteredPair, 
+		       genome_location = starGenomeLocation(species)))
 
-          if (fastqPair != null) {
-            //if paired
-            add(new sailfish(filteredFastq, species, !not_stranded, fastqPair))
-            add(new star(input=filteredFastq, output=samFile, stranded=not_stranded, paired=fastqPair, genome_location = starGenomeLocation(species)))
-          } else { //unpaired
-            add(new sailfish(filteredFastq, species, !not_stranded))
-            add(new star(input=filteredFastq, output=samFile, stranded=not_stranded, paired=null, genome_location = starGenomeLocation(species)))
-          }
-
-          // run regardless of stringency
 
         } else {
           samFile = new File(fastqFiles(0))

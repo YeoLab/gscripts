@@ -281,12 +281,12 @@ class AnalizeCLIPSeq extends QScript {
 	var genome: String = item._2 
       	var replicate: String = item._3
 	
-      	val noPolyAFastq = swapExt(swapExt(fastq_file, ".gz", ""), ".fastq", ".polyATrim.fastq")
-      	val noPolyAReport = swapExt(noPolyAFastq, ".fastq", ".metrics")
+      	val noPolyAFastq = swapExt(swapExt(fastq_file, ".gz", ""), ".fastq", ".polyATrim.fastq.gz")
+      	val noPolyAReport = swapExt(noPolyAFastq, ".fastq.gz", ".metrics")
 	
-      	val noAdapterFastq = swapExt(noPolyAFastq, ".fastq", ".adapterTrim.fastq")
-      	val adapterReport = swapExt(noAdapterFastq, ".fastq", ".metrics")
-	val outRep = swapExt(noAdapterFastq, ".fastq", ".rep.bam")
+      	val noAdapterFastq = swapExt(noPolyAFastq, ".fastq.gz", ".adapterTrim.fastq.gz")
+      	val adapterReport = swapExt(noAdapterFastq, ".fastq.gz", ".metrics")
+	val outRep = swapExt(noAdapterFastq, ".fastq.gz", ".rep.bam")
       	val filteredFastq = swapExt(outRep, "", "Unmapped.out.mate1")
 
       	val filterd_results = swapExt(filteredFastq, ".rep.bamUnmapped.out.mate1", ".rmRep.metrics")
@@ -308,7 +308,7 @@ class AnalizeCLIPSeq extends QScript {
 	  
           add(star(input = noAdapterFastq,
                    output = outRep,
-                   genome_location = "/projects/ps-yeolab/genomes/RepBase18.05.fasta/STAR",
+                   genome_location = "/projects/ps-yeolab/genomes/RepBase18.05.fasta/STAR_fixed",
 		   fastq_out = filteredFastq))
 	  
           var countRepetitiveRegions = new CountRepetitiveRegions
@@ -343,7 +343,7 @@ class AnalizeCLIPSeq extends QScript {
       
       //Only run combination if we are combining more than one thing...
       if(combinedBams.size > 1 && groupName != "null") {
-	var mergedBams = new File(groupName + ".bam")
+	var mergedBams = new File(groupName + "merged.bam")
 	val mergedIndex = swapExt(mergedBams, "", ".bai")
 	add(new samtoolsIndexFunction(mergedBams, mergedIndex))
 	add(samtoolsMergeFunction(combinedBams, mergedBams))
