@@ -81,20 +81,37 @@ class GO(object):
         df = pd.DataFrame(pValues).T
         df.index.name = 'GO Term ID'
 
-        df.columns = ['Hypergeometric p-Value',
-                      'N Genes in List and GO Category',
-                                                  'N Expressed Genes in GO Category',
-                                                  'N Genes in GO category',
-                                                  'Ensembl Gene IDs in List',
-                                                  'Gene symbols in List',
-                                                  'Domain'
-                                                  ]
+        df.columns = [
+            'Hypergeometric p-Value',
+            'N Genes in List and GO Category',
+            'N Expressed Genes in GO Category',
+            'N Genes in GO category',
+            'Ensembl Gene IDs in List',
+            'Gene symbols in List',
+            'Domain'
+        ]
 
         num_tests = len(df['Hypergeometric p-Value'].dropna())
         df['Ensembl Gene IDs in List'] = df['Ensembl Gene IDs in List'].apply(",".join)
         df['Gene symbols in List'] = df['Gene symbols in List'].apply(",".join)
         df['Bonferroni-corrected Hypergeometric p-Value'] = df['Hypergeometric p-Value'].apply(lambda x: min(x * num_tests, 1)).dropna()
+        df['GO Term ID'] = [list(self.GO[ontology]['name'])[0] for ontology in df.index]
+
+        #Sort
         df = df.sort('Bonferroni-corrected Hypergeometric p-Value')
+
+        #Reorder for presentation purposes
+        df = df[[
+            'GO Term ID',
+            'Bonferroni-corrected Hypergeometric p-Value',
+            'N Genes in List and GO Category',
+            'N Expressed Genes in GO Category',
+            'N Genes in GO category',
+            'Ensembl Gene IDs in List',
+            'Gene symbols in List',
+            'Domain',
+            'Hypergeometric p-Value',
+           ]]
         return df
 
 
