@@ -44,21 +44,21 @@ class AnalyzeRNASeq extends QScript {
   }
   case class sortSam(inSam: File, outBam: File, sortOrderP: SortOrder) extends SortSam {
     override def shortDescription = "sortSam"
-    this.wallTime = Option((2 * 60 * 60).toLong)
+    this.wallTime = Option((8 * 60 * 60).toLong)
     this.input :+= inSam
     this.output = outBam
     this.sortOrder = sortOrderP
     this.createIndex = true
   }
 
-  case class mapRepetitiveRegions(noAdapterFastq: File, filteredResults: File, filteredFastq: File) extends MapRepetitiveRegions {
-    override def shortDescription = "MapRepetitiveRegions"
+//  case class mapRepetitiveRegions(noAdapterFastq: File, filteredResults: File, filteredFastq: File) extends MapRepetitiveRegions {
+//    override def shortDescription = "MapRepetitiveRegions"
 
-    this.inFastq = noAdapterFastq
-    this.outRep = filteredResults
-    this.outNoRep = filteredFastq
-    this.isIntermediate = true
-  }
+//    this.inFastq = noAdapterFastq
+//    this.outRep = filteredResults
+//    this.outNoRep = filteredFastq
+//    this.isIntermediate = true
+//  }
 
   case class genomeCoverageBed(input: File, outBed: File, cur_strand: String, species: String) extends GenomeCoverageBed {
     this.inBam = input
@@ -123,7 +123,7 @@ class AnalyzeRNASeq extends QScript {
 
   case class addOrReplaceReadGroups(inBam: File, outBam: File) extends AddOrReplaceReadGroups {
     override def shortDescription = "AddOrReplaceReadGroups"
-    this.wallTime = Option((2 * 60 * 60).toLong)
+    this.wallTime = Option((4 * 60 * 60).toLong)
     this.input = List(inBam)
     this.output = outBam
     this.RGLB = "foo" //should record library id
@@ -143,6 +143,7 @@ class AnalyzeRNASeq extends QScript {
 
   case class samtoolsIndexFunction(input: File, output: File) extends SamtoolsIndexFunction {
     override def shortDescription = "indexBam"
+    this.wallTime = Option((2 * 60 * 60).toLong)
     this.bamFile = input
     this.bamFileIndex = output
   }
@@ -213,7 +214,7 @@ class AnalyzeRNASeq extends QScript {
 	     paired = noAdapterPair,
              output = outRep,
 	     stranded = not_stranded,
-             genome_location = "/projects/ps-yeolab/genomes/RepBase18.05.fasta/STAR",
+             genome_location = "/projects/ps-yeolab/genomes/RepBase18.05.fasta/STAR_fixed",
              fastq_out = filteredFastq))
 
     var countRepetitiveRegions = new CountRepetitiveRegions
