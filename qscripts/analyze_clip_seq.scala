@@ -81,7 +81,8 @@ class AnalizeCLIPSeq extends QScript {
     required("--bam", inBam) +
     required("--out_file", outResult) +
     conditional(barcoded, "--randomer") +
-    required("--metrics_file", metrics_file) 
+    required("--metrics_file", metrics_file) + 
+    required("--classic")
   }
 
   class FixScores(@Input inBed: File, @Output outBed: File) extends CommandLineFunction {
@@ -274,13 +275,14 @@ class AnalizeCLIPSeq extends QScript {
     for ((groupName, valueList) <- (fileList groupBy (_._3))) {
       var combinedBams : Seq[File] = List()
     
-      for (item : Tuple3[File, String, String] <- valueList) {
+      for (item : Tuple5[File, String, String, String, String] <- valueList) {
 	
 	
 	var fastq_file: File = item._1
 	var genome: String = item._2 
       	var replicate: String = item._3
-	
+	var adapters: String = item._4
+
       	val noPolyAFastq = swapExt(swapExt(fastq_file, ".gz", ""), ".fastq", ".polyATrim.fastq.gz")
       	val noPolyAReport = swapExt(noPolyAFastq, ".fastq.gz", ".metrics")
 	

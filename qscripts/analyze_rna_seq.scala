@@ -292,7 +292,7 @@ class AnalyzeRNASeq extends QScript {
       var combinedBams: Seq[File] = List()
       var genome: String = valueList(0)._2
 
-      for (item: Tuple3[File, String, String] <- valueList) {
+      for (item: Tuple5[File, String, String, String, String] <- valueList) {
         var fastqFiles = item._1.toString().split(""";""")
         var species = item._2
         var fastqFile: File = new File(fastqFiles(0))
