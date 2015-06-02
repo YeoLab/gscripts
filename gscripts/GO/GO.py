@@ -1,6 +1,7 @@
 from __future__ import division
 from collections import defaultdict
 import operator
+from functools import partial
 
 import numpy as np
 from scipy.stats import hypergeom
@@ -12,11 +13,17 @@ hg19GOFile = "/nas3/lovci/projects/GO/hg19.ENSG_to_GO.txt.gz"
 ce10GOFile = "/nas3/lovci/projects/GO/ce10.ENSG_to_GO.txt.gz"
 
 
+def hypergeometric(row, lenAllGenes, lenTheseGenes):
+        if (row['inBoth'] <= 3) or (row['expressedGOGenes'] < 5):
+            return np.nan
+        else:
+            return hypergeom.sf(row['inBoth'], lenAllGenes, row['expressedGOGenes'], lenTheseGenes)
+
+
 class GO(object):
     
     def __init__(self, GOFile):
-        self.GO_to_ENSG = pd.read_table(GOFile, compression="gzip")
-        self.geneXref = dict(self.GO_to_ENSG[['Ensembl Gene ID', 'Associated Gene Name']].values)
+        self.GO_to_ENSG = pd.read_table(GOFile, compression="gzip").dropna()
 
         GO, allGenes = self._generateOntology()
         self.GO = GO
@@ -25,76 +32,70 @@ class GO(object):
     def enrichment(self, geneList, background=None):
         if background is None:
             background = self.allGenes
-        return self.GO_enrichment(geneList, self.GO, expressedGenes= background)
+        return self.GO_enrichment(geneList, expressedGenes= background)
 
     def _generateOntology(self):
         """
         :return: returns dict of ontologeis and all genes in all go ontologeis as a background
         """
-        ontology = defaultdict(lambda:  {'genes': set(), 'name': set(), 'domain': set()})
         allGenesInOntologies = set(self.GO_to_ENSG['Ensembl Gene ID'])
-        for index, row in self.GO_to_ENSG.iterrows():
-            GO = row['GO Term Accession']
-            ontology[GO]['genes'].add(row['Ensembl Gene ID'])
-            ontology[GO]['name'].add(row['GO Term Name'])
-            ontology[GO]['domain'].add(row['GO domain'])
-            ontology[GO]['nGenes'] = len(ontology[GO]['genes'])
+        ontology = self.GO_to_ENSG.groupby("GO Term Accession")
+        ontology = ontology.aggregate(lambda x: set(x))
+        ontology['nGenes'] = ontology['Ensembl Gene ID'].apply(len)
+
         return ontology, allGenesInOntologies
 
-    def GO_enrichment(self, geneList, ontology, expressedGenes = None, pCut = 1000000):
-        geneList = set(list(geneList))
+
+
+    def GO_enrichment(self, geneList, expressedGenes = None):
+        geneList  = set(list(geneList))
         expressedGenes = set(list(expressedGenes))
 
-        lenAllGenes, lenTheseGenes = len(expressedGenes), len(geneList)
-        pValues = defaultdict()
-        num_tests = 0
+        lenAllGenes  = len(expressedGenes)
+        lenTheseGenes = len(geneList)
+
+        df = self.GO.copy()
 
         if lenTheseGenes > lenAllGenes:
             raise ValueError("Length of genes examined should not be larger than the total number of genes in organism")
 
-        for GOTerm, GOGenes in ontology.items():
-            inBoth = GOGenes['genes'] & geneList
-            expressedGOGenes = GOGenes['genes'] & expressedGenes
+        df['inBoth'] = df['Ensembl Gene ID'].apply(lambda x: len(x & geneList))
+        df['expressedGOGenes'] = df['Ensembl Gene ID'].apply(lambda x: len(x & expressedGenes))
 
-            #Might need to make this more robust
-            gene_symbols = [self.geneXref[gene_id] for gene_id in inBoth]
+        hypergeometric_partial = partial(hypergeometric,
+                                         lenAllGenes=lenAllGenes,
+                                         lenTheseGenes=lenTheseGenes)
 
-            if len(inBoth) <= 3 or len(expressedGOGenes) < 5:
-                #No Test was performed (don't know why mike set this filtering threshold, but I'll keep it)
-                pValues[GOTerm] = (np.nan, len(inBoth), len(expressedGOGenes), len(GOGenes['genes']),
-                                   inBoth, gene_symbols, list(GOGenes['domain'])[0])
-
-                continue
-
-            pVal = hypergeom.sf(len(inBoth), lenAllGenes, len(expressedGOGenes), lenTheseGenes)
-            if np.isnan(pVal):
-                raise ValueError("hypergeometric test shouldn't return nan here")
-
-            pValues[GOTerm] = (pVal,
-                               len(inBoth),
-                               len(expressedGOGenes),
-                               len(GOGenes['genes']),
-                               inBoth,
-                               gene_symbols,
-                               list(GOGenes['domain'])[0])
-
-        df = pd.DataFrame(pValues).T
-        df.index.name = 'GO Term ID'
-
-        df.columns = ['Hypergeometric p-Value',
-                      'N Genes in List and GO Category',
-                                                  'N Expressed Genes in GO Category',
-                                                  'N Genes in GO category',
-                                                  'Ensembl Gene IDs in List',
-                                                  'Gene symbols in List',
-                                                  'Domain'
-                                                  ]
-
+        df['Hypergeometric p-Value'] = df.apply(hypergeometric_partial, axis=1)
         num_tests = len(df['Hypergeometric p-Value'].dropna())
-        df['Ensembl Gene IDs in List'] = df['Ensembl Gene IDs in List'].apply(",".join)
-        df['Gene symbols in List'] = df['Gene symbols in List'].apply(",".join)
         df['Bonferroni-corrected Hypergeometric p-Value'] = df['Hypergeometric p-Value'].apply(lambda x: min(x * num_tests, 1)).dropna()
+
+        #Compute various value for backwards compatabality
+        df['Ensembl Gene IDs in List'] = df['Ensembl Gene ID'].apply(",".join)
+        df['Gene symbols in List'] = df['Associated Gene Name'].apply(",".join)
+        df['GO Term ID'] = df['GO Term Name'].apply(",".join)
+        df['GO domain'] = df['GO domain'].apply(",".join)
+        df['N Genes in GO category'] = df['Ensembl Gene ID'].apply(len)
+
+        #Rename stuff for backwards compatabality
+        df['N Expressed Genes in GO Category'] = df['expressedGOGenes']
+        df['N Genes in List and GO Category'] = df['inBoth']
+
+        #Sort
         df = df.sort('Bonferroni-corrected Hypergeometric p-Value')
+
+        #Reorder for presentation purposes
+        df = df[[
+            'GO Term ID',
+            'Bonferroni-corrected Hypergeometric p-Value',
+            'N Genes in List and GO Category',
+            'N Expressed Genes in GO Category',
+            'N Genes in GO category',
+            'Ensembl Gene IDs in List',
+            'Gene symbols in List',
+            'GO domain',
+            'Hypergeometric p-Value',
+           ]]
         return df
 
 
