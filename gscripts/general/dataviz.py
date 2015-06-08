@@ -1445,6 +1445,7 @@ def plot_pdf(data, bins=50, ax=None, **kwargs):
 #    stripchart(ax, data, pos, mean, median, 0.8 * w)
 #    violinplot(ax, data, pos, False, cut)
 #    ppl.remove_chartjunk(ax, ['top', 'right'])
+
 def ma_plot(df, ax):
     """
     Given a DF from deseq, plot the MA Plot.
@@ -1462,27 +1463,34 @@ def ma_plot(df, ax):
     ax.set_ylabel("Log 2 Fold Change")
     ax.set_xscale("log")
                                         
-def plot_go_enrichment(df, filter_value=None, max_terms=None, **kwargs):
-        df = df.copy()
-        new_index = []
-        for index, description in izip(df.index, df['GO Term Description']):
-            new_index.append(list(index[:-1]) + [description])
-        df.index = pd.MultiIndex.from_tuples(new_index)
-            
-        go_matrix = df['Bonferroni-corrected Hypergeometric p-Value'].apply(lambda x: -1 * np.log10(x))
-        go_matrix = go_matrix.unstack(range(len(go_matrix.index.levels) - 1))
-        go_matrix = go_matrix.fillna(0)
-            
-        #Set cutoff on values
-        if filter_value is not None:
-            go_matrix = go_matrix[go_matrix.apply(max, axis=1) > filter_value]
-                
-        #Set cutoff on number of go terms to show
-        if max_terms is not None:
-            go_matrix = go_matrix.ix[go_matrix.max(axis=1).order(ascending=False).index].ix[:max_terms]
-        sns.clustermap(go_matrix, robust=True, **kwargs)
+from itertools import izip
+import seaborn as sns
 
-                                                                
+
+def plot_go_enrichment(df, filter_value=None, max_terms=None, **kwargs):
+    df = df.copy()
+    new_index = []
+    for index, description in izip(df.index, df['GO Term Description']):
+        new_index.append(list(index[:-1]) + [description])
+    df.index = pd.MultiIndex.from_tuples(new_index)
+
+    go_matrix = df['Bonferroni-corrected Hypergeometric p-Value'].apply(lambda x: -1 * np.log10(x))
+    go_matrix = go_matrix.unstack(range(len(go_matrix.index.levels) - 1))
+    go_matrix = go_matrix.fillna(0)
+
+    #Set cutoff on values
+    if filter_value is not None:
+        go_matrix = go_matrix[go_matrix.apply(max, axis=1) > filter_value]
+
+    #Set cutoff on number of go terms to show
+    if max_terms is not None:
+        go_matrix = go_matrix.ix[go_matrix.max(axis=1).order(ascending=False).index].ix[:max_terms]
+
+    go_matrix[go_matrix == np.inf] = -1
+    go_matrix[go_matrix == -1] = go_matrix.values.max()
+
+    sns.clustermap(go_matrix, robust=True, **kwargs)
+
 class Figure(object):
     def __init__(self, saveas, tight_layout=True, **kwargs):
         self.kwargs = kwargs
