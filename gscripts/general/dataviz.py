@@ -1474,6 +1474,7 @@ def plot_go_enrichment(df, filter_value=None, max_terms=None, **kwargs):
         new_index.append(list(index[:-1]) + [description])
     df.index = pd.MultiIndex.from_tuples(new_index)
 
+
     go_matrix = df['Bonferroni-corrected Hypergeometric p-Value'].apply(lambda x: -1 * np.log10(x))
     go_matrix = go_matrix.unstack(range(len(go_matrix.index.levels) - 1))
     go_matrix = go_matrix.fillna(0)
