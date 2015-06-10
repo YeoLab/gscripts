@@ -1,0 +1,13 @@
+#!/bin/bash
+
+# Usage: make_project project_name
+
+#makes new project in my sequencing directory
+PROJECT=$1
+mkdir ${PROJECT}
+cd ${PROJECT}
+mkdir -p ~/scratch/projects/${PROJECT}/{analysis,data}
+ln -s ~/scratch/projects/${PROJECT}/analysis
+ln -s ~/scratch/projects/${PROJECT}/data/
+mkdir -p ~/processing_scripts/projects/${PROJECT}/scripts
+ln -s ~/processing_scripts/projects/${PROJECT}/scripts
