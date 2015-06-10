@@ -45,18 +45,19 @@ class AnalizeCLIPSeq extends QScript {
     this.reverse_strand = reverse
   }
 
-  case class cutadapt(fastq_file: File, noAdapterFastq: File, adapterReport: File, adapter: List[String]) extends Cutadapt{
+  case class cutadapt(fastq_file: File, noAdapterFastq: File, adapterReport: File, adapter: List[String], my_overlap: Int) extends Cutadapt{
        override def shortDescription = "cutadapt"
 
        this.inFastq = fastq_file
        this.outFastq = noAdapterFastq 
        this.report = adapterReport
-       this.anywhere = adapter ++ List("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA", 
-        		  	     "TTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTT") 
-       this.overlap = 5
+       this.three_prime = adapter //++ List("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA", "TTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTT") 
+       this.overlap = my_overlap
        this.length = 18
        this.quality_cutoff = 6 
        this.isIntermediate = true
+       this.times = 1
+       this.error_rate = .1
   }
 
   case class sortSam(inSam: File, outBam: File, sortOrderP: SortOrder) extends SortSam {
@@ -281,12 +282,17 @@ class AnalizeCLIPSeq extends QScript {
 	var fastq_file: File = item._1
 	var genome: String = item._2 
       	var replicate: String = item._3
-	var adapters: String = item._4
+	var adapters = item._4.split(""";""").toList
 
+	var match_length: String = item._5
+	if(match_length == "null") {
+	  match_length = "1"
+	}
       	val noPolyAFastq = swapExt(swapExt(fastq_file, ".gz", ""), ".fastq", ".polyATrim.fastq.gz")
-      	val noPolyAReport = swapExt(noPolyAFastq, ".fastq.gz", ".metrics")
-	
-      	val noAdapterFastq = swapExt(noPolyAFastq, ".fastq.gz", ".adapterTrim.fastq.gz")
+      	
+	val round1_cutadapt = swapExt(noPolyAFastq, ".fastq.gz", ".adapterTrim.fastq.gz")
+	val round1Report = swapExt(round1_cutadapt, ".fastq.gz", ".metrics")
+      	val noAdapterFastq = swapExt(round1_cutadapt, ".fastq.gz", ".adapterTrim.round2.fastq.gz")
       	val adapterReport = swapExt(noAdapterFastq, ".fastq.gz", ".metrics")
 	val outRep = swapExt(noAdapterFastq, ".fastq.gz", ".rep.bam")
       	val filteredFastq = swapExt(outRep, "", "Unmapped.out.mate1")
@@ -305,7 +311,14 @@ class AnalizeCLIPSeq extends QScript {
 	if(!fromBam) { 
       	  add(new FastQC(inFastq = fastq_file))
 	  //filters out adapter reads
-	  add(cutadapt(fastq_file = fastq_file, noAdapterFastq = noAdapterFastq, adapterReport = adapterReport, adapter = adapter ) )
+	  
+	  add(cutadapt(fastq_file = fastq_file, noAdapterFastq = round1_cutadapt, adapterReport = round1Report, adapter = adapters, my_overlap=1))
+
+	  add(cutadapt(fastq_file = round1_cutadapt, 
+		       noAdapterFastq = noAdapterFastq,
+		       adapterReport = adapterReport, 
+		       adapter = adapters, 
+		       my_overlap=match_length.toInt))
 	  
 	  
           add(star(input = noAdapterFastq,
