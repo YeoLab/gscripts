@@ -4,8 +4,8 @@
 
 #makes new project in my sequencing directory
 PROJECT=$1
-mkdir ${PROJECT}
-cd ${PROJECT}
+mkdir ~/projects/${PROJECT}
+cd ~/projects/${PROJECT}
 mkdir -p ~/scratch/projects/${PROJECT}/{analysis,data}
 ln -s ~/scratch/projects/${PROJECT}/analysis
 ln -s ~/scratch/projects/${PROJECT}/data/
