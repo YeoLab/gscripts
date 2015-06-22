@@ -45,18 +45,18 @@ class AnalizeCLIPSeq extends QScript {
     this.reverse_strand = reverse
   }
 
-  case class cutadapt(fastq_file: File, noAdapterFastq: File, adapterReport: File, adapter: List[String]) extends Cutadapt{
+  case class cutadapt(fastq_file: File, noAdapterFastq: File, adapterReport: File, adapter: List[String], my_overlap: Int) extends Cutadapt{
        override def shortDescription = "cutadapt"
 
        this.inFastq = fastq_file
        this.outFastq = noAdapterFastq 
        this.report = adapterReport
-       this.anywhere = adapter ++ List("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA", 
-        		  	     "TTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTT") 
-       this.overlap = 5
+       this.three_prime = adapter //++ List("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA", "TTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTT") 
+       this.overlap = overlap
        this.length = 18
        this.quality_cutoff = 6 
        this.isIntermediate = true
+       this.times = 0
   }
 
   case class sortSam(inSam: File, outBam: File, sortOrderP: SortOrder) extends SortSam {
@@ -142,11 +142,11 @@ class AnalizeCLIPSeq extends QScript {
 	this.isIntermediate = true
   }
 
-  case class star(input: File, output: File, genome_location: String, fastq_out: File = null, multimap_number: Int =1) extends STAR {
+  case class star(input: File, output: File, genome_location: String, fastq_out: File = null) extends STAR {
     this.inFastq = input
     this.outSam = output
     this.genome = genome_location
-    this.multimapNMax = multimap_number
+    this.multimapNMax = 1
     this.isIntermediate = true
     this.alpha = alpha
     this.outFastq = fastq_out 
@@ -275,14 +275,15 @@ class AnalizeCLIPSeq extends QScript {
     for ((groupName, valueList) <- (fileList groupBy (_._3))) {
       var combinedBams : Seq[File] = List()
     
-      for (item : Tuple6[File, String, String, String, String, String] <- valueList) {
+      for (item : Tuple5[File, String, String] <- valueList) {
 	
 	
 	var fastq_file: File = item._1
 	var genome: String = item._2 
       	var replicate: String = item._3
-	var adapters: String = item._4
-
+	var adapters: String = item._4.toString().split(""";""")
+	var match_length: String = item._5
+ 
       	val noPolyAFastq = swapExt(swapExt(fastq_file, ".gz", ""), ".fastq", ".polyATrim.fastq.gz")
       	val noPolyAReport = swapExt(noPolyAFastq, ".fastq.gz", ".metrics")
 	
@@ -305,14 +306,19 @@ class AnalizeCLIPSeq extends QScript {
 	if(!fromBam) { 
       	  add(new FastQC(inFastq = fastq_file))
 	  //filters out adapter reads
-	  add(cutadapt(fastq_file = fastq_file, noAdapterFastq = noAdapterFastq, adapterReport = adapterReport, adapter = adapter ) )
+	  add(cutadapt(fastq_file = fastq_file, noAdapterFastq = noAdapterFastq, adapterReport = adapterReport, adapter = adapters, my_overlap=1 ) )
+
+	  add(cutadapt(fastq_file = fastq_file, 
+		       noAdapterFastq = noAdapterFastq,
+		       adapterReport = adapterReport, 
+		       adapter = adapters, 
+		       my_overlap=Int(match_length  ) )
 	  
 	  
           add(star(input = noAdapterFastq,
                    output = outRep,
                    genome_location = "/projects/ps-yeolab/genomes/RepBase18.05.fasta/STAR_fixed",
-		   fastq_out = filteredFastq,
-		   multimap_number=10))
+		   fastq_out = filteredFastq))
 	  
           var countRepetitiveRegions = new CountRepetitiveRegions
           countRepetitiveRegions.inBam = outRep
