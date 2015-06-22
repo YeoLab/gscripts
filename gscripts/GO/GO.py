@@ -1,6 +1,5 @@
 from __future__ import division
-from collections import defaultdict
-import operator
+from itertools import izip
 from functools import partial
 
 import numpy as np
@@ -28,6 +27,7 @@ class GO(object):
         GO, allGenes = self._generateOntology()
         self.GO = GO
         self.allGenes = allGenes
+        self.gene_id_to_name = dict(izip(self.GO_to_ENSG['Ensembl Gene ID'], self.GO_to_ENSG['Associated Gene Name']))
 
     def enrichment(self, geneList, background=None):
         if background is None:
@@ -71,9 +71,12 @@ class GO(object):
         df['Bonferroni-corrected Hypergeometric p-Value'] = df['Hypergeometric p-Value'].apply(lambda x: min(x * num_tests, 1)).dropna()
 
         #Compute various value for backwards compatabality
-        df['Ensembl Gene IDs in List'] = df['Ensembl Gene ID'].apply(",".join)
-        df['Gene symbols in List'] = df['Associated Gene Name'].apply(",".join)
-        df['GO Term ID'] = df['GO Term Name'].apply(",".join)
+        df['Ensembl Gene IDs in List'] = df['Ensembl Gene ID'].apply(lambda x: x & geneList)
+        df['Gene symbols in List'] = df['Ensembl Gene IDs in List'].apply(lambda x: {self.gene_id_to_name[gene_id] for gene_id in x})
+
+        df['Ensembl Gene IDs in List'] = df['Ensembl Gene IDs in List'].apply(",".join)
+        df['Gene symbols in List'] = df['Gene symbols in List'].apply(",".join)
+        df['GO Term Description'] = df['GO Term Name'].apply(",".join)
         df['GO domain'] = df['GO domain'].apply(",".join)
         df['N Genes in GO category'] = df['Ensembl Gene ID'].apply(len)
 
@@ -86,7 +89,7 @@ class GO(object):
 
         #Reorder for presentation purposes
         df = df[[
-            'GO Term ID',
+            'GO Term Description',
             'Bonferroni-corrected Hypergeometric p-Value',
             'N Genes in List and GO Category',
             'N Expressed Genes in GO Category',
