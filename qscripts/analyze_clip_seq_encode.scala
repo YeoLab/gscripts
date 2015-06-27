@@ -53,7 +53,7 @@ class AnalizeCLIPSeq extends QScript {
 		      pairedFile: File = null, 
 		      pairedOut: File = null, 
 		      adapter: List[String] = null, 
-		      five_prime_adapter: List[String] = null
+		      five_prime_adapter: List[String] = Nil
 		    ) extends Cutadapt {
     override def shortDescription = "cutadapt"
     
@@ -171,7 +171,8 @@ class AnalizeCLIPSeq extends QScript {
                   genome_location: String,
 		  paired: File = null,
 		  fastq_out: File = null,
-		  multimap_number: Int = 1) extends STAR {
+		  multimap_number: Int = 1,
+		  end_to_end: Boolean = false) extends STAR {
 
 
     
@@ -187,6 +188,7 @@ class AnalizeCLIPSeq extends QScript {
     this.isIntermediate = true
     this.alpha = alpha
     this.outFastq = fastq_out 
+    this.endToEnd = end_to_end
   }
 
   case class samtoolsIndexFunction(input: File, output: File) extends SamtoolsIndexFunction {
@@ -334,7 +336,13 @@ class AnalizeCLIPSeq extends QScript {
 	if(match_length == "null") {
 	  match_length = "1"
 	}
-	var five_prime_adapters = item._6.split(""";""").toList
+
+	
+	var five_prime_adapters = null 
+	if (item._6 != "null") {
+	  var five_prime_adapters = item._6.split(""";""").toList
+	} 
+	
 
       	val noPolyAFastq = swapExt(swapExt(fastq_file, ".gz", ""), ".fastq", ".polyATrim.fastq.gz")
       	
@@ -348,10 +356,10 @@ class AnalizeCLIPSeq extends QScript {
       	val filterd_results = swapExt(filteredFastq, ".rep.bamUnmapped.out.mate1", ".rmRep.metrics")
       	var bamFile = swapExt(filteredFastq, ".rep.bamUnmapped.out.mate1", ".rmRep.bam")
 	var sortedBamFile = swapExt(bamFile, ".bam", ".sorted.bam")
-	val r2SortedBamFile = swapExt(sortedBamFile, ".bam", "r2.bam")
-      	val NRFFile = swapExt(bamFile, ".bam", ".NRF.metrics")
+	val r2SortedBamFile = swapExt(sortedBamFile, ".bam", ".r2.bam")
+      	val NRFFile = swapExt(r2SortedBamFile, ".bam", ".NRF.metrics")
 	
-      	val rmDupedBamFile = swapExt(bamFile, ".bam", ".rmDup.bam")
+      	val rmDupedBamFile = swapExt(r2SortedBamFile, ".bam", ".rmDup.bam")
       	val rmDupedMetricsFile = swapExt(rmDupedBamFile, ".bam", ".metrics")
 	
       	val sortedrmDupedBamFile = swapExt(rmDupedBamFile, ".bam", ".sorted.bam")
@@ -392,9 +400,10 @@ class AnalizeCLIPSeq extends QScript {
           add(star(input = noAdapterFastq,
 		   paired = noAdapterFastq_pair,
                    output = outRep,
-                   genome_location = "/projects/ps-yeolab/genomes/RepBase18.05.fasta/STAR_fixed",
+                   genome_location = repBaseGenomeLocation(genome),
 		   fastq_out = filteredFastq,
-		   multimap_number=10))
+		   multimap_number=30,
+		   end_to_end=true))
 	  
           var countRepetitiveRegions = new CountRepetitiveRegions
           countRepetitiveRegions.inBam = outRep
@@ -403,20 +412,21 @@ class AnalizeCLIPSeq extends QScript {
 	  
           
           var outRepSorted = swapExt(outRep, ".bam", ".sorted.bam")
-	  add(new SamtoolsSortSam(outRep, outRepSorted)) 
+	  add(sortSam(outRep, outRepSorted, SortOrder.coordinate)) 
 
 	  var rmDupRep = swapExt(outRepSorted, ".bam", ".rmDup.bam")
 	  add(new RemoveDuplicates(outRepSorted,
                                    rmDupRep,
                                    swapExt(rmDupRep, ".bam", ".metrics")))	  
 	  
-	  add(new SamtoolsSortSam(rmDupRep, swapExt(rmDupRep, ".bam", ".sorted.bam"))) 
+	  add(sortSam(rmDupRep, swapExt(rmDupRep, ".bam", ".sorted.bam"), SortOrder.coordinate)) 
 
       	  add(new FastQC(filteredFastq))
       	  add(star(input = filteredFastq, 
 		   paired = filteredPair,
 		   output = bamFile, 
-		   genome_location = starGenomeLocation(genome)))
+		   genome_location = starGenomeLocation(genome),
+		   end_to_end=true))
       	  add(sortSam(bamFile, sortedBamFile, SortOrder.coordinate))
 	  add(new r2ReadsOnly(sortedBamFile, r2SortedBamFile))
       	} else {
