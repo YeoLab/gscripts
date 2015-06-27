@@ -342,12 +342,12 @@ def parse_new_cutadapt_file(report):
         report_dict['Reads with adapter percent'] = adapter[2]
 
 
-    report_dict['Reads that were too short'] = too_short[1]
+    report_dict['Too short reads'] = too_short[1]
     report_dict['Reads that were too short percent'] = too_short[2]
     report_dict['Reads Written'] = written[1]
     report_dict['Reads Written perccent'] = written[2]
     report_dict['Processed bases'] = bp_processed[1]
-    report_dict['Quality-trimmed'] = bp_quality_trimmed[1]
+    report_dict['Trimmed bases'] = bp_quality_trimmed[1]
     report_dict['Quality-trimmed percent'] = bp_quality_trimmed[2]
     report_dict[bp_written[0]] = bp_written[1]
     report_dict["{} percent".format(bp_written[0])] = bp_written[2]
