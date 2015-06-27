@@ -310,9 +310,9 @@ class AnalizeCLIPSeq extends QScript {
 	  
           add(star(input = noAdapterFastq,
                    output = outRep,
-                   genome_location = "/projects/ps-yeolab/genomes/RepBase18.05.fasta/STAR_fixed",
+                   genome_location = repBaseGenomeLocation(species),
 		   fastq_out = filteredFastq,
-		   multimap_number=10))
+		   multimap_number=30))
 	  
           var countRepetitiveRegions = new CountRepetitiveRegions
           countRepetitiveRegions.inBam = outRep
