@@ -211,20 +211,22 @@ def parse_rm_duped_metrics_file(rmDup_file):
 
 def get_cutadapt_version(report):
     with open(report) as file_handle:
-        version = file_handle.next()
-        version = version.split()[-4]
+            version = file_handle.next()
+    version = version.split()[-4]
 
     return int(version.split(".")[1])
 
 
 def parse_cutadapt_file(report):
+    if os.path.getsize(report) == 0:
+        return
 
     old_cutadapt = get_cutadapt_version(report) <= 8
-    print old_cutadapt
     if old_cutadapt:
         return parse_old_cutadapt_file(report)
     else:
         return parse_new_cutadapt_file(report)
+
 
 def parse_old_cutadapt_file(report):
     report_dir = {}
@@ -263,13 +265,16 @@ def get_number_and_percent(line):
     line[1] = int(line[1].replace(",", ""))
     return line
 
+
 def get_number(line):
     line = [x.strip() for x in line.strip().split(":")]
     line[1] = int(line[1].replace(",", ""))
     return line
 
+
 def strip_bp(line):
     return line.replace("bp", "")
+
 
 def remove_header(file_handle):
     """ for both SE and PE output removes header unifromly from cutadapt metrics file"""
@@ -281,6 +286,7 @@ def remove_header(file_handle):
     file_handle.next()
     file_handle.next()
     #print foo.next()
+
 
 def parse_new_cutadapt_file(report):
     report_dict = {}
@@ -317,6 +323,7 @@ def parse_new_cutadapt_file(report):
     except Exception as e:
         print e
         print report
+        return report_dict
 
     report_dict['Processed reads'] = processed_reads[1]
     if paired_file:
@@ -330,6 +337,9 @@ def parse_new_cutadapt_file(report):
         report_dict['Read 2 Quality-trimmed'] = r2_bp_trimmed[1]
         report_dict['Read 1 {}'.format(bp_written[0])] = r1_bp_written[1]
         report_dict['Read 2 {}'.format(bp_written[0])] = r2_bp_written[1]
+    else:
+        report_dict['Reads with adapter'] = adapter[1]
+        report_dict['Reads with adapter percent'] = adapter[2]
 
 
     report_dict['Reads that were too short'] = too_short[1]
@@ -343,6 +353,7 @@ def parse_new_cutadapt_file(report):
     report_dict["{} percent".format(bp_written[0])] = bp_written[2]
 
     return report_dict
+
 
 def commas(x):
     try:
