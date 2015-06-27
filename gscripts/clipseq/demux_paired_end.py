@@ -7,7 +7,7 @@ Converts randomer + barcoded fastq files into something that can be barcode coll
 
 """
 
-from collections import Counter
+from collections import Counter, defaultdict
 from itertools import izip
 import gzip
 import os
@@ -51,7 +51,7 @@ def read_has_barcode(barcodes, read, max_hamming_distance=0):
         if hamming_distances[min_barcode] <= max_hamming_distance:
             closest_barcode = effective_barcodes[min_barcode]
             break
-    return closest_barcode
+    return closest_barcode, read_barcode
 
 
 def reformat_read(name_1, seq_1, plus_1, quality_1,
@@ -68,7 +68,7 @@ def reformat_read(name_1, seq_1, plus_1, quality_1,
     """
 
 
-    barcode = read_has_barcode(barcodes.keys(), seq_1, max_hamming_distance)
+    barcode, actual_barcode = read_has_barcode(barcodes.keys(), seq_1, max_hamming_distance)
     barcode_length = len(barcode) if barcode is not None else 0
 
     randomer = seq_2[:RANDOMER_LENGTH]
@@ -88,7 +88,7 @@ def reformat_read(name_1, seq_1, plus_1, quality_1,
     result_1 = name_1 + seq_1 + plus_1 + quality_1
     result_2 = name_2 + seq_2 + plus_2 + quality_2
 
-    return barcode, randomer, result_1, result_2
+    return barcode, actual_barcode, randomer, result_1, result_2
 
 if __name__ == "__main__":
     usage = """ takes raw fastq files and demultiplex inline randomer + adapter sequences  """
@@ -128,7 +128,7 @@ if __name__ == "__main__":
                                  gzip.open(".".join(split_file_2), 'w'),
                                  ]
 
-            randomer_counts[line[0]] = Counter()
+            randomer_counts[line[0]] = defaultdict(Counter())
 
     split_file_1 = options.out_file_1.split(".")
     split_file_1.insert(-2, "unassigned")
@@ -139,7 +139,7 @@ if __name__ == "__main__":
     barcodes['unassigned'] = [gzip.open(".".join(split_file_1), 'w'),
                               gzip.open(".".join(split_file_2), 'w'),
                               ]
-    randomer_counts['unassigned'] = Counter()
+    randomer_counts['unassigned'] = defaultdict(Counter())
 
     #reads through initial file parses everything out
     with my_open(options.fastq_1) as fastq_file_1, my_open(options.fastq_2) as fastq_file_2, open(options.metrics_file, 'w') as metrics_file:
@@ -157,7 +157,7 @@ if __name__ == "__main__":
                 plus = "+\n" #sometimes the descriptor is here, don't want it
                 quality_2 = fastq_file_2.next()
 
-                barcode, randomer, result_1, result_2 = reformat_read(name_1, seq_1, plus, quality_1,
+                barcode, actual_barcode, randomer, result_1, result_2 = reformat_read(name_1, seq_1, plus, quality_1,
                                                                       name_2, seq_2, plus, quality_2,
                                                                       barcodes, RANDOMER_LENGTH,
                                                                       max_hamming_distance=options.max_hamming_distance)
@@ -166,9 +166,10 @@ if __name__ == "__main__":
                 barcodes[barcode][1].write(result_2)
             except StopIteration:
                 break
-        for barcode, randomers in randomer_counts.items():
-            for randomer, count in randomers.items():
-                metrics_file.write("%s\t%s\t%s\n" % (barcode, randomer, count))
+        for barcode, actual_barcodes in randomer_counts.items():
+            for actual_barcode, randomers in actual_barcodes.items():
+                for randomer, count in randomers.items():
+                    metrics_file.write("%s\t%s\t%s\t%s\n" % (barcode, randomer, count))
 
     #cleans up at the end
     for lst in barcodes.values():
