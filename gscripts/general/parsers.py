@@ -98,7 +98,8 @@ def clipseq_metrics(analysis_dir, iclip=False, num_seps=None, sep=".",
     """
     if num_seps is None:
         num_seps = 2 if iclip else 1
-    
+
+    cutadapt_round2_files = glob.glob(os.path.join(analysis_dir, "*.adapterTrim.round2.metrics"))
     rm_duped_files = glob.glob(os.path.join(analysis_dir, "*rmRep.rmDup.metrics"))
 
     if len(rm_duped_files) == 0:
@@ -110,14 +111,21 @@ def clipseq_metrics(analysis_dir, iclip=False, num_seps=None, sep=".",
     peaks_files = glob.glob(os.path.join(analysis_dir, "*.peaks.bed"))
     spot_files = glob.glob(os.path.join(analysis_dir, "*peaks.metrics"))
 
+    cutadapt_round2_names = get_names(cutadapt_round2_files, num_seps, sep)
+
     rm_duped_names = get_names(rm_duped_files, num_seps, sep)
     peaks_names = get_names(peaks_files, num_seps, sep)
     spot_names = get_names(spot_files, num_seps, sep) 
+
+    cutadapt_round2_df = pd.DataFrame({name: parse_cutadapt_file(cutadapt_file) for name, cutadapt_file in cutadapt_round2_names.items()}).transpose()
+    cutadapt_round2_df.columns = ["{} Round 2".format(col) for col in cutadapt_round2_df.columns]
 
     rm_duped_df = pd.DataFrame({name: parse_rm_duped_metrics_file(rm_duped_file) for name, rm_duped_file in rm_duped_names.items()}).transpose()
     spot_df = pd.DataFrame({name: parse_peak_metrics(spot_file) for name, spot_file in spot_names.items()}).transpose()
     peaks_df = pd.DataFrame({name: {"Num Peaks": len(pybedtools.BedTool(peaks_file))} for name, peaks_file in peaks_names.items()}).transpose()
     combined_df = rnaseq_metrics(analysis_dir, num_seps, sep)
+
+    combined_df = pd.merge(combined_df, cutadapt_round2_df, left_index=True, right_index=True, how="outer")
     combined_df = pd.merge(combined_df, rm_duped_df, left_index=True, right_index=True, how="outer")
     combined_df = pd.merge(combined_df, spot_df, left_index=True, right_index=True, how="outer")
     combined_df = pd.merge(combined_df, peaks_df, left_index=True, right_index=True, how="outer")
