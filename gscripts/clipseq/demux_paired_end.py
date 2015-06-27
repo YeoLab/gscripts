@@ -35,18 +35,21 @@ def read_has_barcode(barcodes, read, max_hamming_distance=0):
     :return: returns best barcode match in read, none if none found
     """
 
-    barcode_lengths = {len(barcode) for barcode in barcodes}
+    #This takes care of the edge case of some barcodes having Ns on the end
+    effective_barcodes = {barcode.split("N")[0]: barcode for barcode in barcodes}
+
+    barcode_lengths = {len(barcode) for barcode in effective_barcodes}
     closest_barcode = None
     #assumes larger barcodes are less likely, and searches for them first
     #for each barcode length see if known barcodes appear
     for barcode_length in sorted(barcode_lengths, reverse=True):
         #Gets min hamming distance between barcode in read and barcode in list, behavior undefined if tie
         read_barcode = read[:barcode_length]
-        cur_length_barcodes = [barcode for barcode in barcodes if len(barcode) == barcode_length]
+        cur_length_barcodes = [barcode for barcode in effective_barcodes if len(barcode) == barcode_length]
         hamming_distances = {barcode: hamming(barcode, read_barcode) for barcode in cur_length_barcodes}
         min_barcode = min(hamming_distances, key=hamming_distances.get)
         if hamming_distances[min_barcode] <= max_hamming_distance:
-            closest_barcode = min_barcode
+            closest_barcode = effective_barcodes[min_barcode]
             break
     return closest_barcode
 
@@ -66,7 +69,7 @@ def reformat_read(name_1, seq_1, plus_1, quality_1,
 
 
     barcode = read_has_barcode(barcodes.keys(), seq_1, max_hamming_distance)
-    barcode_length = len(barcode)
+    barcode_length = len(barcode) if barcode is not None else 0
 
     randomer = seq_2[:RANDOMER_LENGTH]
 
@@ -157,7 +160,7 @@ if __name__ == "__main__":
                 barcode, randomer, result_1, result_2 = reformat_read(name_1, seq_1, plus, quality_1,
                                                                       name_2, seq_2, plus, quality_2,
                                                                       barcodes, RANDOMER_LENGTH,
-                                                                      max_hamming_distance=args.max_hamming_distance)
+                                                                      max_hamming_distance=options.max_hamming_distance)
                 randomer_counts[barcode][randomer] += 1
                 barcodes[barcode][0].write(result_1)
                 barcodes[barcode][1].write(result_2)
