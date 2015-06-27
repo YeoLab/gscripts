@@ -128,7 +128,7 @@ if __name__ == "__main__":
                                  gzip.open(".".join(split_file_2), 'w'),
                                  ]
 
-            randomer_counts[line[0]] = defaultdict(Counter())
+            randomer_counts[line[0]] = defaultdict(Counter)
 
     split_file_1 = options.out_file_1.split(".")
     split_file_1.insert(-2, "unassigned")
@@ -139,7 +139,7 @@ if __name__ == "__main__":
     barcodes['unassigned'] = [gzip.open(".".join(split_file_1), 'w'),
                               gzip.open(".".join(split_file_2), 'w'),
                               ]
-    randomer_counts['unassigned'] = defaultdict(Counter())
+    randomer_counts['unassigned'] = defaultdict(Counter)
 
     #reads through initial file parses everything out
     with my_open(options.fastq_1) as fastq_file_1, my_open(options.fastq_2) as fastq_file_2, open(options.metrics_file, 'w') as metrics_file:
@@ -161,7 +161,7 @@ if __name__ == "__main__":
                                                                       name_2, seq_2, plus, quality_2,
                                                                       barcodes, RANDOMER_LENGTH,
                                                                       max_hamming_distance=options.max_hamming_distance)
-                randomer_counts[barcode][randomer] += 1
+                randomer_counts[barcode][actual_barcode][randomer] += 1
                 barcodes[barcode][0].write(result_1)
                 barcodes[barcode][1].write(result_2)
             except StopIteration:
