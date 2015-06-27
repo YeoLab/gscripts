@@ -96,8 +96,13 @@ def clipseq_metrics(analysis_dir, iclip=False, num_seps=None, sep=".",
         num_seps = 2 if iclip else 1
     
     rm_duped_files = glob.glob(os.path.join(analysis_dir, "*rmRep.rmDup.metrics"))
+
+    if len(rm_duped_files) == 0:
+        rm_duped_files = glob.glob(os.path.join(analysis_dir, "*r2.rmDup.metrics"))
+        
     if len(rm_duped_files) == 0:
         rm_duped_files = glob.glob(os.path.join(analysis_dir, "*.rmDup.metrics"))
+    
     peaks_files = glob.glob(os.path.join(analysis_dir, "*.peaks.bed"))
     spot_files = glob.glob(os.path.join(analysis_dir, "*peaks.metrics"))
 
