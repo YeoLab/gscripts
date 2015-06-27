@@ -76,7 +76,6 @@ def rnaseq_metrics(analysis_dir, num_seps=1, sep="."):
         pass
 
     #combined_df["Repetative Reads"] = (combined_df['Input Reads'] - combined_df['Reads Passing Quality Filter']).astype(int)
-    #combined_df["Reads After Triming"] = (combined_df['Input Reads'] - combined_df['Too short reads']).astype(int)
 
     #Get Rid of worthless metrics
     combined_df = combined_df.drop(["Finished on",
@@ -333,8 +332,8 @@ def parse_new_cutadapt_file(report):
         report_dict["Read 2 with adapter percent"] = r2_adapter[2]
         report_dict['Read 1 basepairs processed'] = r1_bp_processed[1]
         report_dict['Read 2 basepairs processed'] = r2_bp_processed[1]
-        report_dict['Read 1 Quality-trimmed'] = r1_bp_trimmed[1]
-        report_dict['Read 2 Quality-trimmed'] = r2_bp_trimmed[1]
+        report_dict['Read 1 Trimmed bases'] = r1_bp_trimmed[1]
+        report_dict['Read 2 Trimmed bases'] = r2_bp_trimmed[1]
         report_dict['Read 1 {}'.format(bp_written[0])] = r1_bp_written[1]
         report_dict['Read 2 {}'.format(bp_written[0])] = r2_bp_written[1]
     else:
@@ -348,7 +347,7 @@ def parse_new_cutadapt_file(report):
     report_dict['Reads Written perccent'] = written[2]
     report_dict['Processed bases'] = bp_processed[1]
     report_dict['Trimmed bases'] = bp_quality_trimmed[1]
-    report_dict['Quality-trimmed percent'] = bp_quality_trimmed[2]
+    report_dict['Trimmed bases percent'] = bp_quality_trimmed[2]
     report_dict[bp_written[0]] = bp_written[1]
     report_dict["{} percent".format(bp_written[0])] = bp_written[2]
 
