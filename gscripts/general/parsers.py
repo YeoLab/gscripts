@@ -1,6 +1,7 @@
 """
 
-General parsers for QC output of pipeline file, generally pass a handle to the file you want to parse, returns a dict containing
+General parsers for QC output of pipeline file, generally pass a handle to the file you want to parse, returns a dict
+containing
 all useful information
 
 Currently this isn't standard
@@ -12,6 +13,7 @@ import os
 import pandas as pd
 import pybedtools
 
+
 def get_names(files, num_seps, sep):
 
     """ Given a list of files return that files base name and the path to that file
@@ -20,7 +22,8 @@ def get_names(files, num_seps, sep):
         sep -- str seperator to split on
     """
 
-    return {sep.join(os.path.basename(file_name).split(sep)[0 : num_seps]) : file_name for file_name in files}
+    return {sep.join(os.path.basename(file_name).split(sep)[0: num_seps]): file_name for file_name in files}
+
 
 def rnaseq_metrics(analysis_dir, num_seps=1, sep="."):
     """
@@ -38,19 +41,19 @@ def rnaseq_metrics(analysis_dir, num_seps=1, sep="."):
     rmrep_files = glob.glob(os.path.join(analysis_dir, "*rmRep.metrics"))
     
     star_files = glob.glob(os.path.join(analysis_dir, "*rmRep.bamLog.final.out"))
-    if len(star_files) == 0: #hack for old data
+    if len(star_files) == 0:  #hack for old data
         star_files = glob.glob(os.path.join(analysis_dir, "*rmRep.samLog.final.out"))
-    if len(star_files) == 0: #Hack for new data
+    if len(star_files) == 0:  #Hack for new data
         star_files = glob.glob(os.path.join(analysis_dir, "*.bamLog.final.out"))
     nrf_names = get_names(nrf_files, num_seps, sep) 
     cutadapt_names = get_names(cutadapt_files, num_seps, sep)
     rmrep_names = get_names(rmrep_files, num_seps, sep)
     star_names = get_names(star_files, num_seps, sep) 
     
-    nrf_df = pd.DataFrame({name : parse_nrf_file(nrf_file) for name, nrf_file in nrf_names.items()}).transpose()
-    cutadapt_df = pd.DataFrame({name : parse_cutadapt_file(cutadapt_file) for name, cutadapt_file in cutadapt_names.items()}).transpose()
-    rmrep_df = pd.DataFrame({name : parse_rmrep_file(rmrep_file) for name, rmrep_file in rmrep_names.items()}).transpose()
-    star_df = pd.DataFrame({name : parse_star_file(star_file) for name, star_file in star_names.items()}).transpose()
+    nrf_df = pd.DataFrame({name: parse_nrf_file(nrf_file) for name, nrf_file in nrf_names.items()}).transpose()
+    cutadapt_df = pd.DataFrame({name: parse_cutadapt_file(cutadapt_file) for name, cutadapt_file in cutadapt_names.items()}).transpose()
+    rmrep_df = pd.DataFrame({name: parse_rmrep_file(rmrep_file) for name, rmrep_file in rmrep_names.items()}).transpose()
+    star_df = pd.DataFrame({name: parse_star_file(star_file) for name, star_file in star_names.items()}).transpose()
     
     combined_df = pd.merge(cutadapt_df, star_df, left_index=True, right_index=True, how="outer")
     combined_df = pd.merge(combined_df, rmrep_df, left_index=True, right_index=True, how="outer")
@@ -71,17 +74,19 @@ def rnaseq_metrics(analysis_dir, num_seps=1, sep="."):
     except KeyError:
         print "cutadapt file maybe be broken, ignoring calculation"
         pass
+
     #combined_df["Repetative Reads"] = (combined_df['Input Reads'] - combined_df['Reads Passing Quality Filter']).astype(int)
     #combined_df["Reads After Triming"] = (combined_df['Input Reads'] - combined_df['Too short reads']).astype(int)
 
     #Get Rid of worthless metrics
     combined_df = combined_df.drop(["Finished on",
-                  "Mapping speed, Million of reads per hour",
-                  #"Trimmed bases",
-                  "Started job on",
-                  "Started mapping on"], axis=1)
+                                    "Mapping speed, Million of reads per hour",
+                                    "Started job on",
+                                    "Started mapping on"], axis=1)
 
     return combined_df 
+
+
 def clipseq_metrics(analysis_dir, iclip=False, num_seps=None, sep=".",
                     percent_usable=.01, number_usable=500000, frip=.05):
 
@@ -192,8 +197,6 @@ def parse_nrf_file(nrf_file):
     
 def parse_rm_duped_metrics_file(rmDup_file):
     try:
-        total_count = 0
-        removed_count = 0 
         df = pd.read_csv(rmDup_file, sep="\t")
         
         return {"total_count": sum(df.total_count),
