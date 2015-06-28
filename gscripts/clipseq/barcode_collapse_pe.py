@@ -71,7 +71,10 @@ def barcode_collapse(in_bam, out_bam):
     return total_count, removed_count
 
 if __name__ == "__main__":
-    parser = OptionParser()
+    description=""""Paired End randomer aware duplciate removal algorithm."""
+    usage="""Assumes paired end reads are adjectent to each other in output file (ie only provide unsorted bams)
+             Also assumes no multimappers in the bam file, if there are multimappers behavior is undefined"""
+    parser = OptionParser(usage=usage, description=description)
     parser.add_option("-b", "--bam", dest="bam", help="bam file to barcode collapse")
     parser.add_option("-o", "--out_file", dest="out_file")
     parser.add_option("-m", "--metrics_file", dest="metrics_file")
