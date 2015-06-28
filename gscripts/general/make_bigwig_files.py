@@ -23,6 +23,7 @@ def genome_coverage_bed(in_bam=None, in_bed=None, out_bed_graph=None, genome=Non
             priming_call += " -split "
 
         priming_call += " -g {} ".format(genome)
+        print priming_call
         subprocess.check_call(priming_call, shell=True, stdout=out_bed_graph)
 
 
@@ -31,20 +32,22 @@ def normalize_bed_graph(in_bed_graph, in_bam, out_bed_graph):
         priming_call = "normalize_bedGraph.py "
         priming_call += " --bg {} ".format(in_bed_graph)
         priming_call += " --bam {}".format(in_bam)
-        subprocess.call(priming_call, shell=False, stdout=out_bed_graph)
+        print priming_call
+        subprocess.call(priming_call, stdout=out_bed_graph, shell=True)
 
 
 def bed_graph_to_big_wig(in_bed_graph, genome, out_big_wig):
     priming_call = "bedGraphToBigWig {} {} {}".format(in_bed_graph, genome, out_big_wig)
 
     with open(os.devnull, 'w') as fnull:
-        subprocess.call(priming_call, shell=False, stdout=fnull)
+        print priming_call
+        subprocess.call(priming_call, shell=True, stdout=fnull)
 
 def neg_bed_graph(in_bed_graph, out_bed_graph):
     priming_call = "negBedGraph.py "
     priming_call += " --bg {}".format(in_bed_graph)
     with open(out_bed_graph, 'w') as out_bed_graph:
-        subprocess.call(priming_call, shell=False, stdout=out_bed_graph)
+        subprocess.call(priming_call, shell=True, stdout=out_bed_graph)
 
 
 
