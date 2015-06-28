@@ -5,7 +5,7 @@ scripts = [
     'annotations/gencode_annotate_utrs_5p_3p.pl',
     'mirna/miR_splitter.py',
     'clipseq/barcode_collapse.py',
-    'clipseq/barcode_collapse_pe.py'
+    'clipseq/barcode_collapse_pe.py',
     'clipseq/fix_scores.py',
     'clipseq/run_kasey.py',
     'clipseq/kmer_extractor.py',
