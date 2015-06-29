@@ -32,22 +32,20 @@ def normalize_bed_graph(in_bed_graph, in_bam, out_bed_graph):
         priming_call = "normalize_bedGraph.py "
         priming_call += " --bg {} ".format(in_bed_graph)
         priming_call += " --bam {}".format(in_bam)
-        print priming_call
-        subprocess.call(priming_call, stdout=out_bed_graph, shell=True)
+        subprocess.call(priming_call, shell=False, stdout=out_bed_graph)
 
 
 def bed_graph_to_big_wig(in_bed_graph, genome, out_big_wig):
     priming_call = "bedGraphToBigWig {} {} {}".format(in_bed_graph, genome, out_big_wig)
 
     with open(os.devnull, 'w') as fnull:
-        print priming_call
-        subprocess.call(priming_call, shell=True, stdout=fnull)
+        subprocess.call(priming_call, shell=False, stdout=fnull)
 
 def neg_bed_graph(in_bed_graph, out_bed_graph):
     priming_call = "negBedGraph.py "
     priming_call += " --bg {}".format(in_bed_graph)
     with open(out_bed_graph, 'w') as out_bed_graph:
-        subprocess.call(priming_call, shell=True, stdout=out_bed_graph)
+        subprocess.call(priming_call, shell=False, stdout=out_bed_graph)
 
 
 
@@ -58,6 +56,9 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Makes Pretty bed Graph Files!")
     parser.add_argument("--bam", help="bam file to make bedgraphs from", required=True)
     parser.add_argument("--genome", help="chromosome sizes because some things need it", required=True)
+
+    parser.add_argument("--bw_pos", help="positive bw file name", required=True)
+    parser.add_argument("--bw_neg", help="negative bw file name", required=True)
 
     args = parser.parse_args()
     bamFile = args.bam
