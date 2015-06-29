@@ -15,6 +15,7 @@ scripts = [
     'clipseq/run_ripseeker.py',
     'clipseq/demultiplex_barcoded_fastq.py',
     'clipseq/demux_paired_end.py',
+    'clipseq/sort_fastq.py',
     'editing/create_rna_editing_makefile.py',
     'general/cat_files.py',
     'general/cat_biogem.py',
@@ -77,7 +78,8 @@ setup(
                       'pybedtools >= 0.5',
                       'scikit-learn >= 0.13.0',
                       'matplotlib_venn',
-                      'clipper', 'HTSeq'
+                      'clipper', 'HTSeq',
+                      'screed >= 0.9',
     ],
 
     setup_requires=["setuptools_git >= 0.3", ],
