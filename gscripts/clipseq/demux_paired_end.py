@@ -169,7 +169,7 @@ if __name__ == "__main__":
         for barcode, actual_barcodes in randomer_counts.items():
             for actual_barcode, randomers in actual_barcodes.items():
                 for randomer, count in randomers.items():
-                    metrics_file.write("%s\t%s\t%s\t%s\n" % (barcode, randomer, count))
+                    metrics_file.write("%s\t%s\t%s\t%s\n" % (barcode, actual_barcode, randomer, count))
 
     #cleans up at the end
     for lst in barcodes.values():
