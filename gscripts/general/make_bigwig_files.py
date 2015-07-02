@@ -4,7 +4,7 @@ import subprocess
 import os
 
 
-def genome_coverage_bed(in_bam=None, in_bed=None, out_bed_graph=None, genome=None, strand=None, split=False):
+def genome_coverage_bed(in_bam=None, in_bed=None, out_bed_graph=None, genome=None, strand=None, split=True):
     with open(out_bed_graph, 'w') as out_bed_graph:
         if in_bam is not None and in_bed is not None:
             raise Exception("can't pass both bam and bed file to this function")
