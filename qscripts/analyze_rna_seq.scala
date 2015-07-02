@@ -72,6 +72,11 @@ class AnalyzeRNASeq extends QScript {
 //    this.isIntermediate = true
 //  }
 
+  case class fastQC(fastq: File, dir: String= null) extends FastQC {
+    this.inFastq = fastq
+    this.outDir = dir
+  }
+  
   case class genomeCoverageBed(input: File, outBed: File, cur_strand: String, species: String) extends GenomeCoverageBed {
     this.inBam = input
     this.genomeSize = chromSizeLocation(species)
@@ -241,10 +246,10 @@ class AnalyzeRNASeq extends QScript {
     countRepetitiveRegions.outFile = swapExt(outRep, ".rep.bam", ".rmRep.metrics")
     add(countRepetitiveRegions)
 
-    add(new FastQC(filteredFastq))
+    add(new fastQC(filteredFastq, dir=qSettings.runDirectory))
 
     if (filteredPair != null) {
-      add(new FastQC(filteredPair))
+      add(new fastQC(filteredPair, dir=qSettings.runDirectory))
     }
     
     return (filteredFastq, filteredPair)
@@ -323,10 +328,10 @@ class AnalyzeRNASeq extends QScript {
           if (fastqFiles.length == 2) {
             singleEnd = false
             fastqPair = new File(fastqFiles(1))
-            add(new FastQC(inFastq = fastqPair))
+            add(new fastQC(fastqPair, dir=qSettings.runDirectory))
           }
 	
-          add(new FastQC(inFastq = fastqFile))
+          add(new fastQC(fastqFile, dir=qSettings.runDirectory))
 
           
           val (filteredFastq, filteredPair) = stringentJobs(fastqFile, fastqPair)
