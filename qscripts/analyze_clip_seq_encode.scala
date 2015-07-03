@@ -152,11 +152,13 @@ class AnalizeCLIPSeq extends QScript {
 			  required("--region", regions)
   } 
 
-  class makeBigWigFiles(@Input input: File, @Argument genome: String) extends CommandLineFunction {
+  class makeBigWigFiles(@Input input: File, @Argument genome: String, @Output pos_bw: File, @Output neg_nw: File) extends CommandLineFunction {
     override def shortDescription = "makeBigWigFiles"
     def commandLine = "make_bigwig_files.py " +
     required("--bam", input) +
-    required("--genome", genome)
+    required("--genome", genome) +
+    required("--pos_bw", pos_bw) +
+    required("--neg_nw", neg_bw)
   }
 
   case class markDuplicates(inBam: File, outBam: File, metrics_file: File) extends MarkDuplicates {
