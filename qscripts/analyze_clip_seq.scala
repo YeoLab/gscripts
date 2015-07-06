@@ -45,6 +45,11 @@ class AnalizeCLIPSeq extends QScript {
     this.reverse_strand = reverse
   }
 
+  case class fastQC(fastq: File, dir: String= null) extends FastQC {
+    this.inFastq = fastq
+    this.outDir = dir
+  }
+
   case class cutadapt(fastq_file: File, noAdapterFastq: File, adapterReport: File, adapter: List[String]) extends Cutadapt{
        override def shortDescription = "cutadapt"
 
@@ -303,16 +308,16 @@ class AnalizeCLIPSeq extends QScript {
       	val indexedBamFile = swapExt(sortedrmDupedBamFile, "", ".bai")
 	
 	if(!fromBam) { 
-      	  add(new FastQC(inFastq = fastq_file))
+      	  add(new fastQC(inFastq = fastq_file, dir=qSettings.runDirectory))
 	  //filters out adapter reads
 	  add(cutadapt(fastq_file = fastq_file, noAdapterFastq = noAdapterFastq, adapterReport = adapterReport, adapter = adapter ) )
 	  
 	  
           add(star(input = noAdapterFastq,
                    output = outRep,
-                   genome_location = "/projects/ps-yeolab/genomes/RepBase18.05.fasta/STAR_fixed",
+                   genome_location = repBaseGenomeLocation(species),
 		   fastq_out = filteredFastq,
-		   multimap_number=10))
+		   multimap_number=30))
 	  
           var countRepetitiveRegions = new CountRepetitiveRegions
           countRepetitiveRegions.inBam = outRep
@@ -330,7 +335,7 @@ class AnalizeCLIPSeq extends QScript {
 	  
 	  add(new SamtoolsSortSam(rmDupRep, swapExt(rmDupRep, ".bam", ".sorted.bam"))) 
 
-      	  add(new FastQC(filteredFastq))
+      	  add(new fastQC(filteredFastq, dir=qSettings.runDirectory))
       	  add(star(input = filteredFastq, output = bamFile, genome_location = starGenomeLocation(genome)))
       	  add(sortSam(bamFile, sortedBamFile, SortOrder.coordinate))
       	} else {

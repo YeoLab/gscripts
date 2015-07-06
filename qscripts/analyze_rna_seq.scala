@@ -16,8 +16,20 @@ class AnalyzeRNASeq extends QScript {
   @Input(doc = "input file or txt file of input files")
   var input: File = _
 
-  @Argument(doc = "adapter to trim")
+  @Argument(doc = "adapter to trim", required = false)
   var adapter: List[String] = Nil
+
+  @Argument(doc = "R1 3' Adapter Trim (cutadapt wrapper)", required = false)
+  var a_adapter: List[String] = Nil
+
+  @Argument(doc = "R2 3' Adapter Trim (cutadapt wrapper)", required = false)
+  var A_adapter2: List[String] = Nil
+
+  @Argument(doc = "R1 5' Adapter Trim (cutadapt wrapper)", required = false)
+  var g_adapter: List[String] = Nil
+
+  @Argument(doc = "R2 5' Adapter Trim (cutadapt wrapper)", required = false)
+  var G_adapter2: List[String] = Nil
 
   @Argument(doc = "flipped", required = false)
   var flipped: String = "none"
@@ -60,6 +72,11 @@ class AnalyzeRNASeq extends QScript {
 //    this.isIntermediate = true
 //  }
 
+  case class fastQC(fastq: File, dir: String= null) extends FastQC {
+    this.inFastq = fastq
+    this.outDir = dir
+  }
+  
   case class genomeCoverageBed(input: File, outBed: File, cur_strand: String, species: String) extends GenomeCoverageBed {
     this.inBam = input
     this.genomeSize = chromSizeLocation(species)
@@ -148,7 +165,7 @@ class AnalyzeRNASeq extends QScript {
     this.bamFileIndex = output
   }
 
-  case class cutadapt(fastqFile: File, noAdapterFastq: File, adapterReport: File, adapter: List[String], pairedFile: File = null, pairedOut: File = null) extends Cutadapt {
+  case class cutadapt(fastqFile: File, noAdapterFastq: File, adapterReport: File, adapter: List[String], pairedFile: File = null, pairedOut: File = null, a_adapters: List[String] = Nil, A_adapters: List[String] = Nil, g_adapters: List[String] = Nil, G_adapters: List[String] = Nil) extends Cutadapt {
     override def shortDescription = "cutadapt"
 
     this.inFastq = fastqFile
@@ -158,7 +175,10 @@ class AnalyzeRNASeq extends QScript {
       this.inPair = pairedFile
       this.outPair = pairedOut
     }
-
+    this.three_prime = a_adapters
+    this.three_prime2 = A_adapters
+    this.five_prime = g_adapters
+    this.five_prime2 = G_adapters
     this.report = adapterReport
     this.anywhere = adapter ++ List("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
       "TTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTT")
@@ -207,6 +227,10 @@ class AnalyzeRNASeq extends QScript {
 		 noAdapterFastq = noAdapterFastq,
 		 adapterReport = adapterReport,
 		 adapter = adapter, 
+		 a_adapters = a_adapter,
+		 A_adapters = A_adapter2,
+		 g_adapters = g_adapter,
+		 G_adapters = G_adapter2,
 		 pairedFile = pairedFile, 
 		 pairedOut = noAdapterPair))
     
@@ -222,10 +246,10 @@ class AnalyzeRNASeq extends QScript {
     countRepetitiveRegions.outFile = swapExt(outRep, ".rep.bam", ".rmRep.metrics")
     add(countRepetitiveRegions)
 
-    add(new FastQC(filteredFastq))
+    add(new fastQC(filteredFastq, dir=qSettings.runDirectory))
 
     if (filteredPair != null) {
-      add(new FastQC(filteredPair))
+      add(new fastQC(filteredPair, dir=qSettings.runDirectory))
     }
     
     return (filteredFastq, filteredPair)
@@ -304,10 +328,10 @@ class AnalyzeRNASeq extends QScript {
           if (fastqFiles.length == 2) {
             singleEnd = false
             fastqPair = new File(fastqFiles(1))
-            add(new FastQC(inFastq = fastqPair))
+            add(new fastQC(fastqPair, dir=qSettings.runDirectory))
           }
 	
-          add(new FastQC(inFastq = fastqFile))
+          add(new fastQC(fastqFile, dir=qSettings.runDirectory))
 
           
           val (filteredFastq, filteredPair) = stringentJobs(fastqFile, fastqPair)

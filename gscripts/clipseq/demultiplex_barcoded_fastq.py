@@ -72,13 +72,13 @@ if __name__ == "__main__":
         for line in barcodes_file:
             line = line.strip("\n").split("\t")
             split_file = options.out_file.split(".")
-            split_file.insert(-1, line[1])
-            barcodes[line[0]] = open(".".join(split_file), 'w')
+            split_file.insert(-2, line[1])
+            barcodes[line[0]] = gzip.open(".".join(split_file), 'w')
             randomer_counts[line[0]] = Counter()
     
     split_file = options.out_file.split(".")
-    split_file.insert(-1, "unassigned")
-    barcodes['unassigned'] = open(".".join(split_file), 'w')
+    split_file.insert(-2, "unassigned")
+    barcodes['unassigned'] = gzip.open(".".join(split_file), 'w')
     randomer_counts['unassigned'] = Counter()
     
     #reads through initial file parses everything out

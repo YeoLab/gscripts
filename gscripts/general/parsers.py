@@ -1,6 +1,7 @@
 """
 
-General parsers for QC output of pipeline file, generally pass a handle to the file you want to parse, returns a dict containing
+General parsers for QC output of pipeline file, generally pass a handle to the file you want to parse, returns a dict
+containing
 all useful information
 
 Currently this isn't standard
@@ -12,6 +13,7 @@ import os
 import pandas as pd
 import pybedtools
 
+
 def get_names(files, num_seps, sep):
 
     """ Given a list of files return that files base name and the path to that file
@@ -20,7 +22,8 @@ def get_names(files, num_seps, sep):
         sep -- str seperator to split on
     """
 
-    return {sep.join(os.path.basename(file_name).split(sep)[0 : num_seps]) : file_name for file_name in files}
+    return {sep.join(os.path.basename(file_name).split(sep)[0: num_seps]): file_name for file_name in files}
+
 
 def rnaseq_metrics(analysis_dir, num_seps=1, sep="."):
     """
@@ -38,19 +41,19 @@ def rnaseq_metrics(analysis_dir, num_seps=1, sep="."):
     rmrep_files = glob.glob(os.path.join(analysis_dir, "*rmRep.metrics"))
     
     star_files = glob.glob(os.path.join(analysis_dir, "*rmRep.bamLog.final.out"))
-    if len(star_files) == 0: #hack for old data
+    if len(star_files) == 0:  #hack for old data
         star_files = glob.glob(os.path.join(analysis_dir, "*rmRep.samLog.final.out"))
-    if len(star_files) == 0: #Hack for new data
+    if len(star_files) == 0:  #Hack for new data
         star_files = glob.glob(os.path.join(analysis_dir, "*.bamLog.final.out"))
     nrf_names = get_names(nrf_files, num_seps, sep) 
     cutadapt_names = get_names(cutadapt_files, num_seps, sep)
     rmrep_names = get_names(rmrep_files, num_seps, sep)
     star_names = get_names(star_files, num_seps, sep) 
     
-    nrf_df = pd.DataFrame({name : parse_nrf_file(nrf_file) for name, nrf_file in nrf_names.items()}).transpose()
-    cutadapt_df = pd.DataFrame({name : parse_cutadapt_file(cutadapt_file) for name, cutadapt_file in cutadapt_names.items()}).transpose()
-    rmrep_df = pd.DataFrame({name : parse_rmrep_file(rmrep_file) for name, rmrep_file in rmrep_names.items()}).transpose()
-    star_df = pd.DataFrame({name : parse_star_file(star_file) for name, star_file in star_names.items()}).transpose()
+    nrf_df = pd.DataFrame({name: parse_nrf_file(nrf_file) for name, nrf_file in nrf_names.items()}).transpose()
+    cutadapt_df = pd.DataFrame({name: parse_cutadapt_file(cutadapt_file) for name, cutadapt_file in cutadapt_names.items()}).transpose()
+    rmrep_df = pd.DataFrame({name: parse_rmrep_file(rmrep_file) for name, rmrep_file in rmrep_names.items()}).transpose()
+    star_df = pd.DataFrame({name: parse_star_file(star_file) for name, star_file in star_names.items()}).transpose()
     
     combined_df = pd.merge(cutadapt_df, star_df, left_index=True, right_index=True, how="outer")
     combined_df = pd.merge(combined_df, rmrep_df, left_index=True, right_index=True, how="outer")
@@ -71,17 +74,18 @@ def rnaseq_metrics(analysis_dir, num_seps=1, sep="."):
     except KeyError:
         print "cutadapt file maybe be broken, ignoring calculation"
         pass
+
     #combined_df["Repetative Reads"] = (combined_df['Input Reads'] - combined_df['Reads Passing Quality Filter']).astype(int)
-    #combined_df["Reads After Triming"] = (combined_df['Input Reads'] - combined_df['Too short reads']).astype(int)
 
     #Get Rid of worthless metrics
     combined_df = combined_df.drop(["Finished on",
-                  "Mapping speed, Million of reads per hour",
-                  #"Trimmed bases",
-                  "Started job on",
-                  "Started mapping on"], axis=1)
+                                    "Mapping speed, Million of reads per hour",
+                                    "Started job on",
+                                    "Started mapping on"], axis=1)
 
     return combined_df 
+
+
 def clipseq_metrics(analysis_dir, iclip=False, num_seps=None, sep=".",
                     percent_usable=.01, number_usable=500000, frip=.05):
 
@@ -94,21 +98,34 @@ def clipseq_metrics(analysis_dir, iclip=False, num_seps=None, sep=".",
     """
     if num_seps is None:
         num_seps = 2 if iclip else 1
-    
+
+    cutadapt_round2_files = glob.glob(os.path.join(analysis_dir, "*.adapterTrim.round2.metrics"))
     rm_duped_files = glob.glob(os.path.join(analysis_dir, "*rmRep.rmDup.metrics"))
+
+    if len(rm_duped_files) == 0:
+        rm_duped_files = glob.glob(os.path.join(analysis_dir, "*r2.rmDup.metrics"))
+        
     if len(rm_duped_files) == 0:
         rm_duped_files = glob.glob(os.path.join(analysis_dir, "*.rmDup.metrics"))
+    
     peaks_files = glob.glob(os.path.join(analysis_dir, "*.peaks.bed"))
     spot_files = glob.glob(os.path.join(analysis_dir, "*peaks.metrics"))
+
+    cutadapt_round2_names = get_names(cutadapt_round2_files, num_seps, sep)
 
     rm_duped_names = get_names(rm_duped_files, num_seps, sep)
     peaks_names = get_names(peaks_files, num_seps, sep)
     spot_names = get_names(spot_files, num_seps, sep) 
 
+    cutadapt_round2_df = pd.DataFrame({name: parse_cutadapt_file(cutadapt_file) for name, cutadapt_file in cutadapt_round2_names.items()}).transpose()
+    cutadapt_round2_df.columns = ["{} Round 2".format(col) for col in cutadapt_round2_df.columns]
+
     rm_duped_df = pd.DataFrame({name: parse_rm_duped_metrics_file(rm_duped_file) for name, rm_duped_file in rm_duped_names.items()}).transpose()
     spot_df = pd.DataFrame({name: parse_peak_metrics(spot_file) for name, spot_file in spot_names.items()}).transpose()
     peaks_df = pd.DataFrame({name: {"Num Peaks": len(pybedtools.BedTool(peaks_file))} for name, peaks_file in peaks_names.items()}).transpose()
     combined_df = rnaseq_metrics(analysis_dir, num_seps, sep)
+
+    combined_df = pd.merge(combined_df, cutadapt_round2_df, left_index=True, right_index=True, how="outer")
     combined_df = pd.merge(combined_df, rm_duped_df, left_index=True, right_index=True, how="outer")
     combined_df = pd.merge(combined_df, spot_df, left_index=True, right_index=True, how="outer")
     combined_df = pd.merge(combined_df, peaks_df, left_index=True, right_index=True, how="outer")
@@ -187,8 +204,6 @@ def parse_nrf_file(nrf_file):
     
 def parse_rm_duped_metrics_file(rmDup_file):
     try:
-        total_count = 0
-        removed_count = 0 
         df = pd.read_csv(rmDup_file, sep="\t")
         
         return {"total_count": sum(df.total_count),
@@ -200,7 +215,27 @@ def parse_rm_duped_metrics_file(rmDup_file):
                     "removed_count": None,
                     "Usable Reads": None}
 
+
+def get_cutadapt_version(report):
+    with open(report) as file_handle:
+            version = file_handle.next()
+    version = version.split()[-4]
+
+    return int(version.split(".")[1])
+
+
 def parse_cutadapt_file(report):
+    if os.path.getsize(report) == 0:
+        return
+
+    old_cutadapt = get_cutadapt_version(report) <= 8
+    if old_cutadapt:
+        return parse_old_cutadapt_file(report)
+    else:
+        return parse_new_cutadapt_file(report)
+
+
+def parse_old_cutadapt_file(report):
     report_dir = {}
     try:
         with open(report) as report:
@@ -228,6 +263,104 @@ def parse_cutadapt_file(report):
     except:
             print report
     return report_dir
+
+
+def get_number_and_percent(line):
+    line = [x.strip() for x in line.strip().split(":")]
+    line = [line[0]] + line[1].split()
+    line[2] = float(line[2][1:-2])
+    line[1] = int(line[1].replace(",", ""))
+    return line
+
+
+def get_number(line):
+    line = [x.strip() for x in line.strip().split(":")]
+    line[1] = int(line[1].replace(",", ""))
+    return line
+
+
+def strip_bp(line):
+    return line.replace("bp", "")
+
+
+def remove_header(file_handle):
+    """ for both SE and PE output removes header unifromly from cutadapt metrics file"""
+    file_handle.next()
+    file_handle.next()
+    file_handle.next()
+    file_handle.next()
+    file_handle.next()
+    file_handle.next()
+    file_handle.next()
+    #print foo.next()
+
+
+def parse_new_cutadapt_file(report):
+    report_dict = {}
+    try:
+        with open(report) as file_handle:
+            remove_header(file_handle)
+            processed_reads = get_number(file_handle.next())
+            paired_file = processed_reads[0] == 'Total read pairs processed'
+            if paired_file:
+                r1_adapter = get_number_and_percent(file_handle.next())
+                r2_adapter = get_number_and_percent(file_handle.next())
+            else:
+                adapter = get_number_and_percent(file_handle.next())
+
+            too_short = get_number_and_percent(file_handle.next())
+            written = get_number_and_percent(file_handle.next())
+            file_handle.next()
+
+            bp_processed = get_number(strip_bp(file_handle.next()))
+            if paired_file:
+                r1_bp_processed = get_number(strip_bp(file_handle.next()))
+                r2_bp_processed = get_number(strip_bp(file_handle.next()))
+
+            bp_quality_trimmed = get_number_and_percent(strip_bp(file_handle.next()))
+            if paired_file:
+                r1_bp_trimmed = get_number(strip_bp(file_handle.next()))
+                r2_bp_trimmed = get_number(strip_bp(file_handle.next()))
+
+            bp_written = get_number_and_percent(strip_bp(file_handle.next()))
+            if paired_file:
+                r1_bp_written = get_number(strip_bp(file_handle.next()))
+                r2_bp_written = get_number(strip_bp(file_handle.next()))
+
+    except Exception as e:
+        print e
+        print report
+        return report_dict
+
+    report_dict['Processed reads'] = processed_reads[1]
+    if paired_file:
+        report_dict["Read 1 with adapter"] = r1_adapter[1]
+        report_dict["Read 1 with adapter percent"] = r1_adapter[2]
+        report_dict["Read 2 with adapter"] = r2_adapter[1]
+        report_dict["Read 2 with adapter percent"] = r2_adapter[2]
+        report_dict['Read 1 basepairs processed'] = r1_bp_processed[1]
+        report_dict['Read 2 basepairs processed'] = r2_bp_processed[1]
+        report_dict['Read 1 Trimmed bases'] = r1_bp_trimmed[1]
+        report_dict['Read 2 Trimmed bases'] = r2_bp_trimmed[1]
+        report_dict['Read 1 {}'.format(bp_written[0])] = r1_bp_written[1]
+        report_dict['Read 2 {}'.format(bp_written[0])] = r2_bp_written[1]
+    else:
+        report_dict['Reads with adapter'] = adapter[1]
+        report_dict['Reads with adapter percent'] = adapter[2]
+
+
+    report_dict['Too short reads'] = too_short[1]
+    report_dict['Reads that were too short percent'] = too_short[2]
+    report_dict['Reads Written'] = written[1]
+    report_dict['Reads Written perccent'] = written[2]
+    report_dict['Processed bases'] = bp_processed[1]
+    report_dict['Trimmed bases'] = bp_quality_trimmed[1]
+    report_dict['Trimmed bases percent'] = bp_quality_trimmed[2]
+    report_dict[bp_written[0]] = bp_written[1]
+    report_dict["{} percent".format(bp_written[0])] = bp_written[2]
+
+    return report_dict
+
 
 def commas(x):
     try:
