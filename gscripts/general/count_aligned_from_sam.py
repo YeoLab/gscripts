@@ -1,8 +1,5 @@
-"""
-
-Given a sam file counts chromosome frequencies 
-
-"""
+#!/usr/bin/env python
+"""Count number of reads mapped to each chromosome"""
 
 import sys
 import argparse
