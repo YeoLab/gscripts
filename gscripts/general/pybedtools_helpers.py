@@ -17,8 +17,16 @@ def small_peaks(feature):
     returns center of clipper called peak (the middle of the narrow start / stop)
     
     """
-    feature.start = (int(feature[6]) + int(feature[7])) / 2
-    feature.stop = ((int(feature[6]) + int(feature[7])) / 2) + 1
+
+    try:
+        feature.start = (int(feature[6]) + int(feature[7])) / 2
+        feature.stop = ((int(feature[6]) + int(feature[7])) / 2) + 1
+    except IndexError:
+        #if I don't have that # fall back on just taking the peak center
+        midpoint = (feature.start + feature.stop) / 2
+        feature.start = midpoint
+        feature.stop = midpoint + 1
+
     feature.name = feature.name.split("_")[0]
     return feature
 
