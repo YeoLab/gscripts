@@ -299,10 +299,10 @@ class AnalyzeRNASeq extends QScript {
     add(new countTags(input = bamFile, index = bamIndex, output = countFile, species = species))
     add(new singleRPKM(input = countFile, output = RPKMFile, s = species))
 
-    add(oldSplice(input = bamFile, out = oldSpliceOut, species = species))
-    add(new Miso(inBam = bamFile, indexFile = bamIndex, species = species, pairedEnd = false, output = misoOut))
+    // add(oldSplice(input = bamFile, out = oldSpliceOut, species = species))
+    // add(new Miso(inBam = bamFile, indexFile = bamIndex, species = species, pairedEnd = false, output = misoOut))
     //add(new RnaEditing(inBam = bamFile, snpEffDb = species, snpDb = snpDbLocation(species), genome = genomeLocation(species), flipped = flipped, output = rnaEditingOut))
-    return oldSpliceOut
+    return RPKMFile
   }
 
   def script() {
@@ -362,8 +362,8 @@ class AnalyzeRNASeq extends QScript {
 
         combinedBams = combinedBams ++ List(rgSortedBamFile)
 
-        var oldSpliceOut = downstream_analysis(rgSortedBamFile, indexedBamFile, singleEnd, genome)
-        splicesFiles = splicesFiles ++ List(oldSpliceOut)
+        var RPKMFile = downstream_analysis(rgSortedBamFile, indexedBamFile, singleEnd, genome)
+        // splicesFiles = splicesFiles ++ List(oldSpliceOut)
       }
 
       if (groupName != "null") {
@@ -376,8 +376,8 @@ class AnalyzeRNASeq extends QScript {
 	}
 	add(new samtoolsIndexFunction(mergedBams, mergedIndex))
         
-        var oldSpliceOut = downstream_analysis(mergedBams, mergedIndex, singleEnd, genome)
-        splicesFiles = splicesFiles ++ List(oldSpliceOut)
+        var RPKMFile = downstream_analysis(mergedBams, mergedIndex, singleEnd, genome)
+        // splicesFiles = splicesFiles ++ List(oldSpliceOut)
       }
     }
 
@@ -387,9 +387,9 @@ class AnalyzeRNASeq extends QScript {
       add(new MakeTrackHub(trackHubFiles, location = location + "_" + species, genome = species))
     }
 
-    for ((species, files) <- speciesList zip splicesFiles groupBy { _._1 }) {
-      add(parseOldSplice(files map { _._2 }, species = species))
-    }
+    // for ((species, files) <- speciesList zip splicesFiles groupBy { _._1 }) {
+    //   add(parseOldSplice(files map { _._2 }, species = species))
+    // }
 
     for ((species, files) <- speciesList zip bamFiles groupBy { _._1 }) {
       var rnaseqc = new File("rnaseqc_" + species + ".txt")
