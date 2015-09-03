@@ -169,8 +169,14 @@ class MisoPipeline(object):
         event_types = ['SE', 'MXE', 'AFE', 'ALE', 'A3SS', 'A5SS',
                        'RI', 'TANDEMUTR']
 
-        # Get the read length. Gonna keep this as bash because samtools
-        # and head are very fast
+        '''
+        Get the read length. Gonna keep this as bash because samtools and head are very fast.
+        WARNING - this only takes the read length of the first read, not the average read length. 
+        This has caused problems in the past if the first read is shorter than the average, for some reason
+        it seems like all reads longer than what is inputed as readlen get thrown out. Should be changed to get 
+        the average or most abundant read length instead. (9/2/15)
+        '''
+        
         commands.append(
             "READ_LEN=$(samtools view %s | head -n 1 | cut -f 10 | awk '{ "
             "print length }')" % (bam))
