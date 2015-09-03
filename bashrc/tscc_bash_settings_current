@@ -66,3 +66,4 @@ export PATH="/projects/ps-yeolab/software/Anaconda_2.0.1_150511/bin:~/bin:$PATH"
 export PYTHONPATH=
 
 export PYTHONPATH='/opt/scar/lib/':$PYTHONPATH
+export PYTHONPATH='/opt/sdsc/lib/':$PYTHONPATH

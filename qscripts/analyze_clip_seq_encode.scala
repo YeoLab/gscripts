@@ -247,14 +247,14 @@ class AnalizeCLIPSeq extends QScript {
   def downstream_analysis(bamFile_full : File, bamIndex: File, genome : String) {
 
     val bamFile = swapExt(bamFile_full, ".bam", ".r2.bam")
-    //val bedGraphFilePos = swapExt(bamFile, ".bam", ".pos.bg")
-    //val bedGraphFilePosNorm = swapExt(bedGraphFilePos, ".pos.bg", ".norm.pos.bg")
-    //val bigWigFilePos = swapExt(bedGraphFilePosNorm, ".bg", ".bw")
+    val bedGraphFilePos = swapExt(bamFile, ".bam", ".pos.bg")
+    val bedGraphFilePosNorm = swapExt(bedGraphFilePos, ".pos.bg", ".norm.pos.bg")
+    val bigWigFilePos = swapExt(bedGraphFilePosNorm, ".bg", ".bw")
     
-    //val bedGraphFileNeg = swapExt(bamFile, ".bam", ".neg.bg")
-    //val bedGraphFileNegNorm = swapExt(bedGraphFileNeg, ".neg.bg", ".norm.neg.bg")
-    //val bedGraphFileNegInverted = swapExt(bedGraphFileNegNorm, "neg.bg", "neg.t.bg")
-    //val bigWigFileNegInverted = swapExt(bedGraphFileNegInverted, ".t.bg", ".bw")
+    val bedGraphFileNeg = swapExt(bamFile, ".bam", ".neg.bg")
+    val bedGraphFileNegNorm = swapExt(bedGraphFileNeg, ".neg.bg", ".norm.neg.bg")
+    val bedGraphFileNegInverted = swapExt(bedGraphFileNegNorm, "neg.bg", "neg.t.bg")
+    val bigWigFileNegInverted = swapExt(bedGraphFileNegInverted, ".t.bg", ".bw")
     
     val clipper_output = swapExt(bamFile, ".bam", ".peaks.bed")
     val kasey_output = swapExt(bamFile, ".bam", ".peaks.kasey.bed")
@@ -272,7 +272,7 @@ class AnalizeCLIPSeq extends QScript {
     
     //add bw files to list for printing out later
     add(new r2ReadsOnly(bamFile_full, bamFile))
-    add(new makeBigWigFiles(input=bamFile, genome = chromSizeLocation(genome)))
+    add(new makeBigWigFiles(input=bamFile, genome = chromSizeLocation(genome), pos_bw = bigWigFilePos, neg_bw= bigWigFileNeg))
     //add(new genomeCoverageBed(input = bamFile, outBed = bedGraphFilePos, cur_strand = "+", genome = chromSizeLocation(genome)))
     //add(new NormalizeBedGraph(inBedGraph = bedGraphFilePos, inBam = bamFile, outBedGraph = bedGraphFilePosNorm))
     //add(new BedGraphToBigWig(bedGraphFilePosNorm, chromSizeLocation(genome), bigWigFilePos))
