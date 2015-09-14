@@ -280,7 +280,7 @@ class AnalizeCLIPSeq extends QScript {
     for ((groupName, valueList) <- (fileList groupBy (_._3))) {
       var combinedBams : Seq[File] = List()
     
-      for (item : Tuple6[File, String, String, String, String, String] <- valueList) {
+      for (item : Tuple7[File, String, String, String, String, String, String] <- valueList) {
 	
 	
 	var fastq_file: File = item._1
@@ -308,14 +308,14 @@ class AnalizeCLIPSeq extends QScript {
       	val indexedBamFile = swapExt(sortedrmDupedBamFile, "", ".bai")
 	
 	if(!fromBam) { 
-      	  add(new fastQC(inFastq = fastq_file, dir=qSettings.runDirectory))
+      	  add(new fastQC(fastq = fastq_file, dir=qSettings.runDirectory))
 	  //filters out adapter reads
 	  add(cutadapt(fastq_file = fastq_file, noAdapterFastq = noAdapterFastq, adapterReport = adapterReport, adapter = adapter ) )
 	  
 	  
           add(star(input = noAdapterFastq,
                    output = outRep,
-                   genome_location = repBaseGenomeLocation(species),
+                   genome_location = repBaseGenomeLocation(genome),
 		   fastq_out = filteredFastq,
 		   multimap_number=30))
 	  
@@ -326,14 +326,14 @@ class AnalizeCLIPSeq extends QScript {
 	  
           
           var outRepSorted = swapExt(outRep, ".bam", ".sorted.bam")
-	  add(new SamtoolsSortSam(outRep, outRepSorted)) 
-
+	  add(sortSam(outRep, outRepSorted, SortOrder.coordinate))
 	  var rmDupRep = swapExt(outRepSorted, ".bam", ".rmDup.bam")
 	  add(new RemoveDuplicates(outRepSorted,
                                    rmDupRep,
                                    swapExt(rmDupRep, ".bam", ".metrics")))	  
 	  
-	  add(new SamtoolsSortSam(rmDupRep, swapExt(rmDupRep, ".bam", ".sorted.bam"))) 
+	  add(sortSam(rmDupRep, swapExt(rmDupRep, ".bam", ".sorted.bam"), SortOrder.coordinate))
+	  
 
       	  add(new fastQC(filteredFastq, dir=qSettings.runDirectory))
       	  add(star(input = filteredFastq, output = bamFile, genome_location = starGenomeLocation(genome)))
@@ -351,7 +351,7 @@ class AnalizeCLIPSeq extends QScript {
       
       //Only run combination if we are combining more than one thing...
       if(combinedBams.size > 1 && groupName != "null") {
-	var mergedBams = new File(groupName + "merged.bam")
+	var mergedBams = new File(groupName + ".merged.bam")
 	val mergedIndex = swapExt(mergedBams, "", ".bai")
 	add(new samtoolsIndexFunction(mergedBams, mergedIndex))
 	add(samtoolsMergeFunction(combinedBams, mergedBams))

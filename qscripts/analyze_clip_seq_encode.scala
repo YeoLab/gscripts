@@ -152,13 +152,13 @@ class AnalizeCLIPSeq extends QScript {
 			  required("--region", regions)
   } 
 
-  class makeBigWigFiles(@Input input: File, @Argument genome: String, @Output pos_bw: File, @Output neg_nw: File) extends CommandLineFunction {
+  class makeBigWigFiles(@Input input: File, @Argument genome: String, @Output pos_bw: File, @Output neg_bw: File) extends CommandLineFunction {
     override def shortDescription = "makeBigWigFiles"
     def commandLine = "make_bigwig_files.py " +
     required("--bam", input) +
     required("--genome", genome) +
-    required("--pos_bw", pos_bw) +
-    required("--neg_nw", neg_bw)
+    required("--bw_pos", pos_bw) +
+    required("--bw_neg", neg_bw)
   }
 
   case class markDuplicates(inBam: File, outBam: File, metrics_file: File) extends MarkDuplicates {
@@ -272,7 +272,7 @@ class AnalizeCLIPSeq extends QScript {
     
     //add bw files to list for printing out later
     add(new r2ReadsOnly(bamFile_full, bamFile))
-    add(new makeBigWigFiles(input=bamFile, genome = chromSizeLocation(genome), pos_bw = bigWigFilePos, neg_bw= bigWigFileNeg))
+    add(new makeBigWigFiles(input=bamFile, genome = chromSizeLocation(genome), pos_bw = bigWigFilePos, neg_bw= bigWigFileNegInverted))
     //add(new genomeCoverageBed(input = bamFile, outBed = bedGraphFilePos, cur_strand = "+", genome = chromSizeLocation(genome)))
     //add(new NormalizeBedGraph(inBedGraph = bedGraphFilePos, inBam = bamFile, outBedGraph = bedGraphFilePosNorm))
     //add(new BedGraphToBigWig(bedGraphFilePosNorm, chromSizeLocation(genome), bigWigFilePos))
@@ -345,7 +345,7 @@ class AnalizeCLIPSeq extends QScript {
     for ((groupName, valueList) <- (fileList groupBy (_._3))) {
       var combinedBams : Seq[File] = List()
     
-      for (item : Tuple6[File, String, String, String, String, String] <- valueList) {
+      for (item : Tuple7[File, String, String, String, String, String, String] <- valueList) {
 	
 	var fastqFiles = item._1.toString().split(""";""")
         var genome = item._2
@@ -373,8 +373,11 @@ class AnalizeCLIPSeq extends QScript {
 	if (item._6 != "null") {
 	  five_prime_adapters = item._6.split(""";""").toList
 	} 
-	
-      	val noPolyAFastq = swapExt(swapExt(fastq_file, ".gz", ""), ".fastq", ".polyATrim.fastq.gz")
+      	//println(fastq_file + item._7)	
+
+	var num_n = item._7.toInt
+
+	val noPolyAFastq = swapExt(swapExt(fastq_file, ".gz", ""), ".fastq", ".polyATrim.fastq.gz")
       	
 	val round1_cutadapt = swapExt(fastq_file, ".fastq.gz", ".adapterTrim.fastq.gz")
 	val round1Report = swapExt(round1_cutadapt, ".fastq.gz", ".metrics")
@@ -410,7 +413,7 @@ class AnalizeCLIPSeq extends QScript {
 		       noAdapterFastq = round1_cutadapt,
 		       pairedOut = round1_cutadapt_pair,
 		       adapterReport = round1Report, 
-		       a_adapters = List("NNNNNAGATCGGAAGAGCACACGTCTGAACTCCAGTCAC"),
+		       a_adapters = List("N" * num_n + "AGATCGGAAGAGCACACGTCTGAACTCCAGTCAC"),
 		       g_adapters = five_prime_adapters,
 		       A_adapters = A_adapters,
 		       my_overlap=1))
