@@ -9,13 +9,12 @@ parser.add_argument("--genome", help="Genome sizes", required=True)
 args = parser.parse_args()
 
 coverage = pybedtools.BedTool(args.bam)
-NRF = coverage.genome_coverage(g=args.genome, **{'5': True})
 reads_mapped = 0.0
 total_locations_mapped = 0.0
 locations_with_one = 0.0
 #makes historgram
 #chr number count
-for line in str(NRF).strip().split("\n"):
+for line in coverage.genome_coverage(g=args.genome, stream=True, **{'5': True}):
     line = line.strip().split()
     number_of_reads = int(line[1])
     locations_mapped = int(line[2])
