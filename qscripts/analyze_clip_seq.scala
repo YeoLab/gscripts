@@ -341,7 +341,8 @@ class AnalizeCLIPSeq extends QScript {
       	} else {
 	  bamFile = fastq_file
 	}
-      	add(new CalculateNRF(inBam = sortedBamFile, genomeSize = chromSizeLocation(genome), outNRF = NRFFile))
+	//removed until pybedtools fixes bug
+      	//add(new CalculateNRF(inBam = sortedBamFile, genomeSize = chromSizeLocation(genome), outNRF = NRFFile))
       	add(new RemoveDuplicates(sortedBamFile, rmDupedBamFile, rmDupedMetricsFile))
       	add(sortSam(rmDupedBamFile, sortedrmDupedBamFile, SortOrder.coordinate))
       	add(new samtoolsIndexFunction(sortedrmDupedBamFile, indexedBamFile))
