@@ -8,14 +8,14 @@ parser.add_argument("--bam", help="bam file to calculate NRF from",
 parser.add_argument("--genome", help="Genome sizes", required=True)
 args = parser.parse_args()
 
-coverage = pybedtools.BedTool(args.bam)
 reads_mapped = 0.0
 total_locations_mapped = 0.0
 locations_with_one = 0.0
 #makes historgram
 #chr number count
-for line in coverage.genome_coverage(g=args.genome, stream=True, **{'5': True}):
-    line = line.strip().split()
+bamtool = pybedtools.BedTool(args.bam)
+for line in bamtool.genome_coverage(g=args.genome, stream=True, **{'5': True}):
+    line = str(line).strip().split()
     number_of_reads = int(line[1])
     locations_mapped = int(line[2])
     if number_of_reads != 0:

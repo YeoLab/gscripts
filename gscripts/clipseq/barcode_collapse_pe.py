@@ -52,10 +52,16 @@ def barcode_collapse(in_bam, out_bam):
                 if read1.rname != read2.rname:
                     different_chroms += 1
                     continue
+
+                #if the read order is swapped swap everything before running.
+                if not read1.is_read1:
+                    read1, read2 = read2, read1
+
                 randomer = read1.qname.split(":")[0]
 
                 start = stranded_read_start(read1)
                 stop = stranded_read_start(read2)
+                read1.is_read1
                 strand = "-" if read1.is_reverse else "+"
                 unique_location = (read1.rname, start, stop, strand, randomer)
                 total_count[randomer] += 1
