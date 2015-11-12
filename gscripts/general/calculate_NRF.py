@@ -15,7 +15,7 @@ locations_with_one = 0.0
 #makes historgram
 #chr number count
 for line in coverage.genome_coverage(g=args.genome, stream=True, **{'5': True}):
-    line = line.strip().split()
+    line = str(line).strip().split()
     number_of_reads = int(line[1])
     locations_mapped = int(line[2])
     if number_of_reads != 0:
