@@ -170,7 +170,7 @@ def count_contamination(bam_file):
                 total[read_group] += 1
 
             pos_overlap = mark_overlap_for_base(pos_reads)
-            neg_overlap =  mark_overlap_for_base(neg_reads)
+            neg_overlap = mark_overlap_for_base(neg_reads)
 
             #Count both the negative and positive overlap
             for randomer in pos_overlap.columns:
