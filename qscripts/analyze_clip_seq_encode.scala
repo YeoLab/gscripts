@@ -55,6 +55,7 @@ class AnalizeCLIPSeq extends QScript {
     this.premRNA = isPremRNA
     this.superlocal = superlocal
     this.reverse_strand = reverse
+    this.wallTime = Option((24 * 60 * 60).toLong)
   }
 
   case class cutadapt(fastq_file: File, 
@@ -241,7 +242,6 @@ class AnalizeCLIPSeq extends QScript {
         this.outCount = output
         this.tags_annotation = a
   }
-
 
 // performs downstream analysis on a bam file of interest, peak calling, generating RPKMs and all other types of analysis  
   def downstream_analysis(bamFile_full : File, bamIndex: File, genome : String) {
@@ -451,8 +451,12 @@ class AnalizeCLIPSeq extends QScript {
 	  //add(sortSam(rmDupRep, swapExt(rmDupRep, ".bam", ".sorted.bam"), SortOrder.coordinate)) 
 
       	  add(fastQC(fastq = filteredFastq, dir=qSettings.runDirectory))
-      	  add(star(input = filteredFastq, 
-		   paired = filteredPair,
+      	  var sortedFilteredFastq = swapExt(filteredFastq, "mate1", "sorted.mate1")
+	  var sortedFilteredPair = swapExt(filteredPair, "mate2", "sorted.mate2")
+	  add(new FastqSort(filteredFastq, filteredPair, sortedFilteredFastq, sortedFilteredPair))
+	  	  
+	  add(star(input = sortedFilteredFastq, 
+		   paired = sortedFilteredPair,
 		   output = bamFile, 
 		   genome_location = starGenomeLocation(genome),
 		   end_to_end=true))
