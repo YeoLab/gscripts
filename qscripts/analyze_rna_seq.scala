@@ -292,7 +292,7 @@ class AnalyzeRNASeq extends QScript {
     val misoOut = swapExt(bamFile, "bam", "miso")
     val rnaEditingOut = swapExt(bamFile, "bam", "editing")
 
-    add(new CalculateNRF(inBam = bamFile, genomeSize = chromSizeLocation(species), outNRF = NRFFile))
+    //add(new CalculateNRF(inBam = bamFile, genomeSize = chromSizeLocation(species), outNRF = NRFFile))
 
     val (bigWigFilePos: File, bigWigFileNeg: File) = makeBigWig(bamFile, species = species)
 
@@ -335,13 +335,17 @@ class AnalyzeRNASeq extends QScript {
 
           
           val (filteredFastq, filteredPair) = stringentJobs(fastqFile, fastqPair)
-	
+	  
+	  var sortedFilteredFastq = swapExt(filteredFastq, "mate1", "sorted.mate1")
+          var sortedFilteredPair = swapExt(filteredPair, "mate2", "sorted.mate2")
+          add(new FastqSort(filteredFastq, filteredPair, sortedFilteredFastq, sortedFilteredPair))
+
           samFile = swapExt(filteredFastq, ".rep.bamUnmapped.out.mate1", ".rmRep.bam")
-	  add(new sailfish(filteredFastq, species, !not_stranded, fastqPair))
-          add(new star(input=filteredFastq, 
+	  //add(new sailfish(filteredFastq, species, !not_stranded, fastqPair))
+          add(new star(input=sortedFilteredFastq, 
 		       output=samFile, 
 		       stranded=not_stranded, 
-		       paired=filteredPair, 
+		       paired=sortedFilteredPair, 
 		       genome_location = starGenomeLocation(species)))
 
 
