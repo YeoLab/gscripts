@@ -296,10 +296,10 @@ class AnalyzeRNASeq extends QScript {
 
     val (bigWigFilePos: File, bigWigFileNeg: File) = makeBigWig(bamFile, species = species)
 
-    add(new countTags(input = bamFile, index = bamIndex, output = countFile, species = species))
-    add(new singleRPKM(input = countFile, output = RPKMFile, s = species))
+    //add(new countTags(input = bamFile, index = bamIndex, output = countFile, species = species))
+    //add(new singleRPKM(input = countFile, output = RPKMFile, s = species))
 
-    add(oldSplice(input = bamFile, out = oldSpliceOut, species = species))
+    //add(oldSplice(input = bamFile, out = oldSpliceOut, species = species))
     add(new Miso(inBam = bamFile, indexFile = bamIndex, species = species, pairedEnd = false, output = misoOut))
     //add(new RnaEditing(inBam = bamFile, snpEffDb = species, snpDb = snpDbLocation(species), genome = genomeLocation(species), flipped = flipped, output = rnaEditingOut))
     return oldSpliceOut
@@ -336,9 +336,15 @@ class AnalyzeRNASeq extends QScript {
           
           val (filteredFastq, filteredPair) = stringentJobs(fastqFile, fastqPair)
 	  
-	  var sortedFilteredFastq = swapExt(filteredFastq, "mate1", "sorted.mate1")
-          var sortedFilteredPair = swapExt(filteredPair, "mate2", "sorted.mate2")
-          add(new FastqSort(filteredFastq, filteredPair, sortedFilteredFastq, sortedFilteredPair))
+	  var sortedFilteredFastq = filteredFastq
+          var sortedFilteredPair: File = null
+	  //only need to sort if paired end
+	  if(filteredPair != null) { 
+	    sortedFilteredFastq = swapExt(filteredFastq, "mate1", "sorted.mate1")
+	    sortedFilteredPair = swapExt(filteredPair, "mate2", "sorted.mate2")
+            add(new FastqSort(filteredFastq, filteredPair, sortedFilteredFastq, sortedFilteredPair))
+	  }
+	  
 
           samFile = swapExt(filteredFastq, ".rep.bamUnmapped.out.mate1", ".rmRep.bam")
 	  //add(new sailfish(filteredFastq, species, !not_stranded, fastqPair))
@@ -392,7 +398,7 @@ class AnalyzeRNASeq extends QScript {
     }
 
     for ((species, files) <- speciesList zip splicesFiles groupBy { _._1 }) {
-      add(parseOldSplice(files map { _._2 }, species = species))
+      //add(parseOldSplice(files map { _._2 }, species = species))
     }
 
     for ((species, files) <- speciesList zip bamFiles groupBy { _._1 }) {
