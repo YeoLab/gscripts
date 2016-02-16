@@ -36,7 +36,7 @@ class AnalizeCLIPSeq extends QScript {
   case class clipper(in: File, out: File, genome: String, isPremRNA: Boolean, reverse: Boolean) extends Clipper 
   {
     
-    
+    this.wallTime = Option((24 * 60 * 60).toLong)
     this.inBam = in
     this.outBed = out
     this.species = genome
