@@ -55,7 +55,7 @@ class AnalizeCLIPSeq extends QScript {
     this.premRNA = isPremRNA
     this.superlocal = superlocal
     this.reverse_strand = reverse
-    this.wallTime = Option((24 * 60 * 60).toLong)
+    this.wallTime = Option((48 * 60 * 60).toLong)
   }
 
   case class cutadapt(fastq_file: File, 
