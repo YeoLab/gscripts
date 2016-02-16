@@ -156,6 +156,9 @@ if __name__ == "__main__":
                 fastq_file_2.next() #got to consume the read
                 plus = "+\n" #sometimes the descriptor is here, don't want it
                 quality_2 = fastq_file_2.next()
+                if name_1.split()[0] != name_2.split()[0]:
+                    print name_1, name_2
+                    raise Exception("Read 1 is not same name as Read 2")
 
                 barcode, actual_barcode, randomer, result_1, result_2 = reformat_read(name_1, seq_1, plus, quality_1,
                                                                       name_2, seq_2, plus, quality_2,
