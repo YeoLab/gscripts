@@ -45,8 +45,8 @@ def cat_strand(files, strand, ext):
 
 
 def cat_folder(dir_name, ext):
-    r1 = glob.glob(os.path.join(dir_name, "*R1*%s" % ext))
-    r2 = glob.glob(os.path.join(dir_name, "*R2*%s" % ext))
+    r1 = sorted(glob.glob(os.path.join(dir_name, "*R1*%s" % ext)))
+    r2 = sorted(glob.glob(os.path.join(dir_name, "*R2*%s" % ext)))
     cat_strand(r1, "R1", ext)
     cat_strand(r2, "R2", ext)
 
