@@ -219,8 +219,10 @@ def parse_rm_duped_metrics_file(rmDup_file):
 def get_cutadapt_version(report):
     with open(report) as file_handle:
             version = file_handle.next()
-    version = version.split()[-4]
-
+    try:
+        version = version.split()[-4]
+    except:
+        1
     return int(version.split(".")[1])
 
 
