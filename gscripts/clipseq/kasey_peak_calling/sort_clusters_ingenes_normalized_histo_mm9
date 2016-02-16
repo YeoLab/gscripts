@@ -99,6 +99,7 @@ foreach $chr_input (@chr_array) {
 		$this_end = $a[2];
 		$this_id = $a[5];
 		$peak_height = $a[3];
+		#my $id_annotation = {}:
 		if ($this_chr eq $chr_input) {
 			if (exists($id_annotation{$this_id})) {
 				#$id_annotation{$this_id}->[5] += $peak_height;

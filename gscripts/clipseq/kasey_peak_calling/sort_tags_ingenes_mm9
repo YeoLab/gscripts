@@ -62,15 +62,21 @@ foreach $chr_input (@chr_array) {
 		chomp $line;
 		@a = split(/\t/, $line);
 		@b = split(/\|/, $a[3]);
-		$b[0] =~ /.*\,(\d+)/;
+		
+		#This gets an MUSG ID, not the old numerical id, I hacked this, might still be wrong GP
+		$b[0] =~ /.*,(.*)/;
+		#$b[0] =~ /.*\,(\d+)/;
 		$id = $1;
+		#print $1;
+		
 		$start = $b[1];
 		$end = $b[2];
 		$this_chr = $a[0];
 		$this_start = $a[1];
 		$this_end = $a[2];
 		$loc = floor(($this_start+$this_end)/2);
-		#$chr = $id_annotation{$id}->[0];
+	  
+#$chr = $id_annotation{$id}->[0];
 		#$start = $id_annotation{$id}->[1];
 		#$end = $id_annotation{$id}->[2];
 		#$id_direction = $id_annotation{$id}->[3];

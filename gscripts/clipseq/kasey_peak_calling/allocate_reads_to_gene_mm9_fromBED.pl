@@ -5,8 +5,6 @@ use warnings;
 my %GENES;
 my $spec = $ARGV[0]; #hg19, hg18, mm8, ce6
 my $file = $ARGV[1]; #"AGO2_293T_comb";
-#open(GRP,"/nas3/yeolab/Genome/ucsc_output/hg18data4/grouped") || die " can't open file: $!";
-#open(GRP,"/nas3/yeolab/Genome/ensembl/AS_STRUCTURE/hg19data4/grouped") || die "can't open file: $!";
 open(GRP,"/projects/ps-yeolab/genomes/mm9/mm9data4/grouped" ) ||die "can't open file: $!\n";
 
 while (<GRP>)

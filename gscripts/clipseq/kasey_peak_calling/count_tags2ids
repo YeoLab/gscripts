@@ -16,11 +16,13 @@ $cutoff_corr = 1;
 #$inputfile = "s_".$lane."_eland_bed";
 $inputfile = $ARGV[0];
 
+my $id2tagcount = {};
 open(GET_DATA, "< $inputfile") or die "cannot open $inputfile : $!\n";
 while(defined($line = <GET_DATA>)) {
 	chomp $line;
 	@a = split(/\t/, $line);
-	$id = $a[3];		
+	$id = $a[3];
+	#print @a[2]
 	$id2tagcount{$id}++;
 	$total_tags++;
 }
