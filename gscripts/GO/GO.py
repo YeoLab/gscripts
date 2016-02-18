@@ -5,6 +5,7 @@ from functools import partial
 import numpy as np
 from scipy.stats import hypergeom
 import pandas as pd
+import seaborn as sns
 
 
 mm9GOFile = "/nas3/lovci/projects/GO/mm9.ENSG_to_GO.txt.gz"
@@ -44,8 +45,6 @@ class GO(object):
         ontology['nGenes'] = ontology['Ensembl Gene ID'].apply(len)
 
         return ontology, allGenesInOntologies
-
-
 
     def GO_enrichment(self, geneList, expressedGenes = None):
         geneList  = set(list(geneList))
@@ -101,6 +100,188 @@ class GO(object):
            ]]
         return df
 
+    @staticmethod
+    def enrichment_score_vectorized(hit_values, miss_values):
+        normalized_hit_values = hit_values / hit_values.sum()
+        normalized_miss_values = miss_values / miss_values.sum()
+
+        enrichment_score = normalized_hit_values.cumsum() - normalized_miss_values.cumsum()
+        return enrichment_score
+
+    @staticmethod
+    def get_largest_score_vectorized(enrichment_score):
+        combined_scores = pd.concat({"max_score": enrichment_score.max(), "min_score": enrichment_score.min()}).unstack()
+        return combined_scores.apply(lambda x: x.max_score if np.abs(x.max_score) > np.abs(x.min_score) else x.min_score, axis=0)
+
+    @staticmethod
+    def normalized_enrichment_score_vectorized(normalized_hit_values, normalized_miss_values):
+        enrichment_score = normalized_hit_values.cumsum() - normalized_miss_values.cumsum()
+        return enrichment_score
+
+    @staticmethod
+    def fast_normalized_enrichment_score_vectorized(normalized_hit_values, normalized_miss_values):
+        enrichment_score = normalized_hit_values.as_matrix().cumsum(axis=0) - normalized_miss_values.as_matrix().cumsum(axis=0)
+        return enrichment_score
+
+    @staticmethod
+    def fast_get_largest_score_vectorized(enrichment_score):
+        #Enrichment score is already a matrix
+        #I intentionally ignore WHERE the max score is here for speed purposes.  Its not important for the shuffling, only the non-shuffled case
+        max_scores = enrichment_score.max(axis=0)
+        min_scores = enrichment_score.min(axis=0)
+        max_scores[np.abs(max_scores) < np.abs(min_scores)] = min_scores[np.abs(max_scores) < np.abs(min_scores)]
+        return max_scores
+
+    def gsea(self, gene_list, max_size=500, min_size=25, num_iterations=1000):
+
+        """
+        :param gene_list: pandas series where index is ensembl gene ids and values are scores
+        :param max_size: max size of go terms or gene lists to allow into GSEA analysis
+        :param min_size: min size of go terms of gene lists to allow into GSEA analysis
+        :param num_iterations: number of random iterations to perform
+        :return:
+        """
+
+        gene_list = gene_list.sort_values(ascending=False)
+        self.gene_list = gene_list
+        #get proper sets
+        large_sets = self.GO[(self.GO['nGenes'] > min_size) & (self.GO['nGenes'] < max_size)].copy()
+
+        #set up matix of genes in each set
+        result = {}
+        in_set = {}
+        for name, genes in large_sets['Ensembl Gene ID'].iteritems():
+            result[name] = gene_list.copy()
+            in_set[name] = {gene_id: True for gene_id in genes}
+
+        #fill out set values with the rest of the genes in the gene list
+        result = pd.DataFrame(result)
+        in_set = pd.DataFrame(in_set)
+        in_set = in_set.fillna(False)
+
+        incomplete_in_set = in_set.T
+
+        for gene in result.index.difference(in_set.index):
+            incomplete_in_set[gene] = False
+
+        in_set = incomplete_in_set[result.index].T
+
+        #create matrix of genes in each go term and not in each go term (hit and miss)
+        hit_values = result.copy()
+        miss_values = result.copy()
+
+        hit_values[~in_set] = 0
+        hit_values = np.abs(hit_values)
+        self.hit_values = hit_values
+
+        miss_values[:] = 0
+        miss_values[~in_set] = 1
+
+        #calculate enrichment scores for true values and store for plotting later
+        enrichment_score = self.enrichment_score_vectorized(hit_values, miss_values)
+        self.enrichment_score = enrichment_score
+
+        largest_enrichment = self.get_largest_score_vectorized(enrichment_score)
+
+        #normalize hit and miss values first for speed
+        normalized_hit_values = hit_values / hit_values.sum()
+        normalized_miss_values = miss_values / miss_values.sum()
+
+        #generate random list
+        results = {}
+        for x in range(num_iterations):
+            index = list(hit_values.index)
+            np.random.shuffle(index)
+            shuffled_hit_values = normalized_hit_values.ix[index]
+            shuffled_miss_values = normalized_miss_values.ix[index]
+
+            results[x] = self.fast_get_largest_score_vectorized(self.fast_normalized_enrichment_score_vectorized(shuffled_hit_values, shuffled_miss_values))
+
+        shuffled_results = pd.DataFrame(results)
+        shuffled_results.index = hit_values.columns
+        shuffled_results = shuffled_results.T
+
+        #Compute p-values as in paper, generated z-scores based on only positive or negative distributions
+
+        pos_enrichment = largest_enrichment[largest_enrichment >= 0]
+        neg_enrichment = largest_enrichment[largest_enrichment < 0]
+
+        pos_shuffled = shuffled_results[pos_enrichment.index]
+        neg_shuffled = shuffled_results[neg_enrichment.index]
+
+        pos_shuffled = pos_shuffled[pos_shuffled >= 0]
+        neg_shuffled = neg_shuffled[neg_shuffled < 0]
+
+        pos_count = pos_shuffled.count()
+        neg_count = neg_shuffled.count()
+
+        pos_p_value = (pos_shuffled > pos_enrichment).sum() / pos_count
+        neg_p_value = (neg_shuffled < neg_enrichment).sum() / neg_count
+        p_values = np.abs(pd.concat([pos_p_value, neg_p_value]))
+
+        #format output
+
+        enrichment_df = pd.concat({"enrichment": largest_enrichment,
+                                   "p-Value": p_values,
+                                   }).unstack().T
+
+        enrichment_df = enrichment_df.join(large_sets)
+
+        num_tests = len(p_values.dropna())
+        enrichment_df['Bonferroni-corrected p-Value'] = enrichment_df['p-Value'].apply(lambda x: min(x * num_tests, 1)).dropna()
+
+        enrichment_df['GO Term Description'] = enrichment_df['GO Term Name'].apply(",".join)
+        enrichment_df['GO domain'] = enrichment_df['GO domain'].apply(",".join)
+
+        enrichment_df = enrichment_df[[
+            'GO Term Description',
+            'enrichment',
+            'p-Value',
+            'Bonferroni-corrected p-Value',
+            'Ensembl Gene ID',
+            'Associated Gene Name',
+            'Ensembl Transcript ID',
+            'GO Term Name',
+            'GO Term Definition',
+            'GO Term Evidence Code',
+            'GO domain',
+            'GOSlim GOA Description',
+            'GOSlim GOA Accession(s)',
+            'nGenes'
+           ]]
+
+        return enrichment_df, hit_values, enrichment_score
+
+def plot_go_term(go_term, gene_list, hit_values, enrichment_score, fig):
+
+    gene_list = gene_list.sort_values(ascending=False)
+
+    genes_in_set = pd.DataFrame(hit_values[go_term].copy())
+    genes_in_set['x_loc'] = xrange(len(genes_in_set))
+    genes_in_set['y_loc'] = genes_in_set[go_term].apply(lambda x: 1 if x > 0 else 0)
+    genes_in_set = genes_in_set[genes_in_set.y_loc == 1]
+
+    ax = fig.add_subplot(3, 1, 1)
+    ax.scatter(genes_in_set.x_loc, genes_in_set.y_loc, s=5, alpha=.6)
+    ax.set_xlim(0, len(enrichment_score[go_term]))
+    sns.despine(ax=ax, left=False, bottom=True)
+    ax.set_xticklabels([])
+    ax.set_yticklabels([])
+    ax.set_ylabel("Gene in set")
+
+    ax = fig.add_subplot(3, 1, 2)
+    ax.plot(gene_list)
+    ax.set_xlim(0, len(enrichment_score[go_term]))
+    sns.despine(ax=ax, bottom=True)
+    ax.set_xticklabels([])
+    ax.set_ylabel("Correlation")
+
+    ax = fig.add_subplot(3, 1, 3)
+    ax.plot(enrichment_score[go_term])
+    sns.despine(ax=ax)
+    ax.set_xlim(0, len(enrichment_score[go_term]))
+    ax.set_ylabel("Enrichment Score")
+    ax.set_xlabel("Gene Rank")
 
 class hg19GO(GO):
     def __init__(self, *args, **kwargs):
