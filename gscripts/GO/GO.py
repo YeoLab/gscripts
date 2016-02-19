@@ -219,16 +219,31 @@ class GO(object):
         neg_p_value = (neg_shuffled < neg_enrichment).sum() / neg_count
         p_values = np.abs(pd.concat([pos_p_value, neg_p_value]))
 
+        pos_nes_enrichment = pos_enrichment / pos_shuffled.mean()
+        neg_nes_enrichment = (neg_enrichment / neg_shuffled.mean()) * -1
+
+        pos_nes_shuffled = pos_shuffled / pos_shuffled.mean()
+        neg_nes_shuffled = (neg_shuffled / neg_shuffled.mean()) * -1
+
+        pos_p_value_nes = (pos_nes_shuffled > pos_nes_enrichment).sum() / pos_count
+        neg_p_value_nes = (neg_nes_shuffled < neg_nes_enrichment).sum() / neg_count
+
+        nes_p_values = np.abs(pd.concat([pos_p_value_nes, neg_p_value_nes]))
+        nes_enrichment = pd.concat([pos_nes_enrichment, neg_nes_enrichment])
         #format output
 
         enrichment_df = pd.concat({"enrichment": largest_enrichment,
+                                   'nes_enrichment': nes_enrichment,
                                    "p-Value": p_values,
+                                   'nes_p-Value': nes_p_values
                                    }).unstack().T
 
         enrichment_df = enrichment_df.join(large_sets)
 
         num_tests = len(p_values.dropna())
         enrichment_df['Bonferroni-corrected p-Value'] = enrichment_df['p-Value'].apply(lambda x: min(x * num_tests, 1)).dropna()
+        enrichment_df['Bonferroni-corrected NES p-Value'] = enrichment_df['nes_p-Value'].apply(lambda x: min(x * num_tests, 1)).dropna()
+
 
         enrichment_df['GO Term Description'] = enrichment_df['GO Term Name'].apply(",".join)
         enrichment_df['GO domain'] = enrichment_df['GO domain'].apply(",".join)
@@ -236,6 +251,9 @@ class GO(object):
         enrichment_df = enrichment_df[[
             'GO Term Description',
             'enrichment',
+            'nes_enrichment',
+            'nes_p-Value',
+            'Bonferroni-corrected NES p-Value',
             'p-Value',
             'Bonferroni-corrected p-Value',
             'Ensembl Gene ID',
@@ -250,7 +268,7 @@ class GO(object):
             'nGenes'
            ]]
 
-        return enrichment_df, hit_values, enrichment_score
+        return shuffled_results, largest_enrichment, enrichment_df, hit_values, enrichment_score
 
 def plot_go_term(go_term, gene_list, hit_values, enrichment_score, fig):
 
@@ -473,3 +491,71 @@ ENSG00000115665
 ENSG00000164434
 ENSG00000102144
 ENSG00000160710""".split("\n")
+
+
+#shitty non-vectorized GSEA code, but reasable
+#
+# def gsea(ordered_genes, genes_in_set):
+#     genes_in_set = set(ordered_genes.index) & set(genes_in_set)
+#
+#     p_hit = 0
+#     p_miss = 0
+#     enrichment_score = []
+#     print len(genes_in_set)
+#     total_miss = len(set(ordered_genes.index) - genes_in_set) * 1.0
+#
+#     ordered_genes = np.abs(ordered_genes)
+#     total_hit = ordered_genes.ix[genes_in_set].sum() * 1.0
+#
+#     for gene, value in ordered_genes.iteritems():
+#         if gene in genes_in_set:
+#             p_hit += value / total_hit
+#         else:
+#             p_miss += 1 / total_miss
+#         enrichment_score.append(p_hit - p_miss)
+#     print total_hit, total_miss
+#     #print p_hit, p_miss
+#     return enrichment_score
+#
+# def get_max_score_from_enrichment(enrichment_scores):
+#     max_score = np.max(np.abs(enrichment_scores))
+#     if max_score in enrichment_scores:
+#         return max_score
+#     elif max_score * -1.0 in enrichment_scores:
+#         return max_score * -1.0
+#     else:
+#         return "error"
+#
+# def shuffle(df):
+#     index = list(df.index)
+#     np.random.shuffle(df.index.get_values())
+#     #random.shuffle(index)
+#     df = df.ix[index]
+#     df.reset_index()
+#     return df
+#
+# def compute_one_tailed_p_value(max_scores):
+#     if x < 0:
+#         foo = max_scores[max_scores <= 0]
+#         z_score = (x - foo.mean()) / foo.std()
+#         #print foo.mean(), foo.std()
+#
+#     if x > 0:
+#         foo = max_scores[max_scores >= 0]
+#         z_score = (x - foo.mean()) / foo.std()
+#         #print foo.mean(), foo.std()
+#
+#     p_value = scipy.stats.norm.sf(abs(z_score))
+#     return p_value
+#
+# # pc2 = unstressed_protein_coding_pca.loadings.ix['pc_2'].sort_values(ascending=False)
+#
+# # for name, gene_set in large_sets['Ensembl Gene ID'].iteritems():
+# #     real_score = get_max_score_from_enrichment(gsea(pc2, gene_set))
+#
+# #     shuffled_scores = []
+# #     for x in range(200):
+# #         shuffled_scores.append(get_max_score_from_enrichment(gsea(shuffle(pc2), gene_set)))
+# #     shuffled_scores = np.array(shuffled_scores)
+#
+# #     print mm10GO.GO.ix[name]['GO Term Name'], name, real_score, compute_one_tailed_p_value(real_score, shuffled_scores), len(gene_set)
