@@ -268,7 +268,7 @@ class GO(object):
             'nGenes'
            ]]
 
-        return shuffled_results, largest_enrichment, enrichment_df, hit_values, enrichment_score
+        return enrichment_df, hit_values, enrichment_score
 
 def plot_go_term(go_term, gene_list, hit_values, enrichment_score, fig):
 
