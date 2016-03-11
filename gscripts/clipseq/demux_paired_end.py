@@ -7,7 +7,7 @@ Converts randomer + barcoded fastq files into something that can be barcode coll
 
 """
 
-from collections import Counter, defaultdict
+from collections import Counter, defaultdict, OrderedDict
 from itertools import izip
 import gzip
 import os
@@ -29,33 +29,30 @@ def read_has_barcode(barcodes, read, max_hamming_distance=0):
     """
     Checks if read has one of the barcodes listed in barcodes list and returns back that barcode
 
-    :param barcodes: list of barcode sequence
+    :param barcodes: dict of barcode sequence, id
     :param read: str, read to check if barcode exists in
     :param hamming: max hamming distance between given barcode and barcode in read
-    :return: returns best barcode match in read, none if none found
+    :return: returns best barcode match in read and the actual barcode sequence, none if none found
     """
 
-    #This takes care of the edge case of some barcodes having Ns on the end
-    effective_barcodes = {barcode.split("N")[0]: barcode for barcode in barcodes}
-
-    barcode_lengths = {len(barcode) for barcode in effective_barcodes}
     closest_barcode = None
     #assumes larger barcodes are less likely, and searches for them first
     #for each barcode length see if known barcodes appear
-    for barcode_length in sorted(barcode_lengths, reverse=True):
-        #Gets min hamming distance between barcode in read and barcode in list, behavior undefined if tie
-        read_barcode = read[:barcode_length]
-        cur_length_barcodes = [barcode for barcode in effective_barcodes if len(barcode) == barcode_length]
-        hamming_distances = {barcode: hamming(barcode, read_barcode) for barcode in cur_length_barcodes}
-        min_barcode = min(hamming_distances, key=hamming_distances.get)
-        if hamming_distances[min_barcode] <= max_hamming_distance:
-            closest_barcode = effective_barcodes[min_barcode]
-            break
+    barcode_length = max([len(key) for key in barcodes.keys()])
+
+    #Gets min hamming distance between barcode in read and barcode in list, behavior undefined if tie
+    read_barcode = read[:barcode_length]
+    hamming_distances = [(barcode, hamming(barcode, read_barcode)) for barcode in barcodes]
+    min_barcode, hamming_distance = min(hamming_distances, key=lambda x: x[1])
+
+    if hamming_distance <= max_hamming_distance:
+        closest_barcode = min_barcode
+
     return closest_barcode, read_barcode
 
 
 def reformat_read(name_1, seq_1, plus_1, quality_1,
-                  name_2, seq_2, plus_2, quality_2, barcodes,
+                  name_2, seq_2, plus_2, quality_2, barcodes_and_names,
                   RANDOMER_LENGTH=2, max_hamming_distance=0):
     """ reformats read to have correct barcode attached
         name - read name
@@ -68,7 +65,7 @@ def reformat_read(name_1, seq_1, plus_1, quality_1,
     """
 
 
-    barcode, actual_barcode = read_has_barcode(barcodes.keys(), seq_1, max_hamming_distance)
+    barcode, actual_barcode = read_has_barcode(barcodes_and_names, seq_1, max_hamming_distance)
     barcode_length = len(barcode) if barcode is not None else 0
 
     randomer = seq_2[:RANDOMER_LENGTH]
@@ -114,21 +111,29 @@ if __name__ == "__main__":
     RANDOMER_LENGTH = options.length
 
     barcodes = {}
+    barcodes_and_names = OrderedDict()
     randomer_counts = {}
     with open(options.barcodes) as barcodes_file:
         for line in barcodes_file:
-            line = line.strip().split("\t")
+            barcode, barcode_id = line.strip().split("\t")
+
+            barcodes_and_names[barcode] = barcode_id
+
             split_file_1 = options.out_file_1.split(".")
-            split_file_1.insert(-2, line[1])
+            split_file_1.insert(-2, barcode_id)
 
             split_file_2 = options.out_file_2.split(".")
-            split_file_2.insert(-2, line[1])
+            split_file_2.insert(-2, barcode_id)
 
-            barcodes[line[0]] = [gzip.open(".".join(split_file_1), 'w'),
+            barcodes[barcode] = [gzip.open(".".join(split_file_1), 'w'),
                                  gzip.open(".".join(split_file_2), 'w'),
                                  ]
 
-            randomer_counts[line[0]] = defaultdict(Counter)
+            randomer_counts[barcode] = defaultdict(Counter)
+
+    #barcodes should be sorted by their size (ie if they are annotated as present in my barcode file or not)
+    #if the barcodes are annotated put them first (ie they are expected to be demuxed
+    barcodes_and_names = OrderedDict(sorted(barcodes_and_names.iteritems(), key=lambda x: len(x[1].split("_")), reverse=True))
 
     split_file_1 = options.out_file_1.split(".")
     split_file_1.insert(-2, "unassigned")
@@ -162,7 +167,7 @@ if __name__ == "__main__":
 
                 barcode, actual_barcode, randomer, result_1, result_2 = reformat_read(name_1, seq_1, plus, quality_1,
                                                                       name_2, seq_2, plus, quality_2,
-                                                                      barcodes, RANDOMER_LENGTH,
+                                                                      barcodes_and_names, RANDOMER_LENGTH,
                                                                       max_hamming_distance=options.max_hamming_distance)
                 randomer_counts[barcode][actual_barcode][randomer] += 1
                 barcodes[barcode][0].write(result_1)
