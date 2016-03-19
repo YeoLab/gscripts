@@ -90,7 +90,7 @@ def fisher_exact_df(expression_df, motif_df, all_genes):
     for regulated_name, df in expression_df.groupby(level=0):
         for bound_name in motif_df.index.levels[0]:
             regulated = set(df.ix[regulated_name].index)
-            regulated = motif_df.ix[bound_name].index & regulated
+            regulated = set(motif_df.ix[bound_name].index) & regulated
             bound = set(motif_df[motif_df['count'] > 0].ix[bound_name].index)
             counts = fisher_exact_on_genes(regulated, bound, all_genes)
             result[(regulated_name, bound_name)] = counts
