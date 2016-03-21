@@ -93,10 +93,10 @@ def fisher_exact_df(expression_df, motif_df, all_genes):
 
             #This is for filtering events that may not exist in the bound list out to keep stats good
             regulated = set(motif_df.ix[bound_name].index) & regulated
-            all_genes = all_genes & set(motif_df.ix[bound_name].index)
+            all_genes_in_region = all_genes & set(motif_df.ix[bound_name].index)
 
             bound = set(motif_df[motif_df['count'] > 0].ix[bound_name].index)
-            counts = fisher_exact_on_genes(regulated, bound, all_genes)
+            counts = fisher_exact_on_genes(regulated, bound, all_genes_in_region)
             result[(regulated_name, bound_name)] = counts
 
     result_df = pd.DataFrame(result).T
