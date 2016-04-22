@@ -80,16 +80,23 @@ def fisher_exact_df(expression_df, motif_df, all_genes):
     """
 
     :param expression_df: dataframe with two indexes, thing to group by and genes
-    :param motif_df: dataframe of bound genes with two index levels, level 1 is groups (cds, 3' utr) and level 2 is genes
+    :param motif_df: dataframe of bound genes with two index levels, level 1 is groups (cds, 3' utr) and level 2 is genes, assumes that binding is counted per gene that has a region
+    This gets around the issue of increaseing unbound regions when the gene doesn't actually have a region
+    i.e intronless genes being counted as unbound instead of discarded for the puropse of the analysis
     :return:
     """
 
     result = {}
     for regulated_name, df in expression_df.groupby(level=0):
         for bound_name in motif_df.index.levels[0]:
-            regulated = set(df.ix[regulated_name].index) #& protein_coding_genes
-            bound = set(motif_df[motif_df['count'] > 0].ix[bound_name].index) #& protein_coding_genes
-            counts = fisher_exact_on_genes(regulated, bound, all_genes)
+            regulated = set(df.ix[regulated_name].index)
+
+            #This is for filtering events that may not exist in the bound list out to keep stats good
+            regulated = set(motif_df.ix[bound_name].index) & regulated
+            all_genes_in_region = all_genes & set(motif_df.ix[bound_name].index)
+
+            bound = set(motif_df[motif_df['count'] > 0].ix[bound_name].index)
+            counts = fisher_exact_on_genes(regulated, bound, all_genes_in_region)
             result[(regulated_name, bound_name)] = counts
 
     result_df = pd.DataFrame(result).T
