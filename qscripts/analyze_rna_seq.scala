@@ -49,6 +49,9 @@ class AnalyzeRNASeq extends QScript {
   @Argument(doc = "reads are single ended", shortName = "single_end", fullName = "single_end", required = false)
   var singleEnd: Boolean = true
 
+  @Argument(doc = "don't trim off adapters", shortName = "no_trim_adapters", fullName = "no_trim_adapters", required = false)
+  var no_trim_adapters: Boolean = false
+
   class mv(@Input inBam: File, @Output outBam: File) extends CommandLineFunction {
   override def shortDescription = "SortSam"
   def commandLine = "cp " +
@@ -333,20 +336,28 @@ class AnalyzeRNASeq extends QScript {
 	
           add(new fastQC(fastqFile, dir=qSettings.runDirectory))
 
-          
-          val (filteredFastq, filteredPair) = stringentJobs(fastqFile, fastqPair)
 	  
-	  var sortedFilteredFastq = filteredFastq
+	  var sortedFilteredFastq: File = null
           var sortedFilteredPair: File = null
-	  //only need to sort if paired end
-	  if(filteredPair != null) { 
-	    sortedFilteredFastq = swapExt(filteredFastq, "mate1", "sorted.mate1")
-	    sortedFilteredPair = swapExt(filteredPair, "mate2", "sorted.mate2")
-            add(new FastqSort(filteredFastq, filteredPair, sortedFilteredFastq, sortedFilteredPair))
-	  }
-	  
 
-          samFile = swapExt(filteredFastq, ".rep.bamUnmapped.out.mate1", ".rmRep.bam")
+          if(!no_trim_adapters) {
+            val (filteredFastq, filteredPair) = stringentJobs(fastqFile, fastqPair)
+	    
+	    //only need to sort if paired end
+	    if(filteredPair != null) { 
+	      sortedFilteredFastq = swapExt(filteredFastq, "mate1", "sorted.mate1")
+	      sortedFilteredPair = swapExt(filteredPair, "mate2", "sorted.mate2")
+              add(new FastqSort(filteredFastq, filteredPair, sortedFilteredFastq, sortedFilteredPair))
+	    } else {
+	      sortedFilteredFastq = filteredFastq
+	    }
+	    
+            samFile = swapExt(filteredFastq, ".rep.bamUnmapped.out.mate1", ".rmRep.bam")
+	  } else {
+	    sortedFilteredFastq = fastqFile
+            sortedFilteredPair = fastqPair
+	    samFile = swapExt(sortedFilteredFastq, ".fastq.gz", ".bam")
+	  }
 	  //add(new sailfish(filteredFastq, species, !not_stranded, fastqPair))
           add(new star(input=sortedFilteredFastq, 
 		       output=samFile, 
