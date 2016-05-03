@@ -1,5 +1,6 @@
 __author__ = 'gpratt'
 
+from subprocess import call
 import subprocess
 import os
 
@@ -48,6 +49,31 @@ def neg_bed_graph(in_bed_graph, out_bed_graph):
         subprocess.call(priming_call, shell=True, stdout=out_bed_graph)
 
 
+def check_for_index(bamfile):
+
+    """
+
+    Checks to make sure a BAM file has an index, if the index does not exist it is created
+
+    Usage undefined if file does not exist (check is made earlier in program)
+    bamfile - a path to a bam file
+
+    """
+
+    if not os.path.exists(bamfile):
+        raise NameError("file %s does not exist" % (bamfile))
+
+    if os.path.exists(bamfile + ".bai"):
+        return
+
+    if not bamfile.endswith(".bam"):
+        raise NameError("file %s not of correct type" % (bamfile))
+    else:
+        process = call(["samtools", "index", str(bamfile)])
+
+        if process == -11:
+            raise NameError("file %s not of correct type" % (bamfile))
+
 
 if __name__ == "__main__":
 
@@ -64,20 +90,21 @@ if __name__ == "__main__":
     bamFile = args.bam
     genome = args.genome
 
+    check_for_index(bamFile)
+
     bedGraphFilePos = bamFile.replace(".bam", ".pos.bg")
-    bedGraphFilePosNorm = bedGraphFilePos.replace(".pos.bg", ".norm.pos.bg") 
-    bigWigFilePos = bedGraphFilePosNorm.replace(".bg", ".bw")
+    bedGraphFilePosNorm = bedGraphFilePos.replace(".pos.bg", ".norm.pos.bg")
+    bedGraphFilePosInverted = bedGraphFilePosNorm.replace(".bg", ".t.bg")
     
     bedGraphFileNeg = bamFile.replace(".bam", ".neg.bg")
     bedGraphFileNegNorm = bedGraphFileNeg.replace(".neg.bg", ".norm.neg.bg")
-    bedGraphFileNegInverted = bedGraphFileNegNorm.replace(".bg", ".t.bg")
-    bigWigFileNegInverted = bedGraphFileNegNorm.replace(".bg", ".bw")
-
+    
+    
     genome_coverage_bed(in_bam=bamFile, out_bed_graph=bedGraphFilePos, strand="+", genome=genome)
     normalize_bed_graph(in_bed_graph=bedGraphFilePos, in_bam=bamFile, out_bed_graph=bedGraphFilePosNorm)
-    bed_graph_to_big_wig(bedGraphFilePosNorm, genome, args.bw_pos)
+    neg_bed_graph(in_bed_graph=bedGraphFilePosNorm, out_bed_graph=bedGraphFilePosInverted)
+    bed_graph_to_big_wig(bedGraphFilePosInverted, genome, args.bw_pos)
 
     genome_coverage_bed(in_bam=bamFile, out_bed_graph=bedGraphFileNeg, strand="-", genome=genome)
     normalize_bed_graph(in_bed_graph=bedGraphFileNeg, in_bam=bamFile, out_bed_graph=bedGraphFileNegNorm)
-    neg_bed_graph(in_bed_graph=bedGraphFileNegNorm, out_bed_graph=bedGraphFileNegInverted)
-    bed_graph_to_big_wig(bedGraphFileNegInverted, genome, args.bw_neg)
+    bed_graph_to_big_wig(bedGraphFileNegNorm, genome, args.bw_neg)
