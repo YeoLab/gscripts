@@ -45,6 +45,31 @@ class AnalizeCLIPSeq extends QScript {
   @Argument(doc = "start processing from uncollapsed bam file")
   var fromBam: Boolean = false
 
+  @Argument(doc = "STAR genome location", required = false)
+  var star_path: String = ""
+
+  @Argument(doc = "STAR repBase Path", required = false)
+  var repbase_path: String = ""
+
+  @Argument(doc = "gffDb Path", required = false)
+  var gffdb_path: String = ""
+
+  @Argument(doc = "phastcons Path", required = false)
+  var phastcons_path: String = ""
+
+  @Argument(doc = "genome fasta Path", required = false)
+  var genome_path: String = ""
+
+  @Argument(doc = "AS Structure Path", required = false)
+  var as_structure_path: String = ""
+
+  @Argument(doc = "chrome size Path", required = false)
+  var chrome_size_path: String = ""
+
+
+
+
+  
   case class clipper(in: File, out: File, genome: String, isPremRNA: Boolean, reverse: Boolean) extends Clipper 
   {
     
@@ -115,7 +140,7 @@ class AnalizeCLIPSeq extends QScript {
   class r2ReadsOnly(@Input inBam: File, @Output outBam: File) extends CommandLineFunction {
     override def shortDescription = "R2Sam"
     def commandLine = "samtools view -hb -f 128 " +
-    required(inBam) + " > " + required(outBam) 
+    required(inBam) + " > " + required(outBam) + "; samtools index " + required(outBam)  
   }  
 
   class RemoveDuplicates(@Input inBam: File, @Output outResult: File, @Argument metrics_file: String) extends CommandLineFunction {
@@ -160,6 +185,8 @@ class AnalizeCLIPSeq extends QScript {
     required("--genome", genome) +
     required("--bw_pos", pos_bw) +
     required("--bw_neg", neg_bw)
+    
+    this.wallTime = Option((2 * 60 * 60).toLong)
   }
 
   case class markDuplicates(inBam: File, outBam: File, metrics_file: File) extends MarkDuplicates {
@@ -272,7 +299,7 @@ class AnalizeCLIPSeq extends QScript {
     
     //add bw files to list for printing out later
     add(new r2ReadsOnly(bamFile_full, bamFile))
-    add(new makeBigWigFiles(input=bamFile, genome = chromSizeLocation(genome), pos_bw = bigWigFilePos, neg_bw= bigWigFileNegInverted))
+    add(new makeBigWigFiles(input=bamFile, genome = chromSizeLocation(genome, chrome_size_path), pos_bw = bigWigFilePos, neg_bw= bigWigFileNegInverted))
     //add(new genomeCoverageBed(input = bamFile, outBed = bedGraphFilePos, cur_strand = "+", genome = chromSizeLocation(genome)))
     //add(new NormalizeBedGraph(inBedGraph = bedGraphFilePos, inBam = bamFile, outBedGraph = bedGraphFilePosNorm))
     //add(new BedGraphToBigWig(bedGraphFilePosNorm, chromSizeLocation(genome), bigWigFilePos))
@@ -286,11 +313,11 @@ class AnalizeCLIPSeq extends QScript {
     
     add(new FixScores(inBed = clipper_output, outBed = fixed_clipper_output))
     
-    add(new BedToBigBed(inBed = fixed_clipper_output, genomeSize = chromSizeLocation(genome), outBigBed = bigBed_output))
+    add(new BedToBigBed(inBed = fixed_clipper_output, genomeSize = chromSizeLocation(genome, chrome_size_path), outBigBed = bigBed_output))
     
-    add(new ClipAnalysis(bamFile, clipper_output, genome, clipper_output_metrics, AS_Structure = asStructureLocation(genome), 
-	     		 genome_location = genomeLocation(genome), phastcons_location = phastconsLocation(genome), 
-	     		 gff_db = gffDbLocation(genome)))
+    add(new ClipAnalysis(bamFile, clipper_output, genome, clipper_output_metrics, AS_Structure = asStructureLocation(genome, as_structure_path), 
+	     		 genome_location = genomeLocation(genome, genome_path), phastcons_location = phastconsLocation(genome, phastcons_path), 
+	     		 gff_db = gffDbLocation(genome, gffdb_path)))
     
     add(new BamToBed(inBam=bamFile, outBed=rmDupedBedFile))
     //add(new Pyicoclip(inBed = rmDupedBedFile, outBed = pyicoclipResults, regions = genicRegionsLocation(genome) ))
@@ -315,7 +342,7 @@ class AnalizeCLIPSeq extends QScript {
     
     var miclip = new MiClip
     miclip.inBam = bamFile
-    miclip.genome = genomeLocation(genome)
+    miclip.genome = genomeLocation(genome, genome_path)
     miclip.outBed = swapExt(bamFile, ".bam", ".miclip.bed")
     //add(miclip)
     
@@ -429,7 +456,7 @@ class AnalizeCLIPSeq extends QScript {
           add(star(input = noAdapterFastq,
 		   paired = noAdapterFastq_pair,
                    output = outRep,
-                   genome_location = repBaseGenomeLocation(genome),
+                   genome_location = repBaseGenomeLocation(genome, repbase_path),
 		   fastq_out = filteredFastq,
 		   multimap_number=30,
 		   end_to_end=true))
@@ -458,7 +485,7 @@ class AnalizeCLIPSeq extends QScript {
 	  add(star(input = sortedFilteredFastq, 
 		   paired = sortedFilteredPair,
 		   output = bamFile, 
-		   genome_location = starGenomeLocation(genome),
+		   genome_location = starGenomeLocation(genome, star_path),
 		   end_to_end=true))
       	  add(new RemoveDuplicates(bamFile, rmDupedBamFile, rmDupedMetricsFile))
 	  add(sortSam(rmDupedBamFile, sortedrmDupedBamFile, SortOrder.coordinate))
