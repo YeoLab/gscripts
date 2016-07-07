@@ -17,7 +17,7 @@ scripts = [
     'clipseq/demux_paired_end.py',
     'clipseq/sort_fastq.py',
     'editing/create_rna_editing_makefile.py',
-    'general/biwwig_corr.py',
+    'general/bigwig_corr.py',
     'general/cat_files.py',
     'general/cat_biogem.py',
     'general/calculate_NRF.py',
