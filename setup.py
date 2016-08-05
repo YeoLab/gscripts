@@ -16,6 +16,7 @@ scripts = [
     'clipseq/demultiplex_barcoded_fastq.py',
     'clipseq/demux_paired_end.py',
     'clipseq/sort_fastq.py',
+    'clipseq/remove_randomers.py',
     'editing/create_rna_editing_makefile.py',
     'general/bigwig_corr.py',
     'general/cat_files.py',
