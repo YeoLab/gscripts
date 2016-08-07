@@ -107,18 +107,18 @@ class AnalyzeRNASeq extends QScript {
     this.flip = flipped
   }
 
-  case class sailfish(input: File, species: String, ifStranded: Boolean = false, paired: File = null) extends Sailfish {
-    this.inFastq = input
-    this.stranded = ifStranded
+  // case class sailfish(input: File, species: String, ifStranded: Boolean = false, paired: File = null) extends Sailfish {
+  //   this.inFastq = input
+  //   this.stranded = ifStranded
 
-    if (paired != null) {
-      this.inFastqPair = paired
-    }
-    this.outDir = swapExt(swapExt(this.inFastq, ".gz", ""), ".fastq", ".sailfish")
-    this.shScript = swapExt(this.outDir, ".sailfish", ".sailfish.sh")
-    this.index = sailfishGenomeIndexLocation(species)
+  //   if (paired != null) {
+  //     this.inFastqPair = paired
+  //   }
+  //   this.outDir = swapExt(swapExt(this.inFastq, ".gz", ""), ".fastq", ".sailfish")
+  //   this.shScript = swapExt(this.outDir, ".sailfish", ".sailfish.sh")
+  //   this.index = sailfishGenomeIndexLocation(species)
 
-  }
+  // }
 
   case class star(input: File, 
 		  output: File, 
@@ -289,23 +289,24 @@ class AnalyzeRNASeq extends QScript {
 
   def downstream_analysis(bamFile: File, bamIndex: File, singleEnd: Boolean, species: String): File = {
     val NRFFile = swapExt(bamFile, ".bam", ".NRF.metrics")
-    val countFile = swapExt(bamFile, "bam", "count")
-    val RPKMFile = swapExt(countFile, "count", "rpkm")
-    val oldSpliceOut = swapExt(bamFile, "bam", "splices")
-    val misoOut = swapExt(bamFile, "bam", "miso")
-    val rnaEditingOut = swapExt(bamFile, "bam", "editing")
+    // val countFile = swapExt(bamFile, "bam", "count")
+    // val RPKMFile = swapExt(countFile, "count", "rpkm")
+    // val oldSpliceOut = swapExt(bamFile, "bam", "splices")
+    // val misoOut = swapExt(bamFile, "bam", "miso")
+    // val rnaEditingOut = swapExt(bamFile, "bam", "editing")
 
     //add(new CalculateNRF(inBam = bamFile, genomeSize = chromSizeLocation(species), outNRF = NRFFile))
 
     val (bigWigFilePos: File, bigWigFileNeg: File) = makeBigWig(bamFile, species = species)
 
-    //add(new countTags(input = bamFile, index = bamIndex, output = countFile, species = species))
-    //add(new singleRPKM(input = countFile, output = RPKMFile, s = species))
+    // add(new countTags(input = bamFile, index = bamIndex, output = countFile, species = species))
+    // add(new singleRPKM(input = countFile, output = RPKMFile, s = species))
 
-    //add(oldSplice(input = bamFile, out = oldSpliceOut, species = species))
-    add(new Miso(inBam = bamFile, indexFile = bamIndex, species = species, pairedEnd = false, output = misoOut))
+    // add(oldSplice(input = bamFile, out = oldSpliceOut, species = species))
+    // add(new Miso(inBam = bamFile, indexFile = bamIndex, species = species, pairedEnd = false, output = misoOut))
+
     //add(new RnaEditing(inBam = bamFile, snpEffDb = species, snpDb = snpDbLocation(species), genome = genomeLocation(species), flipped = flipped, output = rnaEditingOut))
-    return oldSpliceOut
+    return NRFFile
   }
 
   def script() {
@@ -335,6 +336,7 @@ class AnalyzeRNASeq extends QScript {
           }
 	
           add(new fastQC(fastqFile, dir=qSettings.runDirectory))
+
 
 	  
 	  var sortedFilteredFastq: File = null
@@ -383,8 +385,8 @@ class AnalyzeRNASeq extends QScript {
 
         combinedBams = combinedBams ++ List(rgSortedBamFile)
 
-        var oldSpliceOut = downstream_analysis(rgSortedBamFile, indexedBamFile, singleEnd, genome)
-        splicesFiles = splicesFiles ++ List(oldSpliceOut)
+        // var oldSpliceOut = downstream_analysis(rgSortedBamFile, indexedBamFile, singleEnd, genome)
+        // splicesFiles = splicesFiles ++ List(oldSpliceOut)
       }
 
       if (groupName != "null") {
@@ -397,8 +399,8 @@ class AnalyzeRNASeq extends QScript {
 	}
 	add(new samtoolsIndexFunction(mergedBams, mergedIndex))
         
-        var oldSpliceOut = downstream_analysis(mergedBams, mergedIndex, singleEnd, genome)
-        splicesFiles = splicesFiles ++ List(oldSpliceOut)
+        // var oldSpliceOut = downstream_analysis(mergedBams, mergedIndex, singleEnd, genome)
+        // splicesFiles = splicesFiles ++ List(oldSpliceOut)
       }
     }
 
@@ -408,9 +410,9 @@ class AnalyzeRNASeq extends QScript {
       add(new MakeTrackHub(trackHubFiles, location = location + "_" + species, genome = species))
     }
 
-    for ((species, files) <- speciesList zip splicesFiles groupBy { _._1 }) {
-      //add(parseOldSplice(files map { _._2 }, species = species))
-    }
+    // for ((species, files) <- speciesList zip splicesFiles groupBy { _._1 }) {
+    //   add(parseOldSplice(files map { _._2 }, species = species))
+    // }
 
     for ((species, files) <- speciesList zip bamFiles groupBy { _._1 }) {
       var rnaseqc = new File("rnaseqc_" + species + ".txt")
