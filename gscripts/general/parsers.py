@@ -101,6 +101,7 @@ def clipseq_metrics(analysis_dir, iclip=False, num_seps=None, sep=".",
 
     cutadapt_round2_files = glob.glob(os.path.join(analysis_dir, "*.adapterTrim.round2.metrics"))
     rm_duped_files = glob.glob(os.path.join(analysis_dir, "*rmRep.rmDup.metrics"))
+    rmRep_mapping_files = glob.glob(os.path.join(analysis_dir, "*.adapterTrim.round2.rep.bamLog.final.out"))
 
     if len(rm_duped_files) == 0:
         rm_duped_files = glob.glob(os.path.join(analysis_dir, "*r2.rmDup.metrics"))
@@ -115,10 +116,15 @@ def clipseq_metrics(analysis_dir, iclip=False, num_seps=None, sep=".",
 
     rm_duped_names = get_names(rm_duped_files, num_seps, sep)
     peaks_names = get_names(peaks_files, num_seps, sep)
-    spot_names = get_names(spot_files, num_seps, sep) 
+    spot_names = get_names(spot_files, num_seps, sep)
+    rmRep_mapping_names = get_names(rmRep_mapping_files, num_seps, sep)
+
 
     cutadapt_round2_df = pd.DataFrame({name: parse_cutadapt_file(cutadapt_file) for name, cutadapt_file in cutadapt_round2_names.items()}).transpose()
     cutadapt_round2_df.columns = ["{} Round 2".format(col) for col in cutadapt_round2_df.columns]
+
+    rmRep_mapping_df = pd.DataFrame({name: parse_star_file(star_file) for name, star_file in rmRep_mapping_names.items()}).transpose()
+    rmRep_mapping_df.columns = ["{} rmRep".format(col) for col in rmRep_mapping_df.columns]
 
     rm_duped_df = pd.DataFrame({name: parse_rm_duped_metrics_file(rm_duped_file) for name, rm_duped_file in rm_duped_names.items()}).transpose()
     spot_df = pd.DataFrame({name: parse_peak_metrics(spot_file) for name, spot_file in spot_names.items()}).transpose()
@@ -129,6 +135,7 @@ def clipseq_metrics(analysis_dir, iclip=False, num_seps=None, sep=".",
     combined_df = pd.merge(combined_df, rm_duped_df, left_index=True, right_index=True, how="outer")
     combined_df = pd.merge(combined_df, spot_df, left_index=True, right_index=True, how="outer")
     combined_df = pd.merge(combined_df, peaks_df, left_index=True, right_index=True, how="outer")
+    combined_df = pd.merge(combined_df, rmRep_mapping_df, left_index=True, right_index=True, how="outer")
 
     combined_df['Uniquely Mapped Reads'] = combined_df['Uniquely Mapped Reads'].astype(float)
     try:
@@ -139,8 +146,8 @@ def clipseq_metrics(analysis_dir, iclip=False, num_seps=None, sep=".",
     except ZeroDivisionError:
         pass
 
-
     return combined_df
+
 
 def parse_rmrep_file(rmrep_file):
     try:
