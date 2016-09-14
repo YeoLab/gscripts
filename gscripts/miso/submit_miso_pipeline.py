@@ -199,7 +199,7 @@ class MisoPipeline(object):
                 "READ_LEN=$(samtools view %s | head -n 1 | cut -f 10 | awk '{ "
                 "print length }')" % (bam))
         else:
-            commands.append('READ_LEN={}'.format(read_length))
+            commands.append('READ_LEN={}'.format(self.read_length))
 
         for event_type in event_types:
             out_dir = '{}/miso/{}/{}'.format(os.path.dirname(os.path
