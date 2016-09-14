@@ -72,6 +72,10 @@ class CommandLine(object):
                                       '(default=1)')
         self.parser.add_argument('--ppn', action='store', default=16,
                                  help='Processors per node. (default=16)')
+        self.parser.add_argument('-l', '--read-length', required=False,
+                                 help='(optional) Read length of samples. If '
+                                      'not provided, the length of the first '
+                                      'read of the bam file is used.')
         self.parser.add_argument('--do-not-submit',
                                  action='store_true', default=False,
                                  help='Whether or not to actually submit the '
@@ -111,7 +115,7 @@ class MisoPipeline(object):
     def __init__(self, bam, sample_info_file,
                  sample_id, output_sh,
                  genome, walltime, nodes=1, ppn=16,
-                 submit=False):
+                 submit=False, read_length=None):
         """
         Parameters
         ----------
@@ -144,6 +148,7 @@ class MisoPipeline(object):
 
         self.nodes = nodes
         self.ppn = ppn
+        self.read_length = self.read_length
 
         all_samples_commands = []
 
@@ -188,10 +193,13 @@ class MisoPipeline(object):
         it seems like all reads longer than what is inputed as readlen get thrown out. Should be changed to get 
         the average or most abundant read length instead. (9/2/15)
         '''
-        
-        commands.append(
-            "READ_LEN=$(samtools view %s | head -n 1 | cut -f 10 | awk '{ "
-            "print length }')" % (bam))
+
+        if self.read_length is None:
+            commands.append(
+                "READ_LEN=$(samtools view %s | head -n 1 | cut -f 10 | awk '{ "
+                "print length }')" % (bam))
+        else:
+            commands.append('READ_LEN={}'.format(read_length))
 
         for event_type in event_types:
             out_dir = '{}/miso/{}/{}'.format(os.path.dirname(os.path
@@ -275,6 +283,7 @@ def main():
                      cl.args['walltime'],
                      cl.args['nodes'],
                      cl.args['ppn'],
+                     read_length=cl.args['read_length'],
                      submit=submit)
 
     # If not all the correct arguments are given, break the program and
