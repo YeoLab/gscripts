@@ -65,7 +65,13 @@ class CommandLine(object):
                                       "gets its own sh file.")
         self.parser.add_argument('--walltime',
                                  action='store', default='1:00:00',
-                                 help='Walltime of each submitted job.')
+                                 help='Walltime of each submitted job. '
+                                      '(default=1:00:00 aka 1 hour)')
+        self.parser.add_argument('--nodes=', action='store', default=1,
+                                 help='Number of nodes to request. '
+                                      '(default=1)')
+        self.parser.add_argument('--ppn', action='store', default=16,
+                                 help='Processors per node. (default=16)')
         self.parser.add_argument('--do-not-submit',
                                  action='store_true', default=False,
                                  help='Whether or not to actually submit the '
@@ -104,7 +110,7 @@ class Usage(Exception):
 class MisoPipeline(object):
     def __init__(self, bam, sample_info_file,
                  sample_id, output_sh,
-                 genome, walltime,
+                 genome, walltime, nodes=1, ppn=16,
                  submit=False):
         """
         Parameters
@@ -136,6 +142,9 @@ class MisoPipeline(object):
         self.walltime = walltime
         self.submit = submit
 
+        self.nodes = nodes
+        self.ppn = ppn
+
         all_samples_commands = []
 
         for bam, sample_id, sh_file in zip(self.bams, self.sample_ids,
@@ -147,7 +156,8 @@ class MisoPipeline(object):
                 commands = [sh_command]
                 sub = Submitter(commands, job_name='miso',
                                 sh_filename='{}.qsub.sh'.format(sh_file),
-                                ppn=16, walltime=self.walltime)
+                                ppn=self.ppn, nodes=self.nodes,
+                                walltime=self.walltime)
                 sub.job(submit=self.submit)
 
             if self.multiple_samples:
@@ -156,7 +166,9 @@ class MisoPipeline(object):
         if self.multiple_samples:
             sub = Submitter(all_samples_commands, job_name='miso',
                             sh_filename='miso.qsub.sh',
-                            array=True, ppn=16, walltime=self.walltime)
+                            array=True,
+                            ppn=self.ppn, nodes=self.nodes,
+                            walltime=self.walltime)
             sub.job(submit=self.submit)
 
     def _write_single_sample(self, bam, sample_id, sh_file):
@@ -261,6 +273,8 @@ def main():
                      cl.args['output_sh'],
                      cl.args['genome'],
                      cl.args['walltime'],
+                     cl.args['nodes'],
+                     cl.args['ppn'],
                      submit=submit)
 
     # If not all the correct arguments are given, break the program and
