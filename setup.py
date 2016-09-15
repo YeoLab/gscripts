@@ -24,6 +24,7 @@ scripts = [
     'general/calculate_NRF.py',
     'general/downsample_bam.py',
     'general/count_aligned_from_sam.py',
+    'general/filter_bam_read_length.py',
     'general/make_bigwig_files.py',
     'general/make_trackhubs.py',
     'general/negBedGraph.py',
