@@ -212,15 +212,16 @@ class MisoPipeline(object):
                             ' all {} events'.format(event_type))
             commands.append('mkdir -p {}'.format(out_dir))
             commands.append("miso \
-         --run {6}/{0}/miso/{1}_index \
-         {2} --output-dir {3} \
+         --run {genome_dir}/{genome}/miso/{event_type}_index \
+         {bam} --output-dir {out_dir} \
          --read-len $READ_LEN \
          --settings-filename {6}/hg19/miso_annotations"
                             "/miso_settings_min_event_reads10.txt \
- -p 16 \
- > {4} \
- 2> {5}".format(self.genome, event_type, bam, out_dir,
-                psi_out, psi_err, os.environ['GENOME']))
+ -p {ppn} \
+ > {psi_out} \
+ 2> {psi_err}".format(genome=self.genome, event_type=event_type, bam=bam,
+                out_dir=out_dir, psi_out=psi_out, psi_err=psi_err,
+                      genome_dir=os.environ['GENOME'], ppn=self.ppn))
 
             commands.append("\n# Check that the psi calculation jobs didn't "
                             "fail.\n#'-z' "
