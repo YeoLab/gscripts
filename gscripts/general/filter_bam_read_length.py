@@ -37,7 +37,7 @@ class CommandLine(object):
                                    required=False,
                                    help='What to replace the ".bam" in the'
                                         ' file extension with. Not compatible '
-                                        'with --output.'
+                                        'with --output. '
                                         '(default=".100bp.bam")')
         output_parser.add_argument('--output', '-o', action='store', type=str,
                                    default=None, required=False,
