@@ -14,7 +14,7 @@ Date created: 9/14/16 10:51 PM
 The purpose of this program is to filter bam files for reads of a certain length
 
 Example run:
-filter_bam_read_length.py aligned.bam --length 100
+filter_bam_read_length.py --length 100 aligned.bam
 '''
 
 
