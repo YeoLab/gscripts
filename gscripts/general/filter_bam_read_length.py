@@ -8,7 +8,7 @@ import argparse
 import pysam
 
 '''
-Author: olga
+Author: Olga Botvinnik, based of off Emily Wheeler's code
 Date created: 9/14/16 10:51 PM
 
 The purpose of this program is to filter bam files for reads of a certain length
