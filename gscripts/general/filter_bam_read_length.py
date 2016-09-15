@@ -25,7 +25,7 @@ class CommandLine(object):
             description='''Filter a bam file for only reads of a certain length''',
             add_help=True, prefix_chars='-')
         self.parser.add_argument('bam', action='store',
-                                 type=int, help='Alignment file to filter')
+                                 type=str, help='Alignment file to filter')
         self.parser.add_argument('--length', '-l', action='store',
                                  type=int, default=100, required=False,
                                  help='Length of reads to filter for '
