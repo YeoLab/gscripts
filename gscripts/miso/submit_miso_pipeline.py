@@ -65,7 +65,17 @@ class CommandLine(object):
                                       "gets its own sh file.")
         self.parser.add_argument('--walltime',
                                  action='store', default='1:00:00',
-                                 help='Walltime of each submitted job.')
+                                 help='Walltime of each submitted job. '
+                                      '(default=1:00:00 aka 1 hour)')
+        self.parser.add_argument('--nodes=', action='store', default=1,
+                                 help='Number of nodes to request. '
+                                      '(default=1)')
+        self.parser.add_argument('--ppn', action='store', default=16,
+                                 help='Processors per node. (default=16)')
+        self.parser.add_argument('-l', '--read-length', required=False,
+                                 help='(optional) Read length of samples. If '
+                                      'not provided, the length of the first '
+                                      'read of the bam file is used.')
         self.parser.add_argument('--do-not-submit',
                                  action='store_true', default=False,
                                  help='Whether or not to actually submit the '
@@ -104,8 +114,8 @@ class Usage(Exception):
 class MisoPipeline(object):
     def __init__(self, bam, sample_info_file,
                  sample_id, output_sh,
-                 genome, walltime,
-                 submit=False):
+                 genome, walltime, nodes=1, ppn=16,
+                 submit=False, read_length=None):
         """
         Parameters
         ----------
@@ -136,6 +146,10 @@ class MisoPipeline(object):
         self.walltime = walltime
         self.submit = submit
 
+        self.nodes = nodes
+        self.ppn = ppn
+        self.read_length = self.read_length
+
         all_samples_commands = []
 
         for bam, sample_id, sh_file in zip(self.bams, self.sample_ids,
@@ -147,7 +161,8 @@ class MisoPipeline(object):
                 commands = [sh_command]
                 sub = Submitter(commands, job_name='miso',
                                 sh_filename='{}.qsub.sh'.format(sh_file),
-                                ppn=16, walltime=self.walltime)
+                                ppn=self.ppn, nodes=self.nodes,
+                                walltime=self.walltime)
                 sub.job(submit=self.submit)
 
             if self.multiple_samples:
@@ -156,7 +171,9 @@ class MisoPipeline(object):
         if self.multiple_samples:
             sub = Submitter(all_samples_commands, job_name='miso',
                             sh_filename='miso.qsub.sh',
-                            array=True, ppn=16, walltime=self.walltime)
+                            array=True,
+                            ppn=self.ppn, nodes=self.nodes,
+                            walltime=self.walltime)
             sub.job(submit=self.submit)
 
     def _write_single_sample(self, bam, sample_id, sh_file):
@@ -176,10 +193,13 @@ class MisoPipeline(object):
         it seems like all reads longer than what is inputed as readlen get thrown out. Should be changed to get 
         the average or most abundant read length instead. (9/2/15)
         '''
-        
-        commands.append(
-            "READ_LEN=$(samtools view %s | head -n 1 | cut -f 10 | awk '{ "
-            "print length }')" % (bam))
+
+        if self.read_length is None:
+            commands.append(
+                "READ_LEN=$(samtools view %s | head -n 1 | cut -f 10 | awk '{ "
+                "print length }')" % (bam))
+        else:
+            commands.append('READ_LEN={}'.format(self.read_length))
 
         for event_type in event_types:
             out_dir = '{}/miso/{}/{}'.format(os.path.dirname(os.path
@@ -192,15 +212,16 @@ class MisoPipeline(object):
                             ' all {} events'.format(event_type))
             commands.append('mkdir -p {}'.format(out_dir))
             commands.append("miso \
-         --run {6}/{0}/miso/{1}_index \
-         {2} --output-dir {3} \
+         --run {genome_dir}/{genome}/miso/{event_type}_index \
+         {bam} --output-dir {out_dir} \
          --read-len $READ_LEN \
          --settings-filename {6}/hg19/miso_annotations"
                             "/miso_settings_min_event_reads10.txt \
- -p 16 \
- > {4} \
- 2> {5}".format(self.genome, event_type, bam, out_dir,
-                psi_out, psi_err, os.environ['GENOME']))
+ -p {ppn} \
+ > {psi_out} \
+ 2> {psi_err}".format(genome=self.genome, event_type=event_type, bam=bam,
+                out_dir=out_dir, psi_out=psi_out, psi_err=psi_err,
+                      genome_dir=os.environ['GENOME'], ppn=self.ppn))
 
             commands.append("\n# Check that the psi calculation jobs didn't "
                             "fail.\n#'-z' "
@@ -261,6 +282,9 @@ def main():
                      cl.args['output_sh'],
                      cl.args['genome'],
                      cl.args['walltime'],
+                     cl.args['nodes'],
+                     cl.args['ppn'],
+                     read_length=cl.args['read_length'],
                      submit=submit)
 
     # If not all the correct arguments are given, break the program and
