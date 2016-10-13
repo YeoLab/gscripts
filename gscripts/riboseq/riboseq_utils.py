@@ -12,7 +12,7 @@ def bed_to_genomic_interval(bed):
     """
 
     for interval in bed:
-        yield HTSeq.GenomicPosition(interval.chrom, interval.start, interval.strand)
+        yield HTSeq.GenomicPosition(str(interval.chrom), interval.start, str(interval.strand))
 
 
 def get_closest(bam, regions, half_window_width = 50):
@@ -28,7 +28,7 @@ def get_closest(bam, regions, half_window_width = 50):
     profile = {}
     sorted_bam = HTSeq.BAM_Reader(bam.fn)
     for x, tss in enumerate(bed_to_genomic_interval(regions)):
-        window = HTSeq.GenomicInterval(tss.chrom, tss.pos - half_window_width, tss.pos + half_window_width, tss.strand)
+        window = HTSeq.GenomicInterval(str(tss.chrom), tss.pos - half_window_width, tss.pos + half_window_width, str(tss.strand))
         for almnt in sorted_bam[window]:
             if almnt.iv.strand == "+":
                 read_loc = almnt.iv.start - tss.pos
