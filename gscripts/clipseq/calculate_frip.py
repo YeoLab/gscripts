@@ -12,8 +12,10 @@ def compute_frip(bam, bed):
     num_reads_peaks = len(bam_tool.intersect(peaks, u=True, s=True))
 
     bamtool = pysam.Samfile(bam)
+    
 
-    return float(num_reads_peaks) / bamtool.mapped
+    total_mapped_reads = bamtool.mapped
+    return num_reads_peaks, total_mapped_reads, (float(num_reads_peaks) / total_mapped_reads)
 
 
 if __name__ == "__main__":
@@ -27,8 +29,8 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
 
-    frip = compute_frip(args.bam, args.bed)
+    num_reads_peaks, total_mapped_reads, frip = compute_frip(args.bam, args.bed)
 
     with open(args.out_file, 'w') as outfile:
-        outfile.write("FRiP\n")
-        outfile.write("\t".join([str(frip)]) + "\n")
+        outfile.write("\t".join(["reads_in_peaks", "total_reads", "FRiP"]) + "\n")
+        outfile.write("\t".join([str(num_reads_peaks), str(total_mapped_reads), str(frip)]) + "\n")
