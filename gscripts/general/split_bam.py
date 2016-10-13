@@ -2,7 +2,7 @@ __author__ = 'gpratt'
 import argparse
 import subprocess
 import os
-
+import pysam
 
 def pre_process_bam(bam, bam01, bam02):
     #split bam file into two, return file handle for the two bam files
@@ -11,10 +11,17 @@ def pre_process_bam(bam, bam01, bam02):
     nlines = int(stdout) / 2
     p = subprocess.Popen("samtools view {0} | shuf | split -d -l {1} - {0}".format(bam, nlines), shell=True) # This will shuffle the lines in the file and split it into two parts
     p.wait()
-    p1 = subprocess.Popen("samtools view -H {0} | cat - {0}00 | samtools view -bS - | samtools sort -f - {1}".format(bam, bam01), shell=True)
-    p2 = subprocess.Popen("samtools view -H {0} | cat - {0}01 | samtools view -bS - | samtools sort -f - {1}".format(bam, bam02), shell=True)
+
+    #split and remake bam file
+    p1 = subprocess.Popen("samtools view -H {0} | cat - {0}00 | samtools view -bS - > {0}00.bam".format(bam), shell=True) 
+    p2 = subprocess.Popen("samtools view -H {0} | cat - {0}01 | samtools view -bS - > {0}01.bam".format(bam), shell=True)
     p1.wait()
     p2.wait()
+  
+    #sort remade bam file, can't combine due to race condition for viewing and sorting
+    pysam.sort("{0}00.bam".format(bam), os.path.splitext(bam01)[0])
+    pysam.sort("{0}01.bam".format(bam), os.path.splitext(bam02)[0])
+
     return bam01, bam02
 
 if __name__ == "__main__":
