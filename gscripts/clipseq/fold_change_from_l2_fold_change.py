@@ -3,7 +3,7 @@ __author__ = 'gpratt'
 import argparse
 
 import pybedtools
-
+import sys
 
 def fix_score(interval):
     interval.score = str(pow(2, float(interval.score)))
@@ -22,5 +22,5 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     rep1_out = pybedtools.BedTool(args.in_file).each(fix_score).saveas(args.out_file)
-
+    sys.exit(0)
 
