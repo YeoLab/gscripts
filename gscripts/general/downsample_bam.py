@@ -6,77 +6,38 @@ import subprocess
 import os
 
 
+def wrap_wait_error(wait_result):
+    if wait_result != 0:
+        raise NameError("Failed to execute command correctly {}".format(wait_result))
+
 def pre_process_bam(bam, bam01, bam02, bam03, bam04, bam05, bam06, bam07, bam08, bam09):
     #split bam file into two, return file handle for the two bam files
     p = subprocess.Popen("samtools view {} | wc -l".format(bam), shell=True, stdout=subprocess.PIPE) # Number of reads in the tagAlign file
     stdout, stderr = p.communicate()
     nlines = int(stdout)
-    p = subprocess.Popen("samtools view {0} | shuf > {0}.shuffled.sam".format(bam), shell=True) # This will shuffle the lines in the file and split it into two parts
-    p.wait()
+    shuffled_bam = os.path.splitext(os.path.basename(bam))[0]
+    
+    p = subprocess.Popen("samtools bamshuf {0} {1}".format(bam, shuffled_bam), shell=True) # This will shuffle the lines in the file and split it into two parts
+    wrap_wait_error(p.wait())
 
-    p1 = subprocess.Popen("head -n {2} {0}.shuffled.sam > {1}.tmp".format(bam, bam01, int(nlines * .1)), shell=True)
-    p2 = subprocess.Popen("head -n {2} {0}.shuffled.sam > {1}.tmp".format(bam, bam02, int(nlines * .2)), shell=True)
-    p3 = subprocess.Popen("head -n {2} {0}.shuffled.sam > {1}.tmp".format(bam, bam03, int(nlines * .3)), shell=True)
-    p4 = subprocess.Popen("head -n {2} {0}.shuffled.sam > {1}.tmp".format(bam, bam04, int(nlines * .4)), shell=True)
-    p5 = subprocess.Popen("head -n {2} {0}.shuffled.sam > {1}.tmp".format(bam, bam05, int(nlines * .5)), shell=True)
-    p6 = subprocess.Popen("head -n {2} {0}.shuffled.sam > {1}.tmp".format(bam, bam06, int(nlines * .6)), shell=True)
-    p7 = subprocess.Popen("head -n {2} {0}.shuffled.sam > {1}.tmp".format(bam, bam07, int(nlines * .7)), shell=True)
-    p8 = subprocess.Popen("head -n {2} {0}.shuffled.sam > {1}.tmp".format(bam, bam08, int(nlines * .8)), shell=True)
-    p9 = subprocess.Popen("head -n {2} {0}.shuffled.sam > {1}.tmp".format(bam, bam09, int(nlines * .9)), shell=True)
+    bam_and_percent = [(bam01, int(nlines * .1)),
+                       (bam02, int(nlines * .2)),
+                       (bam03, int(nlines * .3)),
+                       (bam04, int(nlines * .4)),
+                       (bam05, int(nlines * .5)),
+                       (bam06, int(nlines * .6)),
+                       (bam07, int(nlines * .7)),
+                       (bam08, int(nlines * .8)), 
+                       (bam09, int(nlines * .9)),]
 
-    p1.wait()
-    p2.wait()
-    p3.wait()
-    p4.wait()
-    p5.wait()
-    p6.wait()
-    p7.wait()
-    p8.wait()
-    p9.wait()
+    cmds = []
+    for bam_file, percent in bam_and_percent:
+        p1 = subprocess.Popen("samtools view -h {0}.bam | head -n {1} | samtools view -bS - | samtools sort - {2}".format(shuffled_bam, percent, os.path.splitext(bam_file)[0]), shell=True)
+        wrap_wait_error(p1.wait())
 
-    p1 = subprocess.Popen("samtools view -H {0} | cat - {1}.tmp | samtools view -bS - | samtools sort -f - {1}".format(bam, bam01), shell=True)
-    p2 = subprocess.Popen("samtools view -H {0} | cat - {1}.tmp | samtools view -bS - | samtools sort -f - {1}".format(bam, bam02), shell=True)
-    p3 = subprocess.Popen("samtools view -H {0} | cat - {1}.tmp | samtools view -bS - | samtools sort -f - {1}".format(bam, bam03), shell=True)
-    p4 = subprocess.Popen("samtools view -H {0} | cat - {1}.tmp | samtools view -bS - | samtools sort -f - {1}".format(bam, bam04), shell=True)
-    p5 = subprocess.Popen("samtools view -H {0} | cat - {1}.tmp | samtools view -bS - | samtools sort -f - {1}".format(bam, bam05), shell=True)
-    p6 = subprocess.Popen("samtools view -H {0} | cat - {1}.tmp | samtools view -bS - | samtools sort -f - {1}".format(bam, bam06), shell=True)
-    p7 = subprocess.Popen("samtools view -H {0} | cat - {1}.tmp | samtools view -bS - | samtools sort -f - {1}".format(bam, bam07), shell=True)
-    p8 = subprocess.Popen("samtools view -H {0} | cat - {1}.tmp | samtools view -bS - | samtools sort -f - {1}".format(bam, bam08), shell=True)
-    p9 = subprocess.Popen("samtools view -H {0} | cat - {1}.tmp | samtools view -bS - | samtools sort -f - {1}".format(bam, bam09), shell=True)
-
-    p1.wait()
-    p2.wait()
-    p3.wait()
-    p4.wait()
-    p5.wait()
-    p6.wait()
-    p7.wait()
-    p8.wait()
-    p9.wait()
-
-
-    p1 = subprocess.Popen("rm {}.tmp".format(bam01), shell=True)
-    p2 = subprocess.Popen("rm {}.tmp".format(bam02), shell=True)
-    p3 = subprocess.Popen("rm {}.tmp".format(bam03), shell=True)
-    p4 = subprocess.Popen("rm {}.tmp".format(bam04), shell=True)
-    p5 = subprocess.Popen("rm {}.tmp".format(bam05), shell=True)
-    p6 = subprocess.Popen("rm {}.tmp".format(bam06), shell=True)
-    p7 = subprocess.Popen("rm {}.tmp".format(bam07), shell=True)
-    p8 = subprocess.Popen("rm {}.tmp".format(bam08), shell=True)
-    p9 = subprocess.Popen("rm {}.tmp".format(bam09), shell=True)
-    p10 = subprocess.Popen("rm {0}.shuffled.sam".format(bam), shell=True)
-
-
-    p1.wait()
-    p2.wait()
-    p3.wait()
-    p4.wait()
-    p5.wait()
-    p6.wait()
-    p7.wait()
-    p8.wait()
-    p9.wait()
-    p10.wait()
+    
+    p1 = subprocess.Popen("rm {0}.bam".format(shuffled_bam), shell=True)
+    wrap_wait_error(p1.wait())
 
     return bam01, bam02
 
