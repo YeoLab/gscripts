@@ -5,12 +5,14 @@ import subprocess
 import os
 
 
-def genome_coverage_bed(in_bam=None, in_bed=None, out_bed_graph=None, genome=None, strand=None, split=True):
+def genome_coverage_bed(in_bam=None, in_bed=None, out_bed_graph=None, genome=None, strand=None, split=True, dont_flip=False):
     with open(out_bed_graph, 'w') as out_bed_graph:
         if in_bam is not None and in_bed is not None:
             raise Exception("can't pass both bam and bed file to this function")
 
-        if in_bam is not None:
+        if dont_flip and in_bam:
+            priming_call = "genomeCoverageBed -ibam {}".format(in_bam)
+        elif in_bam is not None:
             priming_call = "samtools view -h " + in_bam + " | awk 'BEGIN {OFS=\"\\t\"} {if(!!and($2,0x0080)) {if(!!and($2, 0x0004)) {$2 = $2 - 16} else {$2 = $2 + 16}}; print $0}' | samtools view -bS - | genomeCoverageBed -ibam stdin "
 
         if in_bed is not None:
@@ -82,7 +84,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Makes Pretty bed Graph Files!")
     parser.add_argument("--bam", help="bam file to make bedgraphs from", required=True)
     parser.add_argument("--genome", help="chromosome sizes because some things need it", required=True)
-
+    parser.add_argument("--dont_flip", help="by default assumes trueseq reversed strand, this disables that assumption", action="store_true", default=False)
     parser.add_argument("--bw_pos", help="positive bw file name", required=True)
     parser.add_argument("--bw_neg", help="negative bw file name", required=True)
 
@@ -94,17 +96,16 @@ if __name__ == "__main__":
 
     bedGraphFilePos = bamFile.replace(".bam", ".pos.bg")
     bedGraphFilePosNorm = bedGraphFilePos.replace(".pos.bg", ".norm.pos.bg")
-    bedGraphFilePosInverted = bedGraphFilePosNorm.replace(".bg", ".t.bg")
     
     bedGraphFileNeg = bamFile.replace(".bam", ".neg.bg")
     bedGraphFileNegNorm = bedGraphFileNeg.replace(".neg.bg", ".norm.neg.bg")
+    bedGraphFileNegInverted = bedGraphFileNegNorm.replace(".bg", ".t.bg")
     
-    
-    genome_coverage_bed(in_bam=bamFile, out_bed_graph=bedGraphFilePos, strand="+", genome=genome)
+    genome_coverage_bed(in_bam=bamFile, out_bed_graph=bedGraphFilePos, strand="+", genome=genome, dont_flip=args.dont_flip)
     normalize_bed_graph(in_bed_graph=bedGraphFilePos, in_bam=bamFile, out_bed_graph=bedGraphFilePosNorm)
-    neg_bed_graph(in_bed_graph=bedGraphFilePosNorm, out_bed_graph=bedGraphFilePosInverted)
-    bed_graph_to_big_wig(bedGraphFilePosInverted, genome, args.bw_pos)
+    bed_graph_to_big_wig(bedGraphFilePosNorm, genome, args.bw_pos)
 
-    genome_coverage_bed(in_bam=bamFile, out_bed_graph=bedGraphFileNeg, strand="-", genome=genome)
+    genome_coverage_bed(in_bam=bamFile, out_bed_graph=bedGraphFileNeg, strand="-", genome=genome, dont_flip=args.dont_flip)
     normalize_bed_graph(in_bed_graph=bedGraphFileNeg, in_bam=bamFile, out_bed_graph=bedGraphFileNegNorm)
-    bed_graph_to_big_wig(bedGraphFileNegNorm, genome, args.bw_neg)
+    neg_bed_graph(in_bed_graph=bedGraphFileNegNorm, out_bed_graph=bedGraphFileNegInverted)
+    bed_graph_to_big_wig(bedGraphFileNegInverted, genome, args.bw_neg)
