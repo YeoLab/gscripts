@@ -1490,7 +1490,7 @@ def plot_go_enrichment(df, filter_value=None, max_terms=None, **kwargs):
     go_matrix[go_matrix == np.inf] = -1
     go_matrix[go_matrix == -1] = go_matrix.values.max()
 
-    sns.clustermap(go_matrix, robust=True, **kwargs)
+    return sns.clustermap(go_matrix, robust=True, **kwargs)
 
 class Figure(object):
     def __init__(self, saveas, tight_layout=True, **kwargs):
