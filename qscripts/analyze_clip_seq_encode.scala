@@ -39,6 +39,9 @@ class AnalizeCLIPSeq extends QScript {
   @Argument(doc = "read ids have randomers")
   var barcoded: Boolean = false
 
+  @Argument(doc="expermental trimming")
+  var new_trim: Boolean = false
+
   @Argument(doc = "use alpha version of STAR")
   var alpha: Boolean = false
 
@@ -184,7 +187,8 @@ class AnalizeCLIPSeq extends QScript {
     required("--bam", input) +
     required("--genome", genome) +
     required("--bw_pos", pos_bw) +
-    required("--bw_neg", neg_bw)
+    required("--bw_neg", neg_bw) +
+    required("--dont_flip")
     
     this.wallTime = Option((2 * 60 * 60).toLong)
   }
@@ -435,24 +439,44 @@ class AnalizeCLIPSeq extends QScript {
       	  add(fastQC(fastq = fastq_file, dir=qSettings.runDirectory))
 	  //filters out adapter reads
 	  
-	  add(cutadapt(fastq_file = fastq_file,
-		       pairedFile = fastqPair,
-		       noAdapterFastq = round1_cutadapt,
-		       pairedOut = round1_cutadapt_pair,
-		       adapterReport = round1Report, 
-		       a_adapters = List("N" * num_n + "AGATCGGAAGAGCACACGTCTGAACTCCAGTCAC"),
-		       g_adapters = five_prime_adapters,
-		       A_adapters = A_adapters,
-		       my_overlap=1))
+	  if(!new_trim) { //this is the classic approach
+	    add(cutadapt(fastq_file = fastq_file,
+			 pairedFile = fastqPair,
+			 noAdapterFastq = round1_cutadapt,
+			 pairedOut = round1_cutadapt_pair,
+			 adapterReport = round1Report, 
+			 a_adapters = List("N" * num_n + "AGATCGGAAGAGCACACGTCTGAACTCCAGTCAC"),
+			 g_adapters = five_prime_adapters,
+			 A_adapters = A_adapters,
+			 my_overlap=1))
 
-	  add(cutadapt(fastq_file = round1_cutadapt,
-		       pairedFile= round1_cutadapt_pair,
-		       noAdapterFastq = noAdapterFastq,
-		       pairedOut = noAdapterFastq_pair,
-		       adapterReport = adapterReport, 
-		       A_adapters = A_adapters,
-		       my_overlap=match_length.toInt))
-	  
+	    add(cutadapt(fastq_file = round1_cutadapt,
+			 pairedFile= round1_cutadapt_pair,
+			 noAdapterFastq = noAdapterFastq,
+			 pairedOut = noAdapterFastq_pair,
+			 adapterReport = adapterReport, 
+			 A_adapters = A_adapters,
+			 my_overlap=match_length.toInt))
+	  } else { // this is the new approach to trim lots of things
+	    add(cutadapt(fastq_file = fastq_file,
+			 pairedFile = fastqPair,
+			 noAdapterFastq = round1_cutadapt,
+			 pairedOut = round1_cutadapt_pair,
+			 adapterReport = round1Report, 
+			 a_adapters = List("N" * num_n + "AGATCGGAAGAGCACACGTCTGAACTCCAGTCAC"),
+			 A_adapters = A_adapters,
+			 my_overlap=1))
+
+	    add(cutadapt(fastq_file = round1_cutadapt,
+			 pairedFile= round1_cutadapt_pair,
+			 noAdapterFastq = noAdapterFastq,
+			 pairedOut = noAdapterFastq_pair,
+			 adapterReport = adapterReport, 
+			 g_adapters = five_prime_adapters,
+			 A_adapters = A_adapters,
+			 my_overlap=match_length.toInt))
+
+	  }
           add(star(input = noAdapterFastq,
 		   paired = noAdapterFastq_pair,
                    output = outRep,
