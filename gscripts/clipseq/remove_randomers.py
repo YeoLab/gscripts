@@ -18,8 +18,8 @@ if __name__ == "__main__":
 
     my_open = gzip.open if os.path.splitext(options.fastq1)[1] == ".gz" else open
 
-    out_file1 = my_open(options.out_file1, 'wb')
-    out_file2 = my_open(options.out_file2, 'wb')
+    out_file1 = my_open(options.out_file1, 'w')
+    out_file2 = my_open(options.out_file2, 'w')
 
     with my_open(options.fastq1) as fastq_file1, my_open(options.fastq2) as fastq_file2:
         while True:
