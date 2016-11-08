@@ -1,3 +1,5 @@
+#!/usr/local/bin/python2.7
+
 __author__ = 'gpratt'
 
 from subprocess import call
@@ -5,7 +7,7 @@ import subprocess
 import os
 
 
-def genome_coverage_bed(in_bam=None, in_bed=None, out_bed_graph=None, genome=None, strand=None, split=True, dont_flip=False):
+def genome_coverage_bed(in_bam=None, in_bed=None, out_bed_graph=None, genome=None, strand=None, split=True, dont_flip=False, five=False):
     with open(out_bed_graph, 'w') as out_bed_graph:
         if in_bam is not None and in_bed is not None:
             raise Exception("can't pass both bam and bed file to this function")
@@ -22,9 +24,10 @@ def genome_coverage_bed(in_bam=None, in_bed=None, out_bed_graph=None, genome=Non
         if strand:
             priming_call += " -strand {} ".format(strand)
 
-        if split:
+        if split and not five:
             priming_call += " -split "
-
+        elif five:
+            priming_call += " -5 "
         priming_call += " -g {} ".format(genome)
         subprocess.check_call(priming_call, shell=True, stdout=out_bed_graph)
 
@@ -87,25 +90,26 @@ if __name__ == "__main__":
     parser.add_argument("--dont_flip", help="by default assumes trueseq reversed strand, this disables that assumption", action="store_true", default=False)
     parser.add_argument("--bw_pos", help="positive bw file name", required=True)
     parser.add_argument("--bw_neg", help="negative bw file name", required=True)
-
+    parser.add_argument("-5", "--five", help="calculate coverage of 5' positions only", required=False, default=False, action="store_true")
     args = parser.parse_args()
     bamFile = args.bam
     genome = args.genome
-
+    
     check_for_index(bamFile)
-
-    bedGraphFilePos = bamFile.replace(".bam", ".pos.bg")
-    bedGraphFilePosNorm = bedGraphFilePos.replace(".pos.bg", ".norm.pos.bg")
+    prefix = '.5' if args.five else ''
     
-    bedGraphFileNeg = bamFile.replace(".bam", ".neg.bg")
-    bedGraphFileNegNorm = bedGraphFileNeg.replace(".neg.bg", ".norm.neg.bg")
+    bedGraphFilePos = bamFile.replace(".bam", "{}.pos.bg".format(prefix))
+    bedGraphFilePosNorm = bedGraphFilePos.replace("{}.pos.bg".format(prefix), ".norm{}.pos.bg".format(prefix))
+    
+    bedGraphFileNeg = bamFile.replace(".bam", "{}.neg.bg".format(prefix))
+    bedGraphFileNegNorm = bedGraphFileNeg.replace("{}.neg.bg".format(prefix), ".norm{}.neg.bg".format(prefix))
     bedGraphFileNegInverted = bedGraphFileNegNorm.replace(".bg", ".t.bg")
-    
-    genome_coverage_bed(in_bam=bamFile, out_bed_graph=bedGraphFilePos, strand="+", genome=genome, dont_flip=args.dont_flip)
+
+    genome_coverage_bed(in_bam=bamFile, out_bed_graph=bedGraphFilePos, strand="+", genome=genome, dont_flip=args.dont_flip, five=args.five)
     normalize_bed_graph(in_bed_graph=bedGraphFilePos, in_bam=bamFile, out_bed_graph=bedGraphFilePosNorm)
     bed_graph_to_big_wig(bedGraphFilePosNorm, genome, args.bw_pos)
-
-    genome_coverage_bed(in_bam=bamFile, out_bed_graph=bedGraphFileNeg, strand="-", genome=genome, dont_flip=args.dont_flip)
+    
+    genome_coverage_bed(in_bam=bamFile, out_bed_graph=bedGraphFileNeg, strand="-", genome=genome, dont_flip=args.dont_flip, five=args.five)
     normalize_bed_graph(in_bed_graph=bedGraphFileNeg, in_bam=bamFile, out_bed_graph=bedGraphFileNegNorm)
     neg_bed_graph(in_bed_graph=bedGraphFileNegNorm, out_bed_graph=bedGraphFileNegInverted)
     bed_graph_to_big_wig(bedGraphFileNegInverted, genome, args.bw_neg)
