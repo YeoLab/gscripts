@@ -145,6 +145,7 @@ if __name__ == "__main__":
                               gzip.open(".".join(split_file_2), 'w'),
                               ]
     randomer_counts['unassigned'] = defaultdict(Counter)
+    randomer_counts['too_short'] = defaultdict(Counter)
 
     #reads through initial file parses everything out
     with my_open(options.fastq_1) as fastq_file_1, my_open(options.fastq_2) as fastq_file_2, open(options.metrics_file, 'w') as metrics_file:
@@ -164,6 +165,14 @@ if __name__ == "__main__":
                 if name_1.split()[0] != name_2.split()[0]:
                     print name_1, name_2
                     raise Exception("Read 1 is not same name as Read 2")
+
+                #If the sequencing read is shorter than randommer length don't include in demuxed fastq file
+                if len(seq_2.strip()) < RANDOMER_LENGTH + 1:
+                    barcode = "too_short"
+                    actual_barcode = "too_short"
+                    randomer = "too_short"
+                    randomer_counts[barcode][actual_barcode][randomer] += 1
+                    continue
 
                 barcode, actual_barcode, randomer, result_1, result_2 = reformat_read(name_1, seq_1, plus, quality_1,
                                                                       name_2, seq_2, plus, quality_2,
