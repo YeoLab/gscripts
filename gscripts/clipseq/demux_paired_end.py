@@ -82,6 +82,14 @@ def reformat_read(name_1, seq_1, plus_1, quality_1,
     if barcode is None:
         barcode = "unassigned"
 
+    #Check that both ends of the read are longer than the barcode and randommer. Since these
+    #get trimmed, need to remove reads of 0 length after trimming.
+    if (len(seq_1.strip()) < 1) | (len(seq_2.strip()) < 1):
+        barcode = "too_short"
+        actual_barcode = "too_short"
+        randomer = "too_short"
+
+
     result_1 = name_1 + seq_1 + plus_1 + quality_1
     result_2 = name_2 + seq_2 + plus_2 + quality_2
 
@@ -166,19 +174,19 @@ if __name__ == "__main__":
                     print name_1, name_2
                     raise Exception("Read 1 is not same name as Read 2")
 
-                #If the sequencing read is shorter than randommer length don't include in demuxed fastq file
-                if len(seq_2.strip()) < RANDOMER_LENGTH + 1:
-                    barcode = "too_short"
-                    actual_barcode = "too_short"
-                    randomer = "too_short"
-                    randomer_counts[barcode][actual_barcode][randomer] += 1
-                    continue
+			
 
                 barcode, actual_barcode, randomer, result_1, result_2 = reformat_read(name_1, seq_1, plus, quality_1,
                                                                       name_2, seq_2, plus, quality_2,
                                                                       barcodes_and_names, RANDOMER_LENGTH,
                                                                       max_hamming_distance=options.max_hamming_distance)
+
                 randomer_counts[barcode][actual_barcode][randomer] += 1
+
+                #Do not write reads to the demuxed files that have 0 length
+                if barcode == "too_short":
+                    continue
+
                 barcodes[barcode][0].write(result_1)
                 barcodes[barcode][1].write(result_2)
             except StopIteration:
