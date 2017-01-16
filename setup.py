@@ -23,6 +23,7 @@ scripts = [
     'general/cat_biogem.py',
     'general/calculate_NRF.py',
     'general/downsample_bam.py',
+    'general/downsample_fastq.py',
     'general/count_aligned_from_sam.py',
     'general/filter_bam_read_length.py',
     'general/make_bigwig_files.py',

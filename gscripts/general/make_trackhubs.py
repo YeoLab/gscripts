@@ -152,7 +152,7 @@ if __name__ == "__main__":
             color=color,
             local_fn=bigBed_file,
             remote_fn=os.path.join(upload_dir, GENOME, base_track),
-            visibility="full"
+            visibility="dense"
         )
         #trackdb.add_tracks(track)
         supertrack.add_track(track)
