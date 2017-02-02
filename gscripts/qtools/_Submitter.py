@@ -303,9 +303,10 @@ class Submitter(object):
         sh_file.write("%s -q %s\n" % (self.queue_param_prefix, self.queue))
 
         # Workaround to submit to 'glean' queue and 'condo' queue
-        if (self.queue == "glean") or (self.queue == "condo"):
-            sh_file.write('%s -W group_list=condo-group\n' %
-                          self.queue_param_prefix)
+        #commented out for now, jim updated this, and it breaks automatic condo submissions
+        #if (self.queue == "glean") or (self.queue == "condo"):
+        #    sh_file.write('%s -W group_list=condo-group\n' %
+        #                  self.queue_param_prefix)
 
         self._write_additional_resources(sh_file)
 
