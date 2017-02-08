@@ -16,23 +16,27 @@ def pre_process_bam(bam, bam01, bam02, bam03, bam04, bam05, bam06, bam07, bam08,
     p = subprocess.Popen("samtools view {} | wc -l".format(bam), shell=True, stdout=subprocess.PIPE) # Number of reads in the tagAlign file
     stdout, stderr = p.communicate()
     nlines = int(stdout)
+    
+    p = subprocess.Popen("samtools view -H {} | wc -l".format(bam), shell=True, stdout=subprocess.PIPE) # Number of header lines (for when we've got a lot of chromosomes)
+    stdout, stderr = p.communicate()
+    n_header_lines = int(stdout)
 
     if no_shuffle:
         shuffled_bam = os.path.splitext(bam)[0]
     else: #shuffle
-        shuffled_bam = os.path.splitext(os.path.basename(bam))[0]    
+        shuffled_bam = os.path.splitext(os.path.basename(bam))[0] + "_shuff"    
         p = subprocess.Popen("samtools bamshuf {0} {1}".format(bam, shuffled_bam), shell=True) # This will shuffle the lines in the file and split it into two parts
         wrap_wait_error(p.wait())
     
-    bam_and_percent = [(bam01, int(nlines * .1)),
-                       (bam02, int(nlines * .2)),
-                       (bam03, int(nlines * .3)),
-                       (bam04, int(nlines * .4)),
-                       (bam05, int(nlines * .5)),
-                       (bam06, int(nlines * .6)),
-                       (bam07, int(nlines * .7)),
-                       (bam08, int(nlines * .8)), 
-                       (bam09, int(nlines * .9)),]
+    bam_and_percent = [(bam01, int(nlines * .1) + n_header_lines),
+                       (bam02, int(nlines * .2) + n_header_lines),
+                       (bam03, int(nlines * .3) + n_header_lines),
+                       (bam04, int(nlines * .4) + n_header_lines),
+                       (bam05, int(nlines * .5) + n_header_lines),
+                       (bam06, int(nlines * .6) + n_header_lines),
+                       (bam07, int(nlines * .7) + n_header_lines),
+                       (bam08, int(nlines * .8) + n_header_lines), 
+                       (bam09, int(nlines * .9) + n_header_lines),]
 
     cmds = []
     for bam_file, percent in bam_and_percent:
@@ -40,7 +44,8 @@ def pre_process_bam(bam, bam01, bam02, bam03, bam04, bam05, bam06, bam07, bam08,
             percent -= 1
         if no_sort: #if we are aren't shuffling, don't delete
         #Make sure I select pairs of reads
-            p1 = subprocess.Popen("samtools view -h {0}.bam | head -n {1} | samtools view -bS - > {2}.bam".format(shuffled_bam, percent, os.path.splitext(bam_file)[0]), shell=True)
+            cmd = "samtools view -h {0}.bam | head -n {1} | samtools view -bS - > {2}.bam".format(shuffled_bam, percent, os.path.splitext(bam_file)[0])
+            p1 = subprocess.Popen(cmd, shell=True)
         else: #sort
             p1 = subprocess.Popen("samtools view -h {0}.bam | head -n {1} | samtools view -bS - | samtools sort - {2}  && samtools index {2}.bam".format(shuffled_bam, percent, os.path.splitext(bam_file)[0]), shell=True)
         wrap_wait_error(p1.wait())
