@@ -32,8 +32,8 @@ def pre_process_bam(bam):
     #print "samtools view " + args.bam + " | shuf | split -d -l " + str(nlines) + " - " + args.bam
     p = subprocess.Popen("samtools view " + bam + " | shuf | split -d -l " + str(nlines) + " - " + bam, shell=True) # This will shuffle the lines in the file and split it into two parts
     p.wait()
-    p1 = subprocess.Popen("samtools view -H " + bam + " | cat - " + bam + "00 | samtools view -bS - | samtools sort - " + bam + "00.sorted", shell=True)
-    p2 = subprocess.Popen("samtools view -H " + bam + " | cat - " + bam + "01 | samtools view -bS - | samtools sort - " + bam + "01.sorted", shell=True)
+    p1 = subprocess.Popen("samtools view -H " + bam + " | cat - " + bam + "00 | samtools view -bS - | samtools sort - -o " + bam + "00.sorted.bam", shell=True)
+    p2 = subprocess.Popen("samtools view -H " + bam + " | cat - " + bam + "01 | samtools view -bS - | samtools sort - -o " + bam + "01.sorted.bam", shell=True)
     p1.wait()
     p2.wait()
     return bam + "00", bam + "01"

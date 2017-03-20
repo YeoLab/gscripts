@@ -44,10 +44,10 @@ def pre_process_bam(bam, bam01, bam02, bam03, bam04, bam05, bam06, bam07, bam08,
             percent -= 1
         if no_sort: #if we are aren't shuffling, don't delete
         #Make sure I select pairs of reads
-            cmd = "samtools view -h {0}.bam | head -n {1} | samtools view -bS - > {2}.bam".format(shuffled_bam, percent, os.path.splitext(bam_file)[0])
+            cmd = "samtools view -h {0}.bam | head -n {1} | samtools view -bS - -o {2}".format(shuffled_bam, percent, bam_file)
             p1 = subprocess.Popen(cmd, shell=True)
         else: #sort
-            p1 = subprocess.Popen("samtools view -h {0}.bam | head -n {1} | samtools view -bS - | samtools sort - {2}  && samtools index {2}.bam".format(shuffled_bam, percent, os.path.splitext(bam_file)[0]), shell=True)
+            p1 = subprocess.Popen("samtools view -h {0}.bam | head -n {1} | samtools view -bS - | samtools sort - -o {2}  && samtools index {2}".format(shuffled_bam, percent, bam_file), shell=True)
         wrap_wait_error(p1.wait())
 
     if not no_shuffle: #if we are aren't shuffling, don't delete

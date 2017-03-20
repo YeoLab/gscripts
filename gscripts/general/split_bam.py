@@ -19,8 +19,10 @@ def pre_process_bam(bam, bam01, bam02):
     p2.wait()
   
     #sort remade bam file, can't combine due to race condition for viewing and sorting
-    pysam.sort("{0}00.bam".format(bam), os.path.splitext(bam01)[0])
-    pysam.sort("{0}01.bam".format(bam), os.path.splitext(bam02)[0])
+    p1 = subprocess.Popen("samtools sort {0}00.bam -o {1}".format(bam, os.path.splitext(bam01)), shell=True)
+    p2 = subprocess.Popen("samtools sort {0}01.bam -o {1}".format(bam, os.path.splitext(bam02)), shell=True)
+    p1.wait()
+    p2.wait()
 
     return bam01, bam02
 
