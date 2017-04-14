@@ -13,10 +13,12 @@ def wrap_wait_error(wait_result):
 def pre_process_bam(bam, bam01, bam02, bam03, bam04, bam05, bam06, bam07, bam08, bam09, no_shuffle, no_sort):
     #split bam file into two, return file handle for the two bam files
     
+    print "word counting"
     p = subprocess.Popen("samtools view {} | wc -l".format(bam), shell=True, stdout=subprocess.PIPE) # Number of reads in the tagAlign file
     stdout, stderr = p.communicate()
     nlines = int(stdout)
     
+    print "header counting"
     p = subprocess.Popen("samtools view -H {} | wc -l".format(bam), shell=True, stdout=subprocess.PIPE) # Number of header lines (for when we've got a lot of chromosomes)
     stdout, stderr = p.communicate()
     n_header_lines = int(stdout)
@@ -45,9 +47,11 @@ def pre_process_bam(bam, bam01, bam02, bam03, bam04, bam05, bam06, bam07, bam08,
         if no_sort: #if we are aren't shuffling, don't delete
         #Make sure I select pairs of reads
             cmd = "samtools view -h {0}.bam | head -n {1} | samtools view -bS - -o {2}".format(shuffled_bam, percent, bam_file)
-            p1 = subprocess.Popen(cmd, shell=True)
         else: #sort
-            p1 = subprocess.Popen("samtools view -h {0}.bam | head -n {1} | samtools view -bS - | samtools sort - -o {2}  && samtools index {2}".format(shuffled_bam, percent, bam_file), shell=True)
+            cmd = "samtools view -h {0}.bam | head -n {1} | samtools view -bS - | samtools sort - -o {2}  && samtools index {2}".format(shuffled_bam, percent, bam_file)
+            
+        print cmd
+        p1 = subprocess.Popen(cmd, shell=True)
         wrap_wait_error(p1.wait())
 
     if not no_shuffle: #if we are aren't shuffling, don't delete

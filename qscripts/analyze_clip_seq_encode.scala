@@ -157,7 +157,7 @@ class AnalizeCLIPSeq extends QScript {
 
   class FixScores(@Input inBed: File, @Output outBed: File) extends CommandLineFunction {
   override def shortDescription = "FixScores"
-  def commandLine = "python ~/gscripts/gscripts/clipseq/fix_scores.py " +
+  def commandLine = "fix_scores.py " +
     required("--bed", inBed) +
     required("--out_file", outBed)
     this.isIntermediate = true
@@ -312,7 +312,8 @@ class AnalizeCLIPSeq extends QScript {
     //add(new NormalizeBedGraph(inBedGraph = bedGraphFileNeg, inBam = bamFile, outBedGraph = bedGraphFileNegNorm))
     //add(new NegBedGraph(inBedGraph = bedGraphFileNegNorm, outBedGraph = bedGraphFileNegInverted))
     //add(new BedGraphToBigWig(bedGraphFileNegInverted, chromSizeLocation(genome), bigWigFileNegInverted))
-    
+  
+//commenting out the next 4 things because clipper is broken right now  
     add(new clipper(in = bamFile, genome = genome, out = clipper_output, isPremRNA = premRNA, reverse=reverse_strand))
     
     add(new FixScores(inBed = clipper_output, outBed = fixed_clipper_output))
