@@ -32,7 +32,7 @@ class AnalyzeRNASeq extends QScript {
   case class clipper(in: File, out: File, genome: String, isPremRNA: Boolean, reverse: Boolean) extends Clipper
   {
 
-    this.wallTime = Option((8 * 60 * 60).toLong)
+    this.wallTime = Option((48 * 60 * 60).toLong)
     this.inBam = in
     this.outBed = out
     this.species = genome
@@ -103,20 +103,24 @@ def split_and_call_peaks(bam: File, input_bam: File, genome: String): (File, Fil
       //split rep1 and rep2
       var (rep1_01, rep1_02) = split_and_call_peaks(rep1, input, genome)
       var (rep2_01, rep2_02) =  split_and_call_peaks(rep2, input, genome)
-      add(new IDR_V2(rep1_01, rep1_02, new File(groupName + ".rep1.txt")))
-      add(new IDR_V2(rep2_01, rep2_02, new File(groupName + ".rep2.txt")))
-      
+      var rep1_idr = new IDR_V2(rep1_01, rep1_02, new File(groupName + ".rep1.txt"))
+      rep1_idr.wallTime = Option((24 * 60 * 60).toLong)
+      add(rep1_idr)
+      var rep2_idr = new IDR_V2(rep2_01, rep2_02, new File(groupName + ".rep2.txt"))
+      rep2_idr.wallTime = Option((24 * 60 * 60).toLong)
+      add(rep2_idr)
       //merge and run IDR
       var mergedBams = new File(groupName + ".merged.bam")
       val combinedBams = List(rep1, rep2) 
       add(samtoolsMergeFunction(combinedBams, mergedBams))
       var (combined_01, combined_02) = split_and_call_peaks(mergedBams, input, genome)
-      add(new IDR_V2(combined_01, combined_02, new File(groupName + ".combined.txt")))
-
+      var combined_idr = new IDR_V2(combined_01, combined_02, new File(groupName + ".combined.txt"))
+      combined_idr.wallTime = Option((24 * 60 * 60).toLong)
+      add(combined_idr)
       
       // Run IDR on the real peaks this is super hacky because I'll need to check peak results after, make sure they are exactly the same as eric's results
       var rep1_real = swapExt(rep1.getParent, rep1, ".bam", ".peaks.bed")
-      var rep2_real = swapExt(rep1.getParent, rep2, ".bam", ".peaks.bed")
+      var rep2_real = swapExt(rep2.getParent, rep2, ".bam", ".peaks.bed")
       
       val bam_01_peaks_norm = swapExt(rep1_real, ".bed", ".norm.bed")
       val bam_02_peaks_norm = swapExt(rep2_real, ".bed", ".norm.bed")
@@ -130,9 +134,9 @@ def split_and_call_peaks(bam: File, input_bam: File, genome: String): (File, Fil
       add(new InputNorm(rep1_real, rep1, input, bam_01_peaks_norm, bam_01_peaks_compressed, bam_01_peaks_fixed))
       add(new InputNorm(rep2_real, rep2, input, bam_02_peaks_norm, bam_02_peaks_compressed, bam_02_peaks_fixed))
 
-      add(new IDR_V2(bam_01_peaks_fixed, bam_02_peaks_fixed, new File(groupName + ".txt")))
-      
-      //add(new IDR_V2(, new File(groupName + ".real.txt")))
+      var normal_idr = new IDR_V2(bam_01_peaks_fixed, bam_02_peaks_fixed, new File(groupName + ".txt"))
+      normal_idr.wallTime = Option((24 * 60 * 60).toLong)
+      add(normal_idr)
     }
   }
 }

@@ -320,9 +320,9 @@ class AnalizeCLIPSeq extends QScript {
     
     add(new BedToBigBed(inBed = fixed_clipper_output, genomeSize = chromSizeLocation(genome, chrome_size_path), outBigBed = bigBed_output))
     
-    add(new ClipAnalysis(bamFile, clipper_output, genome, clipper_output_metrics, AS_Structure = asStructureLocation(genome, as_structure_path), 
-	     		 genome_location = genomeLocation(genome, genome_path), phastcons_location = phastconsLocation(genome, phastcons_path), 
-	     		 gff_db = gffDbLocation(genome, gffdb_path)))
+    //add(new ClipAnalysis(bamFile, clipper_output, genome, clipper_output_metrics, AS_Structure = asStructureLocation(genome, as_structure_path), 
+	//     		 genome_location = genomeLocation(genome, genome_path), phastcons_location = phastconsLocation(genome, phastcons_path), 
+	  //   		 gff_db = gffDbLocation(genome, gffdb_path)))
     
     add(new BamToBed(inBam=bamFile, outBed=rmDupedBedFile))
     //add(new Pyicoclip(inBed = rmDupedBedFile, outBed = pyicoclipResults, regions = genicRegionsLocation(genome) ))
