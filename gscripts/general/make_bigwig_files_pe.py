@@ -5,13 +5,18 @@ import subprocess
 import os
 import pysam
 
-def genome_coverage_bed(in_bam=None, out_bed_graph=None, genome=None, strand=None, scale=1):
+def genome_coverage_bed(in_bam=None, out_bed_graph=None, genome=None, strand=None, scale=1, five_prime=False):
     with open(out_bed_graph, 'w') as out_bed_graph:
-        call = "genomeCoverageBed -ibam {} -split -bg -strand {} -scale {} -g {} -du".format(in_bam,
+        call = "genomeCoverageBed -ibam {} -bg -strand {} -scale {} -g {} -du".format(in_bam,
                                                                                              strand,
                                                                                              scale,
                                                                                              genome)
 
+
+        if five_prime:
+            call += " -5 "
+        else:
+            call += " -split "
         subprocess.check_call(call, shell=True, stdout=out_bed_graph)
 
 
@@ -60,8 +65,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Makes Pretty bed Graph Files!")
     parser.add_argument("--bam", help="bam file to make bedgraphs from", required=True)
     parser.add_argument("--genome", help="chromosome sizes because some things need it", required=True)
-    parser.add_argument("--dont_flip", help="by default assumes trueseq reversed strand, this disables that assumption",
-                        action="store_true", default=False)
+    parser.add_argument("--five_prime", help="plot only 5' end of fragment", action="store_true", default=False)
     parser.add_argument("--bw_pos", help="positive bw file name", required=True)
     parser.add_argument("--bw_neg", help="negative bw file name", required=True)
     args = parser.parse_args()
@@ -80,11 +84,13 @@ if __name__ == "__main__":
     genome_coverage_bed(in_bam=bamFile,
                         out_bed_graph=bedGraphFilePos,
                         strand="-", genome=genome,
-                        scale=norm_constant)
+                        scale=norm_constant,
+                        five_prime=args.five_prime)
     bed_graph_to_big_wig(bedGraphFilePos, genome, args.bw_pos)
 
     genome_coverage_bed(in_bam=bamFile,
                         out_bed_graph=bedGraphFileNeg,
                         strand="+", genome=genome,
-                        scale=neg_norm_constant)
+                        scale=neg_norm_constant,
+                        five_prime=args.five_prime)
     bed_graph_to_big_wig(bedGraphFileNeg, genome, args.bw_neg)
