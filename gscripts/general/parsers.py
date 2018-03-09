@@ -229,7 +229,6 @@ def parse_rm_duped_metrics_file(rmDup_file):
                     "Usable Reads": None}
 
 def parse_se_umi(umi_file):
-    print umi_file
     input_reads = None
     usable_reads = None
     for line in open(umi_file):
