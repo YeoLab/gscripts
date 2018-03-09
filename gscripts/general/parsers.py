@@ -86,7 +86,7 @@ def rnaseq_metrics(analysis_dir, num_seps=1, sep="."):
     return combined_df 
 
 
-def clipseq_metrics(analysis_dir, iclip=False, num_seps=None, sep=".",
+def clipseq_metrics(analysis_dir, iclip=False, single_end=False, num_seps=None, sep=".",
                     percent_usable=.01, number_usable=500000, frip=.05):
 
     """
@@ -100,7 +100,11 @@ def clipseq_metrics(analysis_dir, iclip=False, num_seps=None, sep=".",
         num_seps = 2 if iclip else 1
 
     cutadapt_round2_files = glob.glob(os.path.join(analysis_dir, "*.adapterTrim.round2.metrics"))
-    rm_duped_files = glob.glob(os.path.join(analysis_dir, "*rmRep.rmDup.metrics"))
+    if single_end:
+        rm_duped_files = glob.glob(os.path.join(analysis_dir, "*rmDup.bam.out"))
+    else:
+        rm_duped_files = glob.glob(os.path.join(analysis_dir, "*rmRep.rmDup.metrics"))
+    
     rmRep_mapping_files = glob.glob(os.path.join(analysis_dir, "*.adapterTrim.round2.rep.bamLog.final.out"))
 
     if len(rm_duped_files) == 0:
@@ -126,7 +130,10 @@ def clipseq_metrics(analysis_dir, iclip=False, num_seps=None, sep=".",
     rmRep_mapping_df = pd.DataFrame({name: parse_star_file(star_file) for name, star_file in rmRep_mapping_names.items()}).transpose()
     rmRep_mapping_df.columns = ["{} rmRep".format(col) for col in rmRep_mapping_df.columns]
 
-    rm_duped_df = pd.DataFrame({name: parse_rm_duped_metrics_file(rm_duped_file) for name, rm_duped_file in rm_duped_names.items()}).transpose()
+    if single_end:
+        rm_duped_df = pd.DataFrame({name: parse_se_umi(rm_duped_file) for name, rm_duped_file in rm_duped_names.items()}).transpose()
+    else:
+        rm_duped_df = pd.DataFrame({name: parse_rm_duped_metrics_file(rm_duped_file) for name, rm_duped_file in rm_duped_names.items()}).transpose()
     spot_df = pd.DataFrame({name: parse_peak_metrics(spot_file) for name, spot_file in spot_names.items()}).transpose()
     peaks_df = pd.DataFrame({name: {"Num Peaks": len(pybedtools.BedTool(peaks_file))} for name, peaks_file in peaks_names.items()}).transpose()
     combined_df = rnaseq_metrics(analysis_dir, num_seps, sep)
@@ -147,7 +154,6 @@ def clipseq_metrics(analysis_dir, iclip=False, num_seps=None, sep=".",
         pass
 
     return combined_df
-
 
 def parse_rmrep_file(rmrep_file):
     try:
@@ -222,6 +228,18 @@ def parse_rm_duped_metrics_file(rmDup_file):
                     "removed_count": None,
                     "Usable Reads": None}
 
+def parse_se_umi(umi_file):
+    print umi_file
+    input_reads = None
+    usable_reads = None
+    for line in open(umi_file):
+        if "Input Reads" in line:
+            input_reads = int(line.split(":")[-1].strip())
+        if "Number of reads out" in line:
+            usable_reads = int(line.split(":")[-1].strip())
+
+    return {"total_count": input_reads,
+            "Usable Reads": usable_reads}
 
 def get_cutadapt_version(report):
     with open(report) as file_handle:
