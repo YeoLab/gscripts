@@ -4,7 +4,7 @@ import json
 import os
 
 import gspread
-from oauth2client.client import SignedJwtAssertionCredentials
+from oauth2client.service_account import ServiceAccountCredentials
 import pandas as pd
 import pybedtools 
 import pysam
@@ -16,8 +16,8 @@ def _convert_color_to_list(rgb_string):
 def get_lab_manifest():
     json_key = json.load(open("/home/gpratt/ipython_notebook/public clip-588adbc137f3.json"))
     scope = ['https://spreadsheets.google.com/feeds']
-
-    credentials = SignedJwtAssertionCredentials(json_key['client_email'], json_key['private_key'], scope)
+    credentials = ServiceAccountCredentials.from_json_keyfile_dict(json_key, scope)
+    
     gc = gspread.authorize(credentials)
     
     sht1 = gc.open_by_url("https://docs.google.com/spreadsheets/d/1ZU2mQh54jentqvhR_oMnviLGWR8Nw_x338gULzKjNDI/edit#gid=0")
@@ -35,8 +35,8 @@ def get_lab_manifest():
 def get_rbp_color_chooser():
     json_key = json.load(open("/home/gpratt/ipython_notebook/public clip-588adbc137f3.json"))
     scope = ['https://spreadsheets.google.com/feeds']
+    credentials = ServiceAccountCredentials.from_json_keyfile_dict(json_key, scope)
 
-    credentials = SignedJwtAssertionCredentials(json_key['client_email'], json_key['private_key'], scope)
     gc = gspread.authorize(credentials)
 
     sht1 = gc.open_by_url("https://docs.google.com/spreadsheets/d/138x3BU5hRsMUGEooVmuLRy1HbZYYg8Z28SlTK-neVJI/edit#gid=0")
@@ -101,18 +101,27 @@ def format_date(date):
     year = 2000 + int(year)
     return datetime.date(year, month, day)
 
-def get_merged_data(input_norm_dir="/projects/ps-yeolab3/encode/analysis/Eric_Input_Norm/"):
+def get_merged_data(input_norm_dir="/projects/ps-yeolab3/encode/analysis/Eric_Input_Norm/", add_failed_data=False):
     """
     Returns merged data from the google spreadsheet, currently only works for me because it assumes my gspead key
     """
     json_key = json.load(open("/home/gpratt/ipython_notebook/public clip-588adbc137f3.json"))
     scope = ['https://spreadsheets.google.com/feeds']
     
-    credentials = SignedJwtAssertionCredentials(json_key['client_email'], json_key['private_key'], scope)
+    credentials = ServiceAccountCredentials.from_json_keyfile_dict(json_key, scope)
     gc = gspread.authorize(credentials)
     
     sht1 = gc.open_by_url("https://docs.google.com/spreadsheets/d/1NMjzbneXf8bGN13K9azoqK2YbMCrjQqfJBKFoCkkrtY/edit#gid=0")
     ws = sht1.worksheet("Sheet1")
+    merged_data = get_merged_data_ws(ws, input_norm_dir)
+
+    if add_failed_data:
+        ws = sht1.worksheet("Datasets Removed from Further Analysis")
+        failed_data = get_merged_data_ws(ws, input_norm_dir)
+        merged_data = pd.concat([merged_data, failed_data])
+    return merged_data
+
+def get_merged_data_ws(ws, input_norm_dir):
     list_of_lists = ws.get_all_values()
     manifest = pd.DataFrame(list_of_lists[1:], columns=list_of_lists[0])
     merged_data = manifest.set_index("uID")
@@ -134,11 +143,11 @@ def get_merged_data(input_norm_dir="/projects/ps-yeolab3/encode/analysis/Eric_In
     merged_data.submitted = merged_data.submitted.apply(lambda x: False if x.strip() == "FALSE" else True)
     merged_data.peaks_submitable  = merged_data.peaks_submitable.apply(lambda x: False if x.strip() == "FALSE" else True)
     merged_data.family_mapping_submitable = merged_data.family_mapping_submitable.apply(lambda x: False if x.strip() == "FALSE" else True)
-    merged_data['generally_submittable'] = merged_data.submitted | merged_data.family_mapping_submitable 
+    merged_data['generally_submittable'] = merged_data.submitted | merged_data.family_mapping_submitable | merged_data.peaks_submitable 
     
     format_input_norm_location = functools.partial(format_input_norm, input_norm_dir=input_norm_dir)
     merged_data['input_norm'] = merged_data.apply(format_input_norm_location, axis=1)
-    merged_data = merged_data[merged_data.annotation != "not_qc"]
+    #merged_data = merged_data[merged_data.annotation != "not_qc"]
     
     merged_data['Submitted Date'] = merged_data['Submitted Date'].apply(format_date)
     merged_data.is_qced = merged_data.is_qced.apply(lambda x: False if x == "FALSE" else True)
@@ -159,7 +168,7 @@ def get_best_f_score(threshold_col="FRiP", true_clasification_col='submitted', e
     true_positive_array = []
     false_positive_array = []
     threshold_array = []
-
+    f_score_array = []
     max_true_positive_rate = 0
 
     for threshold in explore_range:
@@ -188,8 +197,8 @@ def get_best_f_score(threshold_col="FRiP", true_clasification_col='submitted', e
         true_positive_array.append(true_positive_rate)
         false_positive_array.append(false_positive_rate)
         threshold_array.append(threshold)
-    
+        f_score_array.append(f_score)
     
     print max_true_positive_rate
     print best_threshold
-    return true_positive_array, false_positive_array, threshold_array, best_threshold
+    return true_positive_array, false_positive_array, threshold_array, f_score_array, best_threshold
